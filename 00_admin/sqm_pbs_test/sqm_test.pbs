@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N sqm_test
+#PBS -l select=1:ncpus=1:mpiprocs=1:mem=4gb
+#PBS -l walltime=00:10:00
+#PBS -j oe
+#PBS -o sqm_test.pbs.out
+set -eo pipefail
+cd "$PBS_O_WORKDIR"
+module purge || true
+module load app/amber22/22
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+
+echo "=== compute node: $(hostname) ==="
+echo "=== AM1-BCC parameterization test on cha_a (net charge -2) ==="
+antechamber -i cha_a.mol2 -fi mol2 -o cha_a_bcc.mol2 -fo mol2 \
+  -c bcc -nc -2 -at gaff -s 2
+
+if [[ -s cha_a_bcc.mol2 ]]; then
+  echo "SUCCESS: BCC output produced on compute node"
+  awk '/@<TRIPOS>ATOM/{f=1;next} /@<TRIPOS>BOND/{f=0} f{s+=$9} END{printf "output net charge = %.4f\n", s}' cha_a_bcc.mol2
+  echo "first 5 charges INPUT vs BCC:"
+  paste \
+    <(awk '/@<TRIPOS>ATOM/{f=1;next} /@<TRIPOS>BOND/{f=0} f{print $2, $9}' cha_a.mol2 | head -5) \
+    <(awk '/@<TRIPOS>ATOM/{f=1;next} /@<TRIPOS>BOND/{f=0} f{print $9}' cha_a_bcc.mol2 | head -5)
+else
+  echo "FAILED even on compute node"
+fi
