@@ -1,0 +1,35 @@
+Phase 2 Stage 3 (optimizer) - REAL GEOMETRY (attempt_3 active2-literature-full), union grid (252 pts, r_min=1.7A).
+Same scripts as placeholder (3.1/3.2/3.4); only geometry + grid swapped.
+
+Dv on grid (3.1): range [-0.009267, +0.008084] Eh, 141/252 stabilizing.
+
+Continuous L1-budgeted (3.2): barrier-lowering vs charge budget, convex global optimum per Q.
+  Q=1e: -5.44 | Q=2e: -10.89 | Q=3e: -16.18 | Q=4e: -21.47 | Q=6e: -30.94 | Q=8e: -40.08 | Q=10e: -48.82 kcal/mol.
+  At Q=2e the cation lands at grid idx 224 (Dv=-0.009267, the grid minimum).
+  HEADLINE: optimal static field lowers the barrier by 10.9 kcal/mol at Q=2e - EXCEEDS the enzyme's
+  ~9.1 kcal/mol catalytic effect (and slightly exceeds the placeholder's -9.27, consistent with the
+  deeper real-geometry Dv minimum). Isolated-substrate, frozen-density; polarization tested in Stage 4.
+
+Discrete MIQP (3.4): {-1,0,+1}, <=K active, 2.5 A min-separation (625 close pairs forbidden). CBC certified.
+  K   mode      dDE(kcal)  status  gap    minSep  %ceiling
+  2   neutral   -10.888    OPT     0.000  11.63   100.0
+  2   free      -11.354    OPT     0.000   3.22   104.3
+  4   neutral   -21.466    OPT     0.000   2.77   100.0
+  6   neutral   -28.715    OPT     0.000   2.94    92.8
+  8   neutral   -35.896    OPT     0.000   2.66    89.6
+  ALL certified globally optimal (gap 0.000) on real geometry.
+
+NOVELTY EVIDENCE (separation constraint binds): at K=2 the discrete solution equals the continuous
+ceiling (100%), but as K grows the 2.5 A separation constraint bites - K=6 reaches only 92.8%, K=8
+only 89.6% of the continuous ceiling, with active charges pushed to the 2.66-2.94 A floor. The
+constrained optimum therefore DIVERGES from the naive "threshold the Dv field" answer (which would
+pack charges onto the best Dv points regardless of separation); certified MILP finds the best FEASIBLE
+arrangement. This is the concrete demonstration that certified constrained optimization does something
+the analytic catalytic-field prescription cannot - the core methodological contribution.
+
+Designs (real geometry):
+  K=2 net-neutral: +1 @ idx224 (Dv -0.009267), -1 @ idx251 (Dv +0.008084); active sep 11.63 A.
+  K=2 net-free: +1 @ idx110, +1 @ idx224; active sep 3.22 A (separation-limited).
+Caveat: net-free again edges net-neutral (-11.35 vs -10.89); per Szefczyk the Arg63 sign that partly
+drove this on placeholder was an artifact - the real-geometry residue-Dv check (6.5a) will show whether
+the net-free advantage survives. Enzyme-rediscovery (does idx224 correspond to Arg90?) checked in 6.4.
