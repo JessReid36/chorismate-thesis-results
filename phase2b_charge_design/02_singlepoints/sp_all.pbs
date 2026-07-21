@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -N cm_p2b_sp
+#PBS -l select=1:ncpus=8:mem=16gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_all.pbs.out
+cd /home/18660916/system_development/phase2b_charge_design/02_singlepoints
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:$LD_LIBRARY_PATH"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+for b in sp_reactant sp_ts sp_product; do
+  echo "=== $b ==="
+  /home/apps2/ORCA/6.0.1/orca ${b}.inp > ${b}.out 2>&1
+  grep -E "FINAL SINGLE POINT ENERGY|ORCA TERMINATED NORMALLY" ${b}.out | tail -2
+  # HOMO energy (must be bound/negative for a stable dianion under CPCM eps=4)
+  grep -A2 "ORBITAL ENERGIES" ${b}.out | tail -1 || true
+done
+echo "end=$(date)"
+echo "=== density containers for orca_vpot ==="
+ls -la sp_*.gbw sp_*.densities 2>/dev/null || echo "WARNING: density files missing"
