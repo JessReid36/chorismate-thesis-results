@@ -1,0 +1,1640 @@
+ashpath: /home/18660916/envs/ash/lib/python3.11/site-packages/ash
+Sys path: ['/home/18660916/envs/ash/lib/python3.11/site-packages/ash', '/home/18660916/system_development/phase2b_charge_design/05d_shell_ladder/relax/run_nebP_2p0', '/home/18660916/envs/ash/lib/python311.zip', '/home/18660916/envs/ash/lib/python3.11', '/home/18660916/envs/ash/lib/python3.11/lib-dynload', '/home/18660916/envs/ash/lib/python3.11/site-packages']
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+                                           ASH                                            
+                              A MULTISCALE MODELLING PROGRAM                              
+                                        Version: 0.9dev                                        
+                               Git commit version: Unknown                                
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+ASH path: /home/18660916/envs/ash/lib/python3.11/site-packages/ash
+Python version: 3.11.15
+Python interpreter: /home/18660916/envs/ash/bin/python3
+
+ASH Settings after reading defaults and ~/ash_user_settings.ini : 
+See https://ash.readthedocs.io/en/latest/basics.html#ash-settings on how to change settings.
+	 debugflag :  False
+	 load_julia :  False
+	 julia_library :  pythoncall
+	 use_ANSI_color :  False
+	 print_logo :  False
+	 print_input :  True
+	 scale :  1.0
+	 tol :  0.1
+	 conndepth :  10
+	 connectivity_code :  julia
+	 nonbondedMM_code :  julia
+	 print_exit_footer :  True
+	 print_full_timings :  True
+
+Note: ASH can use ANSI escape sequences for displaying color. Use e.g. less -R to display
+To turn on/off escape sequences, set: 'use_ANSI_color = False' in
+~/ash_user_settings.ini
+
+Input script: /home/18660916/system_development/phase2b_charge_design/05d_shell_ladder/relax/run_nebP_2p0/neb_pass.py
+================================================================================
+   > import sys, openmm
+   > from ash import Fragment, ORCATheory, OpenMMTheory, QMMMTheory, NEBTS
+   > name=sys.argv[1]; RUN=(len(sys.argv)>2 and sys.argv[2]=="run")
+   > ORCADIR="/home/apps2/ORCA/6.0.1"
+   > r_coords="\n".join(open("%s_relaxed.xyz"%name).read().splitlines()[2:])
+   > p_coords="\n".join(open("%s_prod_relaxed.xyz"%name).read().splitlines()[2:])
+   > mmcharges=[float(x) for x in open("%s_charges.txt"%name).read().split(",")]
+   > fragR=Fragment(coordsstring=r_coords, charge=-2, mult=1)
+   > fragP=Fragment(coordsstring=p_coords, charge=-2, mult=1)
+   > els=[a.split()[0] for a in r_coords.strip().split("\n")]
+   > print(">> %s NEB(pass): FIELD-RELAXED endpoints. %d atoms (24 QM + %d MM), MM net %+.2f"%(name,fragR.numatoms,fragR.numatoms-24,sum(mmcharges)))
+   > assert fragR.numatoms==fragP.numatoms==len(mmcharges)
+   > LJ={"C":(3.40,0.086),"N":(3.25,0.170),"O":(2.96,0.210),"H":(1.06,0.016)}
+   > orca=ORCATheory(orcadir=ORCADIR,orcasimpleinput="! B3LYP D3BJ def2-SVP def2/J RIJCOSX CPCM TightSCF",
+   >     orcablocks="%cpcm epsilon 4.0 end\n%scf MaxIter 300 Guess PModel end\n%geom coordsys cartesian end",
+   >     numcores=8,autostart=False)
+   > mm=OpenMMTheory(fragment=fragR,dummysystem=True,platform="CPU",numcores=1,autoconstraints=None,rigidwater=False)
+   > lj=openmm.CustomBondForce("4*eps*((sig/r)^12 - (sig/r)^6)")
+   > lj.addPerBondParameter("sig");lj.addPerBondParameter("eps");lj.setUsesPeriodicBoundaryConditions(False)
+   > ang=openmm.unit.angstrom;kcal=openmm.unit.kilocalorie_per_mole
+   > for i in range(24):
+   >     si,ei=LJ[els[i]]
+   >     for j in range(24,fragR.numatoms):
+   >         sj,ej=LJ[els[j]]
+   >         sig=((si+sj)/2*ang).value_in_unit(openmm.unit.nanometer);eps=(((ei*ej)**0.5)*kcal).value_in_unit(openmm.unit.kilojoule_per_mole)
+   >         lj.addBond(i,j,[sig,eps])
+   > lj.setForceGroup(11);mm.system.addForce(lj)
+   > qmmm=QMMMTheory(qm_theory=orca,mm_theory=mm,fragment=fragR,qmatoms=list(range(24)),charges=mmcharges,
+   >     embedding="elstat",qm_charge=-2,qm_mult=1,numcores=8)
+   > if not RUN:
+   >     print("=== DRY RUN OK %s NEB(pass) ==="%name); sys.exit(0)
+   > NEBTS(reactant=fragR, product=fragP, theory=qmmm, images=12, CI=True,
+   >       charge=-2, mult=1, printlevel=2, maxiter=200, free_end=True,
+   >       ActiveRegion=True, actatoms=list(range(24)))
+   > print(">> NEB DONE for %s"%name)
+================================================================================ 
+
+
+--------------------------------------------------------------------------------
+                                New ASH fragment                                
+--------------------------------------------------------------------------------
+
+ASH Fragment creation
+Getting coordinates from string: C       59.13693976    35.92915896    56.59663233
+H       59.62380974    36.07511892    55.63570856
+H       61.12667534    35.89423449    58.43568503
+C       58.61943832    35.73549386    57.67982927
+C       58.07543325    35.36350666    58.98171400
+O       58.57080424    34.34225431    59.55531720
+O       57.11752768    36.03455738    59.45855215
+O       58.51235515    32.77391141    56.13132994
+C       58.97342320    32.87618454    54.98174308
+H       56.29722271    32.62690196    58.76887487
+C       60.27310605    32.27288754    54.59888206
+H       60.86067687    31.79510481    55.38533467
+C       60.69447081    32.19574207    53.30497657
+C       60.02335453    32.93682442    52.26312340
+H       60.44652390    33.24825941    51.23718976
+C       58.64054968    33.34021282    52.62204313
+H       58.05531218    33.49082348    51.68811747
+C       58.19063448    33.44208975    53.88726027
+H       57.16154309    33.74653369    54.12277355
+O       53.97144461    32.26588052    56.98389555
+H       54.50092514    32.57559048    56.23469227
+C       61.87403829    31.34984001    53.17244005
+O       62.85488143    31.44901701    53.92956398
+O       62.24520755    30.25974080    52.69661706
+C       61.34690001    37.08200001    59.61740001
+N       61.49747702    37.46722000    58.35334601
+H       61.18696000    38.12972200    59.04960001
+H       61.69364654    36.51218210    58.61701316
+N       60.93800275    37.95440443    60.53424950
+H       61.13415829    36.99936123    60.79791132
+H       61.05238537    38.24696097    59.57435701
+N       61.60523847    35.82438280    59.96461093
+H       61.71954511    36.11690444    59.00467593
+H       61.29473475    36.48690080    60.66088322
+C       58.88720000    30.25530000    51.89210000
+O       60.07102500    30.31707600    51.49556300
+O       58.17591600    29.22791700    51.92465900
+H       58.42922100    31.19115000    52.24486100
+C       63.81050000    29.09560000    54.34790000
+O       64.99432500    29.15737600    53.95136300
+O       63.09921600    28.06821700    54.38045900
+H       63.35252100    30.03145000    54.70066100
+C       53.21740000    31.67870000    51.94570000
+N       53.36797700    32.06392000    50.68164600
+H       53.05746000    32.72642200    51.37790000
+H       53.56414600    31.10888200    50.94531300
+N       52.80850100    32.55110400    52.86254900
+H       53.00467000    31.59606600    53.12621600
+H       52.92284900    32.84364000    51.90262800
+N       53.47572100    30.42107600    52.29290500
+H       53.59007000    30.71361100    51.33298400
+H       53.16520400    31.08357800    52.98915900
+C       53.85940000    36.72330000    55.35930000
+N       54.00997700    37.10852000    54.09524600
+H       53.69946000    37.77102200    54.79150000
+H       54.20614600    36.15348200    54.35891300
+N       53.45050100    37.59570400    56.27614900
+H       53.64667000    36.64066600    56.53981600
+H       53.56484900    37.88824000    55.31622800
+N       54.11772100    35.46567600    55.70650500
+H       54.23207000    35.75821100    54.74658400
+H       53.80720400    36.12817800    56.40275900
+C       54.66340000    29.53370000    57.72430000
+N       54.81397700    29.91892000    56.46024600
+H       54.50346000    30.58142200    57.15650000
+H       55.01014600    28.96388200    56.72391300
+N       54.25450100    30.40610400    58.64114900
+H       54.45067000    29.45106600    58.90481600
+H       54.36884900    30.69864000    57.68122800
+N       54.92172100    28.27607600    58.07150500
+H       55.03607000    28.56861100    57.11158400
+H       54.61120400    28.93857800    58.76775900
+C       64.47490000    32.89690000    51.58640000
+O       65.65872500    32.95867600    51.18986300
+O       63.76361600    31.86951700    51.61895900
+H       64.01692100    33.83275000    51.93916100
+C       55.33790560    33.73470384    59.83179259
+N       55.48845766    34.11991178    58.56776155
+H       55.17797308    34.78242326    59.26400365
+H       55.68505039    33.16495565    58.83145946
+N       54.92931075    34.60717899    60.74873798
+H       55.12478637    33.65191272    61.01216387
+H       55.04367332    34.89983306    59.78898892
+N       55.59608971    32.47701660    60.17895342
+H       55.70867375    32.76884193    59.21811307
+H       55.28703862    33.14050206    60.87615483
+C       59.64430000    31.49730000    60.26190000
+N       59.79487700    31.88252000    58.99784600
+H       59.48436000    32.54502200    59.69410000
+H       59.99104600    30.92748200    59.26151300
+N       59.23540100    32.36970400    61.17874900
+H       59.43157000    31.41466600    61.44241600
+H       59.34974900    32.66224000    60.21882800
+N       59.90262100    30.23967600    60.60910500
+H       60.01697000    30.53221100    59.64918400
+H       59.59210400    30.90217800    61.30535900
+C       58.91760000    34.60790000    50.09390000
+O       60.10142500    34.66967600    49.69736300
+O       58.20631600    33.58051700    50.12645900
+H       58.45962100    35.54375000    50.44666100
+Creating/Updating fragment attributes...
+Number of Atoms in fragment: 100
+Formula: H48C20N18O14
+Label: CHHCCOOOCHCHCCHCHCHOHCOOCNHHNHHNHHCOOHCOOHCNHHNHHNHHCNHHNHHNHHCNHHNHHNHHCOOHCNHHNHHNHHCNHHNHHNHHCOOH
+Charge: -2 Mult: 1
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+                                New ASH fragment                                
+--------------------------------------------------------------------------------
+
+ASH Fragment creation
+Getting coordinates from string: C       59.19359587    34.40890482    57.71029092
+H       60.02619313    33.69132731    57.89360808
+H       59.59996454    35.22379532    57.09338022
+C       58.55735763    34.90712041    59.01338955
+C       57.88764863    36.23227173    59.03977284
+O       58.58699405    37.25373015    58.75330451
+O       56.64726016    36.30809061    59.42529477
+O       57.97791494    33.91402420    59.72392565
+C       56.09013523    32.06846512    57.03725071
+H       56.30609569    31.03467488    56.65923608
+C       57.46345732    32.56721133    57.42614206
+H       57.96776143    32.03439610    58.24936700
+C       58.08519967    33.68893109    56.95347639
+C       57.59479900    34.26965492    55.71746193
+H       58.24101297    34.98050823    55.18889849
+C       56.46417375    33.83858038    55.12326401
+H       56.26051706    34.12329647    54.08190424
+C       55.55249497    32.78432169    55.70112204
+H       54.56410485    33.25711253    55.93572900
+O       55.18483248    31.89527177    54.62256851
+H       56.01166711    31.54124189    54.22804097
+C       62.49685090    29.88638741    50.81108898
+O       62.72065679    29.18745489    51.73287971
+O       62.25484666    30.53634228    49.85797605
+C       61.34690000    37.08200000    59.61740000
+N       61.49747700    37.46722000    58.35334600
+H       61.18696000    38.12972200    59.04960000
+H       61.69364600    36.51218200    58.61701300
+N       60.93800100    37.95440400    60.53424900
+H       61.13417000    36.99936600    60.79791600
+H       61.05234900    38.24694000    59.57432800
+N       61.60522100    35.82437600    59.96460500
+H       61.71957000    36.11691100    59.00468400
+H       61.29470400    36.48687800    60.66085900
+C       58.88720000    30.25530000    51.89210000
+O       60.07102500    30.31707600    51.49556300
+O       58.17591600    29.22791700    51.92465900
+H       58.42922100    31.19115000    52.24486100
+C       63.81050000    29.09560000    54.34790000
+O       64.99432500    29.15737600    53.95136300
+O       63.09921600    28.06821700    54.38045900
+H       63.35252100    30.03145000    54.70066100
+C       53.21740000    31.67870000    51.94570000
+N       53.36797700    32.06392000    50.68164600
+H       53.05746000    32.72642200    51.37790000
+H       53.56414600    31.10888200    50.94531300
+N       52.80850100    32.55110400    52.86254900
+H       53.00467000    31.59606600    53.12621600
+H       52.92284900    32.84364000    51.90262800
+N       53.47572100    30.42107600    52.29290500
+H       53.59007000    30.71361100    51.33298400
+H       53.16520400    31.08357800    52.98915900
+C       53.85940000    36.72330000    55.35930000
+N       54.00997700    37.10852000    54.09524600
+H       53.69946000    37.77102200    54.79150000
+H       54.20614600    36.15348200    54.35891300
+N       53.45050100    37.59570400    56.27614900
+H       53.64667000    36.64066600    56.53981600
+H       53.56484900    37.88824000    55.31622800
+N       54.11772100    35.46567600    55.70650500
+H       54.23207000    35.75821100    54.74658400
+H       53.80720400    36.12817800    56.40275900
+C       54.66340000    29.53370000    57.72430000
+N       54.81397700    29.91892000    56.46024600
+H       54.50346000    30.58142200    57.15650000
+H       55.01014600    28.96388200    56.72391300
+N       54.25450100    30.40610400    58.64114900
+H       54.45067000    29.45106600    58.90481600
+H       54.36884900    30.69864000    57.68122800
+N       54.92172100    28.27607600    58.07150500
+H       55.03607000    28.56861100    57.11158400
+H       54.61120400    28.93857800    58.76775900
+C       64.47490000    32.89690000    51.58640000
+O       65.65872500    32.95867600    51.18986300
+O       63.76361600    31.86951700    51.61895900
+H       64.01692100    33.83275000    51.93916100
+C       55.33790000    33.73470000    59.83180000
+N       55.48847700    34.11992000    58.56774600
+H       55.17796000    34.78242200    59.26400000
+H       55.68464600    33.16488200    58.83141300
+N       54.92900100    34.60710400    60.74864900
+H       55.12517000    33.65206600    61.01231600
+H       55.04334900    34.89964000    59.78872800
+N       55.59622100    32.47707600    60.17900500
+H       55.71057000    32.76961100    59.21908400
+H       55.28570400    33.13957800    60.87525900
+C       59.64430000    31.49730000    60.26190000
+N       59.79487700    31.88252000    58.99784600
+H       59.48436000    32.54502200    59.69410000
+H       59.99104600    30.92748200    59.26151300
+N       59.23540100    32.36970400    61.17874900
+H       59.43157000    31.41466600    61.44241600
+H       59.34974900    32.66224000    60.21882800
+N       59.90262100    30.23967600    60.60910500
+H       60.01697000    30.53221100    59.64918400
+H       59.59210400    30.90217800    61.30535900
+C       58.91760000    34.60790000    50.09390000
+O       60.10142500    34.66967600    49.69736300
+O       58.20631600    33.58051700    50.12645900
+H       58.45962100    35.54375000    50.44666100
+Creating/Updating fragment attributes...
+Number of Atoms in fragment: 100
+Formula: H48C20N18O14
+Label: CHHCCOOOCHCHCCHCHCHOHCOOCNHHNHHNHHCOOHCOOHCNHHNHHNHHCNHHNHHNHHCNHHNHHNHHCOOHCNHHNHHNHHCNHHNHHNHHCOOH
+Charge: -2 Mult: 1
+
+--------------------------------------------------------------------------------
+>> shell2p0 NEB(pass): FIELD-RELAXED endpoints. 100 atoms (24 QM + 76 MM), MM net +2.00
+
+
+                     #####################################                      
+                     #                                   #                      
+                     #     ORCATheory initialization     #                      
+                     #                                   #                      
+                     #####################################                      
+Checking for ORCA location
+ Using orcadir path provided: /home/apps2/ORCA/6.0.1 
+Checking if ORCA binary works... yes 
+ORCA parallel job requested with numcores: 8 . Make sure that the correct OpenMPI version (for the ORCA version) is available in your environment
+OpenMPI binary directory found: /apps/openmpi/4.1.1/bin
+Testing that mpirun is executable... yes 
+OpenMPI version (mpirun -V): mpirun (Open MPI) 4.1.1
+
+Report bugs to http://www.open-mpi.org/community/help/
+
+bind_to_core_option: True
+
+Creating ORCA object
+ORCA dir: /home/apps2/ORCA/6.0.1
+! B3LYP D3BJ def2-SVP def2/J RIJCOSX CPCM TightSCF
+%cpcm epsilon 4.0 end
+%scf MaxIter 300 Guess PModel end
+%geom coordsys cartesian end
+
+ORCATheory object created!
+
+
+                           #########################                            
+                           #                       #                            
+                           #     OpenMM Theory     #                            
+                           #                       #                            
+                           #########################                            
+OpenMM CPU threads set to: 1
+Imported OpenMM library version: 8.5.2
+
+--------------------------------------------------------------------------------
+                             Defining OpenMM object                             
+--------------------------------------------------------------------------------
+
+Printlevel: 2
+No automatic constraints
+AutoConstraint setting: None
+Rigidwater constraints: False
+Hydrogenmass option: 1.5 Da
+Using platform: CPU
+
+--------------------------------------------------------------------------------
+                            Setting up force fields.                            
+--------------------------------------------------------------------------------
+
+Note: OpenMM will fail in this step if parameters are missing in topology and
+      parameter files (e.g. nonbonded entries).
+
+Defining new basic single-chain, multi-residue topology
+Inside write_xmlfile_nonbonded
+Wrote XML-file: dummy.xml
+residueTemplates: {}
+System is non-periodic.
+nonbonded noPBC Method is: NoCutoff
+Nonbonded cutoff : 20 Angstrom
+
+----------------------
+OpenMM system created.
+----------------------
+OpenMM Forces defined: [<openmm.openmm.NonbondedForce; proxy of <Swig Object of type 'OpenMM::NonbondedForce *' at 0x149d1e25ee70> >, <openmm.openmm.CMMotionRemover; proxy of <Swig Object of type 'OpenMM::CMMotionRemover *' at 0x149d1e25f030> >]
+
+Setting charges
+Number of atoms in OpenMM system: 100
+
+System constraints defined upon system creation: 0
+Use printlevel =>3 to see list of all constraints
+
+----------------------------------------------------------------------------
+Time to calculate step (OpenMM object creation): 0.183 seconds, 0.0 minutes.
+----------------------------------------------------------------------------
+
+
+                            ########################                            
+                            #                      #                            
+                            #     QM/MM Theory     #                            
+                            #                      #                            
+                            ########################                            
+QM-theory: ORCATheory
+MM-theory: OpenMMTheory
+All atoms in fragment: 100
+QM region (24 atoms): [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+MM region (76 atoms)
+QM/MM object selected to use 8 cores
+Embedding: elstat
+Reading in charges
+Updating charges in OpenMM object.
+Updating simulation object for modified Nonbonded force.
+
+--------------------------------------------------------------------
+Time to calculate step (update_charges): 0.001 seconds, 0.0 minutes.
+--------------------------------------------------------------------
+QM-region coordinates (before linkatoms):
+   0    C  59.13693976   35.92915896   56.59663233
+   1    H  59.62380974   36.07511892   55.63570856
+   2    H  61.12667534   35.89423449   58.43568503
+   3    C  58.61943832   35.73549386   57.67982927
+   4    C  58.07543325   35.36350666   58.98171400
+   5    O  58.57080424   34.34225431   59.55531720
+   6    O  57.11752768   36.03455738   59.45855215
+   7    O  58.51235515   32.77391141   56.13132994
+   8    C  58.97342320   32.87618454   54.98174308
+   9    H  56.29722271   32.62690196   58.76887487
+  10    C  60.27310605   32.27288754   54.59888206
+  11    H  60.86067687   31.79510481   55.38533467
+  12    C  60.69447081   32.19574207   53.30497657
+  13    C  60.02335453   32.93682442   52.26312340
+  14    H  60.44652390   33.24825941   51.23718976
+  15    C  58.64054968   33.34021282   52.62204313
+  16    H  58.05531218   33.49082348   51.68811747
+  17    C  58.19063448   33.44208975   53.88726027
+  18    H  57.16154309   33.74653369   54.12277355
+  19    O  53.97144461   32.26588052   56.98389555
+  20    H  54.50092514   32.57559048   56.23469227
+  21    C  61.87403829   31.34984001   53.17244005
+  22    O  62.85488143   31.44901701   53.92956398
+  23    O  62.24520755   30.25974080   52.69661706
+
+Determining QM-MM/HL-LL boundary
+Parameters determing connectivity:
+Scaling factor: 1.0
+Tolerance: 0.30000000000000004
+QM atoms: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+QM atoms to be excluded from boundary creation (excludeboundaryatomlist):  []
+ Warning. Found more than 1 boundaryatom for QM-atom 2 . This is considered unusual 
+This typically either happens when your QM-region is badly defined or a QM-atom is clashing with an MM atom
+QM atom :  2
+MM Boundaryatoms (connected to QM-atom based on distance) :  [27, 32]
+MM Boundary atom coordinates (for debugging):
+27 H 61.69364654 36.5121821 58.61701316
+32 H 61.71954511 36.11690444 59.00467593
+ Warning. Found more than 1 boundaryatom for QM-atom 9 . This is considered unusual 
+This typically either happens when your QM-region is badly defined or a QM-atom is clashing with an MM atom
+QM atom :  9
+MM Boundaryatoms (connected to QM-atom based on distance) :  [79, 84]
+MM Boundary atom coordinates (for debugging):
+79 H 55.68505039 33.16495565 58.83145946
+84 H 55.70867375 32.76884193 59.21811307
+QM-MM boundary dictionary: {2: [27, 32], 9: [79, 84]}
+
+------------------------------------------------------------------------
+Time to calculate step (get_boundary_atoms): 0.001 seconds, 0.0 minutes.
+------------------------------------------------------------------------
+Found covalent QM-MM boundary. Linkatoms option set to True
+Boundaryatoms (QM:MM pairs): {2: [27, 32], 9: [79, 84]}
+Note: used connectivity settings, scale=1.0 and tol=0.30000000000000004 to determine boundary.
+Linkatom_forceprojection_method: adv
+
+MM boundary (MM1:MMx pairs): {27: [24, 25, 32], 32: [24, 27, 31], 79: [76, 77, 84], 84: [76, 79, 83]}
+
+--------------------------------------------------------------------
+Time to calculate step (get_MMboundary): 0.001 seconds, 0.0 minutes.
+--------------------------------------------------------------------
+Removing constraints in OpenMM object for atoms: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+Removing bonded terms for QM-region in MMtheory
+Modifying bonded forces.
+
+
+Number of bonded terms removed:
+Harmonic Bond terms: 0
+Harmonic Angle terms: 0
+Periodic Torsion terms: 0
+Custom Torsion terms: 0
+CMAP Torsion terms: 0
+CustomBond terms 0
+
+
+--------------------------------------------------------------------------
+Time to calculate step (modify_bonded_forces): 0.002 seconds, 0.0 minutes.
+--------------------------------------------------------------------------
+Removing nonbonded terms for QM-region in MMtheory (QM-QM interactions)
+Add exceptions/exclusions. Removing i-j interactions for list: 24 atoms
+Case Nonbondedforce. Adding Exception for ij pair.
+Number of exceptions (Nonbondedforce) added: 276
+Number of exclusions (CustomNonbondedforce) added: 0
+
+--------------------------------------------------------------------
+Time to calculate step (add exceptions): 0.001 seconds, 0.0 minutes.
+--------------------------------------------------------------------
+Charges of QM atoms set to 0 (since Electrostatic Embedding):
+Setting QM charges to Zero
+
+-------------------------------------------------------------------
+Time to calculate step (ZeroQMCharges): 0.000 seconds, 0.0 minutes.
+-------------------------------------------------------------------
+Updating charges in OpenMM object.
+Updating simulation object for modified Nonbonded force.
+
+--------------------------------------------------------------------
+Time to calculate step (update_charges): 0.000 seconds, 0.0 minutes.
+--------------------------------------------------------------------
+Deleting Coulombexceptions for atomlist: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+
+-----------------------------------------------------------------------
+Time to calculate step (delete_exceptions): 0.003 seconds, 0.0 minutes.
+-----------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+Time to calculate step (QM/MM object creation): 0.031 seconds, 0.0 minutes.
+---------------------------------------------------------------------------
+
+
+                               ##################                               
+                               #                #                               
+                               #     NEB+TS     #                               
+                               #                #                               
+                               ##################                               
+Will first perform loose NEB-CI job, followed by TSOpt job using geomeTRIC optimizer.
+Hessian option: None
+Setting new numcores 8for QMtheory and MMtheory
+1 CPU cores provided to parallelize the 12-image NEB band optimization.
+8 CPU cores will be used to parallelize theory level for each image during NEB.
+8 CPU cores will be used simultaneously during NEB.
+8 CPU cores will be used to parallize theory during Opt-TS part.
+
+
+      ####################################################################      
+      #                                                                  #      
+      #     Nudged elastic band calculation (via interface to KNARR)     #      
+      #                                                                  #      
+      ####################################################################      
+ NEB runmode is serial, i.e. running one image after another. 
+Theory.numcores: 8
+ Theory parallelization is active and will utilize: 8 CPU cores per image. 
+
+Active Region option Active. Passing only active-region coordinates to Knarr.
+
+--------------------------------------------------------------------------------
+                                New ASH fragment                                
+--------------------------------------------------------------------------------
+
+ASH Fragment creation
+Creating/Updating fragment attributes...
+Number of Atoms in fragment: 24
+Formula: H8C10O6
+Label: None
+Charge: None Mult: None
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+                                New ASH fragment                                
+--------------------------------------------------------------------------------
+
+ASH Fragment creation
+Creating/Updating fragment attributes...
+Number of Atoms in fragment: 24
+Formula: H8C10O6
+Label: None
+Charge: None Mult: None
+
+--------------------------------------------------------------------------------
+Active Region feature active. Setting RMSD-alignment in NEB to false (required).
+
+
+--------------------
+Active NEB settings:
+--------------------
+
+Number of images chosen: 12
+Free_end option: True
+Endpoints have been chosen to be free. Reactant and product geometries will thus also be active during NEB optimization.
+There are 14 active images including endpoints.
+Warning: Check that you have chosen an appropriate number of CPU cores for runmode=parallel
+Restart file: None
+TS guess insertion : None
+
+Interpolation path parameters:
+ {'METHOD': 'DOUBLE', 'INTERPOLATION': 'IDPP', 'NIMAGES': 14, 'INSERT_CONFIG': None, 'IDPP_MAX_ITER': 700, 'IDPP_SPRINGCONST': 5.0, 'IDPP_TIME_STEP': 0.01, 'IDPP_MAX_MOVE': 0.1, 'IDPP_MAX_F': 0.07, 'IDPP_RMS_F': 0.009}
+
+NEB parameters:
+ {'PATH': 'neb.xyz', 'CLIMBING': True, 'TANGENT': 'IMPROVED', 'CICHANGEFREQUENCYCHECK': 5, 'SPRINGTYPE': 'DISTANCE', 'PERP_SPRINGTYPE': '', 'ENERGY_WEIGHTED': True, 'SPRINGCONST': 1.0, 'SPRINGCONST2': 10.0, 'MIN_RMSD': False, 'REMOVE_EXTERNAL_FORCE': True, 'FREE_END': True, 'FREE_END_TYPE': 'PERP', 'FREE_END_ENERGY': 0.0, 'FREE_END_ENERGY2': 0.0, 'FREE_END_KAPPA': 0.0, 'CONV_TYPE': 'ALL', 'TOL_SCALE': 10, 'TOL_MAX_FCI': 0.1, 'TOL_RMS_FCI': 0.05, 'TOL_MAX_F': 0.26, 'TOL_RMS_F': 0.13, 'TOL_TURN_ON_CI': 1.0, 'ZOOM': False, 'TOL_TURN_ON_ZOOM': 0.5, 'REPARAM': 0, 'TOL_REPARAM': 0.0, 'INTERPOLATION_TYPE': 'LINEAR', 'AUTO_ZOOM': True, 'ZOOM_OFFSET': 1, 'ZOOM_ALPHA': 0.5, 'RESTART_OPT_ON_CI': True, 'LBFGS_REPARAM_ON_RESTART': False}
+
+Optimizer parameters:
+ {'OPTIM_METHOD': 'LBFGS', 'MAX_ITER': 200, 'TOL_MAX_FORCE': 0.01, 'TOL_RMS_FORCE': 0.005, 'TIME_STEP': 0.01, 'MAX_MOVE': 0.1, 'RESTART_ON_SCALING': True, 'LBFGS_MEMORY': 20, 'LBFGS_DAMP': 1.0, 'FD_STEP': 0.001, 'LINESEARCH': None}
+
+
+Launching Knarr
+
+==================================================
+==================================================
+               K N A R R       
+                ___|__         
+                \-\-\-\        
+                /_/_/_/   p>   
+            (\_____|_____/)    
+           ~~~~/ / / / /~~~    
+           ~~~~~~~~~~~~~~~~    
+                               
+0.0 (dev version)
+Author: Vilhjalmur Asgeirsson 
+University of Iceland
+Time: 15:03 Date: 01.08.2026
+
+I would like to thank: 
+          H. Jonsson, R. Bjornsson, B.O. Birgirsson, O-P Koistinen
+for significant contributions to KNARR and its development
+
+==================================================
+==================================================
+Creating interpolated path.
+Using Knarr IDPP path generation
+Interpolation method: DOUBLE
+Interpolation type: IDPP
+Insert configuration: None
+IDPP Max iterations: 700
+IDPP spring constant: 5.0
+IDPP timestep: 0.01
+IDPP Max Move: 0.1
+IDPP Max Force: 0.07
+IDPP RMS Force: 0.009
+Using ActiveRegion in NEB. Turning off RMSD alignment in Path generation
+
+**************************************************
+                 Path Generation                  
+**************************************************
+
+IDPP optimization:
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   0  15.71   8.437330   7    2.6116   27.5357   0.0000
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   1  15.71   8.118694   7    2.4685   25.2615   0.0041
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   2  15.71   7.653905   7    2.2664   22.0985   0.0065
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   3  15.71   7.109898   7    2.0397   18.6524   0.0083
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   4  15.71   6.542175   7    1.8145   15.3732   0.0095
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   5  15.71   5.987715   7    1.6055   12.9359   0.0102
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   6  15.71   5.467125   7    1.4188   11.2901   0.0109
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   7  15.71   4.989755   7    1.2551    9.7985   0.0117
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   8  15.72   4.579058   8    1.1128    8.4773   0.0124
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+   9  15.72   4.260103   8    0.9894    7.3262   0.0129
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  10  15.72   3.959626   8    0.8823    6.3342   0.0132
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  11  15.73   3.678924   8    0.7891    5.4856   0.0133
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  12  15.73   3.418368   8    0.7077    4.7624   0.0134
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  13  15.73   3.177682   8    0.6364    4.1474   0.0134
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  14  15.74   2.956137   8    0.5736    3.6242   0.0133
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  15  15.75   2.752713   8    0.5183    3.1786   0.0132
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  16  15.75   2.566215   8    0.4693    2.7984   0.0131
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  17  15.76   2.395367   8    0.4259    2.4731   0.0130
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  18  15.77   2.238877   8    0.3873    2.1939   0.0129
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  19  15.78   2.095486   8    0.3529    1.9535   0.0127
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  20  15.79   1.963999   8    0.3223    1.7457   0.0126
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  21  15.79   1.843299   8    0.2949    1.5656   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  22  15.80   1.732358   8    0.2704    1.4087   0.0123
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  23  15.82   1.630239   8    0.2485    1.2789   0.0122
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  24  15.83   1.536088   8    0.2289    1.1644   0.0122
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  25  15.84   1.449136   8    0.2113    1.0628   0.0121
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  26  15.85   1.368689   8    0.1954    0.9725   0.0121
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  27  15.86   1.294119   8    0.1812    0.9041   0.0123
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  28  15.87   1.224862   8    0.1683    0.8409   0.0124
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  29  15.89   1.160411   8    0.1566    0.7819   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  30  15.90   1.100309   8    0.1461    0.7270   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  31  15.92   1.044149   8    0.1365    0.6759   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  32  15.93   0.991566   8    0.1277    0.6285   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  33  15.94   0.942235   8    0.1197    0.5845   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  34  15.96   0.895867   8    0.1124    0.5438   0.0125
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  35  15.97   0.852207   8    0.1056    0.5060   0.0124
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  36  15.99   0.811028   8    0.0995    0.4710   0.0123
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  37  16.00   0.772128   8    0.0938    0.4390   0.0122
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  38  16.02   0.735332   8    0.0885    0.4110   0.0121
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  39  16.04   0.700482   8    0.0836    0.3849   0.0120
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  40  16.05   0.667437   8    0.0791    0.3605   0.0119
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  41  16.07   0.636075   8    0.0750    0.3377   0.0118
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  42  16.09   0.606284   8    0.0711    0.3165   0.0117
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  43  16.10   0.577965   8    0.0675    0.2968   0.0116
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  44  16.12   0.551029   8    0.0641    0.2783   0.0115
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  45  16.14   0.527801   7    0.0610    0.2612   0.0114
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  46  16.15   0.505717   7    0.0580    0.2452   0.0113
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  47  16.17   0.484599   7    0.0552    0.2303   0.0112
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  48  16.19   0.464395   7    0.0526    0.2164   0.0111
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  49  16.21   0.445057   7    0.0502    0.2033   0.0109
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  50  16.23   0.426540   7    0.0479    0.1912   0.0109
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  51  16.24   0.408803   7    0.0457    0.1799   0.0108
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  52  16.26   0.391809   7    0.0436    0.1702   0.0108
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  53  16.28   0.375525   7    0.0416    0.1610   0.0107
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  54  16.30   0.359919   7    0.0398    0.1523   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  55  16.32   0.344965   7    0.0380    0.1450   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  56  16.34   0.330635   7    0.0363    0.1385   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  57  16.36   0.316906   7    0.0347    0.1328   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  58  16.38   0.303755   7    0.0332    0.1275   0.0104
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  59  16.39   0.291161   7    0.0317    0.1224   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  60  16.41   0.279104   7    0.0303    0.1174   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  61  16.43   0.267565   7    0.0290    0.1126   0.0102
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  62  16.45   0.256526   7    0.0277    0.1079   0.0102
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  63  16.47   0.245970   7    0.0265    0.1033   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  64  16.49   0.235879   7    0.0253    0.0989   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  65  16.51   0.226238   7    0.0242    0.0947   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  66  16.53   0.217031   7    0.0231    0.0906   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  67  16.55   0.208243   7    0.0221    0.0866   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  68  16.58   0.199859   7    0.0211    0.0827   0.0103
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  69  16.60   0.191864   7    0.0201    0.0790   0.0104
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  70  16.62   0.184245   7    0.0192    0.0755   0.0104
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  71  16.64   0.176987   7    0.0183    0.0721   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  72  16.66   0.170077   7    0.0175    0.0690   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  73  16.68   0.163502   7    0.0167    0.0662   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  74  16.70   0.157248   7    0.0159    0.0634   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  75  16.72   0.151303   7    0.0152    0.0607   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  76  16.75   0.145653   7    0.0145    0.0582   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  77  16.77   0.140285   7    0.0138    0.0556   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  78  16.79   0.135188   7    0.0132    0.0532   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  79  16.81   0.130349   7    0.0126    0.0508   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  80  16.83   0.125757   7    0.0120    0.0485   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  81  16.86   0.121398   7    0.0115    0.0463   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  82  16.88   0.117262   7    0.0110    0.0441   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  83  16.90   0.113337   7    0.0105    0.0421   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  84  16.92   0.109613   7    0.0100    0.0401   0.0105
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  85  16.94   0.106078   7    0.0095    0.0381   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  86  16.96   0.102723   7    0.0091    0.0363   0.0106
+Current springconstants are: [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.] [5.]
+  87  16.99   0.099538   7    0.0087    0.0345   0.0107
+
+Calculation successfully converged in 87 iterations and 0 func. calls!
+
+Final path:
+Number of images                      :    14
+Number of dimensions (path)           :  1008
+Number of dimensions (image)          :    72
+Number of degrees of freedom          :  1008
+Number of inactive degrees of freedom :     0
+Image:   0
+ C  59.13693976  35.92915896  56.59663233  0  0  0
+ H  59.62380974  36.07511892  55.63570856  0  0  0
+ H  61.12667534  35.89423449  58.43568503  0  0  0
+ C  58.61943832  35.73549386  57.67982927  0  0  0
+ C  58.07543325  35.36350666  58.98171400  0  0  0
+ O  58.57080424  34.34225431  59.55531720  0  0  0
+ O  57.11752768  36.03455738  59.45855215  0  0  0
+ O  58.51235515  32.77391141  56.13132994  0  0  0
+ C  58.97342320  32.87618454  54.98174308  0  0  0
+ H  56.29722271  32.62690196  58.76887487  0  0  0
+ C  60.27310605  32.27288754  54.59888206  0  0  0
+ H  60.86067687  31.79510481  55.38533467  0  0  0
+ C  60.69447081  32.19574207  53.30497657  0  0  0
+ C  60.02335453  32.93682442  52.26312340  0  0  0
+ H  60.44652390  33.24825941  51.23718976  0  0  0
+ C  58.64054968  33.34021282  52.62204313  0  0  0
+ H  58.05531218  33.49082348  51.68811747  0  0  0
+ C  58.19063448  33.44208975  53.88726027  0  0  0
+ H  57.16154309  33.74653369  54.12277355  0  0  0
+ O  53.97144461  32.26588052  56.98389555  0  0  0
+ H  54.50092514  32.57559048  56.23469227  0  0  0
+ C  61.87403829  31.34984001  53.17244005  0  0  0
+ O  62.85488143  31.44901701  53.92956398  0  0  0
+ O  62.24520755  30.25974080  52.69661706  0  0  0
+Image:   1
+ C  59.15635853  35.85152954  56.64410823  0  0  0
+ H  59.72692644  35.93737813  55.72375636  0  0  0
+ H  61.07154338  35.85548774  58.35413344  0  0  0
+ C  58.59262558  35.73310171  57.73414174  0  0  0
+ C  58.02963631  35.45254194  59.04438725  0  0  0
+ O  58.60781441  34.48938840  59.64137592  0  0  0
+ O  57.03142358  36.09638174  59.47250463  0  0  0
+ O  58.48897726  32.85197711  56.50729208  0  0  0
+ C  58.71245032  32.77939762  55.11515823  0  0  0
+ H  56.24334635  32.47426568  58.64772041  0  0  0
+ C  60.06873868  32.27253432  54.83385869  0  0  0
+ H  60.65368522  31.78908853  55.61801836  0  0  0
+ C  60.49078010  32.34327204  53.54969739  0  0  0
+ C  59.83755603  33.07971269  52.49928038  0  0  0
+ H  60.26854241  33.45267243  51.50251346  0  0  0
+ C  58.43547214  33.39216900  52.78961002  0  0  0
+ H  57.87396391  33.55467765  51.84634485  0  0  0
+ C  57.94133095  33.39527157  54.04600082  0  0  0
+ H  56.92437994  33.74327233  54.25806711  0  0  0
+ O  54.02632761  32.21430713  56.81394032  0  0  0
+ H  54.57552379  32.46882660  56.05939957  0  0  0
+ C  61.99741485  31.20467417  52.99592018  0  0  0
+ O  62.94966115  31.23224154  53.78162073  0  0  0
+ O  62.28714499  30.17210326  52.38322115  0  0  0
+Image:   2
+ C  59.17443715  35.78393993  56.68157162  0  0  0
+ H  59.83691700  35.78744563  55.82065723  0  0  0
+ H  61.03051866  35.82478626  58.28862188  0  0  0
+ C  58.56043716  35.72628759  57.77057217  0  0  0
+ C  57.99099885  35.54911493  59.09229138  0  0  0
+ O  58.64569402  34.68080132  59.75409510  0  0  0
+ O  56.94821463  36.15020944  59.47735909  0  0  0
+ O  58.51979026  32.95814166  56.83349933  0  0  0
+ C  58.44367020  32.65488446  55.27550365  0  0  0
+ H  56.15148311  32.29718734  58.53207618  0  0  0
+ C  59.85324396  32.25643456  55.06220210  0  0  0
+ H  60.44364874  31.77644735  55.84666393  0  0  0
+ C  60.32997759  32.47605912  53.81768586  0  0  0
+ C  59.66832808  33.20292334  52.76472577  0  0  0
+ H  60.10272060  33.65232877  51.80590731  0  0  0
+ C  58.25026400  33.43898638  52.96647609  0  0  0
+ H  57.71120258  33.61627582  52.01469192  0  0  0
+ C  57.70717692  33.32849313  54.20658528  0  0  0
+ H  56.72579401  33.78459496  54.37701119  0  0  0
+ O  54.05556174  32.15954611  56.65993229  0  0  0
+ H  54.61322813  32.30791086  55.88574284  0  0  0
+ C  62.07205268  31.08378746  52.79144725  0  0  0
+ O  62.99288371  31.01688660  53.60297847  0  0  0
+ O  62.30870605  30.13920338  52.04354852  0  0  0
+Image:   3
+ C  59.19859078  35.72896780  56.71660270  0  0  0
+ H  59.94259580  35.62827598  55.93137492  0  0  0
+ H  60.99658711  35.81105385  58.24847119  0  0  0
+ C  58.52320013  35.69001335  57.79216415  0  0  0
+ C  57.95907428  35.65622137  59.12263574  0  0  0
+ O  58.69553678  34.94138868  59.87669906  0  0  0
+ O  56.86971730  36.19336762  59.47624626  0  0  0
+ O  58.53964774  33.05245457  57.14392218  0  0  0
+ C  58.20243872  32.57368855  55.45878487  0  0  0
+ H  56.04766122  32.09051797  58.38741946  0  0  0
+ C  59.63432740  32.22821735  55.28070414  0  0  0
+ H  60.23032821  31.75690773  56.06923740  0  0  0
+ C  60.17257991  32.58433925  54.09250603  0  0  0
+ C  59.50469298  33.30517846  53.03455686  0  0  0
+ H  59.95281319  33.82726901  52.12418052  0  0  0
+ C  58.07922760  33.48144134  53.15003239  0  0  0
+ H  57.56429461  33.67594255  52.18912748  0  0  0
+ C  57.48099862  33.26418355  54.36603703  0  0  0
+ H  56.56199884  33.85468162  54.50544811  0  0  0
+ O  54.07075956  32.11757560  56.50233056  0  0  0
+ H  54.61778460  32.06934682  55.70770161  0  0  0
+ C  62.11611271  30.97964871  52.58472923  0  0  0
+ O  63.00067091  30.80526856  53.41360569  0  0  0
+ O  62.32063673  30.15312969  51.70710400  0  0  0
+Image:   4
+ C  59.22689693  35.67166148  56.76451150  0  0  0
+ H  60.03141490  35.45316527  56.06763985  0  0  0
+ H  60.96294714  35.82613937  58.23127122  0  0  0
+ C  58.48787554  35.60046390  57.81965254  0  0  0
+ C  57.92960284  35.77112844  59.13540246  0  0  0
+ O  58.75751716  35.29362849  59.97743259  0  0  0
+ O  56.79657518  36.22449090  59.47279631  0  0  0
+ O  58.53210095  33.10949975  57.47175152  0  0  0
+ C  57.98438773  32.53651919  55.64132527  0  0  0
+ H  55.95479160  31.87174008  58.21360371  0  0  0
+ C  59.42218536  32.20922547  55.49428473  0  0  0
+ H  60.01425018  31.73909046  56.28835332  0  0  0
+ C  60.00046209  32.66159844  54.35433316  0  0  0
+ C  59.34049872  33.39194632  53.29114649  0  0  0
+ H  59.80911122  33.97308793  52.43268138  0  0  0
+ C  57.91561405  33.52226591  53.33277178  0  0  0
+ H  57.42494015  33.73376182  52.36392700  0  0  0
+ C  57.26563884  33.23430506  54.52331806  0  0  0
+ H  56.39956733  33.91159176  54.65640210  0  0  0
+ O  54.09658866  32.07508730  56.30609117  0  0  0
+ H  54.61089290  31.79652539  55.53278522  0  0  0
+ C  62.14557856  30.88078996  52.39280295  0  0  0
+ O  62.99125420  30.60039837  53.22678276  0  0  0
+ O  62.32690941  30.19737248  51.40032959  0  0  0
+Image:   5
+ C  59.25214118  35.58811639  56.83697192  0  0  0
+ H  60.09709510  35.24415686  56.24417204  0  0  0
+ H  60.92556816  35.88267440  58.21963555  0  0  0
+ C  58.48087039  35.46055118  57.88946585  0  0  0
+ C  57.89794947  35.87960808  59.13038465  0  0  0
+ O  58.81032277  35.74133510  60.00870328  0  0  0
+ O  56.73168325  36.24178568  59.46927692  0  0  0
+ O  58.49299151  33.12559971  57.81948034  0  0  0
+ C  57.77913207  32.51538234  55.81009299  0  0  0
+ H  55.88315623  31.66635464  58.03173948  0  0  0
+ C  59.22025093  32.20410506  55.70364025  0  0  0
+ H  59.79911386  31.72797739  56.50421709  0  0  0
+ C  59.81272745  32.71057077  54.58977353  0  0  0
+ C  59.17337207  33.47678625  53.53244800  0  0  0
+ H  59.66282698  34.10266287  52.72358804  0  0  0
+ C  57.75491854  33.56753623  53.51197193  0  0  0
+ H  57.28702922  33.79017542  52.53614575  0  0  0
+ C  57.06351873  33.23592631  54.68099662  0  0  0
+ H  56.22416693  33.95087663  54.81692495  0  0  0
+ O  54.13027780  31.98779093  56.08116278  0  0  0
+ H  54.62153318  31.56055842  55.35729261  0  0  0
+ C  62.16936694  30.77933258  52.21933518  0  0  0
+ O  62.97553325  30.40553927  53.04908022  0  0  0
+ O  62.32738152  30.25648456  51.13467185  0  0  0
+Image:   6
+ C  59.27929267  35.46047741  56.93435925  0  0  0
+ H  60.14860903  34.98520855  56.47277436  0  0  0
+ H  60.87212504  35.99238185  58.18078762  0  0  0
+ C  58.52545835  35.30007627  58.02744041  0  0  0
+ C  57.86854794  35.96114962  59.11693033  0  0  0
+ O  58.81705509  36.23165962  59.92612058  0  0  0
+ O  56.68166316  36.24537904  59.46888477  0  0  0
+ O  58.41185478  33.12219485  58.15824697  0  0  0
+ C  57.58106622  32.49916970  55.96590750  0  0  0
+ H  55.83216759  31.49035658  57.86802201  0  0  0
+ C  59.02617248  32.20343991  55.90248613  0  0  0
+ H  59.58540534  31.72149784  56.71384997  0  0  0
+ C  59.61605284  32.74694096  54.79997294  0  0  0
+ C  59.00390045  33.57234822  53.76634849  0  0  0
+ H  59.51317103  34.22888747  53.00181346  0  0  0
+ C  57.59598472  33.61845594  53.68931930  0  0  0
+ H  57.15110829  33.84387567  52.70547408  0  0  0
+ C  56.87005875  33.25538505  54.84024066  0  0  0
+ H  56.03879200  33.98015513  54.98272920  0  0  0
+ O  54.16620522  31.85717512  55.85772282  0  0  0
+ H  54.66750718  31.38246617  55.16785688  0  0  0
+ C  62.19074432  30.67441787  52.06271157  0  0  0
+ O  62.95540210  30.22624081  52.88753172  0  0  0
+ O  62.31990888  30.31895100  50.91341590  0  0  0
+Image:   7
+ C  59.32246014  35.28938059  57.05766140  0  0  0
+ H  60.20167765  34.69115119  56.76144979  0  0  0
+ H  60.78016129  36.13620844  58.06790632  0  0  0
+ C  58.60511153  35.15631551  58.22240852  0  0  0
+ C  57.85442641  36.01820495  59.10573480  0  0  0
+ O  58.76446791  36.66943350  59.73118042  0  0  0
+ O  56.65202614  36.24101405  59.47249839  0  0  0
+ O  58.28989452  33.13089238  58.46100158  0  0  0
+ C  57.38461795  32.48891432  56.11926786  0  0  0
+ H  55.79788790  31.34084292  57.72927565  0  0  0
+ C  58.83446650  32.20487407  56.09066382  0  0  0
+ H  59.36876192  31.71534668  56.91606104  0  0  0
+ C  59.41833044  32.79528363  55.00356669  0  0  0
+ C  58.83310226  33.68325209  54.00596130  0  0  0
+ H  59.36334512  34.35537800  53.27852922  0  0  0
+ C  57.43940445  33.67149329  53.86824783  0  0  0
+ H  57.01952498  33.89360351  52.87455508  0  0  0
+ C  56.67977108  33.27803033  55.00095971  0  0  0
+ H  55.84442543  33.99514457  55.15290079  0  0  0
+ O  54.21505734  31.71787722  55.64215326  0  0  0
+ H  54.74875842  31.25170596  54.96902564  0  0  0
+ C  62.21142651  30.56785312  51.91693557  0  0  0
+ O  62.92998095  30.06316078  52.74309757  0  0  0
+ O  62.30449253  30.37933308  50.72967978  0  0  0
+Image:   8
+ C  59.38965318  35.07806248  57.20990181  0  0  0
+ H  60.27107265  34.39817180  57.11662262  0  0  0
+ H  60.60022572  36.24220053  57.78796857  0  0  0
+ C  58.67446376  35.05909926  58.42754866  0  0  0
+ C  57.84405751  36.05145661  59.09386407  0  0  0
+ O  58.68713874  36.93218661  59.48729365  0  0  0
+ O  56.63629023  36.23919514  59.48130256  0  0  0
+ O  58.14165478  33.19180373  58.70459420  0  0  0
+ C  57.18480884  32.48329270  56.27868239  0  0  0
+ H  55.78743509  31.21764611  57.62092091  0  0  0
+ C  58.64296013  32.22876607  56.27742301  0  0  0
+ H  59.14366314  31.71366639  57.11082276  0  0  0
+ C  59.23358187  32.90591794  55.24414442  0  0  0
+ C  58.65903773  33.81282407  54.26567094  0  0  0
+ H  59.21607577  34.47728056  53.56180154  0  0  0
+ C  57.28717585  33.72270306  54.05334770  0  0  0
+ H  56.89618733  33.93767009  53.04785414  0  0  0
+ C  56.48990471  33.29065429  55.16049467  0  0  0
+ H  55.63349280  33.97758949  55.32269999  0  0  0
+ O  54.29832099  31.59489756  55.43093236  0  0  0
+ H  54.88140920  31.18204398  54.76264996  0  0  0
+ C  62.23402224  30.46106110  51.78079735  0  0  0
+ O  62.89676269  29.91895657  52.62145899  0  0  0
+ O  62.27951032  30.43395160  50.58169985  0  0  0
+Image:   9
+ C  59.42423138  34.88382088  57.36654237  0  0  0
+ H  60.31344394  34.20026266  57.42889102  0  0  0
+ H  60.37154326  36.17184722  57.46223614  0  0  0
+ C  58.69171244  35.00328021  58.60056288  0  0  0
+ C  57.83960449  36.09124034  59.08217966  0  0  0
+ O  58.64580131  37.06349547  59.28401776  0  0  0
+ O  56.62871968  36.24837789  59.48642246  0  0  0
+ O  58.02792185  33.29304102  58.92971331  0  0  0
+ C  56.97161407  32.47617313  56.45416263  0  0  0
+ H  55.80919457  31.08439602  57.49148271  0  0  0
+ C  58.44379232  32.28863664  56.48848847  0  0  0
+ H  58.92188903  31.74562106  57.31868205  0  0  0
+ C  59.04788589  33.07391077  55.54710537  0  0  0
+ C  58.47231782  33.93307323  54.53620698  0  0  0
+ H  59.05657279  34.59048571  53.85706079  0  0  0
+ C  57.12983830  33.77034070  54.25225159  0  0  0
+ H  56.77357111  33.98161034  53.23412311  0  0  0
+ C  56.28881714  33.27730051  55.31654921  0  0  0
+ H  55.39927405  33.91554787  55.49195307  0  0  0
+ O  54.43136189  31.50950418  55.19784505  0  0  0
+ H  55.08053080  31.15744368  54.55504674  0  0  0
+ C  62.27071718  30.34851501  51.62626087  0  0  0
+ O  62.85879215  29.77522517  52.49313006  0  0  0
+ O  62.25508374  30.48435159  50.43935794  0  0  0
+Image:  10
+ C  59.41757291  34.74090351  57.50739388  0  0  0
+ H  60.30760563  34.06878622  57.62749500  0  0  0
+ H  60.15942632  35.97677494  57.24581158  0  0  0
+ C  58.68123495  34.97367264  58.74694007  0  0  0
+ C  57.84057131  36.13521932  59.07154751  0  0  0
+ O  58.62545839  37.14155693  59.10841983  0  0  0
+ O  56.62531303  36.26283130  59.48298838  0  0  0
+ O  57.96634840  33.42113798  59.14887121  0  0  0
+ C  56.73312569  32.46367825  56.65186831  0  0  0
+ H  55.87698532  30.93643247  57.29038399  0  0  0
+ C  58.22090927  32.36079496  56.72062724  0  0  0
+ H  58.70189639  31.80969416  57.54471589  0  0  0
+ C  58.83121437  33.23855097  55.87485303  0  0  0
+ C  58.26975591  34.03768379  54.81466429  0  0  0
+ H  58.87802209  34.69498624  54.16447651  0  0  0
+ C  56.96230656  33.81471972  54.46308925  0  0  0
+ H  56.64797098  34.02620380  53.43177399  0  0  0
+ C  56.07803604  33.22027377  55.45610474  0  0  0
+ H  55.15353543  33.80074063  55.65312399  0  0  0
+ O  54.60956238  31.49247044  54.96402486  0  0  0
+ H  55.33640582  31.18034975  54.38612441  0  0  0
+ C  62.32156053  30.23119078  51.44907754  0  0  0
+ O  62.81846389  29.62962748  52.34591107  0  0  0
+ O  62.23627550  30.52562479  50.29976081  0  0  0
+Image:  11
+ C  59.38443229  34.63063635  57.61322895  0  0  0
+ H  60.26039427  33.94758519  57.74262260  0  0  0
+ H  59.96846282  35.74121357  57.13940473  0  0  0
+ C  58.65102136  34.95640088  58.85693617  0  0  0
+ C  57.84397506  36.17459398  59.06087504  0  0  0
+ O  58.61412408  37.18599439  58.96798018  0  0  0
+ O  56.62302402  36.27714949  59.47180938  0  0  0
+ O  57.94819381  33.57131160  59.35598918  0  0  0
+ C  56.47781791  32.40500990  56.84850007  0  0  0
+ H  56.00900197  30.84471611  57.01619241  0  0  0
+ C  57.97609987  32.43475172  56.96373721  0  0  0
+ H  58.47166440  31.88543005  57.78103149  0  0  0
+ C  58.58353109  33.39742735  56.22072454  0  0  0
+ C  58.05482347  34.12730366  55.09991737  0  0  0
+ H  58.68313085  34.78996815  54.48166011  0  0  0
+ C  56.78983234  33.84426190  54.67944090  0  0  0
+ H  56.52017162  34.06597293  53.63772131  0  0  0
+ C  55.87811231  33.11068314  55.57310568  0  0  0
+ H  54.92317002  33.64041091  55.78233432  0  0  0
+ O  54.80533531  31.56075878  54.77683626  0  0  0
+ H  55.59742839  31.25592865  54.28618662  0  0  0
+ C  62.37727240  30.11611316  51.25871327  0  0  0
+ O  62.77788980  29.48685577  52.17849462  0  0  0
+ O  62.22597355  30.54983079  50.16638009  0  0  0
+Image:  12
+ C  59.31664292  34.52682927  57.68030362  0  0  0
+ H  60.16698331  33.81799944  57.81637754  0  0  0
+ H  59.79008804  35.49145515  57.10183801  0  0  0
+ C  58.60782972  34.93657110  58.94085292  0  0  0
+ C  57.85595351  36.20604162  59.05042195  0  0  0
+ O  58.60393856  37.21632698  58.85243178  0  0  0
+ O  56.62709076  36.29047705  59.45231300  0  0  0
+ O  57.95463548  33.73575015  59.54606176  0  0  0
+ C  56.25026106  32.25886931  56.98605108  0  0  0
+ H  56.17529344  30.88630743  56.77293778  0  0  0
+ C  57.72181440  32.50517506  57.20603206  0  0  0
+ H  58.22750848  31.95986289  58.01974309  0  0  0
+ C  58.31928706  33.55595184  56.58738889  0  0  0
+ C  57.82955971  34.20302379  55.39836681  0  0  0
+ H  58.47039095  34.88245253  54.81853636  0  0  0
+ C  56.62035423  33.85120802  54.90003658  0  0  0
+ H  56.38996122  34.09842393  53.85454630  0  0  0
+ C  55.70199711  32.95768973  55.66108236  0  0  0
+ H  54.72439206  33.45208169  55.87340104  0  0  0
+ O  55.00081251  31.70297219  54.65756732  0  0  0
+ H  55.82767159  31.38215080  54.23736076  0  0  0
+ C  62.43491899  30.00281261  51.05052728  0  0  0
+ O  62.74293271  29.34220357  51.97951946  0  0  0
+ O  62.22989110  30.55407583  50.02589985  0  0  0
+Image:  13
+ C  59.19359587  34.40890482  57.71029092  0  0  0
+ H  60.02619313  33.69132731  57.89360808  0  0  0
+ H  59.59996454  35.22379532  57.09338022  0  0  0
+ C  58.55735763  34.90712041  59.01338955  0  0  0
+ C  57.88764863  36.23227173  59.03977284  0  0  0
+ O  58.58699405  37.25373015  58.75330451  0  0  0
+ O  56.64726016  36.30809061  59.42529477  0  0  0
+ O  57.97791494  33.91402420  59.72392565  0  0  0
+ C  56.09013523  32.06846512  57.03725071  0  0  0
+ H  56.30609569  31.03467488  56.65923608  0  0  0
+ C  57.46345732  32.56721133  57.42614206  0  0  0
+ H  57.96776143  32.03439610  58.24936700  0  0  0
+ C  58.08519967  33.68893109  56.95347639  0  0  0
+ C  57.59479900  34.26965492  55.71746193  0  0  0
+ H  58.24101297  34.98050823  55.18889849  0  0  0
+ C  56.46417375  33.83858038  55.12326401  0  0  0
+ H  56.26051706  34.12329647  54.08190424  0  0  0
+ C  55.55249497  32.78432169  55.70112204  0  0  0
+ H  54.56410485  33.25711253  55.93572900  0  0  0
+ O  55.18483248  31.89527177  54.62256851  0  0  0
+ H  56.01166711  31.54124189  54.22804097  0  0  0
+ C  62.49685090  29.88638741  50.81108898  0  0  0
+ O  62.72065679  29.18745489  51.73287971  0  0  0
+ O  62.25484666  30.53634228  49.85797605  0  0  0
+Distances:
+ 0  0.000 A
+ 1  1.268 A
+ 2  2.538 A
+ 3  3.814 A
+ 4  5.097 A
+ 5  6.390 A
+ 6  7.691 A
+ 7  9.002 A
+ 8  10.323 A
+ 9  11.651 A
+ 10  12.983 A
+ 11  14.317 A
+ 12  15.651 A
+ 13  16.986 A
+
+Path interpolation job finished in 8.85 seconds!
+Saving initial path as : initial_guess_path.xyz
+
+Reading initial path
+Starting NEB
+NEB printlevel is: 2
+Theory print level will now be set to: 2
+neb_settings: {'PATH': 'neb.xyz', 'CLIMBING': True, 'TANGENT': 'IMPROVED', 'CICHANGEFREQUENCYCHECK': 5, 'SPRINGTYPE': 'DISTANCE', 'PERP_SPRINGTYPE': '', 'ENERGY_WEIGHTED': True, 'SPRINGCONST': 1.0, 'SPRINGCONST2': 10.0, 'MIN_RMSD': False, 'REMOVE_EXTERNAL_FORCE': True, 'FREE_END': True, 'FREE_END_TYPE': 'PERP', 'FREE_END_ENERGY': 0.0, 'FREE_END_ENERGY2': 0.0, 'FREE_END_KAPPA': 0.0, 'CONV_TYPE': 'ALL', 'TOL_SCALE': 10, 'TOL_MAX_FCI': 0.1, 'TOL_RMS_FCI': 0.05, 'TOL_MAX_F': 0.26, 'TOL_RMS_F': 0.13, 'TOL_TURN_ON_CI': 1.0, 'ZOOM': False, 'TOL_TURN_ON_ZOOM': 0.5, 'REPARAM': 0, 'TOL_REPARAM': 0.0, 'INTERPOLATION_TYPE': 'LINEAR', 'AUTO_ZOOM': True, 'ZOOM_OFFSET': 1, 'ZOOM_ALPHA': 0.5, 'RESTART_OPT_ON_CI': True, 'LBFGS_REPARAM_ON_RESTART': False}
+optimizer: {'OPTIM_METHOD': 'LBFGS', 'MAX_ITER': 200, 'TOL_MAX_FORCE': 0.01, 'TOL_RMS_FORCE': 0.005, 'TIME_STEP': 0.01, 'MAX_MOVE': 0.1, 'RESTART_ON_SCALING': True, 'LBFGS_MEMORY': 20, 'LBFGS_DAMP': 1.0, 'FD_STEP': 0.001, 'LINESEARCH': None}
+
+**************************************************
+            Nudged Elastic Band Method            
+**************************************************
+
+Initial path:
+Number of images                      :    14
+Number of dimensions (path)           :  1008
+Number of dimensions (image)          :    72
+Number of degrees of freedom          :  1008
+Number of inactive degrees of freedom :     0
+Image:   0
+ C  59.13693976  35.92915896  56.59663233  0  0  0
+ H  59.62380974  36.07511892  55.63570856  0  0  0
+ H  61.12667534  35.89423449  58.43568503  0  0  0
+ C  58.61943832  35.73549386  57.67982927  0  0  0
+ C  58.07543325  35.36350666  58.98171400  0  0  0
+ O  58.57080424  34.34225431  59.55531720  0  0  0
+ O  57.11752768  36.03455738  59.45855215  0  0  0
+ O  58.51235515  32.77391141  56.13132994  0  0  0
+ C  58.97342320  32.87618454  54.98174308  0  0  0
+ H  56.29722271  32.62690196  58.76887487  0  0  0
+ C  60.27310605  32.27288754  54.59888206  0  0  0
+ H  60.86067687  31.79510481  55.38533467  0  0  0
+ C  60.69447081  32.19574207  53.30497657  0  0  0
+ C  60.02335453  32.93682442  52.26312340  0  0  0
+ H  60.44652390  33.24825941  51.23718976  0  0  0
+ C  58.64054968  33.34021282  52.62204313  0  0  0
+ H  58.05531218  33.49082348  51.68811747  0  0  0
+ C  58.19063448  33.44208975  53.88726027  0  0  0
+ H  57.16154309  33.74653369  54.12277355  0  0  0
+ O  53.97144461  32.26588052  56.98389555  0  0  0
+ H  54.50092514  32.57559048  56.23469227  0  0  0
+ C  61.87403829  31.34984001  53.17244005  0  0  0
+ O  62.85488143  31.44901701  53.92956398  0  0  0
+ O  62.24520755  30.25974080  52.69661706  0  0  0
+Image:   1
+ C  59.15635853  35.85152954  56.64410823  0  0  0
+ H  59.72692644  35.93737813  55.72375636  0  0  0
+ H  61.07154338  35.85548774  58.35413344  0  0  0
+ C  58.59262558  35.73310171  57.73414174  0  0  0
+ C  58.02963631  35.45254194  59.04438725  0  0  0
+ O  58.60781441  34.48938840  59.64137592  0  0  0
+ O  57.03142358  36.09638174  59.47250463  0  0  0
+ O  58.48897726  32.85197711  56.50729208  0  0  0
+ C  58.71245032  32.77939762  55.11515823  0  0  0
+ H  56.24334635  32.47426568  58.64772041  0  0  0
+ C  60.06873868  32.27253432  54.83385869  0  0  0
+ H  60.65368522  31.78908853  55.61801836  0  0  0
+ C  60.49078010  32.34327204  53.54969739  0  0  0
+ C  59.83755603  33.07971269  52.49928038  0  0  0
+ H  60.26854241  33.45267243  51.50251346  0  0  0
+ C  58.43547214  33.39216900  52.78961002  0  0  0
+ H  57.87396391  33.55467765  51.84634485  0  0  0
+ C  57.94133095  33.39527157  54.04600082  0  0  0
+ H  56.92437994  33.74327233  54.25806711  0  0  0
+ O  54.02632761  32.21430713  56.81394032  0  0  0
+ H  54.57552379  32.46882660  56.05939957  0  0  0
+ C  61.99741485  31.20467417  52.99592018  0  0  0
+ O  62.94966115  31.23224154  53.78162073  0  0  0
+ O  62.28714499  30.17210326  52.38322115  0  0  0
+Image:   2
+ C  59.17443715  35.78393993  56.68157162  0  0  0
+ H  59.83691700  35.78744563  55.82065723  0  0  0
+ H  61.03051866  35.82478626  58.28862188  0  0  0
+ C  58.56043716  35.72628759  57.77057217  0  0  0
+ C  57.99099885  35.54911493  59.09229138  0  0  0
+ O  58.64569402  34.68080132  59.75409510  0  0  0
+ O  56.94821463  36.15020944  59.47735909  0  0  0
+ O  58.51979026  32.95814166  56.83349933  0  0  0
+ C  58.44367020  32.65488446  55.27550365  0  0  0
+ H  56.15148311  32.29718734  58.53207618  0  0  0
+ C  59.85324396  32.25643456  55.06220210  0  0  0
+ H  60.44364874  31.77644735  55.84666393  0  0  0
+ C  60.32997759  32.47605912  53.81768586  0  0  0
+ C  59.66832808  33.20292334  52.76472577  0  0  0
+ H  60.10272060  33.65232877  51.80590731  0  0  0
+ C  58.25026400  33.43898638  52.96647609  0  0  0
+ H  57.71120258  33.61627582  52.01469192  0  0  0
+ C  57.70717692  33.32849313  54.20658528  0  0  0
+ H  56.72579401  33.78459496  54.37701119  0  0  0
+ O  54.05556174  32.15954611  56.65993229  0  0  0
+ H  54.61322813  32.30791086  55.88574284  0  0  0
+ C  62.07205268  31.08378746  52.79144725  0  0  0
+ O  62.99288371  31.01688660  53.60297847  0  0  0
+ O  62.30870605  30.13920338  52.04354852  0  0  0
+Image:   3
+ C  59.19859078  35.72896780  56.71660270  0  0  0
+ H  59.94259580  35.62827598  55.93137492  0  0  0
+ H  60.99658711  35.81105385  58.24847119  0  0  0
+ C  58.52320013  35.69001335  57.79216415  0  0  0
+ C  57.95907428  35.65622137  59.12263574  0  0  0
+ O  58.69553678  34.94138868  59.87669906  0  0  0
+ O  56.86971730  36.19336762  59.47624626  0  0  0
+ O  58.53964774  33.05245457  57.14392218  0  0  0
+ C  58.20243872  32.57368855  55.45878487  0  0  0
+ H  56.04766122  32.09051797  58.38741946  0  0  0
+ C  59.63432740  32.22821735  55.28070414  0  0  0
+ H  60.23032821  31.75690773  56.06923740  0  0  0
+ C  60.17257991  32.58433925  54.09250603  0  0  0
+ C  59.50469298  33.30517846  53.03455686  0  0  0
+ H  59.95281319  33.82726901  52.12418052  0  0  0
+ C  58.07922760  33.48144134  53.15003239  0  0  0
+ H  57.56429461  33.67594255  52.18912748  0  0  0
+ C  57.48099862  33.26418355  54.36603703  0  0  0
+ H  56.56199884  33.85468162  54.50544811  0  0  0
+ O  54.07075956  32.11757560  56.50233056  0  0  0
+ H  54.61778460  32.06934682  55.70770161  0  0  0
+ C  62.11611271  30.97964871  52.58472923  0  0  0
+ O  63.00067091  30.80526856  53.41360569  0  0  0
+ O  62.32063673  30.15312969  51.70710400  0  0  0
+Image:   4
+ C  59.22689693  35.67166148  56.76451150  0  0  0
+ H  60.03141490  35.45316527  56.06763985  0  0  0
+ H  60.96294714  35.82613937  58.23127122  0  0  0
+ C  58.48787554  35.60046390  57.81965254  0  0  0
+ C  57.92960284  35.77112844  59.13540246  0  0  0
+ O  58.75751716  35.29362849  59.97743259  0  0  0
+ O  56.79657518  36.22449090  59.47279631  0  0  0
+ O  58.53210095  33.10949975  57.47175152  0  0  0
+ C  57.98438773  32.53651919  55.64132527  0  0  0
+ H  55.95479160  31.87174008  58.21360371  0  0  0
+ C  59.42218536  32.20922547  55.49428473  0  0  0
+ H  60.01425018  31.73909046  56.28835332  0  0  0
+ C  60.00046209  32.66159844  54.35433316  0  0  0
+ C  59.34049872  33.39194632  53.29114649  0  0  0
+ H  59.80911122  33.97308793  52.43268138  0  0  0
+ C  57.91561405  33.52226591  53.33277178  0  0  0
+ H  57.42494015  33.73376182  52.36392700  0  0  0
+ C  57.26563884  33.23430506  54.52331806  0  0  0
+ H  56.39956733  33.91159176  54.65640210  0  0  0
+ O  54.09658866  32.07508730  56.30609117  0  0  0
+ H  54.61089290  31.79652539  55.53278522  0  0  0
+ C  62.14557856  30.88078996  52.39280295  0  0  0
+ O  62.99125420  30.60039837  53.22678276  0  0  0
+ O  62.32690941  30.19737248  51.40032959  0  0  0
+Image:   5
+ C  59.25214118  35.58811639  56.83697192  0  0  0
+ H  60.09709510  35.24415686  56.24417204  0  0  0
+ H  60.92556816  35.88267440  58.21963555  0  0  0
+ C  58.48087039  35.46055118  57.88946585  0  0  0
+ C  57.89794947  35.87960808  59.13038465  0  0  0
+ O  58.81032277  35.74133510  60.00870328  0  0  0
+ O  56.73168325  36.24178568  59.46927692  0  0  0
+ O  58.49299151  33.12559971  57.81948034  0  0  0
+ C  57.77913207  32.51538234  55.81009299  0  0  0
+ H  55.88315623  31.66635464  58.03173948  0  0  0
+ C  59.22025093  32.20410506  55.70364025  0  0  0
+ H  59.79911386  31.72797739  56.50421709  0  0  0
+ C  59.81272745  32.71057077  54.58977353  0  0  0
+ C  59.17337207  33.47678625  53.53244800  0  0  0
+ H  59.66282698  34.10266287  52.72358804  0  0  0
+ C  57.75491854  33.56753623  53.51197193  0  0  0
+ H  57.28702922  33.79017542  52.53614575  0  0  0
+ C  57.06351873  33.23592631  54.68099662  0  0  0
+ H  56.22416693  33.95087663  54.81692495  0  0  0
+ O  54.13027780  31.98779093  56.08116278  0  0  0
+ H  54.62153318  31.56055842  55.35729261  0  0  0
+ C  62.16936694  30.77933258  52.21933518  0  0  0
+ O  62.97553325  30.40553927  53.04908022  0  0  0
+ O  62.32738152  30.25648456  51.13467185  0  0  0
+Image:   6
+ C  59.27929267  35.46047741  56.93435925  0  0  0
+ H  60.14860903  34.98520855  56.47277436  0  0  0
+ H  60.87212504  35.99238185  58.18078762  0  0  0
+ C  58.52545835  35.30007627  58.02744041  0  0  0
+ C  57.86854794  35.96114962  59.11693033  0  0  0
+ O  58.81705509  36.23165962  59.92612058  0  0  0
+ O  56.68166316  36.24537904  59.46888477  0  0  0
+ O  58.41185478  33.12219485  58.15824697  0  0  0
+ C  57.58106622  32.49916970  55.96590750  0  0  0
+ H  55.83216759  31.49035658  57.86802201  0  0  0
+ C  59.02617248  32.20343991  55.90248613  0  0  0
+ H  59.58540534  31.72149784  56.71384997  0  0  0
+ C  59.61605284  32.74694096  54.79997294  0  0  0
+ C  59.00390045  33.57234822  53.76634849  0  0  0
+ H  59.51317103  34.22888747  53.00181346  0  0  0
+ C  57.59598472  33.61845594  53.68931930  0  0  0
+ H  57.15110829  33.84387567  52.70547408  0  0  0
+ C  56.87005875  33.25538505  54.84024066  0  0  0
+ H  56.03879200  33.98015513  54.98272920  0  0  0
+ O  54.16620522  31.85717512  55.85772282  0  0  0
+ H  54.66750718  31.38246617  55.16785688  0  0  0
+ C  62.19074432  30.67441787  52.06271157  0  0  0
+ O  62.95540210  30.22624081  52.88753172  0  0  0
+ O  62.31990888  30.31895100  50.91341590  0  0  0
+Image:   7
+ C  59.32246014  35.28938059  57.05766140  0  0  0
+ H  60.20167765  34.69115119  56.76144979  0  0  0
+ H  60.78016129  36.13620844  58.06790632  0  0  0
+ C  58.60511153  35.15631551  58.22240852  0  0  0
+ C  57.85442641  36.01820495  59.10573480  0  0  0
+ O  58.76446791  36.66943350  59.73118042  0  0  0
+ O  56.65202614  36.24101405  59.47249839  0  0  0
+ O  58.28989452  33.13089238  58.46100158  0  0  0
+ C  57.38461795  32.48891432  56.11926786  0  0  0
+ H  55.79788790  31.34084292  57.72927565  0  0  0
+ C  58.83446650  32.20487407  56.09066382  0  0  0
+ H  59.36876192  31.71534668  56.91606104  0  0  0
+ C  59.41833044  32.79528363  55.00356669  0  0  0
+ C  58.83310226  33.68325209  54.00596130  0  0  0
+ H  59.36334512  34.35537800  53.27852922  0  0  0
+ C  57.43940445  33.67149329  53.86824783  0  0  0
+ H  57.01952498  33.89360351  52.87455508  0  0  0
+ C  56.67977108  33.27803033  55.00095971  0  0  0
+ H  55.84442543  33.99514457  55.15290079  0  0  0
+ O  54.21505734  31.71787722  55.64215326  0  0  0
+ H  54.74875842  31.25170596  54.96902564  0  0  0
+ C  62.21142651  30.56785312  51.91693557  0  0  0
+ O  62.92998095  30.06316078  52.74309757  0  0  0
+ O  62.30449253  30.37933308  50.72967978  0  0  0
+Image:   8
+ C  59.38965318  35.07806248  57.20990181  0  0  0
+ H  60.27107265  34.39817180  57.11662262  0  0  0
+ H  60.60022572  36.24220053  57.78796857  0  0  0
+ C  58.67446376  35.05909926  58.42754866  0  0  0
+ C  57.84405751  36.05145661  59.09386407  0  0  0
+ O  58.68713874  36.93218661  59.48729365  0  0  0
+ O  56.63629023  36.23919514  59.48130256  0  0  0
+ O  58.14165478  33.19180373  58.70459420  0  0  0
+ C  57.18480884  32.48329270  56.27868239  0  0  0
+ H  55.78743509  31.21764611  57.62092091  0  0  0
+ C  58.64296013  32.22876607  56.27742301  0  0  0
+ H  59.14366314  31.71366639  57.11082276  0  0  0
+ C  59.23358187  32.90591794  55.24414442  0  0  0
+ C  58.65903773  33.81282407  54.26567094  0  0  0
+ H  59.21607577  34.47728056  53.56180154  0  0  0
+ C  57.28717585  33.72270306  54.05334770  0  0  0
+ H  56.89618733  33.93767009  53.04785414  0  0  0
+ C  56.48990471  33.29065429  55.16049467  0  0  0
+ H  55.63349280  33.97758949  55.32269999  0  0  0
+ O  54.29832099  31.59489756  55.43093236  0  0  0
+ H  54.88140920  31.18204398  54.76264996  0  0  0
+ C  62.23402224  30.46106110  51.78079735  0  0  0
+ O  62.89676269  29.91895657  52.62145899  0  0  0
+ O  62.27951032  30.43395160  50.58169985  0  0  0
+Image:   9
+ C  59.42423138  34.88382088  57.36654237  0  0  0
+ H  60.31344394  34.20026266  57.42889102  0  0  0
+ H  60.37154326  36.17184722  57.46223614  0  0  0
+ C  58.69171244  35.00328021  58.60056288  0  0  0
+ C  57.83960449  36.09124034  59.08217966  0  0  0
+ O  58.64580131  37.06349547  59.28401776  0  0  0
+ O  56.62871968  36.24837789  59.48642246  0  0  0
+ O  58.02792185  33.29304102  58.92971331  0  0  0
+ C  56.97161407  32.47617313  56.45416263  0  0  0
+ H  55.80919457  31.08439602  57.49148271  0  0  0
+ C  58.44379232  32.28863664  56.48848847  0  0  0
+ H  58.92188903  31.74562106  57.31868205  0  0  0
+ C  59.04788589  33.07391077  55.54710537  0  0  0
+ C  58.47231782  33.93307323  54.53620698  0  0  0
+ H  59.05657279  34.59048571  53.85706079  0  0  0
+ C  57.12983830  33.77034070  54.25225159  0  0  0
+ H  56.77357111  33.98161034  53.23412311  0  0  0
+ C  56.28881714  33.27730051  55.31654921  0  0  0
+ H  55.39927405  33.91554787  55.49195307  0  0  0
+ O  54.43136189  31.50950418  55.19784505  0  0  0
+ H  55.08053080  31.15744368  54.55504674  0  0  0
+ C  62.27071718  30.34851501  51.62626087  0  0  0
+ O  62.85879215  29.77522517  52.49313006  0  0  0
+ O  62.25508374  30.48435159  50.43935794  0  0  0
+Image:  10
+ C  59.41757291  34.74090351  57.50739388  0  0  0
+ H  60.30760563  34.06878622  57.62749500  0  0  0
+ H  60.15942632  35.97677494  57.24581158  0  0  0
+ C  58.68123495  34.97367264  58.74694007  0  0  0
+ C  57.84057131  36.13521932  59.07154751  0  0  0
+ O  58.62545839  37.14155693  59.10841983  0  0  0
+ O  56.62531303  36.26283130  59.48298838  0  0  0
+ O  57.96634840  33.42113798  59.14887121  0  0  0
+ C  56.73312569  32.46367825  56.65186831  0  0  0
+ H  55.87698532  30.93643247  57.29038399  0  0  0
+ C  58.22090927  32.36079496  56.72062724  0  0  0
+ H  58.70189639  31.80969416  57.54471589  0  0  0
+ C  58.83121437  33.23855097  55.87485303  0  0  0
+ C  58.26975591  34.03768379  54.81466429  0  0  0
+ H  58.87802209  34.69498624  54.16447651  0  0  0
+ C  56.96230656  33.81471972  54.46308925  0  0  0
+ H  56.64797098  34.02620380  53.43177399  0  0  0
+ C  56.07803604  33.22027377  55.45610474  0  0  0
+ H  55.15353543  33.80074063  55.65312399  0  0  0
+ O  54.60956238  31.49247044  54.96402486  0  0  0
+ H  55.33640582  31.18034975  54.38612441  0  0  0
+ C  62.32156053  30.23119078  51.44907754  0  0  0
+ O  62.81846389  29.62962748  52.34591107  0  0  0
+ O  62.23627550  30.52562479  50.29976081  0  0  0
+Image:  11
+ C  59.38443229  34.63063635  57.61322895  0  0  0
+ H  60.26039427  33.94758519  57.74262260  0  0  0
+ H  59.96846282  35.74121357  57.13940473  0  0  0
+ C  58.65102136  34.95640088  58.85693617  0  0  0
+ C  57.84397506  36.17459398  59.06087504  0  0  0
+ O  58.61412408  37.18599439  58.96798018  0  0  0
+ O  56.62302402  36.27714949  59.47180938  0  0  0
+ O  57.94819381  33.57131160  59.35598918  0  0  0
+ C  56.47781791  32.40500990  56.84850007  0  0  0
+ H  56.00900197  30.84471611  57.01619241  0  0  0
+ C  57.97609987  32.43475172  56.96373721  0  0  0
+ H  58.47166440  31.88543005  57.78103149  0  0  0
+ C  58.58353109  33.39742735  56.22072454  0  0  0
+ C  58.05482347  34.12730366  55.09991737  0  0  0
+ H  58.68313085  34.78996815  54.48166011  0  0  0
+ C  56.78983234  33.84426190  54.67944090  0  0  0
+ H  56.52017162  34.06597293  53.63772131  0  0  0
+ C  55.87811231  33.11068314  55.57310568  0  0  0
+ H  54.92317002  33.64041091  55.78233432  0  0  0
+ O  54.80533531  31.56075878  54.77683626  0  0  0
+ H  55.59742839  31.25592865  54.28618662  0  0  0
+ C  62.37727240  30.11611316  51.25871327  0  0  0
+ O  62.77788980  29.48685577  52.17849462  0  0  0
+ O  62.22597355  30.54983079  50.16638009  0  0  0
+Image:  12
+ C  59.31664292  34.52682927  57.68030362  0  0  0
+ H  60.16698331  33.81799944  57.81637754  0  0  0
+ H  59.79008804  35.49145515  57.10183801  0  0  0
+ C  58.60782972  34.93657110  58.94085292  0  0  0
+ C  57.85595351  36.20604162  59.05042195  0  0  0
+ O  58.60393856  37.21632698  58.85243178  0  0  0
+ O  56.62709076  36.29047705  59.45231300  0  0  0
+ O  57.95463548  33.73575015  59.54606176  0  0  0
+ C  56.25026106  32.25886931  56.98605108  0  0  0
+ H  56.17529344  30.88630743  56.77293778  0  0  0
+ C  57.72181440  32.50517506  57.20603206  0  0  0
+ H  58.22750848  31.95986289  58.01974309  0  0  0
+ C  58.31928706  33.55595184  56.58738889  0  0  0
+ C  57.82955971  34.20302379  55.39836681  0  0  0
+ H  58.47039095  34.88245253  54.81853636  0  0  0
+ C  56.62035423  33.85120802  54.90003658  0  0  0
+ H  56.38996122  34.09842393  53.85454630  0  0  0
+ C  55.70199711  32.95768973  55.66108236  0  0  0
+ H  54.72439206  33.45208169  55.87340104  0  0  0
+ O  55.00081251  31.70297219  54.65756732  0  0  0
+ H  55.82767159  31.38215080  54.23736076  0  0  0
+ C  62.43491899  30.00281261  51.05052728  0  0  0
+ O  62.74293271  29.34220357  51.97951946  0  0  0
+ O  62.22989110  30.55407583  50.02589985  0  0  0
+Image:  13
+ C  59.19359587  34.40890482  57.71029092  0  0  0
+ H  60.02619313  33.69132731  57.89360808  0  0  0
+ H  59.59996454  35.22379532  57.09338022  0  0  0
+ C  58.55735763  34.90712041  59.01338955  0  0  0
+ C  57.88764863  36.23227173  59.03977284  0  0  0
+ O  58.58699405  37.25373015  58.75330451  0  0  0
+ O  56.64726016  36.30809061  59.42529477  0  0  0
+ O  57.97791494  33.91402420  59.72392565  0  0  0
+ C  56.09013523  32.06846512  57.03725071  0  0  0
+ H  56.30609569  31.03467488  56.65923608  0  0  0
+ C  57.46345732  32.56721133  57.42614206  0  0  0
+ H  57.96776143  32.03439610  58.24936700  0  0  0
+ C  58.08519967  33.68893109  56.95347639  0  0  0
+ C  57.59479900  34.26965492  55.71746193  0  0  0
+ H  58.24101297  34.98050823  55.18889849  0  0  0
+ C  56.46417375  33.83858038  55.12326401  0  0  0
+ H  56.26051706  34.12329647  54.08190424  0  0  0
+ C  55.55249497  32.78432169  55.70112204  0  0  0
+ H  54.56410485  33.25711253  55.93572900  0  0  0
+ O  55.18483248  31.89527177  54.62256851  0  0  0
+ H  56.01166711  31.54124189  54.22804097  0  0  0
+ C  62.49685090  29.88638741  50.81108898  0  0  0
+ O  62.72065679  29.18745489  51.73287971  0  0  0
+ O  62.25484666  30.53634228  49.85797605  0  0  0
+
+Starting nudged elastic band optimization:
+
+==============================
+NEB ITERATION: -1
+==============================
+
+Images to be computed in this iteration: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+Starting NEB calculations in serial mode
+
+Computing image:  0
+ORCATheory is being used
+current_image_file current_image0.gbw DOES NOT exist
+A file orca.gbw file DOES NOT exist.
+Will use ORCATheory settings
+Wrote XYZ file:  image_0_Full.xyz
+Wrote XYZ file:  image_0_active.xyz
+  ------------RUNNING QM/MM MODULE------------- 
+QM Module: ORCATheory
+MM Module: OpenMMTheory
+Charge provided from QMMMTheory object:  -2
+Mult provided from QMMMTheory object:  1
+QM-region Charge: -2 Mult: 1
+Embedding: Electrostatic
+First QMMMTheory run. Running runprep
+Inside QMMMTheory runprep
+Inside get_linkatom_positions
+linkatom_type: H
+linkatom_method: simple
+linkatom_simple_distance not set. Getting standard distance from dictionary for each element:
+Linkatom distance dictionary: {('C', 'H'): 1.09, ('O', 'H'): 0.98, ('N', 'H'): 0.99}
+qm_mm_boundary_dict: {2: [27, 32], 9: [79, 84]}
+Traceback (most recent call last):
+  File "/home/18660916/system_development/phase2b_charge_design/05d_shell_ladder/relax/run_nebP_2p0/neb_pass.py", line 32, in <module>
+    NEBTS(reactant=fragR, product=fragP, theory=qmmm, images=12, CI=True,
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/interfaces/interface_knarr.py", line 109, in NEBTS
+    NEB_results = NEB(reactant=reactant, product=product, theory=theory, images=images, CI=CI, free_end=free_end, maxiter=maxiter, Singleiter=Singleiter,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/interfaces/interface_knarr.py", line 606, in NEB
+    DoNEB(path, calculator, neb_settings, optimizer, second_run=zoom)
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/knarr/KNARRjobs/neb.py", line 328, in DoNEB
+    calculator.Compute(path, list_to_compute=range(0, path.GetNim()))
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/interfaces/interface_knarr.py", line 918, in Compute
+    En_image, Grad_image_full = self.theory.run(current_coords=full_current_image_coords, charge=self.charge, mult=self.mult,
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/modules/module_QMMM.py", line 771, in run
+    return self.elstat_run(current_coords=current_coords, elems=elems, Grad=Grad, numcores=numcores, exit_after_customexternalforce_update=exit_after_customexternalforce_update,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/modules/module_QMMM.py", line 1147, in elstat_run
+    self.runprep(current_coords)
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/modules/module_QMMM.py", line 1056, in runprep
+    linkatoms_coords = self.create_linkatoms(current_coords)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/modules/module_QMMM.py", line 1028, in create_linkatoms
+    self.linkatoms_dict = ash.modules.module_coords.get_linkatom_positions(self.boundaryatoms,self.qmatoms, current_coords, self.elems,
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/18660916/envs/ash/lib/python3.11/site-packages/ash/modules/module_coords.py", line 3454, in get_linkatom_positions
+    linkatom_distance = linkdistances_dict[(elems[qmatom], linkatom_type)]
+                        ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: ('H', 'H')
+
+
+--------------------------------------------------------------------------------
+                          Total timings of all modules                          
+--------------------------------------------------------------------------------
+
+To turn off timing output add to settings file: ~/ash_user_settings.ini
+print_full_timings = False   
+
+Modulename                                   Time (sec) Percentage of total     Times called
+----------------------------------------------------------------------------------------------------
+Object creation
+------------------------------
+OpenMM object creation                             0.18       1.9                   1
+QM/MM object creation                              0.03       0.3                   1
+
+Other modules
+------------------------------
+update_charges                                     0.00       0.0                   2
+get_boundary_atoms                                 0.00       0.0                   1
+get_MMboundary                                     0.00       0.0                   1
+modify_bonded_forces                               0.00       0.0                   1
+add exceptions                                     0.00       0.0                   1
+ZeroQMCharges                                      0.00       0.0                   1
+delete_exceptions                                  0.00       0.0                   1
+
+
+Sum of all moduletimes (flawed)                    0.22
+Total walltime                                     9.43     100.0
+
+ ------------------------------------------------------------------- 
+ ASH Total Walltime: 9.4 seconds, 0.2 minutes. 
+ ------------------------------------------------------------------- 
