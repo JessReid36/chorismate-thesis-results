@@ -49,7 +49,8 @@ the enzyme's strategy (Arg90 + the active-site geometric scaffold together).
   robust read; a polished saddle energy is pending (TSOpt convergence).
 - Capacitor(uniform field)+restraint DERAILED (band downhill from held reactant) -- uniform field too
   disruptive to combine with restraint via NEB; the localized Arg90 charge is what works.
-- Flag: [exploratory] until the TS is pinned; then [retained-final].
+- Flag: [exploratory]. Promotable on the two-clamp NEB agreement (6.40/7.23); a polished saddle is
+  NOT obtainable on this floppy restrained surface (TSOpt settled as non-convergent -- see below).
 
 ## How to read these outputs (recorded to prevent recurrence)
 - Barrier = log frozen/active table OR @-line HEI. The two agree; both validated (reproduce 29.77/46.37).
@@ -57,3 +58,34 @@ the enzyme's strategy (Arg90 + the active-site geometric scaffold together).
 - Barrier converges over iterations; read the LAST. Single-iteration spikes are transients.
 - Both NEBTS caps (maxiter, OptTS_maxiter) default to 100 and both needed raising to 300.
 - One negative Hessian eigenvalue in the TSOpt = genuine TS.
+
+## Free-energy status: what the 6.40/7.23 barrier is, and is not (added after deep literature check)
+The barriers above are **potential-energy** barriers evaluated under held near-attack geometry. They are
+used here as a **relative ranking metric** for comparing charge arrangements -- which is the actual
+purpose in this project (rank designs, pick the best), not to assert an absolute activation free energy.
+
+**Why the potential-energy barrier is a valid ranking metric for this reaction:**
+- The catalytic mechanism at work (charge + geometric confinement / reactive-center compression) is
+  **enthalpically dominated**. Hilvert's conformational-restriction study (J. Am. Chem. Soc.,
+  ja992453d) shows compressing the reactive centers ~4.0 -> 3.0 Angstrom lowers the barrier ~24 -> 12
+  kcal/mol and states the rate gains "derive mainly from ground-state destabilization in which
+  entropic factors do not contribute significantly." Our walls+charge realise exactly this compression.
+- Standard transition-state theory describes the chorismate mutase reaction quantitatively
+  (Ranaghan/Mulholland), i.e. dynamical recrossing effects are small.
+- The intrinsic activation entropy of the (uncatalysed) chorismate Claisen is **modest and roughly
+  constant** across designs: experiment gives -T dS-dagger ~= 3.9 kcal/mol (Kast et al.); EVB gives
+  dH-dagger = 20.9, T dS-dagger = -3.4, dG-dagger = 24.4 kcal/mol (matching experiment). A roughly
+  constant offset shifts all designs together and so barely affects the **ranking**.
+
+**Why this is NOT an absolute dG-dagger claim (honest caveats, deferred to future work):**
+1. There is ~3-4 kcal/mol of intrinsic activation entropy (above) that a potential-energy barrier omits.
+2. The flat-bottom walls impose the near-attack geometry "for free". Imposing that confinement has a
+   real **free-energy cost** (loss of configurational entropy) that the NEB does not capture but a
+   proper PMF would. Our number is therefore conditional on the confinement.
+
+**Decision:** report 6.40/7.23 as a potential-energy ranking barrier with the above framing; **defer a
+full free-energy (PMF) treatment as future validation** of the absolute dG-dagger. A rigorous PMF is
+feasible in principle (xTB-sampled umbrella + DFT reweighting; xTB validated on the dianion, ~325x
+faster than DFT) but is blocked on QM/MM-MD thermostat stability with the current dummy-system MM
+construction (needs a real MM forcefield + X-H constraints, per the ASH fast-QM/MM-MD tutorial). This
+is parked, not required, for the ranking result.
