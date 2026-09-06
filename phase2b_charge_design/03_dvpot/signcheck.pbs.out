@@ -1,0 +1,80 @@
+host=comp050.hpc  start=Sun Sep  6 19:26:59 SAST 2026
+stage=/home/18660916/system_development/phase2b_charge_design/03_dvpot
+
+[found]   /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_reactant.gbw + .densities
+[found]   /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_ts.gbw + .densities
+
+=== single-point energies vs canonical values ===
+  sp_reactant  got -836.367257939969   ref -836.367257939969   MATCH
+  sp_ts        got -836.339411092751   ref -836.339411092751   MATCH
+
+=== geometry guards (expectations read from the provenance table) ===
+  reactant  break O3-C4 = 1.472 A (expect 1.472)   form C1-C6 = 3.124 A (expect 3.124)
+  TS        break O3-C4 = 2.111 A (expect 2.111)   form C1-C6 = 2.526 A (expect 2.526)
+
+=== common-frame check ===
+  centroid separation R vs TS      = 0.070 A  (tolerance 0.5)
+  RMSD as stored / rigidly aligned = 0.252 / 0.235 A
+  improvement from alignment       = 0.017 A  (tolerance 0.1)
+  frame check OK - the two densities are directly comparable at fixed points
+
+wrote 2 probe points to signcheck_points_bohr.xyz (Bohr) and signcheck_labels.tsv (Angstrom)
+
+=== orca_vpot at the reactant density ===
+------------------------------------------------------------------------------
+                      ORCA ELECTROSTATIC POTENTIAL GENERATION
+------------------------------------------------------------------------------
+
+GBW file                           ... /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_reactant.gbw
+File with points to evaluate V(r)  ... signcheck_points_bohr.xyz
+Output file                        ... signcheck_vR.out
+
+Reading the GBW file               ... done
+Reading the positions              ... done (2 positions)
+Electrostatic potential evaluated in     0.033 sec
+
+Maximum memory used throughout the entire VPOT-calculation: 1.7 MB
+=== orca_vpot at the TS density ===
+------------------------------------------------------------------------------
+                      ORCA ELECTROSTATIC POTENTIAL GENERATION
+------------------------------------------------------------------------------
+
+GBW file                           ... /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_ts.gbw
+File with points to evaluate V(r)  ... signcheck_points_bohr.xyz
+Output file                        ... signcheck_vTS.out
+
+Reading the GBW file               ... done
+Reading the positions              ... done (2 positions)
+Electrostatic potential evaluated in     0.033 sec
+
+Maximum memory used throughout the entire VPOT-calculation: 1.7 MB
+
+=== Dv = V_TS - V_R ===
+probe                      V_R (Eh)    V_TS (Eh)      Dv (Eh)    Dv (kcal/mol per +1e)
+----------------------------------------------------------------------------------------
+A_etherO_breaking         -0.264537    -0.283882    -0.019345            -12.139   STABILISING
+B_formingC6               -0.266013    -0.257840    +0.008173             +5.128   destabilising
+
+  A (ether O, breaking bond) Dv < 0 : PASS
+  B (forming bond)           Dv > 0 : PASS
+
+SIGN CHECK PASS.
+A +1 cation beyond the ether oxygen lowers the barrier, and the sign
+inverts in the forming-bond region. Dv therefore carries genuine
+reaction-coordinate information rather than a uniform offset, and the
+convention used by the charge-selection objective is correct.
+
+Magnitudes above are diagnostic only: both probes sit inside the
+candidate-charge envelope and must not be quoted as stabilisation
+energies. Report signs here; report magnitudes from the grid Dv map.
+
+outputs written to /home/18660916/system_development/phase2b_charge_design/03_dvpot:
+-rw-------. 1 18660916 ldapuser 4000 Sep  6 19:03 signcheck_gen3.pbs.out
+-rw-r--r--. 1 18660916 ldapuser  206 Sep  6 19:03 signcheck_gen3_table.tsv
+-rw-r--r--. 1 18660916 ldapuser  102 Sep  6 19:27 signcheck_labels.tsv
+-rw-r--r--. 1 18660916 ldapuser   94 Sep  6 19:27 signcheck_points_bohr.xyz
+-rw-r--r--. 1 18660916 ldapuser  146 Sep  6 19:27 signcheck_table.tsv
+-rw-r--r--. 1 18660916 ldapuser  202 Sep  6 19:27 signcheck_vR.out
+-rw-r--r--. 1 18660916 ldapuser  202 Sep  6 19:27 signcheck_vTS.out
+
+end=Sun Sep  6 19:27:01 SAST 2026  exit=0
