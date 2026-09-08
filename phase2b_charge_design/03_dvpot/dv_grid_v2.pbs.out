@@ -1,0 +1,84 @@
+host=comp050.hpc  start=Mon Sep  7 10:45:27 SAST 2026
+stage=/home/18660916/system_development/phase2b_charge_design/03_dvpot_v2
+
+[found]   /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_reactant.gbw + .densities
+[found]   /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_ts.gbw + .densities
+
+=== single-point energies vs canonical values ===
+  sp_reactant  got -836.367257939969   ref -836.367257939969   MATCH
+  sp_ts        got -836.339411092751   ref -836.339411092751   MATCH
+
+=== preparing grid points ===
+read 1448 sites from /home/18660916/system_development/phase2b_charge_design/03_dvpot_v2/grid_poisson_sites.tsv
+  shell 3.0 A: 365 sites
+  shell 4.0 A: 479 sites
+  shell 5.0 A: 604 sites
+  standoff 2.993 - 5.047 A
+
+wrote 1448 points to grid_points_bohr.xyz (Bohr) and the row order to grid_row_order.tsv
+
+=== orca_vpot at the reactant density (1448 sites) ===
+------------------------------------------------------------------------------
+                      ORCA ELECTROSTATIC POTENTIAL GENERATION
+------------------------------------------------------------------------------
+
+GBW file                           ... /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_reactant.gbw
+File with points to evaluate V(r)  ... grid_points_bohr.xyz
+Output file                        ... vR_grid.out
+
+Reading the GBW file               ... done
+Reading the positions              ... done (1448 positions)
+Warning: Re-creating the pre-screening matrix because it was not found on disk
+Electrostatic potential evaluated in     0.930 sec
+
+Maximum memory used throughout the entire VPOT-calculation: 8.2 MB
+=== orca_vpot at the TS density (1448 sites) ===
+------------------------------------------------------------------------------
+                      ORCA ELECTROSTATIC POTENTIAL GENERATION
+------------------------------------------------------------------------------
+
+GBW file                           ... /home/18660916/system_development/phase2b_charge_design/02_singlepoints/sp_ts.gbw
+File with points to evaluate V(r)  ... grid_points_bohr.xyz
+Output file                        ... vTS_grid.out
+
+Reading the GBW file               ... done
+Reading the positions              ... done (1448 positions)
+Warning: Re-creating the pre-screening matrix because it was not found on disk
+Electrostatic potential evaluated in     0.881 sec
+
+Maximum memory used throughout the entire VPOT-calculation: 8.2 MB
+
+=== Dv = V_TS - V_R ===
+
+Dv MAP: 1448 sites
+  range   -0.005564 to +0.006130 Eh
+          -3.491 to +3.847 kcal/mol per +1e
+  mean    -0.000045 Eh   sd 0.002001 Eh
+  stabilising (Dv < 0): 903/1448 = 62.4%
+
+   shell   sites      min Dv      max Dv   max |Dv| kcal   stabilising
+----------------------------------------------------------------------
+     3.0     365   -0.005564    0.006130           3.847   232 (63.6%)
+     4.0     479   -0.003893    0.004333           2.719   299 (62.4%)
+     5.0     604   -0.002876    0.003271           2.053   372 (61.6%)
+
+  most stabilising: idx 1107, shell 3.0 A, (56.9884, 30.7825, 61.0617), -0.005564 Eh = -3.491 kcal/mol per +1e
+  most destabilising: idx 650, shell 3.0 A, +3.847 kcal/mol per +1e
+
+  best achievable single charge: -3.847 kcal/mol
+
+  previous grid (331 sites): best single charge -5.767 kcal/mol
+  this grid     (1448 sites): best single charge -3.847 kcal/mol
+  difference +1.920 kcal/mol (-33% of the achievable single-charge effect)
+  This is the cost of the shell change, and should be reported as such.
+
+wrote dv_grid_v2.tsv
+
+outputs written to /home/18660916/system_development/phase2b_charge_design/03_dvpot_v2:
+-rw-r--r--. 1 18660916 ldapuser 122388 Sep  7 10:45 dv_grid_v2.tsv
+-rw-r--r--. 1 18660916 ldapuser  65893 Sep  7 10:45 grid_points_bohr.xyz
+-rw-r--r--. 1 18660916 ldapuser  61521 Sep  7 10:45 grid_row_order.tsv
+-rw-r--r--. 1 18660916 ldapuser 144805 Sep  7 10:45 vR_grid.out
+-rw-r--r--. 1 18660916 ldapuser 144805 Sep  7 10:45 vTS_grid.out
+
+end=Mon Sep  7 10:45:31 SAST 2026  exit=0

@@ -1,0 +1,19 @@
+Phase 2 Stage 2 grid - REAL GEOMETRY (attempt_3 active2-literature-full R/TS/P), Option 3 union envelope.
+
+Method change vs placeholder: step_2_1_sdf.py builds the union-of-spheres SDF over pooled atoms of the
+reactant, TS AND product (72 atoms), so every candidate charge position clears the substrate vdW surface
+at every point on the reaction path - required because the designed external charges are static while the
+substrate reacts (Option 3; GOCAT fixed-charge common-embedding-surface precedent). The three geometries
+share a frame (centroids within 0.11 A), so the union is clean.
+
+Downstream (2.2 shells / 2.3 sample / 2.4 thin) unchanged except thinning r_min:
+  placeholder single-geometry: r_min=1.5 A -> 326 pts, cond 22,002.
+  union at r_min=1.5 A: 337 pts, cond 177,728 (8x worse) - larger envelope packs points at the 1.5 A floor
+    (mean NN 1.624 A); systemic over-packing (would need to drop ~144/337 to recover conditioning).
+  Fix: sweep gave cond 1.5A:178k, 1.7A:10.3k, 2.1A:2.0k, 2.5A:1.2k. Chose r_min=1.7 A:
+    252 pts, min spacing 1.700 A, cond 10,280 - better than placeholder (22k), most candidate positions.
+    1.7 A < 2.5 A physical charge min-separation (enforced in the MIQP): grid finely samples WHERE a charge
+    can sit; separation constraint governs which combinations are simultaneously allowed.
+Rationale: matching the placeholder r_min PARAMETER on the new envelope gave 8x worse conditioning;
+matching conditioning QUALITY (adjusting spacing to the larger envelope) is faithful to the blue-noise
+design goal. Parameter changed; principle (well-conditioned grid at physical spacing) constant.
