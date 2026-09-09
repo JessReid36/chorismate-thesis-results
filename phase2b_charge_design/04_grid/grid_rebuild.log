@@ -1,0 +1,224 @@
+############ 0. environment
+python     3.12.3
+numpy      1.26.4
+scipy      1.11.4
+scikit-image 0.26.0
+trimesh    5.1.0
+
+############ 1. signed distance field (union of R + TS + P)
+union geometries: ['reactant.xyz', 'ts.xyz', 'product.xyz']
+pooled atoms: 72 (24 + 24 + 24)  elements: ['C', 'H', 'O']
+voxel: 0.3 A   grid dims: (69, 65, 62)   total voxels: 278,070
+grid origin (A): [48.333 24.427 46.411]
+
+verification:
+  max_sdf_at_atom_centres: -0.9732663631439209
+  sdf_far_corner: 11.975414276123047
+  sdf_min: -1.657078504562378
+  sdf_max: 13.606212615966797
+  has_zero_crossing: True
+  surface_probe_value_near_zero: 0.03500988334417343
+
+saved sdf_grid.npz
+SDF VALID
+
+############ 2. Poisson-disk grid (ours)
+SDF (69, 65, 62), voxel 0.3 A, range [-1.657, 13.606] A
+resolution r_min = 1.0 A   shells = [3.0, 4.0, 5.0] A
+
+shell 3.0 A: area   649.0 A^2, chi=2,   3894 dense samples
+shell 4.0 A: area   844.6 A^2, chi=2,   5067 dense samples
+shell 5.0 A: area  1065.1 A^2, chi=2,   6391 dense samples
+
+GRID v2: 1448 candidate positions
+  shell 3.0 A:   365 sites   standoff 2.993 - 3.057 A
+  shell 4.0 A:   479 sites   standoff 3.994 - 4.033 A
+  shell 5.0 A:   604 sites   standoff 4.995 - 5.047 A
+  NN spacing  min 1.0001  mean 1.0652 +/- 0.0578  (CV 0.0542) A
+  standoff overall 2.993 - 5.047 A
+
+placement capacity (independent sites at a given species separation):
+  sep 3.0 A               :   73 sites
+  sep 3.5 A formate       :   50 sites
+  sep 4.5 A guanidinium   :   32 sites
+  sep 6.0 A               :   18 sites
+
+saved grid_poisson.npz, grid_poisson.xyz, grid_poisson_sites.tsv
+
+matched per-shell counts for CVT: 365 479 604
+
+############ 3. CVT grid (colleague's method), global mode
+restricted CVT (Lloyd), mode=global, seed=0, tol=0.0001, max 300 iters
+shells = [3.0, 4.0, 5.0] A, cloud density = 6.0 pts/A^2
+
+shell 3.0 A: area   649.0 A^2, chi=2,   3894 dense samples
+shell 4.0 A: area   844.6 A^2, chi=2,   5067 dense samples
+shell 5.0 A: area  1065.1 A^2, chi=2,   6391 dense samples
+
+target counts per shell: [365, 479, 604]  (total 1448)
+
+pooled relaxation: 1448 points, 10 iters
+  shell 3.0 A:   365 points | within-shell NN min 0.643 mean 1.079
+  shell 4.0 A:   479 points | within-shell NN min 0.552 mean 1.075
+  shell 5.0 A:   604 points | within-shell NN min 0.633 mean 1.074
+
+CVT GRID (global): 1448 candidate positions
+  NN spacing  min 0.5523  mean 1.0278 +/- 0.1151  (CV 0.1120) A
+  standoff 2.997 - 5.017 A
+
+placement capacity (independent sites at a given species separation):
+  sep 3.0 A               :   83 sites
+  sep 3.5 A formate       :   56 sites
+  sep 4.5 A guanidinium   :   28 sites
+  sep 6.0 A               :   14 sites
+
+saved grid_cvt_global.npz, grid_cvt_global.xyz, grid_cvt_global_sites.tsv
+
+############ 4. CVT grid, per-shell mode (textbook restricted CVT)
+restricted CVT (Lloyd), mode=per_shell, seed=0, tol=0.0001, max 300 iters
+shells = [3.0, 4.0, 5.0] A, cloud density = 6.0 pts/A^2
+
+shell 3.0 A: area   649.0 A^2, chi=2,   3894 dense samples
+shell 4.0 A: area   844.6 A^2, chi=2,   5067 dense samples
+shell 5.0 A: area  1065.1 A^2, chi=2,   6391 dense samples
+
+target counts per shell: [365, 479, 604]  (total 1448)
+
+shell 3.0 A:   365 points,   7 iters | within-shell NN min 0.643 mean 1.079
+shell 4.0 A:   479 points,   8 iters | within-shell NN min 0.552 mean 1.075
+shell 5.0 A:   604 points,   7 iters | within-shell NN min 0.633 mean 1.074
+
+CVT GRID (per_shell): 1448 candidate positions
+  NN spacing  min 0.5523  mean 1.0276 +/- 0.1151  (CV 0.1120) A
+  standoff 2.997 - 5.017 A
+
+placement capacity (independent sites at a given species separation):
+  sep 3.0 A               :   83 sites
+  sep 3.5 A formate       :   56 sites
+  sep 4.5 A guanidinium   :   28 sites
+  sep 6.0 A               :   14 sites
+
+saved grid_cvt_per_shell.npz, grid_cvt_per_shell.xyz, grid_cvt_per_shell_sites.tsv
+
+############ 5. comparison
+Dv gradient: mean 0.185, p95 0.586 kcal/mol/A per +1e [dv_grid_v2.tsv]
+
+reference set: dense independent sampling of shells [3.0, 4.0, 5.0]
+
+grid                         N   minNN  meanNN     CV      cond  max1/r  res.mean  res.p95  res.max
+---------------------------------------------------------------------------------------------------
+grid_poisson              1448   1.000   1.065  0.054     81832   1.000     0.529    0.878    1.236
+grid_cvt_global           1448   0.552   1.028  0.112   2230234   1.811     0.527    0.868    1.199
+grid_cvt_per_shell        1448   0.552   1.028  0.112    255473   1.811     0.527    0.868    1.199
+
+grid                       Dv penalty typ.   steep-region  pairs<0.8A  pairs<1.0A   min NN    p1 NN
+---------------------------------------------------------------------------------------------------
+grid_poisson                         0.098          0.514           0           0    1.000    1.001
+grid_cvt_global                      0.097          0.508          34         299    0.552    0.671
+grid_cvt_per_shell                   0.097          0.508          34         300    0.552    0.671
+
+grid                        sep 3.0A    sep 3.5A    sep 4.5A    sep 6.0A
+------------------------------------------------------------------------
+grid_poisson                      73          50          32          18
+grid_cvt_global                   83          56          28          14
+grid_cvt_per_shell                83          56          28          14
+
+grid                                            per-shell counts
+----------------------------------------------------------------
+grid_poisson                                     365 / 479 / 604
+grid_cvt_global                                  365 / 479 / 604
+grid_cvt_per_shell                               365 / 479 / 604
+
+Notes
+  min NN is a guaranteed floor for Poisson-disk; CVT imposes none.
+  CV is the metric CVT minimises, so compare it directly.
+  resolution is what limits how well a charge can be positioned.
+  cond is the quadratic term the optimiser sees; lower is better.
+  cond depends on the smallest eigenvalue and so is sensitive to a
+  few near-degenerate pairs. The pairs<0.8A / pairs<1.0A counts are
+  the robust companions: quote those alongside it, not cond alone.
+
+done. outputs:
+grid_comparison.txt
+grid_cvt_global_sites.tsv
+grid_cvt_global.xyz
+grid_cvt_per_shell_sites.tsv
+grid_cvt_per_shell.xyz
+grid_points_bohr.xyz
+grid_poisson_sites.tsv
+grid_poisson.xyz
+
+############ 6. voxel convergence
+pooled atoms: 72  shells [3.0, 4.0, 5.0] A  r_min 1.0 A  density 6.0 pts/A^2
+
+voxel 0.30 A: SDF dims (69, 65, 62), 278,070 voxels
+voxel 0.20 A: SDF dims (102, 97, 92), 910,248 voxels
+
+1. SHELL GEOMETRY
+  shell  area coarse   area fine   d area     offset coarse       offset fine
+-----------------------------------------------------------------------------
+    3.0        649.0       649.8    0.11%   2.998 +/- 0.006   2.999 +/- 0.003
+    4.0        844.6       845.2    0.07%   3.998 +/- 0.005   3.999 +/- 0.003
+    5.0       1065.1      1065.7    0.05%   4.998 +/- 0.004   4.999 +/- 0.002
+
+2. ACCURACY AGAINST THE ANALYTIC SURFACE
+   The union-of-spheres SDF is analytic, so the true shell is exactly
+   SDF = d. Discretisation error is |SDF(p) - d| for points sampled
+   from each extracted mesh - measured against ground truth, not
+   against the other mesh.
+
+  shell   lattice   mean err       p95       max   (A)
+--------------------------------------------------
+    3.0    coarse     0.0046    0.0071    0.0790
+    3.0      fine     0.0021    0.0030    0.0482
+    4.0    coarse     0.0037    0.0056    0.0636
+    4.0      fine     0.0017    0.0024    0.0424
+    5.0    coarse     0.0032    0.0045    0.0635
+    5.0      fine     0.0015    0.0020    0.0307
+
+3. GRID OUTCOME
+  sites: coarse 1448   fine 1421   difference -1.86%
+  coarse: coverage mean 0.5241 p95 0.8758 A | min NN 1.0001 A
+    fine: coverage mean 0.5348 p95 0.8895 A | min NN 1.0001 A
+
+VERDICT
+  worst coarse-lattice error against the analytic surface: 0.0790 A
+  site spacing 1.00 A; grid resolves position to ~0.53 A
+  CONVERGED - the coarse lattice reproduces the analytic surface to
+  well within the site spacing, so the lattice is not limiting the grid.
+
+############ 7. envelope justification
+shells [3.0, 4.0, 5.0] A   r_min 1.0 A   density 6.0 pts/A^2   voxel 0.3 A
+intended minimum standoff: 3.0 A
+
+1. PATH CLEARANCE
+   For each envelope, the standoff of its own sites measured against
+   the geometries it did not include.
+
+envelope            sites   min standoff     below floor    worst
+------------------------------------------------------------------
+reactant only        1402          2.345     177 (12.6%)    2.345
+TS only              1415          2.533     298 (21.1%)    2.533
+product only         1405          2.104     234 (16.7%)    2.104
+union R+TS+P         1448              -0 (by construction)        -
+
+2. WHICH GEOMETRY SETS THE ENVELOPE
+   At each site of the union grid, which geometry is closest. If one
+   dominated, the union would be unnecessary.
+
+   reactant   binds at   730 / 1448 sites  (50.4%)
+   ts         binds at   261 / 1448 sites  (18.0%)
+   product    binds at   457 / 1448 sites  (31.6%)
+
+3. SUBSTRATE MOTION ALONG THE PATH
+   R -> TS   per-atom displacement: mean 0.222  max 0.617 A
+   R -> P    per-atom displacement: mean 0.391  max 1.195 A
+
+4. COST OF THE UNION
+   union 1448 sites vs reactant-only 1402: +3.3% in site count
+   reactant-only admits 177 sites (12.6%) that breach the 3.0 A floor later on the path
+   reactant-only sites with no counterpart on the union grid (within 0.001 A): 1402 (100.0%)
+   those sites stand 2.992 to 5.054 A from the reactant surface
+
+   The union is the cheaper of the two errors: a small loss of
+   candidate positions against a guarantee of path-wide clearance.
