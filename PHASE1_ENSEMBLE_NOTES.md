@@ -12,8 +12,14 @@ The Phase-1 barrier of **+16.00 kcal/mol** (`phase1_system_dev/BARRIER_FINAL.md`
 is thoroughly established *as a property of frame 820*: three independent
 determinations agree to 0.4 kcal/mol (OptTS 16.00, NEB-CI 15.94, relaxed scan
 16.37), both endpoints are frequency-verified over 612 displacements, the saddle
-carries one imaginary mode at −313.30 cm⁻¹, and the IRC connects the intended
-basins.
+carries **two** imaginary modes, −313.30 and −18.65 cm⁻¹
+(`05_qmmm/18c_reduced_region/ts_frequencies_summary.txt`), and the IRC connects
+the intended basins. The first mode is the reaction coordinate. The second lies
+below the ~50 cm⁻¹ magnitude often treated as numerical noise in a partially
+frozen region, but that has not been established here, and `WRITEUP_INDEX.md`
+records it as unreconciled. Note that the header line of the summary file, and
+`BARRIER_FINAL.md`, both state "one imaginary mode" while the tabulated
+frequencies in the same file list two; the tabulated values are primary.
 
 What is *not* established by any of that is whether frame 820 is representative.
 Those checks are precision, not accuracy: every one would pass identically if the
@@ -59,13 +65,18 @@ that frame. The proxy is demonstrated on this system, not assumed.
 independent MD snapshots. That is optimisation noise. The C4–O3 bond is not a
 degree of freedom the enzyme varies.
 
-**The active site imposes the near-attack distance rather than inheriting it.**
-The forming C1–C6 distance spans 0.471 Å across the raw MD frames and 0.222 Å
-after QM/MM optimisation — a **53% compression**. More directly, the correlation
-between the selection-time forming distance and the optimised one is
-**r = +0.073 (exact permutation p = 0.894)**, i.e. indistinguishable from zero:
-whatever near-attack geometry a snapshot happened to have is erased by the
-optimisation.
+**Optimisation compresses the sampled variation without removing it.**
+The forming C1-C6 distance spans 0.621 A across the selected frames and 0.365 A
+after optimisation, and the standard deviation halves from 0.199 to 0.100 A. The
+optimised value nevertheless correlates with the selection-time value at
+**r = +0.589 (permutation p = 0.026, n = 14)**. A frame sampled with its
+reacting carbons further apart relaxes to a structure in which they remain
+further apart.
+
+SUPERSEDED: an earlier version of this note, written when five frames had
+converged, reported r = +0.073 (p = 0.894) and concluded that the optimisation
+erased the sampled geometry. That was an artefact of the small sample. The
+n = 14 result above replaces it and the earlier reading must not be used.
 
 This is a Phase-1 result in its own right and supports the near-attack
 conformation argument independently of any barrier. It is descriptive, not

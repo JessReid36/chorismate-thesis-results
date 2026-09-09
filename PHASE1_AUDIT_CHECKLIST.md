@@ -158,6 +158,42 @@ denominator for the standard error.
 
 **Effort:** one script, minutes to run.
 
+### A7. The transition state has two imaginary modes, not one  ☐
+
+`05_qmmm/18c_reduced_region/ts_frequencies_summary.txt` lists **−313.30 cm⁻¹**
+and **−18.65 cm⁻¹**, both flagged `***imaginary mode***`. The header of that same
+file, and `phase1_system_dev/BARRIER_FINAL.md`, both state "one imaginary mode".
+`WRITEUP_INDEX.md` already records the discrepancy and asks whether the
+reduced-region TS is a clean first-order saddle.
+
+A strict first-order saddle has exactly one imaginary frequency. A second small
+imaginary mode in a partially frozen QM/MM region is commonly a numerical
+artefact of the frozen boundary rather than a real instability, and modes below
+roughly 50 cm⁻¹ are often treated as such — but that convention has not been
+established for this system, and citing it without support would repeat the kind
+of unsourced inference this audit exists to catch.
+
+**Fix, in order of increasing cost:**
+
+1. Report both modes and state the interpretation as provisional. Cheapest, and
+   honest.
+2. Displace the TS along the −18.65 cm⁻¹ mode and re-optimise. If it returns to
+   the same saddle, the mode is an artefact of the frozen region; if it descends,
+   it is real and the structure is a second-order saddle.
+3. Recompute the Hessian with a larger movable region. Expensive, and only
+   warranted if (2) is ambiguous.
+
+**This also affects the ensemble.** `step19b_collect.py` reports NEB-CI barriers
+on the grounds that the frame-820 saddle is fully characterised. If that saddle
+is not a clean first-order saddle, the licence for the proxy is weaker than
+stated. Resolving this is therefore a prerequisite for the ensemble write-up, not
+an aside.
+
+**Note on provenance:** two notes committed during this audit — the earlier
+versions of this checklist and of `PHASE1_ENSEMBLE_NOTES.md` — asserted a single
+imaginary mode, following `BARRIER_FINAL.md` rather than the frequency table.
+Both have been corrected.
+
 ---
 
 ## B. Deliberate protocol decisions
@@ -211,8 +247,9 @@ acknowledges "no configurational averaging is taken into account" as a
 limitation of the approach.
 
 This work uses NEB-CI followed by eigenvector-following TS optimisation, with
-frequency verification (one imaginary mode, −313.30 cm⁻¹) and IRC connecting the
-intended basins.
+frequency verification and IRC connecting the intended basins. The Hessian
+shows **two** imaginary modes, −313.30 and −18.65 cm⁻¹
+(`05_qmmm/18c_reduced_region/ts_frequencies_summary.txt`); see the new item A7.
 
 **Action:** none needed — but say so in the methods. This is an improvement over
 the reference protocol and currently goes unclaimed.
