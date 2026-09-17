@@ -1,0 +1,69 @@
+host=comp050.hpc start=Wed Sep 16 11:14:01 SAST 2026
+
+angle definition imported from step11f_nac_check.py
+substrate: 24 atoms, CHHCCOOOCHCHCCHCHCHOHCOO
+trajectories: 20000 + 40000 = 60000 frames, one per picosecond
+  10000/60000
+  20000/60000
+  30000/60000
+  40000/60000
+  50000/60000
+  60000 frames measured
+
+wrote /home/18660916/system_development/04_amber_md/11_analysis/theta_per_frame.dat
+
+==============================================================================
+Correlation times, Sokal windowing, the same estimator as step11e
+==============================================================================
+observable                  tau (frames)    tau (ps)    eff. N  r with barrier
+------------------------------------------------------------------------------
+theta2 (predicts barrier)          275.2       275.2       109          +0.657
+theta1                               4.1         4.1      7244          +0.076
+forming C1-C6                        7.0         7.0      4301          -0.202
+
+  The r column is the correlation of each quantity with the in vacuo
+  barrier across the thirteen frames for which one has been computed.
+  Only theta2 predicts it, so its correlation time is the one that
+  governs whether frames are independent for this purpose.
+
+==============================================================================
+What spacing does theta2 require?
+==============================================================================
+  tau(theta2) = 275.2 ps
+  independence at 5 tau: 1376 ps between frames
+  available equilibrated trajectory, from 11000 ps: 49000 ps
+  independent configurations at that spacing: 36
+
+  step11e reported 3.2 ps for the forming distance and concluded the
+  spacing was 269 times the correlation time. Compare that with the
+  figure above, which is for the observable that tracks the barrier.
+
+==============================================================================
+Where does equilibration end, by Chodera's criterion, for theta2?
+==============================================================================
+  Scan the discard point and take the value leaving the most
+  effectively uncorrelated samples. The present 11000 ps cut was read
+  off backbone-deviation block means by eye.
+
+    t0 / ps   tau / ps     N_eff
+          0      275.2       109
+       2000      236.2       123
+       4000      234.0       120
+       6000      227.7       119
+       8000      239.0       109
+      10000      183.8       136
+      12000      124.8       192
+      14000      115.4       199
+      16000      120.2       183
+      18000      123.4       170
+      20000       97.4       205   <- maximum
+      22000      109.0       174
+      24000      122.4       147
+      26000      142.2       120
+      28000      125.4       128
+
+  Chodera's choice: discard 20000 ps. The present cut is 11000.
+  These differ materially. The thirty-frame selection was made
+  from the 11000 ps cut and should be reconsidered.
+
+exit=0 end=Wed Sep 16 11:14:34 SAST 2026
