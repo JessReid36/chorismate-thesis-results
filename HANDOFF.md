@@ -6,6 +6,62 @@ explicitly, because several were plausible enough to be re-derived.
 
 ---
 
+## 0. How to work on this project
+
+**Read this section before anything else.** Every expensive error in this project
+came from breaking one of these rules.
+
+### Say only what the output shows or the literature states
+
+Two sources are admissible: a command whose output is in front of you, and a
+paper that has been read. Nothing else.
+
+- If a number is quoted, it came from a file that was opened. Do not reconstruct
+  figures from memory, and do not carry a value forward from earlier in a
+  conversation without re-reading it if anything has changed.
+- If a claim needs a citation and the paper is not in the repository, **say so and
+  ask for the DOI.** It will be added. Do not reconstruct a DOI, a page number, a
+  quoted sentence, or an author list from memory — one reconstructed DOI in an
+  earlier session pointed at the wrong paper.
+- If something is inferred rather than measured, label it as inference in the same
+  sentence. "The Hessian is scratch" and "the Hessian is named as scratch in
+  ORCA's own output" are different claims.
+- When asked whether something is the case, the answer is a command, not a view.
+
+### Check the actual output, every time
+
+- **A generator passing `bash -n` says nothing about what it writes.** After
+  changing a generator, regenerate one frame and grep the generated file. This
+  caught the spring constant living in a copied driver rather than the generator
+  that was edited.
+- **Never infer a job's state from the presence of an output file.** PBS writes
+  its output at job end, and ORCA writes window files on completion, so a running
+  job and an unstarted one look identical on disk. Ask `qstat`.
+- **An empty grep is not a negative result** until the file has been confirmed to
+  exist and the pattern confirmed to be right. Several "nothing found" readings in
+  this project were the wrong path or the wrong search term.
+- **Absence of a success marker is not absence of progress.** A stage that has
+  produced 52,000 lines of output and is running at 780 per cent CPU is working,
+  whatever it has not yet printed.
+- **Re-read a file after editing it.** Earlier output in a conversation is stale
+  the moment anything changes.
+
+### When something looks wrong
+
+Measure before concluding. Three examples from this session where the first
+explanation was wrong and a measurement settled it: the transition-state stage
+was not stalled but slow; the memory shortfall was not the cause of that
+slowness; and the top-site disagreement between frames was near-degeneracy in the
+ranking rather than disagreement about location.
+
+### Scope
+
+Do not widen a task without saying so. Deleting files, killing jobs and editing
+committed scripts each need the reason stated and, where the action is
+irreversible, confirmation.
+
+---
+
 ## 1. Where the pipeline is now
 
 Thirty new frames selected from the extended molecular dynamics, all past
@@ -308,6 +364,36 @@ negligibly, the remaining frames can skip it with evidence.
   fragment. The stage that copied never drifted; the stage that rewrote did.
 - Check what a job actually uses before trusting its resource request.
 - Absence of a success marker is not evidence of no progress. Count iterations.
+
+## 10. Where things live
+
+**Repositories**
+- Code: `~/Desktop/chorismate_thesis_code`, branch `tier1-realism`
+- Results: `~/Desktop/chorismate-thesis-results`, branch `main`
+- Cluster: `18660916@hpc1.sun.ac.za`, work under `~/system_development`
+
+**On the cluster**
+- `05_qmmm/19_ensemble/frame_NNNNN/` — one directory per frame, all stages
+- `05_qmmm/19_ensemble_barriers/` — the harvest, which is what the analysis reads
+- `05_qmmm/12_frame_selection/selection_manifest.tsv` — 45 frames, the first 15
+  from the original run and 30 renumbered from the extension
+- `05_qmmm/16_scan/run_scan.sh` — the scan driver, **the single place the spring
+  constant is set**; it is copied into each frame
+- `04_amber_md/10c_production/prod.nc` and `10d_production_extend/prod_ext.nc` —
+  one trajectory in two files, 20,000 and 40,000 frames; scripts route by index
+- `phase2b_charge_design/08_frame_sensitivity/` — the per-frame difference
+  potentials and the ensemble-mean map
+
+**Driving the pipeline**
+```
+bash next.sh                              # advance scans and product optimisations
+bash run_ensemble_batched.sh status       # what is where
+bash run_ensemble_batched.sh stage4 4     # four bands
+bash run_ensemble_batched.sh harvest      # read barriers, free space
+```
+
+**Papers held** are in the reference repository. If one is needed that is not
+there, ask for the DOI.
 
 ## References
 
