@@ -1,0 +1,270 @@
+PHASE 2.2 — PLAN AND RATIONALE
+==============================
+Written 2026-09-30, after Phase 1 was audited step by step and the Hartke-group
+literature was re-read in full. Supersedes the Phase 2 / 2b approach.
+
+Every claim below is traceable to a committed output file or to a paper that has
+been read. Where a source is cited, the specific setting it belongs to is named,
+because the three Hartke-group sources use THREE DIFFERENT settings and conflating
+them has already caused errors in this project.
+
+
+-------------------------------------------------------------------------------
+0. THE THREE SOURCES, KEPT APART
+-------------------------------------------------------------------------------
+
+[D2018]  Dittner & Hartke, J. Chem. Theory Comput. 2018, doi 10.1021/acs.jctc.8b00151
+         "Globally Optimal Catalytic Fields - Inverse Design of Abstract Embeddings
+         for Maximum Reaction Rate Acceleration"
+         refs: acs.jctc.8b00151.pdf
+         SETTING: abstract POINT CHARGES on a vdW surface. Reaction path is FIXED
+         and pre-optimised ("static" or "vertical" mode). Menshutkin SN2 at PM7,
+         with gas-phase and COSMO(water) reference paths. Charges are optimised so
+         that the bare substrate + charges reproduces what the continuum does.
+         NO continuum is present during the optimisation itself.
+
+[DTHESIS] Dittner, PhD thesis, "Globally Optimal Catalysts"
+         refs: gocat_2.pdf
+         Contains D2018 reprinted as a chapter, PLUS material not in D2018:
+           Ch. 2 (Theory)  - the vdW surface constraint algebra, constraint values
+           Ch. 3.6         - the Coulomb-implosion problem; Algorithm 3.1 (static)
+                             versus Algorithm 3.2 (ADAPTIVE, fully relaxes the MEP
+                             inside the GOCAT)
+           Ch. 7           - the adaptive scheme applied, on a Diels-Alder reaction
+                             (maleic anhydride + cyclopentadiene), NOT the SN2
+         So the thesis DOES relax the path; D2018 does not. Do not cite D2018 for
+         path relaxation, and do not cite the thesis Ch.7 system as an SN2.
+
+[B2021]  Behrens & Hartke, Topics in Catalysis 2021, doi 10.1007/s11244-021-01486-1
+         "Globally Optimized Molecular Embeddings for Dynamic Reaction Solvate
+         Shell Optimization and Active Site Design"
+         refs: s11244-021-01486-1.pdf
+         SETTING: REAL MOLECULAR FRAGMENTS, not point charges. MEP recomputed
+         inside every fitness evaluation. GFN-xTB for QM, OPLS-AA for MM.
+         Two systems: SN2 in 20 explicit acetones; and KSI active-site design from
+         crystal structure 1OH0 with ALL WATERS REMOVED and 17 capped side chains.
+         Fitness has THREE terms here, not D2018's five.
+
+Claeyssens 2011 (doi 10.1039/c0ob00691b) is the Phase 1 primary comparator.
+Claeyssens 2005 (doi 10.1039/b508181e) is the comparator ONLY for the enzyme-only
+barrier-versus-stabilisation regression. See 00_crosscutting/comparator_decision.txt
+in consolidated_works.
+
+
+-------------------------------------------------------------------------------
+1. THE GOAL, RESTATED
+-------------------------------------------------------------------------------
+
+Catalyse the chorismate-to-prephenate Claisen rearrangement by placing charges in
+the ABSENCE of the enzyme - what [D2018] achieve for the Menshutkin SN2 - but with
+a NON-BLACK-BOX optimiser. [D2018] and [B2021] both use a genetic algorithm: no
+optimality guarantee, ten independent runs to gain confidence, and in [D2018] a
+database of 5388 solutions clustered after the fact to understand the answer.
+
+The novelty claim is therefore: SAME PHYSICS, PROVABLE OPTIMUM. Not a different
+approximation with a provable optimum.
+
+
+-------------------------------------------------------------------------------
+2. WHAT CHANGES FROM PHASE 2 / 2b, AND WHY
+-------------------------------------------------------------------------------
+
+2.1 THE DIFFERENCE-POTENTIAL MAP IS REBUILT ON POST-CUT FRAMES
+    The committed dv_grid_ensemble_mean.tsv states its own provenance in its
+    header: 10 frames, 02450 04085 09025 09900 10775 11630 12485 14155 17505
+    19185. ALL TEN are below the 20,000 ps equilibration cut, all ran at the 400 kJ
+    spring, and Phase 1's finalised position is that the pilot set must not be used
+    for reported results. 28 post-cut frames now have barriers.
+    -> the map, the grid and the B6 frame-sensitivity conclusion all rebuild.
+
+2.2 NO CONTINUUM ALONGSIDE THE CHARGES
+    Phase 2 as it stood used point charges PLUS CPCM eps = 4. That matches neither
+    published setting: [D2018] uses COSMO only to DEFINE the target path, never
+    alongside the charges; [B2021] uses explicit molecules and no continuum at all.
+    A continuum next to the charges supplies the same electrostatic stabilisation
+    the charges are being optimised to provide.
+    -> charges only. A continuum may define the target, as [D2018] do.
+
+2.3 SMEARED CHARGES, NOT POINT CHARGES         <-- the main physical change
+    [DTHESIS] Ch. 3.6 states the failure mode in its own words:
+      "by using a vdW surface for the point charge entities, Coulomb implosion is
+       an issue due to the non-convexity around the singularity of the charge
+       center without any other repulsions such as dispersion interactions of real
+       atoms"
+    and in its footnote, that without compensating fields "even stationary points
+    of higher order are possible".
+    Our own step_7_relaxed_validation_and_point_charge_collapse.md reproduces this.
+    It is a published pathology of the model, not a bug in our implementation.
+    [DTHESIS] MANAGES it by rejection - gradient-norm thresholds and angle checks
+    that detect and discard imploded solutions.
+    -> we REMOVE IT AT SOURCE by replacing the point charge with a finite-width
+       (Gaussian-smeared) charge distribution. This is a physical improvement on
+       the source model, it is defensible from first principles, and it makes the
+       constraint set smoother, which helps a MILP rather than hurting it.
+    RISK, to be tested not assumed: smearing reduces the attainable field gradient
+       near the surface. Too wide and the designed effect is lost. The width must
+       be calibrated against something physical - see section 4.
+
+2.4 A CHEAP METHOD FOR THE DESIGN LOOP, BENCHMARKED NOT ASSUMED
+    [B2021] run GFN-xTB inside the loop and justify it as: "As long as the relative
+    energies are accurate enough between different solution candidates, our global
+    optimization scheme will be able to find optima that will be transferable to
+    higher quality ab initio calculations."
+    That warrant is about RELATIVE energies, so it must be tested on ours.
+    The literature is specifically unfavourable for this reaction. Claeyssens 2011
+    p.10: "both AM1 and HF overestimate the reaction barrier severely, while
+    standard non-hybrid density functional techniques (e.g. PBE and SCC-DFTB)
+    underestimate the reaction barrier". p.11: AM1 "overestimates substrate
+    compression in chorismate mutase" - a GEOMETRY error. Woodcock's SCC-DFTB
+    barrier is 6.0 against Claeyssens' 11.3 at B3LYP. GFN-xTB is in the same
+    tight-binding family.
+    -> s10_cheap_method_benchmark.py tests XTB2, HF-3c, B97-3c and r2SCAN-3c
+       against the committed barrier_vac column, frame by frame, plus a field-
+       response test. Verdict rules were fixed before running. PBS 414079.
+
+2.5 SEPARATION CONSTRAINT REVISITED
+    [DTHESIS] Ch. 2 gives their typical values: charge bounds [-1, +1] e and a
+    minimum charge-charge separation r_min = 1 Angstrom.
+    Phase 2 used 3.5 Angstrom, which is 3.5x tighter, and that is why "can two
+    charges even be placed in a 4-5 Angstrom favourable region?" became a problem.
+    The constraint causing the difficulty is ours, not inherited.
+    -> revisit. A smeared charge has a physical width that can set r_min instead
+       of an arbitrary choice.
+
+
+-------------------------------------------------------------------------------
+3. WHAT STAYS THE SAME, AND WHY
+-------------------------------------------------------------------------------
+
+3.1 THE SURFACE IS THE UNION OF ATOM-CENTRED vdW SPHERES
+    [DTHESIS] Ch. 2, Eq. 2.16: each charge satisfies
+        || r_i - R_{J,Voronoi} ||_2 - d_J = 0
+    where d_J are ATOM-DEPENDENT vdW radii. No probe rolling, no solvent-accessible
+    offset, no uniform shell. Assignment is Voronoi-like: the atom minimising
+    (||r_i - R_J|| - d_J). A charge inside any sphere is projected back onto it.
+    The surface encloses ALL PATH FRAMES at once - "common vdW surface exposed by
+    all atoms of all frames" - not one geometry.
+    -> keep. One layer, as agreed.
+
+3.2 GOCAT'S PER-FRAME VALIDITY TERMS
+    [D2018] uses five: minimal barrier; TS stabilised versus the reference; no new
+    intermediate minima; a penalty if R, TS or P shifts more than 2 frames; and
+    gradient norms at R, TS and P below threshold. They are explicit that without
+    the fifth, "the reaction profile could be transformed into any arbitrary path
+    ... even into an equi-potential contour line, with no barrier at all".
+    [B2021] simplifies to three: RMS gradient at R/TS/P; sum of all barriers in the
+    path; and sum of RMSD between frames, favouring pre-organised candidates.
+    -> adopt. Note which source each term comes from when writing up.
+    NOTE: the gradient-norm term exists BECAUSE the path is fixed in [D2018].
+    [DTHESIS] Ch. 3.6 says a full path relaxation "would eliminate the need for
+    additional gradient thresholds". If we ever relax the path, that term changes
+    meaning.
+
+3.3 ARITHMETIC MEAN PENALISED BY SPREAD, ACROSS FRAMES
+    Ryde (2016) records the consensus for combining snapshot energies as an
+    exponential average, since the rate depends on exp(-dG/RT). At our barrier
+    spread that average is dominated by a single frame and is badly conditioned.
+    Dutta Dubey, Stuyver, Kalita & Shaik (jacs.9b13029) show solvent organises
+    against an applied field and screens it in proportion to polarity, so a design
+    that works in some conformers and not others is screened away where it is
+    weakest. Robustness across conformers is a condition of surviving solvation,
+    not a refinement.
+    -> mean penalised by spread. State it as a considered choice.
+
+
+-------------------------------------------------------------------------------
+4. THE DESIGN TARGET, AND THE CALIBRATION IT GIVES US
+-------------------------------------------------------------------------------
+
+Burschowsky et al., PNAS 2014 (pnas.1408512111, edited by Warshel) replaced Arg90
+in B. subtilis chorismate mutase with CITRULLINE: isosteric, but the cationic
+guanidinium becomes a neutral urea. Their result:
+
+    "the positively charged arginine contributes up to 5.9 kcal/mol to transition
+     state stabilization but only 0.6 kcal/mol to the binding energy of the ground
+     state"
+
+with the citrulline NH2 3.2 Angstrom from the ether oxygen of the TS analogue.
+
+Against our own measurement: mean stab_TS = -4.8 kcal/mol over the frames with
+both a barrier and an in vacuo barrier. ONE cationic centre at 3.2 Angstrom
+accounts for more than the entire measured stabilisation.
+
+Three consequences:
+  - The target is not a subtle distributed field. It is approximately ONE positive
+    charge about 3 Angstrom from the ether oxygen, with a roughly 10:1 differential
+    between transition state and reactant.
+  - It is a BENCHMARK: 5.9 kcal/mol is what one well-placed cation achieves in a
+    real enzyme.
+  - It is a CALIBRATION for the smearing width of section 2.3: choose the width so
+    that a single smeared +1 at 3.2 Angstrom from the ether oxygen reproduces
+    5.9 kcal/mol of differential stabilisation. That ties our charge model to a
+    measured experimental result instead of an arbitrary parameter.
+
+
+-------------------------------------------------------------------------------
+5. NUMBER OF CHARGES
+-------------------------------------------------------------------------------
+
+[D2018] scanned N_Ch and report: "We have tried several different N_Ch values but
+present here only the N_Ch = 10 size. This is already a converged end point of a
+general trend, starting at N_Ch = 1, reaching N_Ch = 3 (SI), and not changing
+qualitatively at N_Ch = 20 (not shown)." They also ran a full N_Ch = 1 case.
+
+They further observe that at N_Ch = 10 the solution database "might even be reduced
+to one (essential) dimension (due to gauge freedom)", i.e. extra charges buy
+alternative arrangements of the SAME field, not new physics.
+
+-> scan N_Ch = 1, 2, 3, 5, 8 and stop when the objective stops improving. Start at
+   1, because Burschowsky makes it the physically motivated case and because
+   recovering the Arg90 position from a one-charge optimisation would be a
+   validation obtainable no other way.
+
+-> GAUGE FREEDOM IS AN OPPORTUNITY FOR A CERTIFIED OPTIMISER. If many arrangements
+   give the same field, the optimum is degenerate. A GA returns whichever member it
+   lands on; [D2018] had to cluster 5388 solutions by MDS to discover the
+   degeneracy after the fact. A MILP can CHARACTERISE the optimal set directly -
+   solve, add a no-good cut, re-solve, enumerate. That is a stronger statement than
+   "the GA found this one", and it falls out of the certificate rather than being
+   bolted on.
+
+
+-------------------------------------------------------------------------------
+6. ORDER OF WORK
+-------------------------------------------------------------------------------
+
+  1. Cheap-method benchmark                    PBS 414079, running
+  2. Smearing-width calibration against Burschowsky's 5.9 kcal/mol
+  3. Spatial clustering of top-ranked dv sites, on existing data - decides whether
+     the ranking instability of the old note matters or is noise inside a robust
+     solution domain ([D2018]: "as long as the ESP is within those ranges, a
+     significant catalytic effect is to be expected")
+  4. Rebuild the dv map on the post-cut frames
+  5. Grid construction: one layer, union of atom vdW spheres over all path frames;
+     sampling density set by the calibrated smearing width
+  6. Objective and constraints: per-frame terms from [D2018]/[B2021], across-frame
+     mean penalised by spread, reconciled with MILP linearity
+  7. N_Ch scan, 1 upward
+  8. Validate: does the dv extremum sit near the ether oxygen at ~3 Angstrom?
+
+
+-------------------------------------------------------------------------------
+7. OPEN QUESTIONS NOT YET SETTLED
+-------------------------------------------------------------------------------
+
+  - FIXED PATH OR RELAXED PATH. [D2018] fixes it and needs gradient thresholds.
+    [DTHESIS] Ch. 7 relaxes it (Algorithm 3.2) on a Diels-Alder system. [B2021]
+    recomputes the MEP every fitness call. A MILP over a fixed dv map is the
+    [D2018] setting. Whether an outer loop - solve the certified inner problem,
+    recompute the MEP, rebuild the map, repeat - is worth building is undecided.
+    That would be sequential linearisation with a certified inner step.
+  - EXPLICIT WATER. [B2021] remove all waters for the enzyme case and name it as a
+    deficiency of their own work, wanting "the inclusion of explicit water
+    molecules". Phase 1 has 139 mobile waters in the active region. Whether the
+    design environment includes them is undecided.
+  - TARGET REFERENCE. [D2018] use COSMO(water) to define the target the charges
+    must reproduce. Whether our target is gas-phase-referenced or water-referenced
+    is undecided.
+  - PRECISION FLOOR. The standard error on the mean barrier sets the smallest
+    design effect separable from conformational noise. Recompute on the post-cut
+    frames before claiming any effect.
