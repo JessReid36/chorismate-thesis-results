@@ -105,6 +105,35 @@ approximation with a provable optimum.
        near the surface. Too wide and the designed effect is lost. The width must
        be calibrated against something physical - see section 4.
 
+2.3b THE SURFACE ITSELF PUTS CHARGES TOO CLOSE, AND THAT IS PROBABLY THE CAUSE
+    Found 2026-09-30 while building s12_build_grid.py.
+
+    [DTHESIS] Ch. 2 Eq. 2.16 places each charge EXACTLY ON its atom's vdW sphere.
+    The charge-to-nucleus distance is therefore the vdW radius itself:
+
+        H 1.09    C 1.70    N 1.55    O 1.52   Angstrom
+
+    Burschowsky's citrulline NH2 sits 3.2 Angstrom from the ether oxygen. So
+    [DTHESIS]'s surface places a bare point charge at UNDER HALF the separation of
+    the real cation it is standing in for.
+
+    That is very plausibly why [DTHESIS] Ch. 3.6 reports Coulomb implosion: the
+    surface choice and the pathology are linked. They treat the symptom - gradient
+    thresholds and angle checks that detect and discard imploded solutions - rather
+    than the cause.
+
+    CONSEQUENCE FOR THE GRID. min_approach cannot be a filter applied on top of the
+    vdW surface, because every site on that surface fails it by construction. It
+    must be a FLOOR on the site radius, pushing the surface outward where the vdW
+    radius alone would sit too close. s12_build_grid.py implements it that way, and
+    min_approach = 0 recovers [DTHESIS]'s surface exactly so their setting stays
+    reachable for comparison.
+
+    CONSEQUENCE FOR THE CHARGE MODEL. If s11 finds a bare charge is only trustworthy
+    beyond, say, 2.5-3 Angstrom, then [DTHESIS]'s surface is inside the breakdown
+    region for this substrate and a bare point charge on it cannot represent Arg90.
+    That would be a finding about the source model, not about our implementation.
+
 2.4 A CHEAP METHOD FOR THE DESIGN LOOP, BENCHMARKED NOT ASSUMED
     [B2021] run GFN-xTB inside the loop and justify it as: "As long as the relative
     energies are accurate enough between different solution candidates, our global
@@ -120,7 +149,14 @@ approximation with a provable optimum.
     tight-binding family.
     -> s10_cheap_method_benchmark.py tests XTB2, HF-3c, B97-3c and r2SCAN-3c
        against the committed barrier_vac column, frame by frame, plus a field-
-       response test. Verdict rules were fixed before running. PBS 414079.
+       response test. Verdict rules were fixed before running.
+    NOTE ON COST, measured 2026-09-30. The first submission used %pal nprocs 8. ORCA
+    reported 2-4 s of compute per job while consecutive outputs appeared ~180 s
+    apart: 98 per cent MPI startup and teardown on a 24-atom single point. The xtb2
+    jobs, the only ones without %pal, ran 8 s apart. %pal is now removed from both
+    s10 and s11 and the PBS request dropped to 1 cpu. For jobs this small, serial is
+    roughly 40x faster in wall time. Worth remembering for any future single-point
+    sweep.
 
 2.5 SEPARATION CONSTRAINT REVISITED
     [DTHESIS] Ch. 2 gives their typical values: charge bounds [-1, +1] e and a
@@ -233,22 +269,51 @@ alternative arrangements of the SAME field, not new physics.
 6. ORDER OF WORK
 -------------------------------------------------------------------------------
 
-  1. Cheap-method benchmark                    PBS 414079, running
-  2. Smearing-width calibration against Burschowsky's 5.9 kcal/mol
-  3. Spatial clustering of top-ranked dv sites, on existing data - decides whether
-     the ranking instability of the old note matters or is noise inside a robust
-     solution domain ([D2018]: "as long as the ESP is within those ranges, a
-     significant catalytic effect is to be expected")
-  4. Rebuild the dv map on the post-cut frames
-  5. Grid construction: one layer, union of atom vdW spheres over all path frames;
-     sampling density set by the calibrated smearing width
-  6. Objective and constraints: per-frame terms from [D2018]/[B2021], across-frame
-     mean penalised by spread, reconciled with MILP linearity
-  7. N_Ch scan, 1 upward
-  8. Validate: does the dv extremum sit near the ether oxygen at ~3 Angstrom?
+CORRECTED 2026-09-30. The first version of this list had the spatial-clustering
+test at step 3, ahead of the map rebuild. That was wrong: the clustering test needs
+a difference-potential map, and the only map that exists is the pilot one. Running
+it and reporting the result would mean reporting a number derived from exactly the
+frames Phase 1's finalised position excludes.
 
+The dependency chain is: charge model -> grid -> map -> anything computed on the map.
 
--------------------------------------------------------------------------------
+  1. CHEAP-METHOD BENCHMARK                          s10, PBS 414092
+     Decides what can go inside the design loop. Independent of everything below.
+
+  2. PROBE-DISTANCE SCAN                             s11, PBS 414093
+     Decides the CHARGE MODEL: bare point charges or something with repulsion, and
+     the minimum distance at which a bare charge can be trusted. That distance
+     becomes min_approach in the grid.
+
+  3. GRID                                            s12, written and tested
+     Depends on 2 for min_approach. Everything else about it is already tunable and
+     the tool is a pure function of its configuration, so a changed min_approach is
+     one command and a meaningful diff.
+
+  4. REBUILD THE DIFFERENCE-POTENTIAL MAP on post-cut frames
+     Depends on 3. This is the step that retires the pilot map.
+
+  5. SPATIAL CLUSTERING OF TOP-RANKED SITES, on the rebuilt map
+     The reportable version. Asks whether the top sites occupy a common region
+     across frames, i.e. whether ranking instability matters or is noise inside
+     [D2018]'s robust solution domain.
+
+  6. OBJECTIVE AND CONSTRAINTS
+     Per-frame validity terms from [D2018] and [B2021]; across-frame mean penalised
+     by spread; reconciled with MILP linearity.
+
+  7. N_Ch SCAN, from 1 upward.
+
+  8. VALIDATE against Burschowsky: does the dv extremum sit near the ether oxygen
+     at roughly 3 A?
+
+  OPTIONAL, IN PARALLEL, NOT QUOTABLE
+     The clustering test can be run NOW on the pilot map purely to size the risk of
+     step 4. Strong spatial clustering means the rebuild is low-stakes and can
+     happen late; no clustering means the design target is frame-dependent and that
+     reshapes step 6 before it is built. If run, it must be labelled a methods
+     pilot, exactly as the original ten frames were, and never quoted as a result.
+
 7. OPEN QUESTIONS NOT YET SETTLED
 -------------------------------------------------------------------------------
 
