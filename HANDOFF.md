@@ -150,6 +150,26 @@ With `maxcore 3000`, `nprocs 8` and `NImages 8` the requirement is
 8 x 8 x 3000 MB, about 192 GB. Every band before this ran roughly 70 GB over its
 request.
 
+### The batch runner could not see the queue at all
+
+Two independent defects in `run_ensemble_batched.sh`, both measured 2026-09-28.
+Band job names are `cm19_n<5-digit frame>` - `cm19_n24883` - while the code
+asked for `cm19_n${f:1}` = `cm19_n4883`, which strips the leading digit and is
+not the job's name. And qstat truncates the Name field to nine characters plus
+an asterisk, so even the correct name could not match: `cm19_n24883` prints as
+`cm19_n248*`. The "still running" guard in harvest had therefore NEVER been able
+to fire, and the same defect was in stage1 line 93. Fixed by `job_running()`,
+which compares the printed prefix against the full name, plus a clause refusing
+to delete any Hessian written within the hour.
+
+A third defect, found 2026-09-29: `stage4` had no per-frame queue check at all.
+A frame that is running but not yet converged passes every other test, so each
+stage4 call submitted a duplicate into the same directory. Observed on frame
+36665, which acquired two jobs writing the same files; both were killed and the
+frame restarted from a cleaned directory. Read this whole file end to end rather
+than block by block - three separate faults were found in it, each only because
+something else forced a look at that particular block.
+
 ### The batch runner tested files instead of the queue
 
 `stage2` decided a scan was outstanding unless `win_20.pdb` existed, which only
@@ -300,9 +320,22 @@ and -0.7 A" from a restrained scan. The climbing image is more converged than
 that. The refined saddle would be an improvement on something already adequate by
 the published standard, not a requirement.
 
-**Decision still open:** whether to let all thirty run this stage. Compare a
-refined saddle against its climbing image when one converges; if they differ
-negligibly, the remaining frames can skip it with evidence.
+**DECISION TAKEN, 2026-09-28: do not run this stage.** All four frames attempted
+(24883, 26495, 34991, 43738) were killed at the 176 h walltime after 6 to 9
+cycles, with final MAX gradients of 0.00236, 0.00390, 0.00131 and 0.00191
+against a 3.0e-4 tolerance - 4 to 13 times over, and rising on 43738. Each had
+reached band convergence in 2 to 7 hours, so roughly 96 per cent of each job's
+walltime produced nothing. The remaining frames run NEB-CI, which stops at the
+climbing image: measured run times 2.6 to 22.7 hours, mean 7.2, and about
+450 MB per frame against 22 GB, because no Hessian is built.
+
+Eight images are sufficient to place the saddle. Frame 47641 was rerun with
+NImages 16: the highest-energy image sits at fractional path position 0.647
+against 0.667 with eight images, and the energies agree to within
+0.037 kcal/mol at every matched iteration. The residual offset from Claeyssens'
+r = -0.50 is therefore methodological - their transition state is the maximum of
+a restrained scan along one coordinate, ours is a climbing image free to find a
+saddle displaced in any coordinate - and not a resolution artefact.
 
 ## 7. Conclusions overturned — do not re-derive
 
@@ -349,8 +382,34 @@ negligibly, the remaining frames can skip it with evidence.
 
 - Zero-point and thermal corrections before comparing to an activation enthalpy.
 - The reference transition state shows two imaginary modes where one is expected.
-- Section X.1.4 claims one level of theory throughout; false after the basis split
-  (Phase 1 def2-SVP, Phase 2 def2-SVPD).
+- Section X.1.4 claims one level of theory throughout. This is TRUE for every
+  structural calculation: optimisations, scans, bands and barriers are
+  B3LYP-D3BJ/def2-SVP in both phases. def2-SVPD appears in only four files in
+  the whole code repository - s7_additivity, s7b_additivity_scaling,
+  s9_frame_sensitivity, and 02_singlepoints/refstate_diagnostic, which runs both
+  bases deliberately to compare them. All four are difference-potential single
+  points. The split is structural work versus dv work, not Phase 1 versus
+  Phase 2. The earlier note here overstated the problem. What has NO written
+  justification anywhere is the choice of def2-SVP over Claeyssens' 6-31G(d);
+  argue it via stabilisation, where basis error largely cancels.
+- The original fourteen frames lie at 2450 to 19185 ps and are therefore all
+  before the 20,000 ps equilibration cut adopted in section 4. Their scans also
+  ran at the 400 kJ spring, against 2500 for the thirty. The two groups are not
+  compared: the ten were a pilot establishing that the pipeline reproduces
+  Claeyssens, and the thirty establish it independently. Nothing in the write-up
+  should pool or contrast them.
+- stab_TS_total, in any ensemble_barriers.tsv written before 2026-09-28, must
+  never be quoted. It differenced a QM/MM TOTAL energy for the whole solvated
+  system against a 24-atom gas-phase energy, giving about -240 Eh. It is not a
+  stabilisation of anything. Nothing downstream ever read it. Replaced by
+  stab_TS = barrier - barrier_vac; stab_R, which was not wrong but misnamed, is
+  now E_int_R.
+- The in vacuo reference is a gas-phase dianion that is electronically UNBOUND,
+  HOMO(R) +0.082 Eh at def2-SVP and +0.044 at def2-SVPD. It is retained because
+  the unboundedness cancels between reactant and TS: the barrier moves only
+  0.66 kcal/mol from vacuum to bulk water. Claeyssens used the same gas-phase
+  reference, so the convention is inherited - but state it rather than leave it
+  to be found.
 - Arithmetic averaging stated as a considered choice, per Ryde's guidance.
 - Frame 820, the Phase 2 reference, is at 820 ps and therefore pre-equilibration.
 

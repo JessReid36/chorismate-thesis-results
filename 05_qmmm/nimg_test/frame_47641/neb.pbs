@@ -1,0 +1,22 @@
+#!/bin/bash
+#PBS -N cm19_x47641
+#PBS -l select=1:ncpus=8:mem=250gb
+#PBS -l walltime=176:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/nimg_test/frame_47641/neb.pbs.out
+cd /home/18660916/system_development/05_qmmm/nimg_test/frame_47641
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:$LD_LIBRARY_PATH"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+# the NEB needs both optimised endpoints present under these names
+for f in reactant.pdb product.pdb; do [[ -s "$f" ]] || { echo "FAIL missing $f - run the endpoint optimisations first"; exit 1; }; done
+echo "host=$(hostname) start=$(date)"
+/home/apps2/ORCA/6.0.1/orca neb.inp > neb.out 2>&1
+echo "orca_exit=$? end=$(date)"
+grep -iE "THE NEB OPTIMIZATION HAS CONVERGED|ORCA TERMINATED NORMALLY" neb.out | tail -4
+# the full-system trajectories are large and the quantum-region
+# versions of the same paths are kept; the Hessian is kept because
+# a restart of the transition-state optimisation would need it
+rm -f neb_MEP_ALL_trj.xyz neb_MEP_trj.xyz neb_initial_path_trj.xyz neb_MEP_ALL.activeRegion_trj.xyz neb*.tmp neb_im*.gbw 2>/dev/null

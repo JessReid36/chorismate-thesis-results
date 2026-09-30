@@ -152,8 +152,17 @@ already exceeds it on the same geometries against the same reference.
 +16.00 sits inside Ranaghan's B3LYP window, at its top. Candidate reasons for
 sitting above Claeyssens' 11.3, in order of likely importance: **single snapshot
 versus an average** (the ensemble now under way tests this directly); D3BJ
-dispersion, which Claeyssens did not use; ff14SB/GAFF/TIP3P versus CHARMM27; and
-the reduced 102-atom movable region. None indicates an error.
+dispersion, which Claeyssens did not use; and ff14SB/GAFF/TIP3P versus CHARMM27.
+None indicates an error.
+
+CORRECTION 2026-09-29: the reduced 102-atom movable region was previously listed
+here as a fourth candidate. It is not one. That region is used only in
+step18c_ts_reduced.inp and step18d_irc.inp, for the frame-820 saddle and IRC,
+where Hessian memory forced it. The ensemble never uses it: step19a reads
+active_atoms_R12.txt, 1959 atoms - 1518 protein, the 24-atom QM ligand, and 417
+water atoms, which is 139 TIP3P waters free to move. Claeyssens' movable region
+is roughly 3750 atoms in a 25 A sphere, so ours is about half the size, but it
+is not 102 atoms and it is not dry.
 
 **Outstanding:** the comparison to experimental ΔH‡ is not like-for-like. A
 potential-energy barrier omits zero-point and thermal corrections. The frame-820
