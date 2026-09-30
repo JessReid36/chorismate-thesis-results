@@ -352,3 +352,104 @@ The dependency chain is: charge model -> grid -> map -> anything computed on the
   - PRECISION FLOOR. The standard error on the mean barrier sets the smallest
     design effect separable from conformational noise. Recompute on the post-cut
     frames before claiming any effect.
+
+-------------------------------------------------------------------------------
+10. THE PROBE SCAN: WHAT IT ESTABLISHED, AND WHAT IT DID NOT
+-------------------------------------------------------------------------------
+Run 2026-09-30, PBS 414174. Full result in s11_probe_scan_result.txt.
+
+ESTABLISHED, and these stand:
+  - The design signal behaves as physics predicts for two of three frames: the
+    differential stabilisation falls as d^-2 in the far field, slopes -2.29 and -1.99.
+  - A bare +1 at Burschowsky's 3.2 A delivers -1.53 kcal/mol on average against the
+    measured -5.3, i.e. 29 per cent of the real arginine. ONE CHARGE CANNOT REACH THE
+    BENCHMARK.
+  - FRAME 43087 CHANGES SIGN beyond 4 A while the other two do not. A charge placed
+    there to help two frames would hurt the third. This is measured evidence for the
+    mean-penalised-by-spread objective, which previously rested on the Shaik screening
+    argument alone.
+
+NOT ESTABLISHED, AND A CORRECTION TO WHAT WAS FIRST CLAIMED FROM IT:
+  It was first reported from this scan that there is "no over-polarisation anywhere from
+  1.5 to 10 A" and therefore that bare point charges are safe and smearing unnecessary.
+  THAT CONCLUSION WAS OUT OF SCOPE AND IS WITHDRAWN.
+
+  The scan ran SINGLE POINTS ON FROZEN GEOMETRIES. The collapse recorded in
+  step_7_relaxed_validation_and_point_charge_collapse.md is GEOMETRIC: a substrate
+  oxygen migrates onto a designed +1 and ends 0.879 A away, 0.641 A inside its own van
+  der Waals contact, during RELAXED OPTIMISATION. Four of eight designs collapsed and
+  three more were drifting inward when killed. Nothing in this scan was permitted to
+  move, so nothing in it could detect that.
+
+  What the scan does show is that the ELECTRONIC response at fixed geometry is well
+  behaved: Loewdin shift monotone and only -0.226 e at 1.5 A, short-range log-log slopes
+  SHALLOWER than -2 rather than steeper, HOMO pulled down. Those are real and they are
+  the answer to a different question.
+
+  LESSON: a fixed-geometry energy scan cannot validate a charge model whose failure mode
+  is nuclear motion. The test that assesses a charge model is the one step 7 already
+  ran - relaxed optimisation, measuring closest approach against van der Waals contact.
+
+-------------------------------------------------------------------------------
+11. THE CHARGE MODEL: WHAT IS SETTLED, AND THE ONE ROUTE WORTH RE-TESTING
+-------------------------------------------------------------------------------
+
+step_7b_charge_representation_options.md was re-read and its claims checked rather than
+accepted. It holds up, and it is more careful than a first reading suggests.
+
+VERIFIED AGAINST THE ORCA 6 MANUAL, online:
+  - The .pc format is strictly count then "charge x y z" in Angstrom, four columns, no
+    width field. So 7b's rejection of Gaussian-smeared or finite-width external charges
+    stands on format grounds. A "charged sphere" is not something the code can express.
+  - %LJCoefficients with !QMMMOpt does exist, so the LJ route is real. 7b did not miss
+    it: they tried it and quote ORCA's actual abort,
+      "CPCM or SMD or ALPB or ddCOSMO or CPCMX requested together with QM/MM method.
+       This is not implemented."
+    and record it as "the preferred fix on physical grounds".
+
+VERIFIED INTERNALLY: 7b checked ORCA's UFF non-bonded parameters against Rappe's
+published values - C 0.105/3.851, N 0.069/3.660, O 0.060/3.500, H 0.044/2.886, all exact
+- and caught that the length column is R_min and not sigma.
+
+UNVERIFIED: 7b quotes BsCM's charged residues at 2.63-3.43 A (Arg90 2.63, Lys60' 2.71,
+Glu78 3.08, Arg7 3.19, Arg63' 3.43). Against the step 04 placed pose only Glu78 matches;
+Arg90 and Arg63' differ by 0.2-0.5 A. step 04 measures the TSA-derived pose BEFORE
+minimisation and MD, and 7b does not state its source structure. The claim is unverified
+rather than wrong, and 7b should name the structure it measured.
+
+THE ROUTE WORTH RE-TESTING, AND WHY IT IS NOT A REVERSAL
+7b's LJ rejection is CONDITIONAL ON CPCM BEING REQUIRED. Section 2.2 of this plan removes
+the continuum on independent grounds: [D2018] never runs charges and COSMO together, and
+[B2021] uses explicit molecules with no continuum at all. With CPCM gone, the abort that
+blocked 7b should not fire.
+
+7b's second blocker was that orca_mm -makeff "cannot generate a force field for
+free-floating charge sites: it runs an internal xtb geometry optimisation which fails on
+disconnected atoms". That is true of GENERATING one. The ORCA 6 manual, Molecular
+Mechanics section, states that the ORCAFF.prms nonbonded parameters "can be conveniently
+modified directly within the ORCA Force Field File. This file can then be modified, the
+required values can be added, and the resulting file can be defined as input for the QMMM
+calculation." The site is therefore ADDED BY HAND to an existing file, and step13a already
+produced one.
+
+If it works, the LJ route is closer to [B2021] than surrogates are - they use OPLS-AA
+electrostatic embedding, i.e. charges WITH Lennard-Jones parameters, not bare point
+charges - and it carries no orientation parameter and no basis-set superposition error.
+
+s13_lj_charge_site_test.sh tests it in three stages and stops at the first failure:
+whether !QMMM runs without CPCM; whether a hand-edited ORCAFF.prms with a free-floating
+site is accepted; and where a substrate oxygen stops under relaxed optimisation against a
++1 carrying LJ parameters, with a bare point charge run alongside as the control.
+
+THE CRITERION, fixed before running and taken from step 7's own reframing: inward motion
+is PARTLY PHYSICAL, since a real guanidinium should pull a carboxylate into a salt bridge
+and the structural consensus places those contacts at 2.6-3.0 A. So
+    below 2.0 A   the wall is too weak, no better than bare
+    2.0 to 3.2 A  PHYSICAL, the salt-bridge range
+    beyond 4.0 A  the wall is too hard and the charge cannot act
+The objective is not to prevent approach but to make it stop in the right place.
+
+IF IT FAILS, molecular surrogates stand exactly as 7b concluded: methylguanidinium for
++1 and acetate for -1, placed in the QM region and Cartesian-frozen while the substrate
+relaxes, which for this system are not analogies since Arg90's side chain IS a
+guanidinium and Glu78's IS a carboxylate.
