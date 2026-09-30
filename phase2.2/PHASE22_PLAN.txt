@@ -150,13 +150,32 @@ approximation with a provable optimum.
     -> s10_cheap_method_benchmark.py tests XTB2, HF-3c, B97-3c and r2SCAN-3c
        against the committed barrier_vac column, frame by frame, plus a field-
        response test. Verdict rules were fixed before running.
-    NOTE ON COST, measured 2026-09-30. The first submission used %pal nprocs 8. ORCA
-    reported 2-4 s of compute per job while consecutive outputs appeared ~180 s
-    apart: 98 per cent MPI startup and teardown on a 24-atom single point. The xtb2
-    jobs, the only ones without %pal, ran 8 s apart. %pal is now removed from both
-    s10 and s11 and the PBS request dropped to 1 cpu. For jobs this small, serial is
-    roughly 40x faster in wall time. Worth remembering for any future single-point
-    sweep.
+    NOTE ON COST, corrected 2026-09-30 after a parsing error.
+      ORCA's TOTAL RUN TIME line is "days hours minutes seconds msec". The parser
+      used until now read fields 4, 6, 8 as hours, minutes, seconds, so it reported
+      days*3600 + hours*60 + minutes and dropped seconds. "4.0 s" was 4 minutes.
+      Three conclusions were drawn from that parse and two were wrong.
+      Correct: awk '{t=$4*86400+$6*3600+$8*60+$10}'.
+
+      WHAT ACTUALLY DRIVES COST, on 24-atom single points of the dianion, one core:
+          hf3c     14 s   MINIX, no DFT grid, 12 SCF cycles
+          b97-3c  202 s   mTZVP plus grid, 20 SCF cycles
+      A 14x difference on 1.7x the cycles: cost per cycle, i.e. basis and grid. NOT a
+      convergence pathology, despite the substrate being an unbound dianion.
+
+      PARALLELISM IS PER METHOD. b97-3c goes 202 s serial to 71-89 s on 8 ranks,
+      about 2.5x, with 81 per cent of the time in SCF iterations. That is where %pal
+      pays. A 14 s job is startup-dominated and %pal costs more than it saves. s10
+      sets ranks per method; s11 is parallel throughout since every job is at the
+      production level. A blanket setting either way is wrong, and was made twice.
+
+      NODE-LOCAL SCRATCH is real but secondary: 28.7 s shared against 6.6 s local for
+      the same input, measured with time. Both scripts now use ${TMPDIR:-/tmp}. The
+      earlier claim that this was THE cause was wrong.
+
+      LESSON, worth more than the numbers: sanity-check a parsed quantity against an
+      independent source before building on it. qstat -f reports cput and walltime,
+      and would have exposed the parser immediately.
 
 2.5 SEPARATION CONSTRAINT REVISITED
     [DTHESIS] Ch. 2 gives their typical values: charge bounds [-1, +1] e and a
