@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#PBS -N cm_s15dv
+#PBS -l select=1:ncpus=1:mem=8gb
+#PBS -l walltime=04:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/s15_dv2/s15_dv.pbs.out
+#
+# orca_vpot on the committed in vacuo densities. No SCF is run.
+# One call per frame per state; each is seconds, so this is serial and unparallelised.
+
+set -uo pipefail
+ORCA=/home/apps2/ORCA/6.0.1
+VAC=/home/18660916/system_development/05_qmmm/20_invacuo
+WORK=/home/18660916/system_development/phase2.2/s15_dv2
+
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="$ORCA/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+
+cd "$WORK" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+trap 'rmdir "$WORK/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "frames: 20000 21634 23268 24883 26495 33320 34991 36665 38344 40485 41786 42436 43087 43738 44388 45688 46990 47641 48292 49592 50892 52192 53493 54144 54795 55446 56098 57397 58698 59999"
+echo
+
+miss=0; ok=0
+for f in 20000 21634 23268 24883 26495 33320 34991 36665 38344 40485 41786 42436 43087 43738 44388 45688 46990 47641 48292 49592 50892 52192 53493 54144 54795 55446 56098 57397 58698 59999; do
+  for tag in R TS; do
+    gbw="$VAC/sp_${f}_${tag}.gbw"
+    out="vpot_${f}_${tag}.out"
+    # per-frame point file when the ensemble was aligned, shared file otherwise
+    if [ -s "points_${f}.xyz" ]; then PTS="points_${f}.xyz"; else PTS="points_bohr.xyz"; fi
+    if [ ! -s "$gbw" ]; then
+      echo "  MISSING $gbw"; miss=$((miss+1)); continue
+    fi
+    [ -s "$out" ] && { ok=$((ok+1)); continue; }
+    # ORCA 6 stores the SCF density INSIDE the .densities container rather than as a
+    # loose .scfp file, and orca_vpot's second argument is the density's NAME in that
+    # container, not a path. Verified 2026-09-30 on sp_24883_R: the call returns in
+    # 0.4 s and writes four columns with the potential last. There is therefore no
+    # .scfp on disk and none is needed; testing for one rejects every frame.
+    # The manual's note that a mismatched basename must be passed as a FIFTH argument
+    # is the tell: the second argument is a container entry.
+    "$ORCA/orca_vpot" "$gbw" "sp_${f}_${tag}.scfp" \
+        "$PTS" "$out" "$VAC/sp_${f}_${tag}" > /dev/null 2>&1
+    if [ -s "$out" ]; then ok=$((ok+1)); else echo "  FAILED $f $tag"; miss=$((miss+1)); fi
+  done
+done
+echo
+echo "evaluated=$ok missing_or_failed=$miss"
+echo "end=$(date)"
+echo "now: python3 s15_dv_matrix.py assemble <grid.tsv> /home/18660916/system_development/phase2.2/s15_dv2 amatrix.tsv"

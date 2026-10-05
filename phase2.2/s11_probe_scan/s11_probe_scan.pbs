@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#PBS -N cm_s11probe
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/s11_probe_scan/s11_probe_scan.pbs.out
+#
+# s11_probe_scan.pbs - probe-distance scan.
+# ORCA is NOT on PATH on this cluster and cannot run on a login node.
+# Conventions copied from s8_invacuo_new.pbs.
+
+set -uo pipefail
+ORCA=/home/apps2/ORCA/6.0.1
+WORK=/home/18660916/system_development/phase2.2/s11_probe_scan
+
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="$ORCA/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+
+cd "$WORK" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+echo "host=$(hostname) start=$(date)"
+
+for f in *.out; do
+  [ -e "$f" ] || continue
+  grep -q "TERMINATED NORMALLY" "$f" 2>/dev/null || rm -f "$f"
+done
+
+n=0; ok=0; bad=0
+SCRATCH="${TMPDIR:-/tmp}/orca_$$"
+mkdir -p "$SCRATCH" || { echo "FAIL: cannot create $SCRATCH"; exit 1; }
+trap 'rm -rf "$SCRATCH"; rmdir .running 2>/dev/null' EXIT
+echo "scratch: $SCRATCH"
+
+# MEASURED 2026-09-30: the same 24-atom job takes 28.7 s real on the shared
+# filesystem and 6.6 s in node-local scratch, user time 4.9 s vs 3.6 s. The
+# difference is ORCA temporary-file I/O, not compute. Each job therefore runs in
+# node-local scratch and only the .out is copied back.
+for inp in *.inp; do
+  out="${inp%.inp}.out"
+  if [ -f "$out" ] && grep -q "TERMINATED NORMALLY" "$out"; then continue; fi
+  n=$((n+1))
+  base="${inp%.inp}"
+  rm -rf "$SCRATCH/$base"; mkdir -p "$SCRATCH/$base"
+  cp "$inp" "$SCRATCH/$base/" || continue
+  for dep in $(grep -oE '[A-Za-z0-9_.-]+\.(xyz|pc)' "$inp" | sort -u); do
+    [ -f "$dep" ] && cp "$dep" "$SCRATCH/$base/"
+  done
+  ( cd "$SCRATCH/$base" && "$ORCA/orca" "$inp" > "$out" 2>&1 </dev/null )
+  cp "$SCRATCH/$base/$out" "$out" 2>/dev/null
+  rm -rf "$SCRATCH/$base"
+  if grep -q "TERMINATED NORMALLY" "$out" 2>/dev/null; then ok=$((ok+1))
+  else bad=$((bad+1)); echo "  WARN did not terminate: $inp"; fi
+  if [ $((n % 50)) -eq 0 ]; then echo "  ... $n run, $ok ok, $bad failed  $(date +%H:%M)"; fi
+done
+echo
+echo "run=$n ok=$ok failed=$bad"
+echo "end=$(date)"
