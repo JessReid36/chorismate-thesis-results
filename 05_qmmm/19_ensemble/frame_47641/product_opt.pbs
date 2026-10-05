@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -N cm19_p47641
+#PBS -l select=1:ncpus=8:mem=16gb
+#PBS -l walltime=176:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/19_ensemble/frame_47641/product_opt.pbs.out
+cd /home/18660916/system_development/05_qmmm/19_ensemble/frame_47641
+# the product guess is the final scan window, as it was for frame 820
+cp scan/win_20.pdb product_start.pdb || { echo 'FAIL: scan did not reach the final window'; exit 1; }
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:$LD_LIBRARY_PATH"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+( while sleep 1800; do printf "  [%s] steps=%s  lastE=%s\n" "$(date +%H:%M)" "$(wc -l < product_opt-minimize-ener.csv 2>/dev/null)" "$(tail -1 product_opt-minimize-ener.csv 2>/dev/null | cut -d, -f2)"; done ) & HB=$!
+/home/apps2/ORCA/6.0.1/orca product_opt.inp > product_opt.out 2>&1
+RC=$?
+kill $HB 2>/dev/null
+echo "orca_exit=$RC end=$(date)"
+grep -q "ORCA TERMINATED NORMALLY" product_opt.out && grep -q "The minimization has converged" product_opt.out && echo PRODUCT_OPT_PASS || echo PRODUCT_OPT_INCOMPLETE
+# stage the endpoints under the names the NEB expects
+cp reactant_opt.pdb reactant.pdb 2>/dev/null
+cp product_opt.pdb  product.pdb  2>/dev/null

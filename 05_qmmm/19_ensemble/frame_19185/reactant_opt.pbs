@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -N cm19_r19185
+#PBS -l select=1:ncpus=8:mem=120gb
+#PBS -l walltime=176:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/19_ensemble/frame_19185/reactant_opt.pbs.out
+cd /home/18660916/system_development/05_qmmm/19_ensemble/frame_19185
+# RUNLOCK: refuse to start if another job is already working in this directory
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running here - aborting"; exit 1; fi
+trap "rmdir .running 2>/dev/null" EXIT
+# RESTART_AWARE: L-Opt checkpoints to .mdrestart every step. If a previous
+# attempt was killed before converging, resume from it instead of restarting.
+if [ -s reactant_opt.mdrestart ] && ! grep -q "The minimization has converged" reactant_opt.out 2>/dev/null; then
+  echo "resuming from reactant_opt.mdrestart ($(wc -l < reactant_opt-minimize-ener.csv 2>/dev/null) steps done)"
+  cp reactant_opt.mdrestart reactant_opt.mdrestart.resume
+fi
+# ARCHIVE_PRIOR: keep any earlier attempt so a rerun never destroys evidence
+if [ -s reactant_opt.out ]; then n=1; while [ -e "reactant_opt.out.$n" ]; do n=$((n+1)); done; mv reactant_opt.out "reactant_opt.out.$n"; fi
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:$LD_LIBRARY_PATH"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+# HEARTBEAT: report optimisation progress every 30 min
+( while sleep 1800; do printf "  [%s] steps=%s  lastE=%s\n" "$(date +%H:%M)" "$(wc -l < reactant_opt-minimize-ener.csv 2>/dev/null)" "$(tail -1 reactant_opt-minimize-ener.csv 2>/dev/null | cut -d, -f2)"; done ) & HB=$!
+/home/apps2/ORCA/6.0.1/orca reactant_opt.inp > reactant_opt.out 2>&1
+kill $HB 2>/dev/null
+echo "orca_exit=$? end=$(date)"
+grep -q "ORCA TERMINATED NORMALLY" reactant_opt.out && grep -q "The minimization has converged" reactant_opt.out && echo REACTANT_OPT_PASS || echo REACTANT_OPT_INCOMPLETE
+rm -f reactant_opt_trj.dcd 2>/dev/null

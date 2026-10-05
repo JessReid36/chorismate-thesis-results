@@ -1,0 +1,22 @@
+#!/bin/bash
+#PBS -N cm19_s04085
+#PBS -l select=1:ncpus=8:mem=120gb
+#PBS -l walltime=176:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/19_ensemble/frame_04085/scan/scan.pbs.out
+cd /home/18660916/system_development/05_qmmm/19_ensemble/frame_04085/scan
+# RUNLOCK: mkdir is atomic - a second job in this directory exits
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running here"; exit 1; fi
+trap "rmdir .running 2>/dev/null" EXIT
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:$LD_LIBRARY_PATH"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+bash run_scan.sh
+RC=$?
+echo "end=$(date) rc=$RC"
+# the scan is only useful if it reached the final window
+if [ -s win_20.pdb ]; then echo SCAN_PASS; else echo SCAN_INCOMPLETE; exit 1; fi
+tail -3 scan_progress.tsv 2>/dev/null
