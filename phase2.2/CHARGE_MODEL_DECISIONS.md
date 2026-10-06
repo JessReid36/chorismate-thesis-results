@@ -69,7 +69,7 @@ tried and failed: A_v1 agrees in sign across frames at 4 of 580 sites (0.7%,
 ## D4. Validation site model: an all-atom MM methylguanidinium, built by the substrate's protocol
 
 **Decision.** The group used to validate a +1 site (WP4 arm 3, and later designs) is methylguanidinium
-(CH3-NH-C(NH2)2+, the standard model of the arginine side chain), treated as MM with electrostatic
+(CH3-NH-C(NH2)2+: arginine's guanidinium group, capped with a methyl at CD), treated as MM with electrostatic
 embedding around the QM substrate. Charges: AM1-BCC; LJ: GAFF; i.e. the protocol Phase 1 used for the
 substrate (`phase1_system_dev/local_workstation/step08a_am1bcc_charges.sh`, then GAFF typing). AM1-BCC
 runs on the PC because `sqm` is broken on hpc1.
@@ -80,9 +80,13 @@ runs on the PC because `sqm` is broken on hpc1.
   reason, `phase2b_charge_design/relaxation_attempts/ash_guarded/mmsurr_run`).
 - Behrens & Hartke 2021 use exactly this arrangement: a QM reactant embedded among MM molecules
   carrying force-field charges and LJ (OPLS-AA there).
-- GAFF gives every nitrogen type the same LJ as Amber's protein N (R* 1.824, epsilon 0.170) and polar
-  hydrogens R* 0.6, epsilon 0.0157 - to be confirmed from the generated parameter file - so the LJ wall
-  matches the enzyme's arginine and only the charges come from AM1-BCC.
+- Measured once built (`wp4_site_models/`, wp4b audit): every atom type of the group (c3, h1, nh, hn,
+  cz) carries exactly the LJ of the corresponding atom of the enzyme's arginine in the committed force
+  field, so the LJ wall matches and only the charges differ.
+- The AM1-BCC charges are smaller atom by atom than Amber's (CZ +0.52 against +0.81, terminal N -0.50
+  against -0.86), but the potential they produce on the same geometry differs by 2.4% RMS around the
+  group and by 1-3% at the hydrogen-bond acceptor positions (`wp4_site_models/WP4_ESP_COMPARE.txt`).
+  What a neighbouring atom feels is the potential, so the group presents the enzyme's electrostatics.
 - WP8 still uses the enzyme's own arginine (its force-field charges) to ask what a real group presents;
   methylguanidinium is the validation model for a design site.
 - The earlier Phase 2b surrogate (hand-set charges C +0.64, N -0.80, H +0.46) is not adopted: the
