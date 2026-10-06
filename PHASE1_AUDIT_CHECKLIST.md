@@ -306,6 +306,113 @@ named as the fully characterised member and its value given. This matches how
 Claeyssens and Agbaglo report, and it is the honest presentation of what was
 computed.
 
+
+### C4. The reactant end of each NEB band is not its lowest point  ☐
+
+In 39 of 44 final bands an image before the climbing image lies more than 0.5 kcal/mol
+below image 0 (s18b_pipeline_check.py, section 8). The worst is frame 42436: image 4,
+5.86 A along the band, -12.26 kcal/mol. Image 0 is exactly the optimised reactant (energies
+agree to 0.0001 kcal/mol), and every tabulated barrier is measured from it. That reactant is
+an unrestrained optimisation converged to ORCA's large-system thresholds (max gradient
+1.0e-3, RMS 2.0e-4 Eh/bohr), looser than ORCA's default Normal criteria (3e-4, 1e-4).
+
+**Diagnosis.** Between image 0 and the lowest pre-CI image the substrate barely moves:
+QM-region RMSD median 0.097 A, max 0.209 A over the 39 frames; C4-O3 changes by at most
+0.053 A. Yet those images lie 0.67-6.85 A along the band. ORCA's band distance is the
+Cartesian norm over all 1959 active atoms: next to the climbing image it equals the
+substrate-only distance between images, away from it it far exceeds it (checked on frames
+20000, 36665 and 42436). The dip is the MM environment settling into a lower local minimum,
+not the substrate. Upper bound on that motion: 0.015-0.155 A RMS per active atom (path
+length / sqrt(1959); the straight-line displacement is smaller).
+
+**Literature.**
+- Claeyssens et al. (2011), this system's reference: their 16 enzyme pathways are plotted
+  and averaged relative to the lowest point on the reactant side of each path. Unrestrained
+  re-optimisation of the reactant from the lowest restrained structure gave very similar
+  structures, with energy differences below 1 kcal/mol.
+- Behrens & Hartke (2021), QM/MM GOCAT for KSI: with unfrozen alpha-carbons the path shows
+  energy wells before and after the reaction from rearrangements in the MM subsystem only,
+  and the barrier is almost unchanged when measured from the lowest point to the highest.
+- Dittner & Hartke (2018, 2020): reactant, TS and product must stay stationary (gradient
+  checks; tight relaxation of the end points); an intermediate minimum makes the effective
+  barrier "maximum minus minimum"; the 2020 workflow ends with a tight NEB over all frames.
+- Ryde (2016), citing Senn & Thiel (2009): the local-minima problem; remedies are to go
+  forth and back between states until the energy differences are constant, to keep the
+  relaxed MM region small (at the risk of missing dielectric relaxation), to use several
+  snapshots, or to compute free energies.
+- Ryde (2017): the exponential average is badly conditioned above about 7 kJ/mol of spread;
+  the second-order cumulant approximation needs fewer energies (his Table 2); arithmetic
+  averages are more stable but less accurate.
+
+**What it does to the number.** Post-cut 30 frames: from image 0, 13.34 +- 4.29 (sample
+sd) kcal/mol, 17.9 kJ/mol; from the lowest image at or before the climbing image,
+16.69 +- 3.02, 12.6 kJ/mol. Mean shift +3.34, maximum +12.26. With image 0 as the reference,
+the barrier variance splits 87.9% environment (stab_TS), 17.0% in vacuo, -4.9% covariance;
+about half of that variance disappears under the lowest-point definition.
+
+**Protocol (accepted 6 October 2026; run after C5).**
+0. Which kind of dip: re-optimise image 0 itself to ORCA's Normal thresholds (TolMaxG 3e-4,
+   TolRMSG 1e-4) for the five deepest-dip frames and two frames without a dip. Energy falling
+   to within 1 kcal/mol of the dip means an incomplete optimisation; otherwise the dip is a
+   separate local minimum.
+1. Barrier from the lowest image at or before the climbing image to the climbing image.
+2. Re-optimise the reactant without restraints from that image, to the same thresholds.
+   Accept only if all three hold:
+   - energy within 1 kcal/mol of the image (Claeyssens 2011);
+   - substrate RMSD to its own MD frame, after superposition, at most 0.30 A (the original
+     optimisation moved substrates by median 0.170, max 0.219 A);
+   - active-region displacement from image 0 at most 0.20 A RMS per atom (the dips reach at
+     most 0.155), with the largest single-atom displacement recorded.
+3. Otherwise go forth and back (Ryde 2016): rerun NEB-CI from the re-optimised reactant.
+   At most two cycles; a frame still failing is dropped and recorded with its numbers. If
+   more than 3 of the 30 frames are dropped, stop and revisit the protocol.
+4. Report the arithmetic mean +- sem as the result, with the image-0 numbers shown once
+   alongside. Report the cumulant estimate with Ryde's (2017) Table 2 requirement: at
+   17.9 kJ/mol it needs 66-83 energies for +-20 kJ/mol and gives a negative barrier
+   (-1.6 to -2.1 kcal/mol); at 12.6 kJ/mol 30 energies reach +-20 kJ/mol (18-24 needed)
+   but not +-10 kJ/mol (68-102 needed).
+5. Sensitivity (Behrens & Hartke 2021; Ryde 2016): repeat 2-3 frames with the outer active
+   region frozen; the barrier measured from the lowest point to the highest should hold.
+6. Downstream: every frame whose reactant changes goes through the in vacuo single points,
+   the s16 alignment, grid_v2, A_v2, s17 and the designs again, and the barrier statistics
+   (mean, spread, stab_TS, variance split, regression) are recomputed. Methods states that
+   the barrier definition was settled by this audit and shows both definitions once.
+Item C3's quoted barrier and its uncertainty depend on this.
+
+### C5. Twenty-two barriers come from a loosely converged NEB stage  ☐
+
+Standard: every barrier converged to within 0.1 kcal/mol, with the same criteria for every
+frame. ORCA's manual gives 5e-4 Eh/bohr on the climbing image as typically acceptable for
+convergence to the saddle point; NEB-TS instead halts the band once the climbing image meets
+a looser tolerance and hands over to the TS optimisation. Every NEB-TS run here (the 14
+pilot frames and 20000, 21634, 23268, 24883, 26495, 33320, 34991, 43738) took its barrier
+from that halted band: climbing-image threshold 2.0e-3, regular images 2.0e-2 Eh/bohr,
+against 5.0e-4 and 5.0e-3 for NEB-CI.
+
+**Evidence (committed outputs).**
+- Final climbing-image force: NEB-TS median 1.48e-3 (0.90-1.94e-3); NEB-CI median 4.1e-4.
+- NEB-CI logs: the barrier at the first iteration that met the looser max-force criteria
+  fell by the end in all 22 frames: median 0.38, mean 0.58, range 0.19-4.95 kcal/mol (RMS
+  forces are not logged, so that iteration is approximate). Over 617 logged iterations, a
+  climbing-image force of 1-2e-3 left the barrier above its final value by median 0.22,
+  mean 0.72, max 5.4; at 3-5e-4, by median 0.024. Over their last 5 iterations NEB-CI
+  barriers vary by median 0.040, max 0.084 kcal/mol.
+- The interrupted TS optimisations of the eight post-cut NEB-TS frames had already lowered
+  the energy 0.19-0.84 kcal/mol below the climbing image when they were stopped.
+- Climbing-image geometry, loose against final (NEB-CI): RMSD median 0.021, max 0.032 A;
+  C4-O3 within 0.090 A, C1-C6 within 0.097 A.
+- Resolution is not the issue: 05_qmmm/nimg_test (16 against 8 images) agrees to 0.037.
+- The force columns of these QM/MM path summaries are near-constant across images and are
+  not convergence evidence; use the convergence table and neb.NEB.log.
+
+**Fix.** Restart NEB-CI for the eight post-cut NEB-TS frames from their neb_MEP.allxyz
+(Restart_ALLXYZFile) and converge to the NEB-CI defaults. Pass: final thresholds met;
+barrier within 0.1 kcal/mol over the last 5 iterations; expected drop 0.2-0.8 kcal/mol, and
+a drop above 2 kcal/mol is inspected for environment rearrangement (C4) before it is
+accepted; climbing image within about 0.05 A RMSD of the loose one. Then regenerate those
+frames' in vacuo TS single points and their A_v2 columns. The pilot frames are not reported
+and need nothing.
+
 ---
 
 ## D. Suggested order

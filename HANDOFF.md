@@ -463,3 +463,22 @@ Hur and Bruice (2003) doi:10.1073/pnas.1534873100
 Ryde (2016) doi:10.1016/bs.mie.2016.05.014
 Ryde (2017) doi:10.1021/acs.jctc.7b00826
 Senn and Thiel (2009) doi:10.1002/anie.200802019
+
+## Errata, 6 October 2026 (provenance audit, s18b_pipeline_check.py)
+
+- The NEB-TS record above calls 24883, 26495, 34991 and 43738 "all four frames attempted".
+  The committed outputs show 22 NEB-TS runs: the 14 pilot frames and 20000, 21634, 23268,
+  24883, 26495, 33320, 34991 and 43738. None of the 22 neb.out files ends in ORCA TERMINATED
+  NORMALLY. Their barriers are read, like every other, from the climbing image of the
+  converged NEB stage, but in an NEB-TS run that stage stops at ORCA's NEB-TS thresholds,
+  four times looser than NEB-CI's (max force on the climbing image 2.0e-3 against 5.0e-4
+  Eh/bohr). On the 22 NEB-CI frames, going from the looser to the full criteria lowered every
+  barrier: median 0.38, at most 4.95 kcal/mol, while the climbing image moved by at most
+  0.032 A RMSD. The 22 NEB-TS barriers are therefore probably too high by a few tenths of a
+  kcal/mol. See PHASE1_AUDIT_CHECKLIST.md item C5.
+- Frame 08170 has no barrier. Its band falls monotonically and ORCA marks image 0 as the
+  climbing image. ensemble_barriers.tsv recorded 0.000 until the harvester was corrected
+  (code 8424715); the field is now blank.
+- 05_qmmm/19_ensemble/frame_11630/scan/run_scan.sh is a later copy (code 7f3bc74, SPRING=2500)
+  than the version that ran (8c2a372, 8 September). Every scan input of that frame uses
+  Spring 400.0; the inputs are the record.

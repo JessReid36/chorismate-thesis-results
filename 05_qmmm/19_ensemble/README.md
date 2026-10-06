@@ -19,3 +19,12 @@ Restraints, read from the scan inputs on 5 Oct 2026: harmonic restraints on C4-O
 6215-6214) and C6-C1 (6219-6207); spring 400 kJ/mol/A^2 for the 14 pilot frames, 2500 for the 30
 post-cut frames. Job logs missing on hpc1: product_opt.pbs.out (09025 17505 34991 55446 57397 58698
 59999), neb.pbs.out (41786 46990). Frame 08170 has no converged climbing image.
+
+Notes added 6 Oct 2026 (s18b_pipeline_check.py):
+- frame_11630/scan/run_scan.sh postdates that frame's scan. It is the 7f3bc74 version
+  (SPRING=2500); the scan ran on 8 Sep 2026 with the 8c2a372 version, and every scan_NN.inp
+  of the frame uses Spring 400.0. The inputs are the record.
+- The 22 neb.out files of the NEB-TS runs do not end in ORCA TERMINATED NORMALLY: the jobs
+  were stopped in the TS-optimisation stage. Their barriers come from the NEB stage that
+  precedes it, converged only to ORCA's looser NEB-TS thresholds (PHASE1_AUDIT_CHECKLIST.md
+  item C5).
