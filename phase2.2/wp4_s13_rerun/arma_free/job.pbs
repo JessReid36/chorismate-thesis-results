@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -N cm24_wp4_arma_free
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=168:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/wp4_s13_rerun/arma_free/job.pbs.out
+cd /home/18660916/system_development/phase2.2/wp4_s13_rerun/arma_free
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+/home/apps2/ORCA/6.0.1/orca job.inp > job.out 2>&1 </dev/null
+echo "orca_exit=$? end=$(date)"
+grep -c 'GEOMETRY OPTIMIZATION CYCLE' job.out; grep -E 'THE OPTIMIZATION HAS CONVERGED|ORCA TERMINATED NORMALLY' job.out | tail -2
+rm -f job.gbw job*.tmp 2>/dev/null

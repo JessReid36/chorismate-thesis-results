@@ -112,17 +112,29 @@ exactly as the harvester's stab_TS column. Its values wait for C4 and C5, which 
 Reference 3 is quoted from the paper itself (Burschowsky 2014), with the caveats stated there
 (orientation of the urea assigned "based on chemical sense").
 
-## D-WP4. Consequences for WP4 (the s13 rerun), fixed now
+## D-WP4. WP4 (the s13 rerun) as run - updated 6 October 2026, before any result was read
 
 - **Frame**: 41786 (no reactant-end dip, NEB-CI; untouched by C4 and C5), so WP4 never needs redoing.
-- **Contact tested**: the carboxylate contact, because a free single site always goes there (WP5).
-  References: Arg-carboxylate N to O 2.74-2.77 A (QM/MM) and 2.87 +- 0.12 A (MD); CZ to O 3.23-3.27 A
-  (QM/MM) and 3.52 +- 0.17 A (MD, nearest O).
-- **Arms**: bare +1 (control); nitrogen-sized LJ site (model property: rigid-model expectation
-  2.584 A to O2 at frame 41786, a departure over 0.3 A to be explained); methylguanidinium (D4),
-  accepted if its N to O and CZ to O distances fall within the MD mean +- 2 sd (N to O 2.62-3.11 A,
-  CZ to O 3.18-3.86 A).
-- **Degrees of freedom**: every arm gets the same freedom (the test2 lesson). The control is run the
-  same way as the LJ arms, as a QM/MM site with zero LJ parameters (ORCA accepts zero LJ, as for the
-  hydroxyl hydrogen), not as a point-charge file; the substrate may move as a whole in every arm, and
-  centroid drift is reported separately.
+- **Start**: the enzyme's own QM/MM structure at that frame. Arg90 there bridges the ether O3 and the
+  carboxylate O2 (N to O3 2.83 A, N to O2 2.71 A, CZ to O3 3.55 A). Arms a and b start at Arg90's CZ,
+  which lies 0.11 A from the AM1-BCC group's charge centre (0.19 A with Amber's own charges); arm c sits on
+  Arg90's own atoms, CG replaced by a methyl hydrogen.
+- **Arms**: (a) bare +1, run as a QM/MM site with zero LJ (control, expected to collapse); (b) +1 with
+  Amber's N LJ (model property; rigid-model expectation 2.584 A to O2); (c) methylguanidinium (D4), held
+  at CD and HD1 only, as the literature holds a side chain at its backbone atoms.
+- **Freedom**, each variant identical across the three arms:
+  - *anch* - the four ring carbons farthest from CZ (C5-C8) held, standing in for the pocket; every
+    atom of the contact region free. This is the validation test. (A first draft held s16's alignment
+    core, which contains O3; that would have fixed the O3 contact by construction.)
+  - *free* - all substrate atoms active, optimised in ORCA's redundant internal coordinates. When the
+    fixed site is not linked into ORCA's coordinate set the substrate cannot translate (armb_free:
+    centroid fixed to 1e-6 A), so these are reported as internal motion only.
+  - *freecart* - the same, in Cartesian coordinates (ProjectTR false), so the substrate may translate
+    and rotate as a whole in every arm.
+- **Acceptance for arm c, anch**: the bridge is kept (one N-H to O3, one to a carboxylate oxygen); nearest
+  N to O within 2.62-3.11 A and CZ to nearest O within 3.18-3.86 A (Arg90 MD mean +- 2 sd); each contact's
+  change from the enzyme's QM/MM value at this frame reported.
+- **Criteria files**: phase2.2/wp4_s13_rerun/WP4_CRITERIA.txt and WP4_CRITERIA_CARTESIAN.txt.
+- **Deferred to WP6**: in armb_free the forming C1-C6 distance opened from 3.16 to 4.27 A. Whether a
+  site pulls the substrate out of its near-attack geometry, or the dianion relaxes that way in vacuum on
+  its own, needs a no-site control; it belongs to WP6, not to the representation test.
