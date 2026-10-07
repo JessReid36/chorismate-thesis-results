@@ -1,0 +1,25 @@
+Stage 3 of the charged-sphere development: QM/MM confirmation at selected charges (pre-registered, 7 October 2026)
+Inputs: cs3_prepare.py from committed files; analysis: cs3_analyse.py. Set-up identical to WP4 arm b anchored
+(phase2.2/wp4_s13_rerun/armb_anch/job.inp: B3LYP-D3BJ/def2-SVP RIJCOSX TightSCF, QM/MM optimisation, substrate QM
+(-2, singlet), C5 C6 C7 C8 and the sphere held, every other substrate atom free). Amber N sphere.
+
+Runs
+  p1_41786_qp05  q = +0.5 at WP4 arm b's start; identical to WP4 armb_anch except the charge (+1 there)
+  n1_41786_qm1   q = -1   at the closest approach to H8 allowed by every other atom's LJ wall (2.541 A from H8;
+  n2_41786_qm05  q = -0.5   the binding wall is O4's, 3.545 A); H8 itself has no LJ (GAFF ho)
+  n3_55446_qm1   q = -1   same rule on frame 55446 (2.530 A from H8), a second frame for the risk test
+
+Why these runs. Stage 2 found positive spheres hold at the carboxylates and every negative sphere escapes the
+dianion in the rigid model, which cannot move H8. The open questions are (a) whether the rigid contact holds in
+QM/MM at a fractional charge, and (b) whether a frozen negative sphere next to the hydroxyl draws H8 onto itself
+when H8 can move, since nothing repels H8 except electrostatics.
+
+S3.1 (p1) PASS if: converged (or the s13 stability rule: contact within 0.05 A over the last third); no collapse
+     (closest substrate atom >= 2.0 A); every bond within 0.15 A of its start; and the nearest oxygen within 0.3 A
+     of the rigid own-basin contact for its group at q +0.5 in frame 41786 R (Stage 2: carboxylate A 2.744 A,
+     carboxylate B 2.970 A). A nearest oxygen at the ether or hydroxyl has no rigid own-basin value (Stage 2) and
+     counts as outside. Informative: the change from q +1 (WP4 armb_anch, 2.711 A to O2).
+S3.2 (n1, n2, n3) PASS if, at the final geometry: O4-H8 <= 1.20 A (no proton pulled off) and H8..sphere >= 1.50 A
+     (H8 not drawn onto the charge); all other bonds within 0.15 A; converged or stability rule met. Path extremes
+     (largest O4-H8, smallest H8..sphere) are reported. A FAIL means negative spheres near the hydroxyl need a
+     QM-side LJ term on H8 (or an exclusion zone) before they can be used in designs.
