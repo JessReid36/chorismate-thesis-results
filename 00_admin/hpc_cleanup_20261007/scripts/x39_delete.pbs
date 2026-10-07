@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N x39_delete
+#PBS -l select=1:ncpus=1:mem=2gb
+#PBS -l walltime=04:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/x39_delete.pbs.out
+# x39_delete.pbs - hpc1. DELETES the files recorded in ~/x37_stage/DELETE_CHECKSUMS.sha256, and only those,
+# after three checks: (1) that checksum file is byte-identical to the one committed to the results repo
+# (its sha256 is passed in as EXPECT, printed by the PC commit script); (2) no path lies in a protected
+# folder (running C5 restarts, in vacuo densities, Phase 2.2, MD) or is a true Hessian; (3) each file's
+# current sha256 still equals its recorded one. Anything failing (2) stops the job before any deletion;
+# a file failing (3) is skipped and reported, not deleted. Submit: qsub -v EXPECT=<sha256> x39_delete.pbs
+set -euo pipefail
+SD=/home/18660916/system_development
+CK=$HOME/x37_stage/DELETE_CHECKSUMS.sha256
+LOG=$HOME/x37_stage/DELETED.log
+cd "$SD"
+[ -n "${EXPECT:-}" ] || { echo "STOP: submit with -v EXPECT=<sha256 printed by x38>"; exit 1; }
+[ "$(sha256sum "$CK" | cut -c1-64)" = "$EXPECT" ] || { echo "STOP: $CK is not the committed version"; exit 1; }
+if cut -c67- "$CK" | grep -E '^(05_qmmm/22_c5_nebci/|05_qmmm/20_invacuo/|phase2\.2/|04_amber_md/)|\.hess$' | grep -v '\.appr\.hess$' | head -1 | grep -q .; then
+  echo "STOP: the list contains a protected path or a true Hessian"; exit 1; fi
+n=0; skip=0; freed=0
+: > "$LOG"
+while IFS= read -r line; do
+  h=${line:0:64}; f=${line:66}
+  if [ ! -e "$f" ]; then echo "ABSENT $f" >> "$LOG"; continue; fi
+  if [ "$(sha256sum "$f" | cut -c1-64)" != "$h" ]; then echo "SKIPPED_CHANGED $f" >> "$LOG"; skip=$((skip+1)); continue; fi
+  s=$(stat -c %s "$f"); rm -f -- "$f"; echo "DELETED $s $f" >> "$LOG"; n=$((n+1)); freed=$((freed+s))
+done < "$CK"
+echo "deleted $n files, $(awk -v b=$freed 'BEGIN{printf "%.2f GB", b/1e9}') freed; skipped (changed since recorded) $skip; see $LOG"

@@ -25,3 +25,10 @@ Never deleted (protected): 05_qmmm/22_c5_nebci, 05_qmmm/20_invacuo (in vacuo wav
 by Phase 2.2), phase2.2, 04_amber_md, true Hessians (*.hess, e.g. 18b_ts_numfreq/ts_optfreq.hess), final
 bands, IRC and optimisation trajectories, and 19_ensemble's structures, final bands and TS geometries (needed
 by C4).
+
+Step 2 (7 October 2026): x39_delete.pbs deleted all 3912 listed files (36.76 GB), none skipped or absent
+(DELETED.log, x39_delete.pbs.out). Checked on hpc1 afterwards: no deleted file remains; 36142 files remain
+outside 22_c5_nebci, exactly the 40054 of the inventory minus the 3912 listed, so nothing else was removed;
+ts_optfreq.hess (1193873651 bytes), all 1054 files of 20_invacuo and all 44 final bands of 19_ensemble are
+present; system_development is 70 GB (was 104 GB). The two job scripts as run are in scripts/ (the queue
+directive removed and mail lines added before submission, after a first submission was refused).

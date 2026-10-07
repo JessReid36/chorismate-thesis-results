@@ -1,0 +1,56 @@
+#!/bin/bash
+#PBS -N x37_stage
+#PBS -l select=1:ncpus=4:mem=8gb
+#PBS -l walltime=06:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/x37_stage.pbs.out
+# x37_stage.pbs - hpc1. NON-DESTRUCTIVE. Prepares the commit-before-clean-up: compresses every uncommitted
+# text output listed in archives.tsv into the archives named there (each with a sha256 manifest of its
+# members), compresses the listed large outputs individually, and records the sha256 of every file in
+# delete.tsv. Reads and writes only; deletes and moves nothing. Lists come from Claude's comparison of the
+# committed hpc1 inventory (results fbb3c69) against the repos.
+set -euo pipefail
+SD=/home/18660916/system_development
+L=$HOME/x37_lists
+OUT=$HOME/x37_stage
+[ -d "$OUT" ] && { echo "STOP: $OUT exists"; exit 1; }
+mkdir -p "$OUT/arch" "$OUT/indiv" "$OUT/work"
+cd "$SD"
+echo "start $(date)"
+# 1. every listed file must exist with the size the inventory recorded
+bad=0
+check() { while IFS=$'\t' read -r a b c; do
+  if [ "$1" = arch ]; then s=$b; r=$c; elif [ "$1" = indiv ]; then s=$a; r=$b; else s=$b; r=$c; fi
+  [ "$(stat -c %s "$r" 2>/dev/null || echo MISSING)" = "$s" ] || { echo "MISMATCH $1 $r (listed $s)"; bad=$((bad+1)); }
+done; }
+check arch < "$L/archives.tsv"; check indiv < "$L/individual.tsv"; check del < "$L/delete.tsv"
+[ "$bad" -eq 0 ] || { echo "STOP: $bad files differ from the inventory"; exit 1; }
+echo "all $(cat "$L"/*.tsv | wc -l) listed files present with their inventory sizes"
+# 2. archives with member manifests
+cut -f1 "$L/archives.tsv" | sort -u > "$OUT/work/names"
+i=0
+while IFS= read -r name; do
+  i=$((i+1))
+  awk -F'\t' -v n="$name" '$1==n{print $3}' "$L/archives.tsv" > "$OUT/work/list_$i"
+  mkdir -p "$OUT/arch/$(dirname "$name")"
+  tar -cf - --no-recursion -T "$OUT/work/list_$i" | xz -6 -T4 > "$OUT/arch/$name"
+  xargs -d '\n' sha256sum < "$OUT/work/list_$i" > "$OUT/arch/${name%.tar.xz}.MANIFEST.sha256"
+  sz=$(stat -c %s "$OUT/arch/$name")
+  [ "$sz" -lt 95000000 ] || { echo "STOP: $name is $sz bytes (GitHub limit 100 MB)"; exit 1; }
+  printf '%s\t%d\t%d\n' "$name" "$(wc -l < "$OUT/work/list_$i")" "$sz" >> "$OUT/ARCHIVES_BUILT.tsv"
+done < "$OUT/work/names"
+echo "$i archives built"
+# 3. large outputs compressed individually
+while IFS=$'\t' read -r s r; do
+  mkdir -p "$OUT/indiv/$(dirname "$r")"
+  xz -6 -T4 -c "$r" > "$OUT/indiv/$r.xz"
+  sha256sum "$r" >> "$OUT/INDIV.sha256"
+done < "$L/individual.tsv"
+# 4. checksums of everything proposed for deletion
+cut -f3 "$L/delete.tsv" | xargs -d '\n' sha256sum > "$OUT/DELETE_CHECKSUMS.sha256"
+[ "$(wc -l < "$OUT/DELETE_CHECKSUMS.sha256")" -eq "$(wc -l < "$L/delete.tsv")" ] || { echo "STOP: checksum count"; exit 1; }
+rm -rf "$OUT/work"
+echo "DONE $(date)" > "$OUT/DONE"
+echo "done $(date)"
