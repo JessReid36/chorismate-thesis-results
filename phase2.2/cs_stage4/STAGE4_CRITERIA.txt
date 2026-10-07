@@ -1,0 +1,25 @@
+Stage 4 of the charged-sphere development: spill-out check, def2-SVPD against def2-SVP (pre-registered,
+7 October 2026). Inputs: cs4_prepare.py from committed files; analysis: cs4_analyse.py.
+
+Why. Electron density can spread towards a nearby positive charge, more so with diffuse basis functions (Laio et al.
+2002; Senn & Thiel 2009; Behrens' thesis section 3.6.1 citing Laino et al. 2005). The project uses def2-SVP; a
+dianion would usually get diffuse functions, so the check also asks whether the sphere results hold with them.
+Negative spheres push density away and are not tested.
+
+Runs. Same method as Stage 3 / WP4 (B3LYP-D3BJ, def2/J, RIJCOSX, TightSCF, QM/MM, Amber N sphere), basis changed:
+  o1_p1_svpd  Stage 3 p1's def2-SVP minimum (q +0.5, nearest O2 2.674 A) re-optimised with def2-SVPD
+  o2_q1_svpd  WP4 armb_anch's def2-SVP minimum (q +1, nearest O2 2.711 A) re-optimised with def2-SVPD
+              (both anchored as before: C5-C8 and the sphere held; starting from the SVP minimum measures how that
+              minimum moves, not whether another binding mode is found)
+  sp_*        p1's converged geometry (sphere 2.674 A from O2) at q = 0, +-0.5, +-1, in def2-SVP and def2-SVPD,
+              Hirshfeld charges printed
+
+S4.1 PASS: in both re-optimisations, converged, same nearest oxygen, contact distance within 0.05 A of the def2-SVP
+     value, closest atom >= 2.0 A.
+S4.2 PASS: the polarisation term at contact, b (from symmetric sums, exact through q^4), changes by less than 10%
+     between def2-SVP and def2-SVPD.
+Informative: the change in the first-order term a (a different density has a different potential), the q = 0 -> +1
+change of the Hirshfeld and Mulliken charge on O2 in each basis, and the def2-SVP q = +0.5 single point against
+Stage 3 p1's final energy (same geometry and method).
+If either criterion fails: spill-out matters at contact distance, and the remedies are a larger sphere or smeared
+charges (whether ORCA supports the latter is to be checked), before positive spheres at contact are used.
