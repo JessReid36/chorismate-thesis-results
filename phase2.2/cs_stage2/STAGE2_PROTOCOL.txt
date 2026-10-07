@@ -1,0 +1,34 @@
+Stage 2 of the charged-sphere development: contact distance by charge and sphere size, rigid model
+(pre-registered, 7 October 2026). Script: cs2_contact_scan.py (code repo phase2.2), which imports WP5's
+wp5_rigid_lj_scan.py unchanged for the energy model, substrate charges/LJ, combining rule and minimiser.
+
+Model. Rigid substrate, sphere minimised in 3D under Coulomb (AM1-BCC charges of the committed force field) plus
+Lennard-Jones (Lorentz-Berthelot on the full R_min, as ORCA; Stage 1 S1.4 showed ORCA's LJ is exactly this form).
+No polarisation. An expectation-setter for the QM/MM checks of Stage 3, not a result in its own right; S1.5 reports
+how the force-field charges' potential compares with the true one at contact.
+
+Scope. 30 post-cut frames (grid_v2 header) x {R, TS} in vacuo geometries. Sizes: Amber N (R* 1.824 A, eps 0.170;
+baseline), N+5% and N+10% (Murphy et al. 2000 range), OPLS-AA sp3 carbon (sigma 3.500 A, eps 0.066), Behrens'
+stated sigma 3.55 A (eps 0.066). Positive q = +0.25, +0.5, +0.75, +1 against the four oxygen groups (WP5's CONTACT
+starts and own/migrated classification). Negative q = -0.25, -0.5, -0.75, -1 against each hydrogen H1-H8 (start 3.2 A
+out along heavy atom -> H); outcomes bound-own, bound-migrated, escaped (nearest atom beyond 6 A, i.e. no contact
+minimum), unconverged (reported, not used).
+
+Disclosure. Before this protocol was written, the script was run on ONE frame only as a code test (self-checks,
+timing). That test showed every negative-sphere start escaping in that frame; no positive-q distance was read. The
+expectations below were then written; E2.3 is phrased so that it does not depend on that observation.
+
+Expectations (reported against, not tuned to):
+E2.1 Positive N sphere at the carboxylates: contact distance falls monotonically as q rises from +0.25 to +1 in at
+     least 90% of frame-state-groups (weaker attraction, longer contact).
+E2.2 Self-checks pass: substrate rows/charge; analytic vs finite-difference gradient within 1e-5 relative for
+     q = +1 and -1; every positive-q minimum clean (|g| < 1e-5 kcal/mol/A, nearest atom > 1.5 A).
+E2.3 Negative spheres: the outcome counts are reported per q and size. Any bound minimum closer than 2.0 A to H8
+     (zero LJ) is flagged; whatever the rigid model shows, Stage 3 tests a negative sphere near the hydroxyl in
+     QM/MM, where H8 can move.
+E2.4 No size is tuned to a target. Amber N stays the baseline (the only size validated in ORCA QM/MM, WP4 arm b);
+     the other four are reported as sensitivity.
+
+What Stage 2 does not decide. The grid floor (Stage 5) is set from these distances together with Stage 3's QM/MM
+checks; where a sign of charge has no contact minimum, the floor for it comes from the Lennard-Jones pair minimum
+and Stage 3, not from Stage 2 alone.

@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N cs1b_vpot
+#PBS -l select=1:ncpus=4:mem=16gb
+#PBS -l walltime=12:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage1b/stage1b.pbs.out
+BASE=/home/18660916/system_development/phase2.2/cs_stage1b
+ORCA=/home/apps2/ORCA/6.0.1
+VAC=/home/18660916/system_development/05_qmmm/20_invacuo
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="$ORCA/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+for d in s1h_C_qm05 s1i_C_qm1 s1j_M_qp1 s1k_M_qm1 s1l_F_qp1 s1m_F_qm1; do
+  cd "$BASE/$d"
+  $ORCA/orca job.inp > job.out 2>&1 </dev/null
+  echo "$d orca_exit=$? $(grep -c 'ORCA TERMINATED NORMALLY' job.out) $(date)"
+  rm -f job.gbw job*.tmp 2>/dev/null
+done
+# first-order potential the A matrix uses: orca_vpot on the stored in vacuo density (read only), as s15_dv_matrix.py
+cd "$BASE"
+sha256sum "$VAC/sp_41786_R.gbw" "$VAC/sp_41786_R.densities" > vac_inputs.sha256
+"$ORCA/orca_vpot" "$VAC/sp_41786_R.gbw" "sp_41786_R.scfp" vpot_points_bohr.xyz vpot_C_M_F.out "$VAC/sp_41786_R" > vpot.log 2>&1
+echo "orca_vpot exit=$? lines=$(wc -l < vpot_C_M_F.out 2>/dev/null)"
+echo "end=$(date)"

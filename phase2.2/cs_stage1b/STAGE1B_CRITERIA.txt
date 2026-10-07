@@ -1,0 +1,23 @@
+Stage 1 extension S1.5: QM/MM sphere-substrate electrostatics against the A matrix's first-order terms
+(pre-registered, 7 October 2026). Inputs: cs1b_prepare.py from committed files; analysis: cs1b_analyse.py.
+
+Question. Stage 1 showed that ORCA force-shifts the sphere-sphere (MM-MM) Coulomb term at 12 A. Is the
+sphere-substrate (QM-MM) electrostatic interaction also cut off or shifted, and does its first-order part equal
+the potential the A matrix uses (orca_vpot on the stored in vacuo density)?
+
+Basis. Stage 1's substrate geometry equals 05_qmmm/20_invacuo/41786_R.xyz exactly, and its q = 0 QM/MM energy
+minus the printed LJ term equals the in vacuo single point sp_41786_R to 2e-10 Eh, so sp_41786_R's density is the
+q -> 0 density of these runs.
+
+Sites (Amber N sphere): C, the Stage 1 contact site (nearest atom 3.40 A); M, nearest atom 9.000 A (7 of 24 atoms
+beyond 12 A); F, nearest atom 13.000 A (all 24 beyond 12 A). New runs: C at q = -0.5 and -1; M and F at q = +1 and
+-1. The first-order coefficient a is taken from symmetric differences (contact: exact through q^3, using Stage 1's
+q = +0.5, +1; mid and far: (E(+1) - E(-1))/2), so polarisation (even in q) cancels exactly.
+
+S1.5 PASS: |a_QMMM - a_vpot| <= 0.05 kcal/mol per unit charge at all three sites. A pass means the QM-MM
+electrostatics are full, unshifted Coulomb at least to 13 A, and the A matrix's first-order terms mean the same in
+validation as in design. If the far-site QM/MM a is near zero while a_vpot is not, a QM-MM cutoff is acting.
+
+Informative (no pass/fail): the rigid model's electrostatic potential (AM1-BCC charges of the committed force field)
+at the same sites, as a fraction of the true potential; this calibrates how much Stage 2's rigid contact distances
+can be trusted at contact range.
