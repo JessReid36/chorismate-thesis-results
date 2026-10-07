@@ -1,0 +1,24 @@
+Stage 1 of the charged-sphere development: implementation checks in ORCA (pre-registered, 7 October 2026)
+Plan: phase2.2/CHARGED_SPHERE_DEVELOPMENT_APPROACH.docx v2, Stage 1. Inputs built by cs1_prepare.py from
+committed files only; analysed by cs1_analyse.py. All runs: frame 41786, B3LYP-D3BJ/def2-SVP RIJCOSX TightSCF,
+QM/MM single point with gradient, substrate as QM (charge -2, singlet), spheres as MM atoms with Amber N
+Lennard-Jones (R_min 3.648 A full, eps 0.170 kcal/mol).
+
+S1.1 Element label carries no physics. s1a/s1b/s1c differ only in the sphere's element label (N, C, Ar; in
+     both the geometry and the force-field file). PASS: the printed QM/MM energy, the 24 QM-atom gradient lines
+     and the printed LJ energy are identical as printed. If ORCA refuses a label, that run is reported and the
+     criterion is judged on the labels it accepts (at least two).
+S1.2 Fractional charge accepted. s1e has q = +0.5 (non-integer MM charge). PASS: it terminates normally with the
+     QM region still at charge -2 and multiplicity 1, and the energies at q = 0, 0.5, 1 (s1d, s1e, s1a) fit
+     E(q) - E(0) = a q + b q^2 with b < 0 (polarisation lowers the energy, as the design model assumes).
+S1.3 Frozen sphere-sphere terms cancel from barriers. s1f/s1g have the same two spheres (+0.5, -0.5; 8.10 A
+     apart, inside both cutoffs) and the substrate at the reactant and at the TS. PASS: the MM-MM Coulomb term
+     printed by ORCA is non-zero and identical in both, and the MM-MM Lennard-Jones term (ORCA's printed LJ
+     minus the QM-MM part computed as in S1.4) agrees within 2e-6 Eh.
+S1.4 The rigid model's Lennard-Jones is ORCA's. For the five one-sphere runs, the QM-MM Lennard-Jones energy
+     computed from the force-field file (arithmetic mean of R_min, geometric mean of eps, CHARMM force-switch
+     shift for r < 10 A, ORCA's constant 627.508107 kcal/mol per Eh from WP1) reproduces ORCA's printed LJ
+     energy within 1e-6 Eh. (Already observed post hoc on WP4 arm b's committed outputs: within 3e-9 to
+     5.9e-7 Eh over 18 geometries; pre-registered here for new geometries.)
+Informative: s1a is WP4 arm b's starting point (force field and coordinates byte-identical); its energy is
+     compared with WP4's first single point.
