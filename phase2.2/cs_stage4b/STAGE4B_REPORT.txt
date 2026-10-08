@@ -1,0 +1,49 @@
+Stage 4b report (cs4b_analyse.py) - criteria from STAGE4B_CRITERIA.txt
+
+ARM A - bare sphere (QM/MM), def2-SVP vs def2-SVPD, sphere moved out along O2 -> sphere
+  2.674 A from O2:  a SVP -142.540 / SVPD -141.048;  b SVP -9.841 / SVPD -14.241 (44.7%) -> b criterion NOT met
+     q=+0.50  SVPD gap 3.90 eV, deviation from trend -1.405 kcal/mol (SVP 3.68 eV, -0.060) -> NOT safe
+     q=+0.75  SVPD gap 1.86 eV, deviation from trend -4.183 kcal/mol (SVP 3.52 eV, -0.140) -> NOT safe
+     q=+1.00  SVPD gap 0.55 eV, deviation from trend -17.179 kcal/mol (SVP 3.34 eV, -0.272) -> NOT safe
+  2.900 A from O2:  a SVP -136.878 / SVPD -136.257;  b SVP -8.023 / SVPD -11.939 (48.8%) -> b criterion NOT met
+     q=+0.50  SVPD gap 4.00 eV, deviation from trend -1.001 kcal/mol (SVP 3.70 eV, -0.039) -> NOT safe
+     q=+0.75  SVPD gap 2.20 eV, deviation from trend -2.890 kcal/mol (SVP 3.55 eV, -0.090) -> NOT safe
+     q=+1.00  SVPD gap 0.54 eV, deviation from trend -10.258 kcal/mol (SVP 3.39 eV, -0.175) -> NOT safe
+  3.200 A from O2:  a SVP -129.953 / SVPD -129.969;  b SVP -6.239 / SVPD -9.510 (52.4%) -> b criterion NOT met
+     q=+0.50  SVPD gap 4.03 eV, deviation from trend -0.634 kcal/mol (SVP 3.72 eV, -0.022) -> NOT safe
+     q=+0.75  SVPD gap 2.73 eV, deviation from trend -1.740 kcal/mol (SVP 3.58 eV, -0.052) -> NOT safe
+     q=+1.00  SVPD gap 0.87 eV, deviation from trend -4.658 kcal/mol (SVP 3.44 eV, -0.100) -> NOT safe
+  3.500 A from O2:  a SVP -123.597 / SVPD -123.755;  b SVP -4.938 / SVPD -7.483 (51.5%) -> b criterion NOT met
+     q=+0.50  SVPD gap 4.05 eV, deviation from trend -0.405 kcal/mol (SVP 3.74 eV, -0.014) -> NOT safe
+     q=+0.75  SVPD gap 3.22 eV, deviation from trend -1.058 kcal/mol (SVP 3.61 eV, -0.031) -> NOT safe
+     q=+1.00  SVPD gap 1.69 eV, deviation from trend -2.501 kcal/mol (SVP 3.49 eV, -0.060) -> NOT safe
+  safe distance by charge (smallest tested distance from O2 at which that charge, and every larger tested distance, is safe):
+     q=+0.50: none of the tested distances
+     q=+0.75: none of the tested distances
+     q=+1.00: none of the tested distances
+
+ARM B - sphere = coreless ECP centre Ne> with charge q and the Ne-type pseudopotential (Marefat Khah 2020, SI S2)
+  q = 0 (svp): B2_inline_svp_q0; the +-0.0001 pair's mean differs by -2.22e-10 Eh
+  q = 0 (svpd): B2_inline_svpd_q0; the +-0.0001 pair's mean differs by -3.87e-10 Eh
+  check 0 (118 electrons in every run; the centre adds no basis functions: 264 / 402): PASS  [NEL [118]; basis [('svp', 264), ('svpd', 402)]]
+  check 1 control (point-charge file, no ECP, qp1) vs the QM part of Stage 4's QM/MM energy: +0.00e+00 Eh; dispersion-correction difference +0.00e+00 Eh; residual +0.00e+00 Eh
+  check 1 control (point-charge file, no ECP, qm1) vs the QM part of Stage 4's QM/MM energy: -2.05e-12 Eh; dispersion-correction difference +0.00e+00 Eh; residual -2.05e-12 Eh
+  check 1 -> PASS
+  check 2 inline ECP vs %basis ECP (q=+1, SVP): +0.00e+00 Eh -> PASS
+  check 3 the ECP acts (ECP vs no-ECP at q=+1 differ by 2.6327 kcal/mol) -> PASS
+  ECP lines in the inline run's output (first 12 matching, for inspection):
+     | WARNING: The globally-selected AuxJ basis set is optimized for use with ECPs
+     | | 33>   Ne>  1.000000     40.83200000    18.75000000    42.55100000  NewECP
+     | | 34>   N_core 10
+     | | 35>   lmax f
+     | > coreless ECP center with (optional) point charge
+     | ECP PARAMETER INFORMATION
+     |  Group 1, Type Ne ECP (replacing 10 core electrons, lmax=3)
+     | Atom  24Ne>  ECP group =>   1
+     | ECP BASIS IN INPUT FORMAT
+     |  NewECP Ne
+     |    N_core 10
+     |    lmax f
+  B1 (SVPD, ECP sphere at contact): gap at q=+1 3.64 eV; deviation from trend at q=+1 -1.432 kcal/mol (+0.75: -0.739); b SVP -9.681 / SVPD -12.835 (32.6%) -> FAIL
+  B2 (decision input; SVP, ECP sphere vs bare sphere): a -141.841 vs -142.540 (+0.49%); b -9.681 vs -9.841 (+1.6%) -> within 1% / 10%: adopting the ECP leaves the A matrix and Stage 2-3 conclusions unchanged
+  informative: energy the pseudopotential alone adds at contact (q=0, SVP) +1.744 kcal/mol, of which +0.000 is a change in the dispersion correction (if ORCA's D3 counts the centre); the sphere's LJ energy at the same geometry +2.364 kcal/mol
