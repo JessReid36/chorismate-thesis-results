@@ -1,0 +1,33 @@
+Stage 4b, Amendment 1 (8 October 2026) - written and committed before the replacement runs.
+
+What happened. Arm B's batch (batch_B.pbs, comp042, 10:10-10:30 SAST): 11 of 15 runs completed normally; four aborted
+within a second with ORCA's message "There is no ECP on center  24 (Ne>)": B_ecp_svp_q0, B_ecp_svpd_q0,
+B_noecp_svp_qp1, B_noecp_svp_qm1. Arm A is unaffected.
+
+Why. (1) ORCA does not accept a coreless ECP centre (Ne>) without a pseudopotential, so the no-ECP controls as written
+cannot run. (2) At q = 0 ORCA did not attach the pseudopotential set for Ne in the %basis block, although it did at every
+non-zero charge: those runs print "Type Ne ECP (replacing 10 core electrons, lmax=3)" and "Atom  24Ne>  ECP group =>   1",
+and without it they would have aborted the same way. The inline form (written on the centre) and the %basis form gave
+the same energy at q = +1 to the last printed digit (-836.416656960834 Eh in both).
+
+What had been looked at when this was written: the batch log; electron and basis-function counts, the dispersion
+correction and the ECP assignment lines of the completed Arm B runs; the two q = +1 energies above; and Arm A's two
+completed contact runs at q = +0.75, which the analysis reported. No Arm B a, b, deviation from the trend or gap had been
+computed (the analysis cannot form them without q = 0), so B1 had not been evaluated.
+
+Replacement runs (cs4b_amend1_prepare.py; method line, substrate lines and ECP block as in the original Arm B inputs):
+  B2_inline_{svp,svpd}_q0          the pseudopotential inline on the Ne> centre at q = 0; replace B_ecp_{svp,svpd}_q0
+  B2_inline_{svp,svpd}_q{p,m}00001 the same at q = +-0.0001; their mean is used only if ORCA refuses the inline q = 0
+                                   centre too. Its error is about b x 1e-8 (b ~ -10 kcal/mol), i.e. ~1e-7 kcal/mol; when
+                                   both exist the report shows the difference
+  B2_pc_svp_q{p,m}1                no pseudopotential: the sphere as a one-line external point-charge file (%pointcharges),
+                                   q = +-1; replace B_noecp_svp_q{p,m}1 as check 1's controls. External point charges are
+                                   the mechanism ORCA's QM/MM uses for MM charges and add no electrons (check 0 confirms
+                                   118)
+
+Analysis. cs4b_analyse.py reads these in place of the failed runs and includes every replacement run in check 0;
+nothing else changes. All criteria, thresholds and decision rules in STAGE4B_CRITERIA.txt are unchanged. The four
+failed outputs are kept and committed with the results as the record of the failure.
+
+Inputs. AMENDMENT1_INPUT_CHECKSUMS.sha256 lists the eight runs, batch_B2.pbs and this note; INPUT_CHECKSUMS.sha256 and
+the pre-registered inputs are untouched.
