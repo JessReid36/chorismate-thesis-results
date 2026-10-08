@@ -1,0 +1,37 @@
+Stage 4b - EXPLORATORY note (8 October 2026). Not a pre-registered test: the quantities below were chosen after Stage
+4b's results were seen. Stage 4b's verdicts stand as recorded in STAGE4B_REPORT.txt (Arm A: no tested distance safe
+for q = +0.5, +0.75, +1; Arm B: checks 0-3 PASS, B1 FAIL, B2 within 1% / 10%). This note and
+STAGE4B_EXPLORATORY_REPORT.txt (cs4b_explore.py) inform the design of Stage 4c; they re-score nothing.
+
+Why. The pre-registered b criterion (def2-SVP and def2-SVPD within 10%) cannot separate two different effects:
+  - basis-set polarisation: def2-SVP underestimates static polarisabilities (Rappoport & Furche 2010: -26% mean for
+    molecules of H and B-F, against -3.1% for def2-SVPD; similar basis-set convergence with DFT functionals), and
+    diffuse functions are critical for polarisabilities, more so for anions (Woon & Dunning 1994);
+  - the trap: positively charged classical sites can trap electrons when the basis is flexible enough (Laio et al.
+    2002; Laino et al. 2005), which needs a positive charge.
+  So the curvature of E(q) from the negative side only (q = -1, -0.5, 0) measures basis polarisation, and the excess
+  of the positive-side curvature (q = 0, +0.5, +1) over it measures the trap.
+
+What the exploratory report shows (cs4b_explore.py on the committed outputs):
+  - def2-SVPD / def2-SVP on the negative side: 1.37-1.39 at every distance (2.674-3.50 A) for the bare sphere, 1.27 for
+    the pseudopotential sphere - a distance-independent basis effect of the size Rappoport & Furche report, though not
+    the same quantity (their polarisabilities are of small neutral molecules in a uniform field);
+  - bare sphere, def2-SVPD: positive-side excess -28.7, -16.5, -6.8, -3.4 kcal/mol at 2.674, 2.90, 3.20, 3.50 A,
+    gap at q = +1 0.55, 0.54, 0.87, 1.69 eV - the trap weakens with distance but is still present at 3.5 A;
+  - bare sphere, def2-SVP: excess at most -0.31 kcal/mol at any distance (a compact basis confines the wavefunction:
+    Nabo et al. 2016);
+  - pseudopotential sphere at contact, def2-SVPD: excess -1.58 kcal/mol, gap 3.64 eV - smaller than the bare sphere's
+    at 3.5 A; in def2-SVP the pseudopotential changes a by +0.49% and b by +1.63%.
+
+Reading (to be tested in Stage 4c, not concluded here):
+  1. A bare positive sphere is not basis-robust anywhere in the tested range for q >= +0.75 when diffuse functions
+     are present; distance alone is not a practical remedy.
+  2. A Ne-type pseudopotential removes most of the trap at contact; in def2-SVP it leaves the design quantities
+     essentially unchanged.
+  3. The residual pseudopotential-sphere asymmetry (-1.58) is not yet attributable: higher-order responses need more
+     diffuse functions (Woon & Dunning 1994), so part may be genuine; part may be residual trapping. A physical
+     reference is needed (Stage 4c, arm C1 proposal: a real Na+, isoelectronic with the Ne-type pseudopotential).
+  4. The def2-SVP / def2-SVPD difference in b (about a quarter) is a basis-set question for the design's polarisation
+     terms, independent of how charges are represented (Stage 4c, arm C2 proposal: def2-SVP to def2-TZVPD).
+The decision rule's "Arm A's safe distances become the rule" yields no safe distance; because the b criterion
+conflates basis polarisation with the trap, D2 and D4 in CHARGE_MODEL_DECISIONS.md are not updated until Stage 4c.
