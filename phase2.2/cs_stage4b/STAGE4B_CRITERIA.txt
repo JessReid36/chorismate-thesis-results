@@ -1,0 +1,52 @@
+Stage 4b of the charged-sphere development: where the bare sphere is safe, and whether a pseudopotential makes it
+safe at contact (pre-registered, 8 October 2026). Inputs: cs4b_prepare.py from committed files; analysis:
+cs4b_analyse.py.
+
+Why. Stage 4 failed: with def2-SVPD a bare +1 sphere at contact (2.674 A from O2) shows a low empty orbital (gap
+0.55 eV), an energy 13 kcal/mol below the smooth trend, a dipole response 2.9 times the q = +0.5 one and 0.50 e
+gathered on the nearest atoms; def2-SVP is linear throughout. This is electron trapping by a positive point charge
+when the basis is flexible enough, from the missing Pauli repulsion (Laio et al. 2002; Laino et al. 2005; Murphy et
+al. 2000); compact bases confine the wavefunction (Nabo et al. 2016). Remedies in the literature: Gaussian-smeared
+charges (Das et al. 2002; Laino et al. 2005; Li & Chan 2025 in PySCF) and pseudopotentials on the MM sites
+(Marefat Khah et al. 2020). ORCA has no smeared external charges but does have coreless ECP centres ("El>", treated
+as point charges; manual 7.5.8).
+
+ARM A - bare sphere, ORCA QM/MM exactly as in Stage 4 (Amber N sphere), def2-SVP and def2-SVPD, p1's geometry.
+  The sphere is moved out along the line O2 -> sphere: 2.674 (Stage 4's runs), 2.90, 3.20, 3.50 A from O2 (nearest
+  atom H8: 2.59, 2.77, 3.02, 3.28 A). At each distance q = -1, -0.5, 0, +0.5, +0.75, +1 (at 2.674 A only +0.75 is new).
+  Per distance and basis: a and b from symmetric sums (exact through q^4); the smooth trend is the quadratic through
+  q = -1, -0.5, 0 (negative spheres do not trap; this reference keeps the trap out of the fit), and the deviation
+  from it is reported at +0.5, +0.75, +1; HOMO-LUMO gap at every q.
+  A positive charge q is SAFE at a distance if, with def2-SVPD, the gap is at least 2.0 eV and the deviation from the
+  trend is within 0.5 kcal/mol, and b agrees between the bases within 10% at that distance.
+  Reported: the safe distance for q = +0.5, +0.75, +1 = the smallest tested distance at which that charge, and every
+  larger tested distance, is safe. (def2-SVP's own deviations are shown alongside: they measure the sphere's genuine
+  higher-order response, -0.06 and -0.27 kcal/mol at +0.5 and +1 at contact in Stage 4, inside the 0.5 tolerance.)
+
+ARM B - pseudopotential sphere: plain ORCA (no QM/MM), the sphere a coreless ECP centre "Ne>" carrying the point
+  charge q and the Ne-type all-electron pseudopotential of Marefat Khah et al. 2020 (SI Table S2: N_core 10; s
+  54.5100 / 2.0475, p 1.46500 / 0.44815, d -0.8380 / 0.49205, local f 0; coefficient / exponent, r^0), at p1's
+  sphere position (2.674 A from O2). Same method and basis pairs; Hirshfeld printed; PrintBasis.
+  Ne-type because Marefat Khah assign it to second-row atoms and the sphere stands for a charged group's nearest
+  heavy atom; applying it to an abstract charged sphere is this project's extension, not theirs.
+  Runs: q = -1, -0.5, 0, +0.5, +0.75, +1 in def2-SVP and def2-SVPD (ECP set in %basis, NewECP Ne); controls: no ECP at
+  q = +1 and -1 (def2-SVP); and the ECP given inline on the centre (q = +1, def2-SVP).
+  Checks (all must pass for Arm B to be assessable):
+   0  every run has 118 electrons and 264 / 402 basis functions (the centre adds neither);
+   1  the no-ECP controls reproduce the QM part of Stage 4's QM/MM energies (ORCA's plain FINAL SINGLE POINT ENERGY,
+      i.e. without the LJ term), after any difference in the dispersion correction, within 1e-6 Eh (the centre's
+      electrostatics equal the MM sphere's);
+   2  inline and %basis ECP give the same energy within 1e-7 Eh;
+   3  the ECP acts: with and without it at q = +1 differ by more than 1e-4 Eh.
+  B1 PASS: with def2-SVPD and the ECP at contact, the gap at q = +1 is at least 2.0 eV, the deviation from the trend
+     at q = +1 is within 0.5 kcal/mol, and b agrees between def2-SVP and def2-SVPD within 10%.
+  B2 (decision input, not pass/fail): in def2-SVP, a and b with the ECP against the bare sphere's (Stage 4). Within
+     1% and 10%: adopting the ECP leaves the A matrix and Stage 2-3 conclusions unchanged; outside: those are revisited.
+  Informative: the energy the ECP alone adds at contact (q = 0) beside the sphere's LJ energy there - the input for
+  deciding whether an ECP sphere keeps, scales or drops its LJ wall in relaxed runs (counting repulsion twice).
+
+Decisions. B1 passes (with checks 0-3): the sphere becomes "charge + Ne-type pseudopotential" for single-point design
+quantities; a relaxed test of the LJ question follows before it is used in optimisations (ORCA: ECP centres need
+Cartesian constraints in optimisations, manual 7.5.8). B1 fails: Arm A's safe distances become the rule for positive
+spheres in the grid, and Gaussian-smeared spheres (PySCF) are the next option to assess. Either way D2 and D4 in
+CHARGE_MODEL_DECISIONS.md are updated.

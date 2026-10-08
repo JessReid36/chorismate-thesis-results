@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -N cm34b_A_svp
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=168:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage4b/batch_A_svp.pbs.out
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+for d in A_svp_d2674_qp075 A_svp_d290_qm1 A_svp_d290_qm05 A_svp_d290_q0 A_svp_d290_qp05 A_svp_d290_qp075 A_svp_d290_qp1 A_svp_d320_qm1 A_svp_d320_qm05 A_svp_d320_q0 A_svp_d320_qp05 A_svp_d320_qp075 A_svp_d320_qp1 A_svp_d350_qm1 A_svp_d350_qm05 A_svp_d350_q0 A_svp_d350_qp05 A_svp_d350_qp075 A_svp_d350_qp1; do
+  cd /home/18660916/system_development/phase2.2/cs_stage4b/$d
+  /home/apps2/ORCA/6.0.1/orca job.inp > job.out 2>&1 </dev/null
+  echo "$d orca_exit=$? $(grep -c 'ORCA TERMINATED NORMALLY' job.out) $(date)"
+  rm -f job.gbw job*.tmp 2>/dev/null
+done
+echo "end=$(date)"
