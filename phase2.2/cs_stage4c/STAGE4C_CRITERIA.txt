@@ -1,0 +1,39 @@
+Stage 4c of the charged-sphere development: does the basis set change the barrier change a sphere arrangement
+produces, or the ranking of arrangements? (pre-registered, 9 October 2026; plan: PHASE22_PLAN_UPDATE_20261009.md
+section 6). Inputs: cs4c_prepare.py from committed files; analysis: cs4c_analyse.py.
+
+Why. Stage 4b: with def2-SVP a bare sphere shows no trap and the Ne-type pseudopotential changes a and b by under 2%,
+but def2-SVP's polarisation is about a quarter below def2-SVPD's (Rappoport & Furche 2010 report the same kind of
+def2-SVP deficit for polarisabilities). Validation is planned at def2-SVP; this stage tests whether that level gives
+the right change in barrier and the right ranking for the arrangements a design produces.
+
+Geometry: frame 41786's reactant and TS, fixed (aligned frame; internal geometry identical to Stage 1's).
+Arrangements (arrangements.tsv; rule fixed in cs4c_prepare.py, from frame 41786's A-matrix column; sites >= 3.25 A
+apart): E1 most catalytic site +1; E2 the same +0.5; E3 most anti-catalytic site -1; E4 site nearest a carboxylate
+oxygen +1; E5 three sites by |a|, charges opposing a, x1; E6 five sites, x0.5; E7 E5 reversed; E8 three most
+negative-a sites, +1 each. First-order predictions -23.4 to +23.4 kcal/mol.
+Levels: L1 production (ORCA QM/MM, B3LYP-D3BJ/def2-SVP, spheres as MM atoms with Amber N LJ); L0, L2, L3 plain ORCA,
+spheres as Ne> centres with q and the Ne-type pseudopotential (Marefat Khah et al. 2020), def2-SVP, def2-SVPD,
+def2-TZVPD (recommended for accurate routine response work by Rappoport & Furche 2010). Bare substrate at R and TS in
+each basis. Same functional, dispersion, RIJCOSX and SCF settings throughout.
+Quantity: ddE = [E_TS(spheres) - E_TS(bare)] - [E_R(spheres) - E_R(bare)] from the QM energy (in L1 the QM part,
+without the LJ term, which is the same at every level and reported separately as dE_LJ).
+
+Check 0 (must pass for the stage to be assessable): all 70 runs terminate normally; 118 electrons everywhere; one
+basis-function count per basis (spheres add none); in L0/L2/L3 one Ne-type ECP centre per sphere, none elsewhere.
+
+Comparisons: fit ref = k x test through the origin (ddE is zero without spheres); residual = RMS of ref - k x test;
+Spearman rank correlation over the eight; signs compared wherever |ref| >= 0.5 kcal/mol.
+  ranking kept:      rho >= 0.95 (at most two adjacent swaps among eight) and every compared sign the same;
+  magnitude kept:    residual <= 0.5 kcal/mol (a rate factor of about 2.3 at 300 K) and 0.8 <= k <= 1.25.
+S4c (L1 against L3):
+  PASS          ranking and magnitude kept -> design and relaxed validation stay at def2-SVP with bare spheres; every
+                final design gets an L3 single-point check;
+  RANKING ONLY  ranking kept, magnitude not -> def2-SVP ranks designs; magnitudes are judged at L3, and D5's
+                reference 2 is then recomputed at L3 (plan section 6);
+  FAIL          ranking not kept -> validation of the top designs moves to the diffuse level: L2 if L2 against L3 is
+                PASS, otherwise L3.
+Informative (not verdicts): L0 against L3 and L1 against L0 (the pseudopotential's part of any L1-L3 difference
+against the basis's); first-order prediction against L1 (the Tier 2 question: does polarisation change the ranking);
+dE_LJ per arrangement; the bare barrier at the fixed geometries in each basis.
+Scope: one frame; the L3 check on every final design guards against a frame-specific verdict.
