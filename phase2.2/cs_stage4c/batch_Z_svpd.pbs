@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -N cm34c_Zsvpd
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=168:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage4c/batch_Z_svpd.pbs.out
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+for d in Z_L2_S1_R Z_L2_S1_TS Z_L2_S3_R Z_L2_S3_TS Z_L2_S4_R Z_L2_S4_TS Z_L2_S5_R Z_L2_S5_TS Z_L2_S6_R Z_L2_S6_TS Z_L2_S8_R Z_L2_S8_TS; do
+  cd /home/18660916/system_development/phase2.2/cs_stage4c/$d
+  /home/apps2/ORCA/6.0.1/orca job.inp > job.out 2>&1 </dev/null
+  echo "$d orca_exit=$? $(grep -c 'ORCA TERMINATED NORMALLY' job.out) $(date)"
+  rm -f job.gbw job*.tmp 2>/dev/null
+done
+echo "end=$(date)"

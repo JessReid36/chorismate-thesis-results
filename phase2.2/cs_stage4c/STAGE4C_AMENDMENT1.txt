@@ -1,0 +1,45 @@
+Stage 4c, Amendment 1 (9 October 2026) - committed before the zero-charge runs.
+
+What and why. The pre-registered quantity is ddE from the QM energy, with the sphere's steric term (LJ) excluded
+from L1 and reported separately. In the pseudopotential levels (L0, L2, L3) the Ne-type pseudopotential adds a
+charge-independent reactant/TS term of its own, which the analysis did not remove: a design error
+(exploratory/STAGE4C_EXPLORATORY.txt, item 1). Amendment 1 removes it as the criteria intended: for each site set,
+the same spheres at zero charge, and ddE_corr = ddE - ddE(zero charge). L1 needs no correction: at zero charge a
+bare sphere leaves the QM energy equal to the bare substrate's.
+
+What had been looked at when this was written: everything - STAGE4C_REPORT.txt, all 70 energies, orbital and Loewdin
+diagnostics and the exploratory analysis. Unlike Stage 4b's Amendment 1, this one is written with the results known.
+It therefore changes no threshold, leaves the original verdict on record (STAGE4C_REPORT.txt), and reports the
+corrected comparisons separately (STAGE4C_AMENDMENT1_REPORT.txt).
+
+Runs (cs4c_amend1_prepare.py; 36). Each input is a committed input with every Ne> charge set to 0.000000 and nothing
+else changed (checked by the generator). Site sets: S1 (E1, E2), S3 (E3), S4 (E4), S5 (E5, E7), S6 (E6), S8 (E8);
+levels L0, L2, L3; R and TS. The inline pseudopotential at zero charge ran in Stage 4b (B2_inline_*_q0).
+
+Analysis (cs4c_amend1_analyse.py). Check 0 for the new runs; corrected ddE; the pre-registered comparisons with
+thresholds unchanged. Added: a representation check, L1 against L0 corrected (same basis, only the representation
+differs), judged by the same criteria and used in the decision rule below; informative: L1 against L2 corrected, L0
+against L2, first order against L1; and, chosen after E5's def2-TZVPD reactant was seen, the same comparisons without E5.
+
+Decision rule, fixed now, before the zero-charge runs. It replaces the pre-registered consequence of RANKING ONLY
+("magnitudes are judged at L3, and D5's reference 2 is recomputed at L3") for these reasons: (i) L3 equals L2 where
+both are well-behaved (within 0.59 kcal/mol for seven of eight) and its one large difference is a change of electronic
+state, not basis convergence; (ii) the design-versus-enzyme comparison (D5 reference 2) is like-for-like only at one
+model chemistry, and Phase 1's enzyme values are def2-SVP with bare MM charges, the same representation as L1;
+(iii) Ryde 2016 recommends SVP-level structures and diffuse functions for single-point energies when anions are
+involved - a diffuse single-point check, not a change of production level; (iv) like-for-like, diffuse functions
+change the barrier change by about 6%.
+  1. Design and relaxed validation stay at def2-SVP with bare LJ spheres (L1).
+  2. If the representation check is PASS, every final design also gets a def2-SVPD single point with Ne-type
+     pseudopotential spheres, corrected by the same spheres at zero charge; both numbers are reported. Otherwise no
+     diffuse check is made in this representation, and the basis uncertainty is stated from Stage 4c and this amendment.
+  3. Every final design is screened electronically at each level used: HOMO-LUMO gap, and the shift of substrate atomic
+     charges against the bare substrate (Hirshfeld; Davidson & Chakravorty 1992). A design whose state at the diffuse
+     level differs from its def2-SVP state (the E5 signature) is flagged, and its barrier change is reported as
+     unresolved at this level of theory. Thresholds are fixed when design validation is pre-registered.
+  4. D5's reference 2 moves to def2-SVPD only if a final design's catalytic verdict differs between the two levels.
+  5. The corrected S4c verdict sets the stated basis uncertainty. Only a FAIL (ranking or sign not kept after the
+     correction) changes the protocol: the final ranking of top designs is then made at def2-SVPD.
+
+Inputs. AMENDMENT1_INPUT_CHECKSUMS.sha256 lists the 36 inputs, batch_Z_svp.pbs, batch_Z_svpd.pbs, batch_Z_tzvpd.pbs
+and this note; INPUT_CHECKSUMS.sha256 and every pre-registered and committed file are untouched.
