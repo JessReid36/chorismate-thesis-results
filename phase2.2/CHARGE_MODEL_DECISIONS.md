@@ -156,3 +156,12 @@ mapping back to residues is out of scope. The decisions above are updated as fol
 - **Stage 4/4b outcome**, as the approach document required ("either way D2 and D4 are updated"): with def2-SVP the
   bare sphere stands; a diffuse basis needs the Ne-type pseudopotential (Stage 4b; exploratory note in
   `cs_stage4b/exploratory/`). Smeared charges, the approach document's first fallback, are not available in ORCA.
+
+## Update after Stage 4c (9 October 2026)
+
+- **D5.** The 9 October note above ("if Stage 4c sends magnitudes to def2-TZVPD ..., reference 2 is recomputed at
+  that level") is superseded: reference 2 stays at def2-SVP, like-for-like with the designs' production level, and
+  moves to def2-SVPD only if a final design's catalytic verdict differs between the two levels
+  (`cs_stage4c/STAGE4C_AMENDMENT1.txt`, decision rule; `PHASE22_PLAN_UPDATE_20261009.md`, Stage 4c section).
+- **D1.** Unchanged. Stage 4c adds a reason for its CPCM check: in vacuum, net-negative arrangements put the HOMO at
+  +3 to +6.5 eV (`cs_stage4c/exploratory/`).

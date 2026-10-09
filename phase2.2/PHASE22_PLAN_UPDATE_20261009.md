@@ -103,3 +103,27 @@ One frame is tested; the L3 check on every final design guards against a frame-s
 | WP3 (the bare charge's well) | superseded by the sphere |
 | WP6 (frozen against relaxed) | kept: Stage 6 and validation |
 | D1, D3, D5; validation protocol and restraints (approach document) | unchanged |
+
+## Update after Stage 4c (9 October 2026)
+
+Stage 4c's verdict is RANKING ONLY (`cs_stage4c/STAGE4C_REPORT.txt`); the evaluation is in
+`cs_stage4c/exploratory/STAGE4C_EXPLORATORY.txt`, and the correction and decision rule in
+`cs_stage4c/STAGE4C_AMENDMENT1.txt`. What changes in this plan:
+
+- **Section 3, last bullet, corrected.** The "about a quarter" polarisation deficit of def2-SVP was measured on the
+  total energy at one geometry (Stage 4b). In the barrier change most of it cancels: like-for-like, diffuse functions
+  change the barrier change by about 6%, and make catalytic arrangements slightly less catalytic.
+- **Section 6's consequences are replaced** by the decision rule in `STAGE4C_AMENDMENT1.txt`: design and relaxed
+  validation at def2-SVP with bare LJ spheres; a corrected def2-SVPD single point with Ne-type pseudopotential spheres
+  on every final design if the representation check passes; D5's reference 2 stays at def2-SVP unless a final design's
+  verdict depends on the level. def2-TZVPD is not used further.
+- **Validation protocol, added:** electronic screens at every level used (HOMO-LUMO gap; shift of substrate charges
+  against the bare substrate, Hirshfeld), because the most strongly polarising arrangement (E5) changed electronic
+  state with def2-TZVPD. Thresholds are fixed when validation is pre-registered.
+- **Optimiser stage, added:** at def2-SVP, polarisation adds 10-31% beyond the first-order prediction for the tested
+  arrangements, so the candidate pool is re-scored with full def2-SVP single points before the top designs are taken
+  (the inexpensive form of the Tier 2 question in `PHASE22_PLAN.txt`). This project's own reading, not yet a decision:
+  the strongest arrangements are the nearest to electronic breakdown, which adds to the case for the reactant-gradient
+  term (section 4, item 5) and for a field or charge budget. Dittner & Hartke 2018 penalise gradient norms above
+  10 kcal/mol/A at their E, TS and P frames so that these stay near-stationary, and the design shown in their Fig. 11
+  has charges within +-0.751 e.
