@@ -138,3 +138,21 @@ Reference 3 is quoted from the paper itself (Burschowsky 2014), with the caveats
 - **Deferred to WP6**: in armb_free the forming C1-C6 distance opened from 3.16 to 4.27 A. Whether a
   site pulls the substrate out of its near-attack geometry, or the dianion relaxes that way in vacuum on
   its own, needs a no-site control; it belongs to WP6, not to the representation test.
+
+## Update 9 October 2026 - after Stage 4b (plan: PHASE22_PLAN_UPDATE_20261009.md)
+
+The end goal was restated: charges optimised on a van der Waals-surface grid, the top ~10 tested for catalysis;
+mapping back to residues is out of scope. The decisions above are updated as follows (reasons in the plan, section 4).
+
+- **D2 relaxed.** A site is an abstract charged quasi-atom (GOCAT), not the charge centre of a named group. How close
+  a site may sit is set by the sphere's measured contact distance (Stage 5), not by arginine distances.
+- **D4 withdrawn.** Designs are validated with the spheres themselves (Behrens' one-embedding scheme, spheres frozen),
+  as in the approach document's validation protocol. WP4 arm c, WP8 and the final WP2 measurement are dropped with it.
+- **D-WP4.** Arms a and b stand as recorded (bare +1 collapses; the nitrogen-sized sphere stops at 2.54-2.71 A).
+  Arm c is not pursued (out of scope).
+- **D1.** Unchanged. WP7 (b at two sites, def2-SVPD) is replaced by Stage 4c (`cs_stage4c/`).
+- **D5.** Unchanged. If Stage 4c sends magnitudes to def2-TZVPD with pseudopotential spheres, reference 2 is
+  recomputed at that level, so a design and the enzyme are always compared at one model chemistry.
+- **Stage 4/4b outcome**, as the approach document required ("either way D2 and D4 are updated"): with def2-SVP the
+  bare sphere stands; a diffuse basis needs the Ne-type pseudopotential (Stage 4b; exploratory note in
+  `cs_stage4b/exploratory/`). Smeared charges, the approach document's first fallback, are not available in ORCA.
