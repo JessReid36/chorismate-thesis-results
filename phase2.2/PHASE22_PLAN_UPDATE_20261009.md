@@ -127,3 +127,11 @@ Stage 4c's verdict is RANKING ONLY (`cs_stage4c/STAGE4C_REPORT.txt`); the evalua
   term (section 4, item 5) and for a field or charge budget. Dittner & Hartke 2018 penalise gradient norms above
   10 kcal/mol/A at their E, TS and P frames so that these stay near-stationary, and the design shown in their Fig. 11
   has charges within +-0.751 e.
+
+## Addendum (9 October 2026): enzyme reference at def2-SVPD - committed, to be done later
+
+- D5's reference 2 will be computed at def2-SVPD as well as def2-SVP, whatever the designs show
+  (`cs_stage4c/STAGE4C_AMENDMENT1_ADDENDUM1.txt`, which replaces Amendment 1's rule 4 and sets out the method). Not run now.
+- Place in section 5's order: after C4, alongside Stages 5-6, and before design validation. It needs Amendment 1's
+  representation check to pass and its own def2-SVP validation.
+- From here on, every stage that compares a design with the enzyme reports both levels.

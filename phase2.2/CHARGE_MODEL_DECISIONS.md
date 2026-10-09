@@ -165,3 +165,9 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   (`cs_stage4c/STAGE4C_AMENDMENT1.txt`, decision rule; `PHASE22_PLAN_UPDATE_20261009.md`, Stage 4c section).
 - **D1.** Unchanged. Stage 4c adds a reason for its CPCM check: in vacuum, net-negative arrangements put the HOMO at
   +3 to +6.5 eV (`cs_stage4c/exploratory/`).
+
+## Addendum (9 October 2026)
+
+- **D5.** Reference 2 will be computed at both def2-SVP and def2-SVPD, whatever the designs show
+  (`cs_stage4c/STAGE4C_AMENDMENT1_ADDENDUM1.txt`). This supersedes the "only if" condition in the Stage 4c update
+  above. Not yet run; scheduled after C4.
