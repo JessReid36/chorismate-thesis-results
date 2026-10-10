@@ -258,3 +258,13 @@ Results: `cs_stage4d/STAGE4D_REPORT.txt`. Evaluation, not pre-registered:
   design proceeds at the current level with the disagreement stated.
 - **Order from here (section 5):** C4 and Stage 4e side by side, then Stage 5, Stage 6, the optimiser stage (with the
   random-arrangement null) and validation. The end goal (section 1) is unchanged.
+
+## Update: Stage 4e pre-registered (10 October 2026)
+
+`cs_stage4e/STAGE4E_CRITERIA.txt` (criteria committed before the inputs were generated; inputs before any run).
+Stage 4d's PC2 re-examination: does the sign of the barrier change beside the carboxylates follow the
+electronic-structure method? Frame 41786's fixed reactant and TS; the six residues alone and +-1 probes at the grid
+sites nearest Arg90's, Arg7's and Arg63''s places; at B3LYP-D3BJ/def2-SVP (production), B3LYP/6-31G(d), HF/6-31G(d),
+MP2/6-31G(d) (the reference, Szefczyk et al. 2004's top level) and wB97X-D3/def2-SVP. SIGN ROBUST keeps the A matrix
+at the production level; METHOD-DEPENDENT moves it to the DFT level that keeps MP2's signs (or to MP2 densities) and
+marks the earlier values beside the carboxylates as level-dependent. Runs alongside C4; Stage 5 waits for its verdict.
