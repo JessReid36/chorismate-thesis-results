@@ -187,3 +187,11 @@ mapping back to residues is out of scope. The decisions above are updated as fol
 - **D5.** A design is called catalytic only if it is catalytic at both levels, each against the reference at the same
   level; at one level only, it is "not established" (plan, addendum to the Stage 4c Amendment 1 update, reporting
   commitment 1).
+
+## Update: Stage 4d (10 October 2026)
+
+- **D5.** Stage 4d measures the enzyme of frame 41786 with the design yardstick (frozen geometries, QM plus LJ;
+  `cs_stage4d/STAGE4D_CRITERIA.txt`). If its PC1 passes, that value is the screening reference for frozen-geometry
+  design numbers. Reference 2 (the relaxed QM/MM barrier difference) is unchanged and alone decides catalysis.
+- **D2, D4.** Unchanged: a site is an abstract quasi-atom and designs are not mapped to residues. Stage 4d compares
+  spheres with Arg90 and Arg7 only to measure how far a point charge stands in for a real charged group (PC3).

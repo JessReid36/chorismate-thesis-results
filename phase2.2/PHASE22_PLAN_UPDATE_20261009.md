@@ -195,3 +195,31 @@ but the earlier version was the one run, so they are appended here unchanged.
   4. a design flagged by the electronic screens (rule 3) is reported as unresolved, never as catalytic;
   5. the catalytic criterion itself is fixed in the design-validation pre-registration, before any design's barrier
      is computed.
+
+## Update: Stage 4d, positive and negative controls (10 October 2026)
+
+Pre-registered in `cs_stage4d/STAGE4D_CRITERIA.txt` (criteria committed before the inputs were generated; inputs
+before any run).
+
+- **Why.** The design numbers are much larger than the enzyme's. At frame 41786 one +1 sphere lowers the barrier by
+  9.3 kcal/mol (with LJ) and three spheres by 32.3, while the whole enzyme stabilises the TS by 0.8 at this frame
+  and by 5.0 +- 4.2 over 43 frames (Claeyssens et al. 2005: 4.2 for the same quantity). No control yet applied the
+  design calculation to the real enzyme, so nothing shows whether these sizes are realistic.
+- **What.** The design calculation (frozen reactant and TS of frame 41786, QM energy plus LJ) applied to known
+  environments: the whole enzyme (PC1, judged against the Phase 1 ensemble's range); single charged residues alone
+  and knocked out (PC2, judged on sign against Szefczyk et al. 2004); +1 spheres standing in for Arg90 and Arg7, at
+  their own place and at the nearest grid site (PC3, judged on sign; the size ratios are recorded and quoted beside
+  every design magnitude from then on); zero charges and reversed charges (negative controls). Reproduction checks
+  against Phase 1's own single points come first and must pass.
+- **Where in section 5's order.** Now, alongside C4: frame 41786 is untouched by C4 and C5. Before Stage 5, because a
+  PC3 failure would send the sphere representation back for re-examination.
+- **Random arrangements (the null distribution), registered now for the optimiser stage.** Before any optimiser
+  design is read, the same calculation is applied to arrangements drawn at random under the optimiser's own grid,
+  charge bounds, spacing and budget (Stage 5's rules, so not run now): first order for many, full def2-SVP single
+  points with LJ for a subset. Every design is reported with its position in that distribution. The numbers drawn
+  are fixed in the optimiser-stage pre-registration.
+- **Link to reporting commitment 5.** The catalytic criterion, fixed in the design-validation pre-registration, is
+  expressed against the enzyme measured with the same calculation: Stage 4d's whole-enzyme value for frozen-geometry
+  screening (if PC1 passes), D5's reference 2 for the relaxed NEB-CI barrier, which alone gives the verdict.
+- **Not a return to residue fidelity.** Residues appear here only as known test charges for the yardstick; designs
+  are still not mapped to residues (section 4, item 3).
