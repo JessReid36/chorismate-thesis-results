@@ -1,0 +1,64 @@
+Stage 4e of the charged-sphere development: does the sign of the barrier change beside the carboxylates depend on
+the electronic-structure method? (pre-registered 10 October 2026, committed before the inputs are generated and
+before any run; plan: PHASE22_PLAN_UPDATE_20261009.md, "Update: Stage 4e"). This is the re-examination that Stage
+4d's PC2 failure requires (STAGE4D_CRITERIA.txt). Generator: cs4e_prepare.py (on the PC, from committed files only);
+analysis: cs4e_analyse.py.
+
+Why. At B3LYP-D3BJ/def2-SVP, a cation at Arg7's place (beside the enolpyruvyl carboxylate, O1/O2) or at Arg63''s
+place (beside the ring carboxylate, O5/O6) raises the barrier: Arg7 alone +2.57 kcal/mol, Arg63' alone +5.98 (QM
+part, Stage 4d), and the first-order field at the nearest grid sites is positive in 29-30 of 30 frames
+(STAGE4D_EXPLORATORY.txt). Szefczyk et al. 2004 find both residues barrier-lowering at MP2/6-31G(d), Arg7 at every
+level they report (point-charge potential to MP2), on an RHF/6-31G(d)/CHARMM22 structure. Stage 4d ruled out the
+residues' places, the frozen environment and frame 41786 alone as the cause; the method is untested. The design's
+field (the A matrix) is built at B3LYP-D3BJ/def2-SVP, so its sign beside the carboxylates decides where an optimiser
+puts anions and cations.
+
+Design. Frame 41786's reactant and TS, fixed, in their own (Phase 1) coordinates, exactly as Stage 4d. Five levels:
+  L1  B3LYP-D3BJ/def2-SVP, def2/J, RIJCOSX   the production level; its inputs are byte-identical to Stage 4d's
+  L2  B3LYP/6-31G(d)                          Claeyssens et al. 2005's level
+  L3  HF/6-31G(d)                             Szefczyk et al. 2004's wavefunction level
+  L4  MP2/6-31G(d) (frozen core)              Szefczyk et al. 2004's reference level - the reference here
+  L5  wB97X-D3/def2-SVP, def2/J, RIJCOSX      a second functional family (range-separated hybrid; keyword WB97X-D3)
+All TightSCF, ORCA 6.0.1. ORCA uses pure d functions for every basis, including 6-31G(d), which was defined with
+Cartesian d (ORCA 6.0 manual); this does not bear on signs. Dispersion acts between QM atoms only, so it cancels from
+every quantity below.
+At each level, 34 single points: the bare substrate (R, TS); each of Stage 4d's six residues alone, with Stage 4d's
+point charges unchanged (Arg90, Arg7, Glu78, Arg116, Arg63', Lys60'; R, TS); and a +1 and a -1 probe charge at five
+grid_v2 sites, taken back to frame 41786's own coordinates: 37 (nearest Arg90's charge centre), 52 and 87 (nearest
+Arg7's), 209 and 211 (nearest Arg63''s) (R, TS). 170 runs.
+Quantities. ddE(X) = [E_TS(X) - E_TS(bare)] - [E_R(X) - E_R(bare)] x 627.5094740631, QM energy, kcal/mol, negative
+lowers the barrier. For a probe site, the first-order part a = [ddE(+1) - ddE(-1)]/2 (what reverses with the charge;
+the quantity the A matrix holds) and the polarisation part [ddE(+1) + ddE(-1)]/2. The steric (LJ) terms are those
+of Stage 4d and do not depend on the level; totals are reported for the residues.
+  carboxylate set C: Arg7 alone, Arg63' alone, a(52), a(87), a(209), a(211)
+  control set K:     Arg90 alone, a(37) - barrier-lowering in every model so far and in the literature
+  informative:       Glu78, Arg116, Lys60' alone; the polarisation parts
+
+Checks that must pass for the stage to be assessable:
+  check 0  all 170 runs terminate normally; 118 electrons; one basis-function count per level; the number of point
+           charges ORCA reads equals runs.tsv's.
+  R0       L1's bare and residue-alone energies equal Stage 4d's (same inputs) within 1e-6 Eh.
+  controls K negative at L4 (the reference). If not, the stage is not assessable.
+
+Verdict (L1 against L4, sign compared wherever |L4| >= 0.5 kcal/mol, as in Stage 4c):
+  SIGN ROBUST       every C and K value at L1 has L4's sign. The sign beside the carboxylates does not follow the
+                    method at this geometry; Stage 5 builds the A matrix at L1, and the disagreement with Szefczyk
+                    et al. is recorded as structural (their structure against ours), not resolved.
+  METHOD-DEPENDENT  some C or K value at L1 has the opposite sign to L4's. L1 is not used to build the A matrix. Stage
+                    5 builds it at the DFT level (L2 or L5) whose C and K values all have L4's sign and whose fit to
+                    L4 over all eleven values (six residues alone, five first-order parts) has the smallest residual
+                    (fit L4 = k x level through the origin); if neither does, from MP2 densities. Every Stage 4c and
+                    4d value beside a carboxylate is then marked as level-dependent.
+  Any level whose K values are not both negative is reported and is not eligible.
+Informative, not verdicts: k and residual of each level against L4; L3 against L4 (does correlation change the
+signs?); L3's signs for the six residues against Szefczyk et al.'s HF-level values (Table 1, dSCF) - if HF at this
+geometry disagrees with their HF at theirs, the structures differ; L1's first-order parts against A_v2's a for frame
+41786 at the same sites (the A matrix's own values); HOMO-LUMO gaps (rule 3 of STAGE4C_AMENDMENT1.txt: a run below
+1.0 eV is flagged, and every value that uses it is unresolved and left out of the sign comparison).
+Scope: one frame, fixed geometries, vacuum, five levels with modest basis sets. It decides which level builds the
+A matrix; it does not by itself say which structure, ours or Szefczyk et al.'s, is right.
+
+References: Szefczyk, Mulholland, Ranaghan & Sokalski, J. Am. Chem. Soc. 2004, 126, 16148 (doi 10.1021/ja049376t);
+Claeyssens, Ranaghan, Manby, Harvey & Mulholland, Chem. Commun. 2005, 5068 (doi 10.1039/b508181e); ORCA 6.0
+manual, basis sets section (pure d and f functions); wB97X-D3: Lin, Li, Mao & Chai, J. Chem. Theory Comput. 2013,
+9, 263 (doi 10.1021/ct300715s).
