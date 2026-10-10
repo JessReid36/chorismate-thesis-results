@@ -1,0 +1,71 @@
+Stage 4d - EXPLORATORY note (10 October 2026). Not pre-registered: written after STAGE4D_REPORT.txt was seen. The
+verdicts stand as recorded there: machinery checks PASS (Phase 1's QM/MM reactant reproduced to 1.5e-8 Eh); PC1 FAIL
+(the whole enzyme, frozen at the reactant's environment, +5.26 kcal/mol, outside [-13.3, +3.3]); PC2 FAIL (Arg7 +1.05
+and Arg116 +0.27, where Szefczyk et al. 2004 find both catalytic); PC3 PASS. The reversed-charge runs (NC1) have
+HOMO-LUMO gaps of 0.55 and 0.59 eV, below the screen's 1.0 eV, so their values are unresolved and not used. Every
+number below is in STAGE4D_EXPLORATORY_REPORT.txt (cs4d_explore.py on the committed inputs and outputs) or
+STAGE4D_REPORT.txt.
+
+1. PC1 failed on the steric term, not on electrostatics. Frozen at the reactant's environment, the enzyme's QM part
+   (electrostatics with polarisation) is -2.00 kcal/mol, inside the band; the LJ term is +7.26, and +5.76 of it is
+   Glu78 alone: with the protein held at the reactant, the TS's hydroxyl hydrogen comes to 1.38 A from Glu78's OE1
+   (1.53 A in the reactant). In the TS's own environment the substrate-environment LJ change is -0.62. A protein
+   frozen at the reactant does not make room for the TS; letting it relax removes the penalty. Any frozen-geometry
+   total can carry such a steric term, which is what PC1's consequence (frozen values rank designs only and are
+   never compared with an enzyme number) and reporting commitment 3 (the relaxed barrier decides) guard against.
+
+2. Measured the way Claeyssens et al. 2005 measured it, the enzyme's electrostatics come out at their size. With
+   each state in its own environment (reactant in env_R, TS in env_TS), frame 41786's TS stabilisation splits into
+   -4.87 kcal/mol electrostatic including polarisation (Claeyssens et al., B3LYP/6-31G(d)/CHARMM27: 4.7 on average
+   over 16 paths, from the same decomposition), +5.23 substrate-environment van der Waals, and -1.17 for the rest
+   (mainly the protein's own MM energy change); together Phase 1's -0.81. Frame 41786 is the sixth weakest of 43
+   frames because of its van der Waals term, not its electrostatics. One frame against a 16-path average: an
+   agreement in size, not a test.
+
+3. PC2. Arg90 and Lys60' agree with Szefczyk et al. in sign; Arg90 alone is -5.64 kcal/mol and -5.84 in situ (their
+   MP2 value -9.06; Burschowsky et al. 2014 find Arg90 contributes "up to 5.9 kcal/mol" to TS stabilisation, a free
+   energy in water, so comparable only qualitatively). Arg7 (+1.05) and Arg116 (+0.27) disagree; Arg63' (not judged)
+   is +3.54 against their -1.40. What the data rule out and what they leave open:
+   - Not the residues' places. Arg7 and Arg90 both bind the enolpyruvyl carboxylate (O1, O2), and Arg90 also the
+     ether O3, as Arg-7 and Arg-90 share one carboxylate of the transition-state analogue in the crystal structure
+     (Chook et al. 1993); Arg63' binds the ring carboxylate (O5, O6), and in Ranaghan et al. 2004's QM/MM model too
+     "arginines 7, 63, and 90 interact with the carboxylate groups". Arg116 makes no contact (second shell; in the
+     crystal it sits 3.1-4.1 A from the other carboxylate).
+   - Not the frozen environment. The four residues in contact move at most 0.18 A between env_R and env_TS, and
+     Arg7's hydrogen bond to O1 lengthens in both (1.94 A at the reactant; 2.11 frozen and 2.15 in its own TS
+     environment). Ranaghan et al. 2004 report that Arg7's hydrogen bonds shorten towards the TS on their path; here
+     they do not.
+   - Not frame 41786 alone, for Arg7 and Arg63'. The first-order field (A_v2) at the grid sites nearest their charge
+     centres is positive, so a cation there raises the barrier: near Arg7 in 29 and 30 of 30 frames (22 of 30 at its
+     third site), near Arg63' in 30 of 30 (23 of 30 at its third); near Arg90 it is negative in 30 of 30. For Arg116
+     the sign varies (negative in 18-24 of 30 frames), so its disagreement may be specific to this frame.
+   - Not obviously the substrate's geometry: breaking and forming distances 1.475 and 3.158 A (reactant) and 2.191
+     and 2.470 A (TS), against Szefczyk et al.'s 1.45 and 3.44, 2.17 and 2.58.
+   - Open: the electronic-structure method. Szefczyk et al.'s residue values rest on HF/6-31G(d) wavefunctions (from
+     the point-charge potential up to MP2 every level gives Arg7 the same, catalytic, sign), on a structure from
+     an RHF/6-31G(d)/CHARMM22 path. The enzyme's TS stabilisation (QM/MM against QM energy) is 19.7 kcal/mol at that
+     level on that path (Ranaghan et al. 2004) and 4.2 at B3LYP/6-31G(d) on 16 others (Claeyssens et al. 2005; 4.7 for
+     its electrostatic part): the literature's own values differ fourfold between methods and paths. This model is
+     B3LYP. Whether the sign of the field at the carboxylates depends on the method can be tested at this geometry.
+
+4. Why it matters for the design. In this model a cation next to either carboxylate raises the barrier and an anion
+   there lowers it (Stage 4c's E3, -1 next to O5: -11.7 kcal/mol with LJ). The enzyme puts cations there (Arg7,
+   Arg63'), and Szefczyk et al.'s catalytic field marks Arg7's place as one where a cation lowers the barrier. An
+   optimiser working from this field will favour anions beside the carboxylates.
+   If that sign is a property of the method rather than of the reaction, designs would be built on it. It has to be
+   settled before the optimiser stage (PC2's consequence) and before Stage 5 rebuilds the A matrix at the same level.
+
+5. PC3. A +1 point at a residue's charge centre gives 0.71 (Arg90) and 0.49 (Arg7) of the residue's own effect, with
+   its sign; moved to the grid at contact distance it gives 1.14 times more (about 0.8 of Arg90); replacing Arg90 by
+   a sphere inside the enzyme loses 2.40 of Arg90's 5.84. A sphere understates a real arginine.
+   The six residues alone sum to -1.86 kcal/mol (QM part) against the whole enzyme's -2.00: in this model the
+   enzyme's small net electrostatic effect is a balance of catalytic residues (Arg90 -7.29, Glu78 -4.42) and
+   anti-catalytic ones (Arg63' +5.98 and Arg7 +2.57, which bind the carboxylates, and Lys60' +1.07). The large
+   design numbers come from the arrangement (several charges, all placed to help, none binding the substrate), not
+   from the sphere.
+
+6. Reading taken forward (consequences in the plan update):
+   - frozen totals are screening numbers only and are never compared with an enzyme number (PC1);
+   - before the optimiser stage and before Stage 5, test whether the field's sign at the carboxylates depends on the
+     electronic-structure method (PC2's re-examination; proposed as Stage 4e);
+   - r90 0.71, r7 0.49, g 1.14 and SUB_R90 - ENZ +2.40 are quoted beside every design magnitude (PC3).
