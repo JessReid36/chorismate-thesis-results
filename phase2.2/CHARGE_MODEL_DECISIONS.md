@@ -203,3 +203,10 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   alone decides catalysis.
 - **D1.** Unchanged. Reversing the enzyme's charges around the dianion in vacuum drops its HOMO-LUMO gap to 0.55 eV
   (Stage 4d, NC1): another case of the vacuum limitation that D1's CPCM check of final designs addresses.
+
+## Update after Stage 4e (10 October 2026)
+
+- **Design objective.** The A matrix stays at B3LYP-D3BJ/def2-SVP (Stage 4e: SIGN ROBUST across five levels,
+  `cs_stage4e/STAGE4E_REPORT.txt`). Design magnitudes carry a stated method uncertainty (about 12% above MP2/6-31G(d)
+  at frame 41786) beside the basis uncertainty of Stage 4c.
+- **D1, D2, D5.** Unchanged.

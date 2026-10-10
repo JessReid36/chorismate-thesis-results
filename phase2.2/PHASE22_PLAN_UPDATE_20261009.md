@@ -268,3 +268,31 @@ sites nearest Arg90's, Arg7's and Arg63''s places; at B3LYP-D3BJ/def2-SVP (produ
 MP2/6-31G(d) (the reference, Szefczyk et al. 2004's top level) and wB97X-D3/def2-SVP. SIGN ROBUST keeps the A matrix
 at the production level; METHOD-DEPENDENT moves it to the DFT level that keeps MP2's signs (or to MP2 densities) and
 marks the earlier values beside the carboxylates as level-dependent. Runs alongside C4; Stage 5 waits for its verdict.
+
+## Update after Stage 4e (10 October 2026)
+
+Results: `cs_stage4e/STAGE4E_REPORT.txt`.
+
+- **Verdict: SIGN ROBUST.** At all five levels (B3LYP-D3BJ/def2-SVP, B3LYP/6-31G(d), HF/6-31G(d), MP2/6-31G(d),
+  wB97X-D3/def2-SVP) every carboxylate value has the same sign: a cation at Arg7's or Arg63''s place, or at the four
+  grid sites beside the two carboxylates, raises the barrier; the controls (Arg90 alone, the site at Arg90's place)
+  lower it at every level. Consequence (`STAGE4E_CRITERIA.txt`): Stage 5 builds the A matrix at B3LYP-D3BJ/def2-SVP.
+- **The disagreement with Szefczyk et al. 2004 is structural, recorded and not resolved.** HF/6-31G(d) at frame
+  41786's structure gives Arg7 alone +2.78 and Arg63' alone +6.43 kcal/mol, where their HF values at their structure
+  are -6.66 and -0.79 (Table 1, dSCF): the same method gives opposite signs on the two structures. Our ensemble
+  reproduces the B3LYP-level enzyme values of Claeyssens et al. 2005 (TS stabilisation -5.0 +- 4.2 over 43 frames
+  against their 4.2; electrostatic part -4.87 at frame 41786 against their 4.7), which supports our structures
+  without settling the question.
+- **Informative, from the same runs.**
+  - Magnitudes against the MP2 reference (fit MP2 = k x level over the eleven values): k 0.88 at B3LYP-D3BJ/def2-SVP
+    (residual 0.27, largest difference 1.13 kcal/mol, Arg90), 0.87 at B3LYP/6-31G(d), 0.82 at HF/6-31G(d), 0.89 at
+    wB97X-D3/def2-SVP. The production level gives single-charge effects about 12% larger than MP2/6-31G(d) here. This
+    method uncertainty is stated beside the basis uncertainty of Stage 4c whenever a design magnitude is quoted.
+  - The probes' first-order parts at B3LYP-D3BJ/def2-SVP equal the A matrix's own values for frame 41786 within 4%
+    (ratios 1.03-1.04 at all five sites), so the A matrix measures what full single points measure.
+  - Polarisation parts at the probes are small (-0.82 to +0.49 kcal/mol) beside the first-order parts (1.6 to 6.0
+    in size).
+  - Smallest HOMO-LUMO gaps 1.19 eV (L1) and 1.22 eV (L2), above the 1.0 eV flag; none flagged.
+- **Stage 4d's PC2 re-examination is complete.** The design objective's sign beside the carboxylates does not depend
+  on the method at this geometry. Next (section 5): C4, then Stage 5 (grid and A rebuilt on the C4/C5 geometries at
+  B3LYP-D3BJ/def2-SVP).
