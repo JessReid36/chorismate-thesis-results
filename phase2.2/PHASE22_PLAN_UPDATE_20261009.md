@@ -135,3 +135,38 @@ Stage 4c's verdict is RANKING ONLY (`cs_stage4c/STAGE4C_REPORT.txt`); the evalua
 - Place in section 5's order: after C4, alongside Stages 5-6, and before design validation. It needs Amendment 1's
   representation check to pass and its own def2-SVP validation.
 - From here on, every stage that compares a design with the enzyme reports both levels.
+
+## Update after Stage 4c Amendment 1 (10 October 2026)
+
+Results: `cs_stage4c/STAGE4C_AMENDMENT1_REPORT.txt` (36 zero-charge runs; thresholds unchanged). Evaluation, not
+pre-registered: `cs_stage4c/exploratory/STAGE4C_AMENDMENT1_EXPLORATORY.txt`.
+
+- **Verdicts.** Check 0 PASS. Corrected S4c verdict (L1 against L3): k 0.849, residual 1.831, rho 0.976, signs
+  agree -> RANKING ONLY. Representation check (L1 against L0, corrected): k 0.990, residual 0.284, rho 1.000,
+  max |diff| 0.739 kcal/mol -> PASS (uncorrected it was residual 0.996, max 1.72).
+- **Decision rule applied** (`STAGE4C_AMENDMENT1.txt`; rule 4 replaced by Addendum 1):
+  - rule 1: design and relaxed validation stay at def2-SVP with bare LJ spheres - unchanged;
+  - rule 2 is active: every final design also gets a def2-SVPD single point with Ne-type pseudopotential spheres,
+    corrected by the same spheres at zero charge, and both numbers are reported. The corrected sphere is validated
+    against the bare sphere at def2-SVP only; at def2-SVPD the bare sphere cannot be run, so the check is the best
+    available rather than directly validated, and is reported with that caveat;
+  - rule 3 (electronic screens at every level used) - unchanged;
+  - Addendum 1's condition is met: the enzyme reference at def2-SVPD can use the pseudopotential embedding. It stays
+    after C4, with its own def2-SVP validation, and is reported beside the def2-SVP reference;
+  - rule 5: RANKING ONLY is not FAIL, so the protocol is unchanged and the basis uncertainty is stated. For a
+    design's barrier change, def2-SVP against corrected def2-SVPD: k 0.94, residual 1.1 kcal/mol, per arrangement up
+    to 3.2 kcal/mol or 23%, where the electronic state does not change. The pre-registered L1-L3 comparison gives
+    residual 1.8 and up to 8.0 kcal/mol, driven by E5's change of electronic state at def2-TZVPD; rule 3's screens
+    are there to catch that case.
+- **Correction.** In the "Update after Stage 4c" section, first bullet, "and make catalytic arrangements slightly
+  less catalytic" is withdrawn. Corrected, diffuse functions change the barrier change by about 5% on average, but
+  unevenly (under 1% to about 19% per arrangement), and one catalytic arrangement (E1) becomes slightly more
+  catalytic. The average in that bullet and in Amendment 1's reason (iv), "about 6%", is confirmed at about 5%.
+- **For the design-validation pre-registration** (to be fixed there, recorded now): designs whose def2-SVP barrier
+  changes are closer than the stated basis uncertainty can swap at def2-SVPD (E3 and E2: 2.37 kcal/mol apart at
+  def2-SVP, 0.59 at def2-SVPD), and an optimiser's top ~10 will be closer together than Stage 4c's eight. How such
+  ties are reported is decided with the validation thresholds. Exploratory hypothesis to check on the final
+  designs: arrangements with spheres at the C10 carboxylate are the most basis-sensitive.
+- **Tier 2.** First order against full L1 (k 1.093, residual 3.13, rho 1.000) is as in Stage 4c; re-scoring the
+  candidate pool with full def2-SVP single points stays in the optimiser stage.
+- **Next** (section 5): C4.

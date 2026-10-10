@@ -171,3 +171,13 @@ mapping back to residues is out of scope. The decisions above are updated as fol
 - **D5.** Reference 2 will be computed at both def2-SVP and def2-SVPD, whatever the designs show
   (`cs_stage4c/STAGE4C_AMENDMENT1_ADDENDUM1.txt`). This supersedes the "only if" condition in the Stage 4c update
   above. Not yet run; scheduled after C4.
+
+## Update after Stage 4c Amendment 1 (10 October 2026)
+
+- **Charged sphere at diffuse levels.** The Ne-type pseudopotential sphere, corrected by the same spheres at zero
+  charge, reproduces the bare sphere at def2-SVP (representation check PASS: residual 0.284, max 0.739 kcal/mol;
+  `cs_stage4c/STAGE4C_AMENDMENT1_REPORT.txt`). It is the representation used for every def2-SVPD check of final
+  designs; the bare LJ sphere at def2-SVP stays the production representation.
+- **D5.** Addendum 1's condition (the representation check passes) is met, so reference 2 at def2-SVPD can use the
+  pseudopotential embedding described in `cs_stage4c/STAGE4C_AMENDMENT1_ADDENDUM1.txt`. Still scheduled after C4.
+- **D1.** Unchanged.
