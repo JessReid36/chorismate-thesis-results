@@ -1,0 +1,103 @@
+Stage 4d of the charged-sphere development: positive and negative controls for the design quantity
+(pre-registered 10 October 2026, committed before the inputs are generated and before any run; plan:
+PHASE22_PLAN_UPDATE_20261009.md, "Update: Stage 4d"). Generator: cs4d_prepare.py (runs on hpc1, from the
+Phase 1 files of frame 41786, each checked against its sha256 in the results repo); analysis: cs4d_analyse.py.
+
+Why. Every design number so far is ddE: the change in barrier that fixed charges cause at the fixed reactant and TS
+of frame 41786, from the QM energy with the steric (LJ) term beside it. The sizes are large: one +1 sphere at
+site 117 gives -9.3 kcal/mol with LJ, three spheres (E5) -32.3, while the whole enzyme at this frame stabilises the
+TS by only -0.8 (Phase 1, stab_TS) and by -5.0 +- 4.2 over 43 frames (Claeyssens et al. 2005: 4.2 on average for
+the same quantity). Nothing so far has applied the design calculation to the real enzyme. This stage does: it
+measures the enzyme, single residues, and spheres standing in for residues, all with the design calculation, and
+compares them with Phase 1 and the literature. It tests the yardstick; it does not test any design.
+
+Method (as Stage 4c L1). B3LYP-D3BJ/def2-SVP, def2/J, RIJCOSX, TightSCF; QM = the chorismate dianion (24 atoms,
+-2, singlet). The environment enters as fixed point charges (%pointcharges), which reproduce the QM part of ORCA
+QM/MM to 1e-12 Eh (Stage 4b). Frame 41786 in its own (Phase 1) coordinates, not the aligned frame.
+  substrate R  = 05_qmmm/20_invacuo/41786_R.xyz  (NEB image 0)
+  substrate TS = 05_qmmm/20_invacuo/41786_TS.xyz (NEB climbing image)
+  env_R  = every other atom of 19_ensemble/frame_41786/reactant.pdb (the NEB's image 0; coordinates to 0.001 A)
+  env_TS = every other atom of 19_ensemble/frame_41786/neb_NEB-CI_converged.xyz (the climbing image, full system)
+  charges and LJ parameters = 19_ensemble/frame_41786/complex_solvated.ORCAFF.prms (the Phase 1 force field)
+Quantity, per environment X: ddE_QM(X) = [E_TS(X) - E_TS(bare)] - [E_R(X) - E_R(bare)] x 627.5094740631;
+dE_LJ(X) = LJ(TS) - LJ(R) between the substrate and X's atoms, computed classically with ORCA's rule (WP1: rule A,
+R_ij = (R_i + R_j)/2, eps_ij = sqrt(eps_i eps_j), E = eps_ij[(R_ij/r)^12 - 2(R_ij/r)^6]) over all pairs, no
+cutoff; total = ddE_QM + dE_LJ (reporting commitment 2). Negative lowers the barrier. A sphere is a +1 point
+charge with Amber N's LJ (R_min 3.648, eps 0.170), as in Stages 1-4c.
+
+Runs (42; runs.tsv lists each with its environment and expected number of point charges):
+  bare             no environment (R, TS)
+  NC0              env_R atoms, every charge 0
+  ENZ              the whole enzyme as point charges, env_R
+  ENZTS            the whole enzyme, env_TS
+  REV              the whole enzyme with every charge reversed, env_R
+  KO_<res>         the whole enzyme with one residue's charges set to 0 (its LJ kept), env_R
+  ALONE_<res>      that residue's charges only, env_R
+  SPH_R90CZ        one +1 at Arg90's CZ (its guanidinium charge centre: WP4, 0.11-0.19 A away)
+  SPH_R7CZ         one +1 at Arg7's CZ
+  SPH_G37          one +1 at grid_v2 site 37, the design-grid site nearest Arg90's CZ (0.65 A), at contact distance
+  SUB_R90          the whole enzyme with Arg90's charges replaced by one +1 at its CZ (Arg90's LJ kept)
+  <res> = R90, R7, E78, R116 (chain B, residues 217, 134, 205, 243 in the system's numbering) and R63p, K60p
+  (Arg63', Lys60' of chain A, residues 63, 60): the residues Szefczyk et al. 2004 analyse that carry a formal
+  charge. The generator stops unless each has the expected name, a whole-residue charge of +1 or -1 and an
+  atom within 10 A of the substrate. Residues are whole (backbone included); Szefczyk et al. used side-chain
+  fragments.
+
+Checks that must pass for the stage to be assessable (machinery):
+  check 0  all 42 runs terminate normally; 118 electrons; 264 basis functions; the number of point charges ORCA
+           reads equals runs.tsv's.
+  R0a      bare R and TS reproduce Phase 1's in vacuo single points (20_invacuo/sp_41786_R.out -836.142634941140,
+           sp_41786_TS.out -836.116074935829; same method, settings and geometry file) within 1e-6 Eh.
+  R0b      ENZ's R reproduces Phase 1's QM part of the QM/MM reactant (19_ensemble/frame_41786/reactant_opt.out,
+           -836.914536233376) within 5e-4 Eh. The tolerance allows for reactant.pdb's 0.001 A rounding of every
+           coordinate (estimated effect about 5e-5 Eh); a wrong charge set or a misplaced atom misses by far more.
+  NC0      NC0's R and TS equal bare's within 1e-6 Eh: point charges of zero change nothing.
+If any fails, the stage is not assessable and the cause is found before anything else uses it.
+
+Controls with verdicts (thresholds fixed now):
+  PC1  The whole enzyme, measured with the design yardstick. PASS if ENZ's total lies within the Phase 1 ensemble's
+       stab_TS mean +- 2 sd, [-13.3, +3.3] kcal/mol (43 frames, 05_qmmm/19_ensemble_barriers/ensemble_barriers.tsv
+       at results commit 5fa30a2: -4.99 +- 4.15). Reported beside it: ENZTS, the "own environment" value (R in
+       env_R, TS in env_TS) against frame 41786's stab_TS (-0.81; the difference is mainly the protein's own MM
+       energy change, which point charges do not contain), and Claeyssens et al.'s 4.2.
+  PC2  Single residues, measured with the design yardstick, against Szefczyk et al. 2004 (Table 1, residue-TS and
+       residue-substrate pairs cut from a QM/MM model of the same enzyme). PASS if ALONE's total has Szefczyk's
+       sign for each residue whose sign is the same at all seven of their levels (point-charge potential to MP2):
+       Arg90, Arg7, Arg116 negative (catalytic), Lys60' positive (anti-catalytic). Glu78 is reported but not
+       judged: its value changes sign with the orientation of the substrate's hydroxyl (their Tables 2-3, -8.70 to
+       +7.33). Arg63' is reported but not judged: its sign differs between their levels. A value within 0.05
+       kcal/mol of zero counts as a mismatch. Magnitudes are compared, not judged: their structures, method and
+       side-chain fragments differ from ours.
+  PC3  A sphere standing in for a residue. PASS if SPH_R90CZ and SPH_R7CZ each have the sign of ALONE for the same
+       residue (QM part). Recorded, not judged, and carried forward as the stated representation scale:
+         r90 = SPH_R90CZ / ALONE_R90 and r7 = SPH_R7CZ / ALONE_R7 (QM part): a point charge against the
+               residue's own distributed charges at the same place;
+         g   = SPH_G37 / SPH_R90CZ (QM part): moving the sphere from Arg90's place to the grid at contact distance;
+         SUB_R90 - ENZ (QM part): the error of replacing one residue by a sphere inside the enzyme.
+  NC1  REV (informative): the odd part (ENZ - REV)/2 is what reverses with the charges (first order); the even part
+       (ENZ + REV)/2 is polarisation, which does not. Their sizes show how much of the enzyme's effect a
+       first-order surrogate would miss.
+
+Consequences (they change how numbers are used, never a threshold already fixed):
+  machinery check fails        stop; the cause is found before Stage 5 or the optimiser use frame 41786's yardstick.
+  PC1 PASS                     the frozen-geometry yardstick gives the enzyme an enzyme-sized number. The enzyme's
+                               own frozen value (ENZ total) becomes the screening reference that designs are
+                               compared with; the catalytic verdict stays with the relaxed NEB-CI barrier against
+                               D5's reference 2 (reporting commitments 1 and 3).
+  PC1 FAIL                     the frozen yardstick does not measure even the enzyme realistically: frozen values
+                               rank designs only and are never compared with an enzyme number.
+  PC2 FAIL                     the yardstick misjudges the sign of a residue's effect; the design objective is
+                               re-examined before the optimiser stage.
+  PC3 FAIL                     a sphere does not even keep the sign of the residue it stands for; the sphere
+                               representation is re-examined before Stage 5.
+  PC3 ratios                   quoted beside every design magnitude from here on.
+
+Electronic screen (rule 3 of STAGE4C_AMENDMENT1.txt): every run's HOMO-LUMO gap and largest shift of a substrate
+Hirshfeld charge against bare are reported; a run with a gap below 1.0 eV is flagged and its values are unresolved.
+Scope: one frame (41786, untouched by C4 and C5), frozen geometries, def2-SVP only. It measures the yardstick on
+known environments; it says nothing about whether any design is catalytic.
+
+References: Claeyssens, Ranaghan, Manby, Harvey & Mulholland, Chem. Commun. 2005, 5068 (doi 10.1039/b508181e);
+Szefczyk, Mulholland, Ranaghan & Sokalski, J. Am. Chem. Soc. 2004, 126, 16148 (doi 10.1021/ja049376t);
+Burschowsky et al., PNAS 2014, 111, 17516 (doi 10.1073/pnas.1408512111), Arg90 "up to 5.9 kcal/mol" of TS
+stabilisation in water (a free energy; informative only).
