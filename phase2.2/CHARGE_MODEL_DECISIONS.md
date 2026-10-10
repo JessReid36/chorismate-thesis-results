@@ -181,3 +181,9 @@ mapping back to residues is out of scope. The decisions above are updated as fol
 - **D5.** Addendum 1's condition (the representation check passes) is met, so reference 2 at def2-SVPD can use the
   pseudopotential embedding described in `cs_stage4c/STAGE4C_AMENDMENT1_ADDENDUM1.txt`. Still scheduled after C4.
 - **D1.** Unchanged.
+
+## Addendum (10 October 2026)
+
+- **D5.** A design is called catalytic only if it is catalytic at both levels, each against the reference at the same
+  level; at one level only, it is "not established" (plan, addendum to the Stage 4c Amendment 1 update, reporting
+  commitment 1).

@@ -170,3 +170,28 @@ pre-registered: `cs_stage4c/exploratory/STAGE4C_AMENDMENT1_EXPLORATORY.txt`.
 - **Tier 2.** First order against full L1 (k 1.093, residual 3.13, rho 1.000) is as in Stage 4c; re-scoring the
   candidate pool with full def2-SVP single points stays in the optimiser stage.
 - **Next** (section 5): C4.
+
+## Addendum to the Stage 4c Amendment 1 update (10 October 2026): reporting commitments
+
+These belong to the section above. They came out of an audit, before Stage 4d or any design, for anything in the
+protocol that could let a too-favourable barrier through. A revised commit script carried them inside that section,
+but the earlier version was the one run, so they are appended here unchanged.
+
+- **Reporting commitments, made now, before any design exists.** Nothing in the design or validation may be set up
+  so that it favours a lower barrier. Specifically:
+  1. a design is called catalytic only if it meets the catalytic criterion at both def2-SVP and corrected def2-SVPD,
+     each against D5's reference 2 at the same level (Addendum 1 computes it at both); a design that meets it at one
+     level only is reported as "not established". Reason: def2-SVP overstates the lowering by about 5% on average
+     and by up to 23% for one arrangement here, and the def2-SVPD check is not directly validated, so neither level
+     alone may decide. This also restores the intent of Stage 4c's pre-registered RANKING ONLY consequence
+     ("magnitudes are judged at L3"), which Amendment 1 replaced after the results were known; def2-SVPD stands in
+     for L3, which agrees with it wherever both are well-behaved (all but E5: within 0.59 kcal/mol before the
+     correction, 0.46 after);
+  2. barrier changes quoted as results are total QM/MM values (QM plus the spheres' LJ). The QM-only ddE values of
+     Stages 4-4c are basis-comparison quantities, not barrier changes, and are not quoted as results (at L1 the LJ
+     term moves them by -4.4 to +4.3 kcal/mol);
+  3. frozen-geometry values are screening numbers only; the catalytic verdict uses the relaxed NEB-CI barrier
+     (WP6: section 4, item 5);
+  4. a design flagged by the electronic screens (rule 3) is reported as unresolved, never as catalytic;
+  5. the catalytic criterion itself is fixed in the design-validation pre-registration, before any design's barrier
+     is computed.
