@@ -1,0 +1,154 @@
+C4 of the Phase 1 audit: the reactant end of each NEB band (PHASE1_AUDIT_CHECKLIST.md, item C4, protocol accepted
+6 October 2026). Pre-registered 10 October 2026: these criteria and the band table c4_bands.tsv (which fixes the
+frames and images below) are committed before any input is generated, and the inputs before any run. Band table:
+c4_bands.py (PC, committed files only). Generator: c4_prepare.py (hpc1; every source checked against its sha256 in the
+results repo). In-job extraction: c4_extract.py. Analysis: c4_analyse.py.
+
+THE PROBLEM
+In 27 of the 30 reported frames (bands after C5) an image before the climbing image lies more than 0.5 kcal/mol
+below image 0, by up to 12.81 kcal/mol (frame 23268). Image 0 is the Phase 1 reactant, optimised to ORCA's
+large-system thresholds (L-Opt: max gradient 1.0e-3, RMS 2.0e-4 Eh/bohr), and every tabulated barrier is measured from
+it. Over the 30 frames (c4_bands.tsv): from image 0, 13.22 +- 4.36 (sd) kcal/mol; from the lowest image at or before the
+climbing image, 17.10 +- 2.57.
+
+BANDS AND ENERGIES
+Final band of each frame: 22_c5_nebci for the eight C5 frames, 19_ensemble for the other 22 (all NEB-CI).
+  E_k   image k's energy on the final band (last PATH SUMMARY of neb.out); every tabulated barrier uses these.
+  Ew_k  image k's energy on the band as written to disk (neb_MEP.QMRegion_trj.xyz, neb_MEP.allxyz). ORCA writes these
+        files at the last iteration in neb.NEB.log, one before the converged band. The end points are fixed. A
+        re-optimisation starts from a written geometry, so its starting energy is Ew_k (they differ from E_k by -0.03
+        to +0.45 kcal/mol at the images used; c4_bands.tsv, lag_klow).
+  k_low the lowest image of the final band at or before the climbing image (image 0 included). The same image is
+        lowest on the written band in all 30 frames.
+  E_start, E_min  the optimiser's energy at its first and its last step (reopt-minimize-ener.csv; one run, one
+        definition). Phase 1's optimisations end 0.16-0.19 kcal/mol below their own final single point (c4_bands.tsv,
+        opt_offset), so the optimiser's energies are never compared directly with single-point energies: every
+        criterion uses differences within one run, within one band, or the run's start against its own start image.
+All energies kcal/mol (x 627.5094740631).
+
+RUNS (35; ORCA 6.0.1; 8 cores, 120 GB and 176 h walltime, as Phase 1's reactant optimisations)
+Input: each frame's Phase 1 reactant_opt.inp (QMMM B3LYP D3BJ def2-SVP def2/J RIJCOSX L-Opt; QM atoms 6207-6230, charge
+-2, singlet; the same 1959 active atoms; the same force field) with three changes: TightSCF (as the bands); %geom
+MaxIter 2000 TolMaxG 1.0e-4 TolRMSG 3.0e-5 end (ORCA's TightOpt gradient thresholds; see DEVIATION); the geometry read
+from start.xyz (the written image, full precision, no PDB rounding). 2000 steps at the slowest Phase 1 rate (180 s
+per step, frame 42436) take 100 h, so a run that reaches the step limit still ends inside the walltime and writes its
+last geometry.
+  S0_<frame>  step 0: image 0 re-optimised, for the five frames with the deepest dips: 23268, 42436, 44388, 54795,
+              49592.
+  S2_<frame>  step 2: image k_low re-optimised, all 30 frames. For 33320 and 41786 k_low is image 0, so their S2 run
+              is also their step-0 run (the two frames without a dip).
+
+DEVIATION FROM THE ACCEPTED PROTOCOL (made now, before any input exists)
+The protocol named ORCA's Normal gradient thresholds (TolMaxG 3e-4, TolRMSG 1e-4). L-Opt stops on gradients alone, and
+every Phase 1 reactant optimisation was still falling in energy when it stopped: by 2.8-7.5 kcal/mol over its last 50
+steps (median 4.1) and 0.16-0.62 over its last 10 (reactant_opt-minimize-ener.csv, 30 frames). ORCA's own Normal
+criteria also require the energy to settle (TolE 5e-6 Eh per step), which L-Opt does not test. A run stopped on a
+slope would make A1 and step 0 depend on where L-BFGS happened to stop. So the gradient thresholds are tightened to
+ORCA's TightOpt values and an energy plateau is required (M1). This is stricter than the protocol: a later stop can
+only lower a re-optimised energy (the optimiser goes downhill), which makes A1 harder to pass, not easier.
+
+MACHINERY (a run failing G, X, M0 or M2 is not assessable and is reported; its frame waits for a corrected run)
+  G   generator, before any run: every source matches its sha256 in the results repo; image 0 of neb_MEP.allxyz
+      equals reactant.pdb within 6e-4 A (PDB rounding); in image k_low every atom outside the active region equals
+      reactant.pdb within 6e-4 A; image k_low's substrate equals the committed written QM-region path within 2e-6 A,
+      and its energy, if the allxyz comment carries one, equals Ew_klow within 1e-6 Eh; the active-atom list is the
+      same in reactant_opt.inp and the band's neb.inp; atoms 6207-6230 are the substrate in reactant.pdb and in the
+      frame's MD structure. Logged: substrate RMSDs to the MD structure (a start above 0.25 A is flagged), and the
+      RMS displacement of the environment (active atoms other than the substrate) from image 0 and from k_low to the
+      climbing image, for all 30 frames: how far the surroundings change on the way to the TS (Ryde 2016).
+  X   in each job, c4_extract.py: every atom outside the active region is where start.xyz put it (2e-6 A).
+  M0  the input ORCA echoes is the committed reopt.inp; the optimiser's printed thresholds are the input's (1e-4 and
+      3e-5 Eh/bohr read 0.496 and 0.149 kJ/mol/A); its energies start at step 1. Once the gradients are met, also:
+      118 electrons, charge -2, singlet, and the final active-region geometry extracted.
+  M1  finished: ORCA terminated normally, "The minimization has converged.", and the energy over the final 50 steps
+      fell by at most 2.5e-4 Eh (ORCA's Normal energy criterion, 5e-6 Eh per step, on average; a run of 50 steps or
+      fewer is judged on its gradients). A run not finished is continued once, in <run>_c, from its last geometry
+      (reopt.xyz, or the last frame of reopt_trj.dcd if the walltime killed it) with the same settings, except that a
+      run which met the gradients without the plateau continues at ORCA's VeryTightOpt gradients (TolMaxG 3e-5,
+      TolRMSG 8e-6); its inputs are committed before it runs, and the two parts are one optimisation (E_start from the
+      first, everything else from the second). Still not finished: the frame fails step 2.
+  M2  every run's E_start - Ew_(start image) lies within 0.10 kcal/mol of the median over all runs: each run began from
+      the intended image, and the median measures any constant offset between the optimiser's energy and the band's
+      (0 if the two are the same quantity; about -0.18 if they differ as Phase 1's opt_offset suggests). The values are
+      reported.
+
+STEP 0 - which kind of dip (diagnosis, reported; it changes nothing below)
+For each S0 frame: fall F0 = E_start - E_min; depth d = E_0 - E_klow.
+  F0 >= d - 1   "incomplete optimisation": re-optimising image 0 alone reaches the dip (within 1 kcal/mol)
+  otherwise     "separate local minimum": the band found a lower minimum that image 0's optimisation does not reach
+Also reported for these five frames: the S0 against the S2 end point (energy, and active-region RMS displacement),
+which shows whether the two starts reach one structure. For 33320 and 41786, F0 is reported (no dip to reach).
+
+STEP 1 - the barrier
+B = E_ci - E_klow, from the final band. (From image 0: E_ci - E_0, reported beside it once.)
+
+STEP 2 - is k_low a reactant? (S2 run of each frame; accepted only if all three hold)
+  A1  |dE_reopt| <= 1.0 kcal/mol, where dE_reopt = (E_min - E_start) + (Ew_klow - E_klow) is the re-optimised energy
+      relative to image k_low of the final band (Claeyssens et al. 2011: unrestrained re-optimisation of the reactant
+      from the lowest restrained structure gave very similar structures, energy differences below 1 kcal/mol).
+  A2  substrate RMSD between the final geometry and the frame's own MD structure, after superposition, <= 0.30 A
+      (the Phase 1 optimisation moved substrates by median 0.170, max 0.219 A; the written k_low images already lie
+      0.128-0.249 A from their MD structures, median 0.194, from the committed .rst7 files; the generator recomputes
+      both).
+  A3  active-region displacement from image 0 (1959 atoms, no superposition: the rest of the system is fixed)
+      <= 0.20 A RMS per atom (the band distance to k_low, spread over the active atoms, is at most 0.152 A per atom,
+      frame 23268; an upper bound on the dips' own displacement); the largest single-atom displacement and its atom
+      are reported.
+Accepted: the frame's step-1 barrier B stands (protocol step 1; Claeyssens et al. 2011 measure from the lowest point
+of the path and use the re-optimisation as the check). The barrier from the re-optimised reactant, B - dE_reopt, is
+reported beside it, with the mean dE_reopt. dE_reopt is usually negative (a minimisation goes down), so B is usually
+the lower of the two, by at most 1 kcal/mol in an accepted frame; the report states the mean difference and its sign.
+
+STEP 3 - forth and back (Ryde 2016), for each frame failing step 2
+Forth: the frame's product substrate placed in the S2 end point's surroundings and optimised there (step-2
+thresholds), so both end points share one environment; back: NEB-CI between the S2 end point and that product
+(NEB-CI thresholds as C5); then steps 1 and 2 on the new band.
+At most two cycles; a frame still failing is dropped and recorded with its numbers. If more than 3 of the 30 frames
+are dropped, stop and revisit the protocol before any number is used. Step 3's inputs are generated after step 2's
+results and committed before they run; this rule is fixed now.
+
+STEP 4 - the result
+Over the retained frames: the arithmetic mean +- sem of B is the result, with the sd in kcal/mol and kJ/mol; the
+image-0 values are shown once beside it; the barriers from the re-optimised reactants and the mean dE_reopt are shown
+(informative). Ryde's
+(2017) second-order cumulant estimate, mean - sd^2/(2RT) at his T = 300 K, is reported with his Table 2's number of
+energies needed for +-20 and +-10 kJ/mol at that sd (95% confidence), stated against n.
+
+STEP 5 - sensitivity (Behrens & Hartke 2021; Ryde 2016), fixed now, inputs committed later and before they run
+Frames 23268, 42436, 44388 (the three deepest dips). Active region reduced to whole residues and waters with an atom
+within 6.0 A of the substrate in image 0, everything else fixed at image 0's coordinates; reactant (from image 0) and
+product (the frame's product with the frozen atoms set to image 0's coordinates) optimised to the step-2 thresholds,
+then NEB-CI as step 3. Holds if the barrier from the lowest point at or before the highest to the highest is within
+1.0 kcal/mol of the frame's
+B in at least two of the three frames; otherwise the largest difference is reported with the result as a stated
+uncertainty of the barrier definition. It does not change B.
+
+STEP 6 - downstream
+Every frame whose reactant geometry changes (k_low not image 0, or a new band from step 3) gets in vacuo single
+points at the new reactant's substrate geometry and goes through the alignment, grid, A matrix and s17 again (Stage
+5); stab_TS, the variance split and the regression are recomputed. B and stab_TS use the same reactant, image k_low.
+stab_TS pairs each in vacuo energy with the QM/MM energy of the same geometry on disk (the written band, Ew), so it is
+exactly a barrier difference at one set of geometries; the difference between that QM/MM barrier and B (from the
+written band's one-iteration lag; at most 0.45 kcal/mol at the images used, frame 42436) is reported once. Methods
+states that the barrier definition was settled by this audit and shows both definitions once.
+
+WHAT THIS DOES TO THE DESIGN YARDSTICK (stated before any result)
+Measured from k_low, the enzyme's barrier is higher and its spread smaller, so its TS stabilisation (D5 reference 2)
+is smaller in magnitude, and a design is judged against a smaller enzyme number. The definition was accepted on 6
+October 2026 on the literature, before any Phase 2.2 design was validated (the one design run so far, s14, is a
+frozen-surrogate screen). Claeyssens et al. 2011 plot and average their pathways from the lowest point on the reactant
+side; Behrens & Hartke 2021 measure the barrier from the lowest point to the highest; Ryde 2016: all distant groups
+must stay in one local minimum throughout a reaction sequence. The same definition applies to every barrier compared
+with the enzyme (the bare substrate's and the designs' relaxed NEB-CI barriers), so the comparison is like for like.
+Within C4 the barrier from k_low is usually below the barrier from the re-optimised reactant (step 2); both are
+reported, and the protocol's choice (k_low) was fixed on 6 October, before any re-optimised energy existed.
+
+SCOPE
+Thirty frames, one model chemistry (B3LYP-D3BJ/def2-SVP/Amber), potential energies. The re-optimisations test the
+reactant end only; the climbing images are C5's and Phase 1's.
+
+References: Claeyssens, Ranaghan, Lawan, Macrae, Manby, Harvey & Mulholland, Org. Biomol. Chem. 2011, 9, 1578 (doi
+10.1039/c0ob00691b); Behrens & Hartke, Top. Catal. (accepted 23 July 2021; doi 10.1007/s11244-021-01486-1); Ryde,
+Methods Enzymol. 2016, 577, 119 (doi 10.1016/bs.mie.2016.05.014); Ryde, J. Chem. Theory Comput. 2017, 13, 5745 (doi
+10.1021/acs.jctc.7b00826; the library copy is the accepted manuscript, Table 2 and Eqn 5); Senn & Thiel, Angew. Chem.
+Int. Ed. 2009, 48, 1198 (doi 10.1002/anie.200802019).
