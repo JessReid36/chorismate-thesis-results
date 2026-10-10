@@ -210,3 +210,11 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   `cs_stage4e/STAGE4E_REPORT.txt`). Design magnitudes carry a stated method uncertainty (about 12% above MP2/6-31G(d)
   at frame 41786) beside the basis uncertainty of Stage 4c.
 - **D1, D2, D5.** Unchanged.
+
+## Update: C4 pre-registered (10 October 2026)
+
+- **D5.** Reference 2 waits for C4 (C5 is done). C4 fixes the definition of the enzyme's barrier: from the lowest image
+  at or before the climbing image (`05_qmmm/23_c4_reactant/C4_CRITERIA.txt`), with the in vacuo barrier taken at the
+  same reactant geometry, so stab_TS stays the barrier difference at one geometry. The same definition applies to the
+  bare substrate's and the designs' relaxed barriers, so reference 2 stays like for like. Fixed before any Phase 2.2
+  design's relaxed barrier exists (reporting commitment 5).

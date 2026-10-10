@@ -296,3 +296,34 @@ Results: `cs_stage4e/STAGE4E_REPORT.txt`.
 - **Stage 4d's PC2 re-examination is complete.** The design objective's sign beside the carboxylates does not depend
   on the method at this geometry. Next (section 5): C4, then Stage 5 (grid and A rebuilt on the C4/C5 geometries at
   B3LYP-D3BJ/def2-SVP).
+
+## Update: C4 pre-registered (10 October 2026)
+
+`05_qmmm/23_c4_reactant/C4_CRITERIA.txt` and `c4_bands.tsv` (criteria and frame table committed before the inputs were
+generated; inputs before any run). Phase 1 audit item C4, the reactant end of each NEB band, as accepted on 6 October
+2026: 35 unrestrained re-optimisations at B3LYP-D3BJ/def2-SVP/Amber - image 0 of the five deepest-dip frames (step 0:
+what kind of dip) and the lowest image at or before the climbing image in all 30 frames (step 2: is it a reactant, by
+three tests). Steps 3 (forth and back) and 5 (sensitivity with the outer active region frozen) have their rules fixed
+now; their inputs are committed later, before they run.
+
+- **One deviation from the accepted protocol, made before any input exists.** Every Phase 1 reactant optimisation was
+  still falling in energy when it stopped on its gradients (2.8-7.5 kcal/mol over its last 50 steps), so a gradient
+  threshold alone does not mark a minimum. The re-optimisations use ORCA's TightOpt gradient thresholds instead of the
+  Normal ones and must also reach an energy plateau (ORCA's Normal energy criterion averaged over the last 50 steps),
+  with one continuation allowed. This is stricter and can only lower a re-optimised energy.
+- **Before any result.** Over the 30 frames the barrier is 13.22 +- 4.36 (sd) kcal/mol from image 0 and 17.10 +- 2.57
+  from the lowest image. The lowest-image definition was accepted on 6 October on the literature (Claeyssens et al.
+  2011; Behrens & Hartke 2021; Ryde 2016), before any Phase 2.2 design was validated; C4 tests, frame by frame,
+  whether that lowest image is a sound reactant, and repairs or drops the frames where it is not. Measured from the
+  lowest image the enzyme's TS stabilisation (D5 reference 2) is smaller, so designs would be judged against a
+  smaller enzyme number; the criteria apply the same definition to every barrier compared with the enzyme. The
+  agreement with Claeyssens et al. 2005 quoted after Stage 4e uses the image-0 definition and is recomputed after C4.
+- **Found while preparing it (neither changes a tabulated barrier).** (i) ORCA writes the band to disk (the neb_MEP
+  files and neb_MEP.allxyz) at the iteration before the converged band that the PATH SUMMARY, and so every tabulated
+  barrier, uses; at the images C4 starts from the two differ by -0.03 to +0.45 kcal/mol (frame 42436 the largest).
+  (ii) Phase 1's reactant optimisations end 0.16-0.19 kcal/mol below their own final single point. The criteria take
+  each run's own starting energy as its reference and correct to the final band explicitly; the only test that meets
+  the offset in (ii) checks that every run shows the same offset (M2).
+- **Frame 41786** (Stages 4c-4e) has no dip; its re-optimisation tests that it needs no change. If it failed step 2,
+  Stages 4c-4e would stand as tests at the geometry they used.
+- **Order (section 5):** the C4 runs; step 3 and step 5 inputs if needed; then Stage 5 on the C4/C5 geometries.
