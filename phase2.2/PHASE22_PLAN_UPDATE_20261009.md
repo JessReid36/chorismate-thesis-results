@@ -223,3 +223,38 @@ before any run).
   screening (if PC1 passes), D5's reference 2 for the relaxed NEB-CI barrier, which alone gives the verdict.
 - **Not a return to residue fidelity.** Residues appear here only as known test charges for the yardstick; designs
   are still not mapped to residues (section 4, item 3).
+
+## Update after Stage 4d (10 October 2026)
+
+Results: `cs_stage4d/STAGE4D_REPORT.txt`. Evaluation, not pre-registered:
+`cs_stage4d/exploratory/STAGE4D_EXPLORATORY.txt`.
+
+- **Verdicts.** Machinery checks PASS: the design calculation reproduces Phase 1's QM/MM reactant energy to 1.5e-8 Eh
+  and its in vacuo energies to 1e-12 Eh. PC1 FAIL: the whole enzyme, frozen at the reactant's environment, gives
+  +5.26 kcal/mol (QM part -2.00, LJ +7.26), outside [-13.3, +3.3]. PC2 FAIL: Arg90 and Lys60' agree in sign with
+  Szefczyk et al. 2004, Arg7 and Arg116 do not. PC3 PASS: r90 0.71, r7 0.49, g 1.14, SUB_R90 - ENZ +2.40. NC1
+  unresolved (HOMO-LUMO gap below 1.0 eV).
+- **Consequences now in force** (`cs_stage4d/STAGE4D_CRITERIA.txt`):
+  - PC1: frozen-geometry totals rank designs only and are never compared with an enzyme number. The failure is
+    steric: a protein frozen at the reactant crowds the TS (+7.26, of which Glu78 +5.76), the effect reporting
+    commitment 3 already guards against;
+  - PC2: the design objective is re-examined before the optimiser stage. For Arg7 and Arg63' the disagreement is not
+    specific to frame 41786: in this model's first-order field a cation beside either carboxylate raises the barrier
+    in nearly every A_v2 frame, the opposite of the enzyme's arrangement and of Szefczyk et al.'s field at Arg7. The
+    re-examination is Stage 4e, below;
+  - PC3: the ratios are quoted beside every design magnitude. A sphere understates a real arginine at its own place
+    (0.49-0.71 of it; about 0.8 at the grid's contact distance).
+- **What Stage 4d establishes about realism.** With each state in its own environment the calculation gives the
+  enzyme's electrostatic TS stabilisation at the published size (-4.87 kcal/mol at frame 41786; Claeyssens et al.
+  2005, 4.7 on average). One sphere's effect is of the size of one real arginine (Arg90 alone -5.6 kcal/mol with LJ;
+  Burschowsky et al. 2014, "up to 5.9", a free energy in water, so only qualitatively). Frozen totals are not barrier
+  changes. The sign of the field beside the carboxylates is in question.
+- **Stage 4e (proposed; pre-registered separately before it runs): does the field's sign beside the carboxylates
+  depend on the electronic-structure method?** At frame 41786's fixed reactant and TS, the residue-alone runs (Arg90
+  as the control, Arg7, Arg63', Glu78) and +1 probes at the grid sites nearest Arg7 and Arg63' are repeated at
+  HF/6-31G(d) (Szefczyk et al.'s level), B3LYP/6-31G(d) (Claeyssens et al.'s), MP2 and a range-separated hybrid,
+  beside the existing B3LYP-D3BJ/def2-SVP. If the sign follows the method, the level that builds the A matrix is
+  chosen again before Stage 5; if it holds across methods, the disagreement with the literature is structural and the
+  design proceeds at the current level with the disagreement stated.
+- **Order from here (section 5):** C4 and Stage 4e side by side, then Stage 5, Stage 6, the optimiser stage (with the
+  random-arrangement null) and validation. The end goal (section 1) is unchanged.

@@ -195,3 +195,11 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   design numbers. Reference 2 (the relaxed QM/MM barrier difference) is unchanged and alone decides catalysis.
 - **D2, D4.** Unchanged: a site is an abstract quasi-atom and designs are not mapped to residues. Stage 4d compares
   spheres with Arg90 and Arg7 only to measure how far a point charge stands in for a real charged group (PC3).
+
+## Update after Stage 4d (10 October 2026)
+
+- **D5.** Stage 4d's PC1 failed, so the enzyme's frozen-geometry value is not a screening reference and no frozen
+  design number is compared with an enzyme number. Reference 2 (the relaxed QM/MM barrier difference) is unchanged and
+  alone decides catalysis.
+- **D1.** Unchanged. Reversing the enzyme's charges around the dianion in vacuum drops its HOMO-LUMO gap to 0.55 eV
+  (Stage 4d, NC1): another case of the vacuum limitation that D1's CPCM check of final designs addresses.
