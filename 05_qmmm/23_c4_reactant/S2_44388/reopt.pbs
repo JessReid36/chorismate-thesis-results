@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -N c4_S2_44388
+#PBS -l select=1:ncpus=8:mem=120gb
+#PBS -l walltime=176:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/23_c4_reactant/S2_44388/reopt.pbs.out
+cd /home/18660916/system_development/05_qmmm/23_c4_reactant/S2_44388
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+for f in reopt.inp start.xyz complex_solvated.ORCAFF.prms; do [[ -s "$f" ]] || { echo "FAIL missing $f"; exit 1; }; done
+[[ -e reopt.out ]] && { echo "FAIL reopt.out exists: this run was already started"; exit 1; }
+[[ $(df -Pk . | awk 'NR==2{print $4}') -ge 3000000 ]] || { echo "FAIL less than 3 GB free here (the trajectory needs up to ~1.3 GB)"; exit 1; }
+echo "host=$(hostname) start=$(date)"
+/home/apps2/ORCA/6.0.1/orca reopt.inp > reopt.out 2>&1 </dev/null
+echo "orca_exit=$? $(date)"
+grep -q "ORCA TERMINATED NORMALLY" reopt.out && grep -q "The minimization has converged" reopt.out && echo C4_REOPT_CONVERGED || echo C4_REOPT_INCOMPLETE
+env -u LD_LIBRARY_PATH python3 /home/18660916/system_development/05_qmmm/23_c4_reactant/c4_extract.py /home/18660916/system_development/05_qmmm/23_c4_reactant/S2_44388 && echo "extract=ok" || echo "extract=FAILED"
+# a finished run's trajectory (55680 atoms per step) is not needed: its last geometry is reopt.xyz. A run killed by the
+# walltime never reaches this line, so its trajectory stays for the continuation (C4_CRITERIA.txt, M1)
+rm -f reopt_trj.dcd reopt*.tmp 2>/dev/null
+echo "end=$(date)"
