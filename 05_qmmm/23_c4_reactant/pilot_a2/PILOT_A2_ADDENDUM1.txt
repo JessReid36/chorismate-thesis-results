@@ -1,0 +1,38 @@
+C4 Amendment 2 pilot - ADDENDUM 1 (EXPLORATORY): six frames instead of one. Written 11 October 2026, about 20:00,
+committed before any input of the five added frames is generated. PILOT_A2.txt stays as committed; everything it says
+applies to each added frame (runs, thresholds, quantities, the values fixed beforehand, the relation to C4).
+
+WHAT HAD BEEN SEEN WHEN THIS WAS WRITTEN
+Only T1_43087's start-up checks and its first 34 optimiser steps (c4a2_pilot_report.py, about 19:50): ORCA reports 1935
+active atoms and the step-2 thresholds (0.4961 / 0.1488 kJ/mol/A); E_start - E_ci = -0.0026 kcal/mol (within the 0.01
+limit, the 5-decimal rounding of c4_bands.tsv); fall so far 0.26 kcal/mol. Nothing of R2_43087 exists. These numbers say
+whether the machinery started correctly, not how the pilot will come out.
+
+WHY SIX
+One frame tests the machinery; it says little about how often the reactant re-optimised from the relaxed transition-state
+environment fails the draft test |dR| <= 1.0 kcal/mol on the first cycle. With six frames the decision rule below
+gives a false alarm with probability 0.016 if 10% of frames would fail, and catches the method with probability 0.66 if
+half would fail and 0.93 if 70% would (binomial).
+
+FRAMES - by the rule of PILOT_A2.txt extended to six
+The six earliest-finished step-2 runs whose start image is not image 0, ordered by the end of their job (the time stamp
+of reopt.pbs.out on hpc1). From the end times in C4_AMENDMENT1_STATE.txt (committed 11 October, 17:15):
+  S2_43087 05:03 (the pilot's first frame), S2_26495 10:37, S2_34991 11:10, S2_48292 13:38, S2_20000 15:17, S2_58698 15:18
+(S2_41786 03:01 and S2_33320 15:39 start from image 0). The bundle recomputes the six on hpc1 and stops unless they are
+these six, each finished cleanly (gradients met, c4_extract ok).
+
+PILOT DECISION RULE - fixed now
+After R2 of all six has finished (T1 and R2 each finished: gradients met, energy plateau, c4_extract ok; one
+continuation allowed as in C4's M1):
+  - any machinery failure (a substrate atom moved in a T1, ORCA rejecting the input, a leg not finishing after one
+    continuation) -> fix the procedure before Amendment 2 is written;
+  - 3 or more of the six with |dR| > 1.0 kcal/mol -> the TS-anchored design is revisited (C4_WAY_FORWARD section 4,
+    option D, or a second cycle as standard) before Amendment 2 is written;
+  - otherwise Amendment 2 is written with the values PILOT_A2.txt fixed, and each frame enters step 3 as soon as its own
+    step-2 run has finished (to be stated in the amendment).
+B3 - B over six frames is reported but decides nothing: six frames cannot estimate a mean shift to better than about
++-2-3 kcal/mol, and B stays the provisional barrier until step 4.
+
+REUSE
+As PILOT_A2.txt: a pilot frame's T1 and R2 are its step-3 runs only if Amendment 2's inputs for that frame are
+byte-identical (sha256) to the pilot's; otherwise the frame is run again.
