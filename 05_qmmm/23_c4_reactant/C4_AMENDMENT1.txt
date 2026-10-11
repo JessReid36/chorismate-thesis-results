@@ -1,0 +1,46 @@
+C4 Amendment 1: the reference energy of a run's start image (written 11 October 2026, committed while most of the 35
+runs were still running; C4_AMENDMENT1_STATE.txt lists which runs had finished when it was committed). It changes two
+energy references in C4_CRITERIA.txt and the sentences built on them. No threshold, test, frame, run or input changes.
+Analysis: c4_analyse_a1.py (the pre-registered c4_analyse.py stays as committed and is run as well).
+
+WHAT WAS FOUND
+The criteria assumed that ORCA writes neb_MEP.allxyz and neb_MEP.QMRegion_trj.xyz one NEB iteration before the
+converged band, so that a geometry taken from them has the energy written beside it (Ew_k, the comment-line energy,
+equal to the last block of neb.NEB.log) rather than the converged band's (E_k, the PATH SUMMARY). The runs show the
+opposite. Each run's first energy is a fresh single point on its start geometry, and it matches E_k, not Ew_k: the
+pre-registered analysis, run on 11 October at 12:32 while most runs were going (C4_REPORT_PROVISIONAL.txt, committed
+with this amendment), gave E_start - Ew from -0.443 to +0.026 kcal/mol and failed M2 for S2_42436 and S2_24883, the
+two frames whose labels lag most (Ew_klow - E_klow = +0.446 and +0.141, c4_bands.tsv), by about their lags. Before
+this amendment was committed, the amended analysis was run on the same outputs (x68 stops otherwise) and found
+E_start - E_k within 0.10 kcal/mol of its median for every run; its M2 lines are in C4_AMENDMENT1_STATE.txt. So the
+geometries on disk ARE the converged band's; only the energy labels written beside them are one iteration old.
+ORCA's own final single point at the end of each finished run equals its optimiser's last energy within 0.002
+kcal/mol, so the optimiser's energy and the band's are the same quantity.
+
+WHAT CHANGES
+1. M2: E_start is compared with E_(start image) of the final band (E_0 or E_klow, PATH SUMMARY), not with Ew. The rule
+   is unchanged (every run within 0.10 kcal/mol of the median). The pre-registered values against Ew are still
+   printed, marked as superseded.
+2. A1: dE_reopt = E_min - E_klow. The pre-registered formula, (E_min - E_start) + (Ew_klow - E_klow), added the label
+   lag on the assumption that E_start = Ew_klow. Since E_start = E_klow, that term only shifted dE_reopt by the lag.
+   With dE_reopt negative (a minimisation goes down), removing it makes A1 harder to pass in every frame whose lag is
+   positive (by up to 0.45 kcal/mol, frame 42436) and easier by at most 0.03 kcal/mol in the one frame whose lag is
+   negative (50892). The barrier from the re-optimised reactant is E_ci - E_min (= B - dE_reopt, as before).
+3. Text built on the wrong premise, superseded: in BANDS AND ENERGIES, "A re-optimisation starts from a written
+   geometry, so its starting energy is Ew_k"; in STEP 6, that stab_TS "pairs each in vacuo energy with the QM/MM energy
+   of the same geometry on disk (the written band, Ew)", and the sentence on its difference to B. Corrected: the
+   geometries on disk are the final band's, so stab_TS pairs each in vacuo energy with E (PATH SUMMARY), exactly a
+   barrier difference at one set of geometries, with no lag to report. The plan's 10 October note (i) is corrected in
+   the same way. Phase 1's harvested stab_TS (PATH SUMMARY barriers, in vacuo energies at the geometries on disk) was
+   consistent all along.
+
+WHAT EXISTED WHEN THIS WAS WRITTEN (disclosed)
+When this was written (11 October, about 13:00) six runs had finished: S2_41786, S2_43087, S2_26495, S2_34991 (step 2)
+and S0_23268, S0_42436 (step 0); C4_AMENDMENT1_STATE.txt lists those finished when it was committed. Their results
+under the pre-registered analysis are in C4_REPORT_PROVISIONAL.txt. For the four step-2 frames the change in dE_reopt
+is at most 0.007 kcal/mol (their labels lag by 0.000 to 0.007) and every verdict is unchanged: all four fail A1, with
+dE_reopt from -1.84 to -4.58 kcal/mol, and pass A2 and A3. Step 0 uses no written label and is unchanged. For
+S2_42436 and S2_24883 only their start energies (M2) were known, not their results.
+
+References: C4_CRITERIA.txt (BANDS AND ENERGIES, M2, STEP 2, STEP 6); c4_bands.tsv (lag_klow); PHASE1_AUDIT_CHECKLIST.md
+item C4.
