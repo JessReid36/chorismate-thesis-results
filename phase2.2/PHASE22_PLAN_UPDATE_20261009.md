@@ -327,3 +327,22 @@ now; their inputs are committed later, before they run.
 - **Frame 41786** (Stages 4c-4e) has no dip; its re-optimisation tests that it needs no change. If it failed step 2,
   Stages 4c-4e would stand as tests at the geometry they used.
 - **Order (section 5):** the C4 runs; step 3 and step 5 inputs if needed; then Stage 5 on the C4/C5 geometries.
+
+## Update: C4 Amendment 1 (11 October 2026)
+
+`05_qmmm/23_c4_reactant/C4_AMENDMENT1.txt`, committed while most C4 runs were still running.
+
+- **Correction to the 10 October note (i).** ORCA writes the converged band's geometries to neb_MEP.allxyz and
+  neb_MEP.QMRegion_trj.xyz; only the energies written beside them (and the last block of neb.NEB.log) are one
+  iteration old. Every C4 run's first single point reproduces the PATH SUMMARY energy of its start image, not the
+  written label (labels differ by up to 0.45 kcal/mol, frame 42436). Phase 1's barriers and stab_TS were consistent
+  all along; no number already tabulated changes.
+- **What the amendment changes.** C4's start-energy check (M2) uses the PATH SUMMARY energy, and the A1 quantity
+  becomes dE_reopt = E_min - E_klow, dropping a lag term that would have made A1 easier to pass by up to 0.45
+  kcal/mol (and harder by at most 0.03, frame 50892). Six runs had finished when it was written; for those, no
+  verdict changes.
+- **Also found (not an amendment).** Phase 1's 0.16-0.19 kcal/mol gap between each reactant optimisation's last step and
+  its final single point most likely came from ORCA writing the optimised reactant as a PDB (3 decimals) and evaluating
+  the single point and image 0 at those rounded coordinates: with full-precision xyz input the two agree within 0.002
+  kcal/mol. Image 0 of every Phase 1 band therefore sits about 0.18 kcal/mol above its optimised reactant, and each
+  image-0 barrier is about that much too low. C4, and any later input built from it, uses xyz end points.
