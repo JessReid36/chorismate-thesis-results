@@ -1,0 +1,48 @@
+C4 Amendment 2 pilot - EXPLORATORY. The TS-anchored forth and back tried on one finished frame. Written 11 October 2026
+(evening) while 17 of the 35 C4 runs were still running; committed before any pilot input is generated, and the inputs
+before any pilot run. Not part of C4's result; C4_CRITERIA.txt and Amendment 1 are unchanged by it.
+
+WHY
+C4_WAY_FORWARD_20261011.md (this folder; the literature review, also in the project as claude/C4_WAY_FORWARD.md) proposes
+replacing step 3's NEB-CI "back" leg by a TS-anchored forth and back (Amendment 2, draft, its section 5). Before that is
+pre-registered, one frame tests what the review could not settle from the literature:
+ 1. machinery: ORCA 6.0.1 L-Opt with the substrate (the QM atoms) left out of the active atoms, so that the environment
+    relaxes around a fixed climbing-image substrate. ORCA's L-Opt (its MD-module optimiser) states that "frozen
+    coordinates, fragments are ignored", so the active-atom list is the only way to hold the substrate;
+ 2. cost: steps and wall time of each leg;
+ 3. a first look at the quantities Amendment 2 would test (below).
+
+FRAME - chosen by a rule fixed before any pilot result
+The earliest-finished step-2 run whose start image is not image 0: S2_43087 (ended 11 October 05:03; S2_41786 ended
+earlier but starts from image 0, which has no environment to carry from the climbing image). The bundle checks the rule
+on hpc1 before it writes anything. Band 19_ensemble, climbing image 5, k_low 1.
+
+RUNS - the step-2 template, thresholds and machinery (TightSCF, TolMaxG 1.0e-4, TolRMSG 3.0e-5 Eh/bohr, MaxIter 2000)
+  T1_43087  start: the final band's climbing image (neb_MEP.allxyz image 5; the converged geometry, Amendment 1). Active
+            atoms: C4's 1959 minus the substrate (6207-6230): 1935. Input otherwise S2_43087/reopt.inp, line for line.
+  R2_43087  generated only after T1 has finished (gradients met, energy plateau as M1, c4_extract ok): T1's last geometry
+            with the substrate (6207-6230) taken from band image 1 (k_low). All 1959 atoms active. Input file:
+            S2_43087/reopt.inp byte for byte. Not generated if a substrate atom would start closer than 1.0 A to any other
+            atom (the generator reports the closest contact either way).
+  A second cycle is not part of the pilot.
+
+QUANTITIES (kcal/mol; the optimiser's energies, as in C4), reported whatever they show
+  T1  E_start - E_ci (the start is the converged climbing image: must be within 0.01); fall_T = E_ci - E_min(T1);
+      steps; environment displacement and most-displaced atom; substrate displacement (must be 0; c4_extract.py checks
+      every atom outside T1's active atoms, the substrate included)
+  R2  dR = E_min(R2) - E_min(S2_43087), against the draft test |dR| <= 1.0; substrate RMSD to its MD structure (A2)
+  B = E_ci - E_klow (band); B3 = E_min(T1) - E_min(R2); and, as a check, E_min(T1) - E_min(S2_43087)
+
+FIXED BEFORE THE PILOT - the draft Amendment 2 values, which the pilot must not be used to choose
+The step-2 thresholds for every leg; the 1.0 kcal/mol test; at most two cycles; more than 3 of 30 unresolved frames ->
+stop and revisit; the three-frame NEB check on 23268, 42436 and 44388. If any of these changes after the pilot, the change
+and its reason are stated in the amendment.
+
+HOW THE PILOT RELATES TO C4
+If Amendment 2 is committed with rules under which frame 43087's T1 and R2 inputs are byte-identical to the pilot's (their
+sha256 decide), the pilot runs are that frame's step-3 runs; otherwise the frame is run again under the amendment. The
+pilot's inputs, outputs and report are committed [exploratory] whatever they show.
+
+References: C4_CRITERIA.txt; C4_AMENDMENT1.txt; C4_WAY_FORWARD_20261011.md sections 3.3 and 5; Zhang, Liu & Yang 2000
+(J. Chem. Phys. 112, 3483; the alternating scheme); Claeyssens et al. 2005, 2011; Senn et al. 2009 (Can. J. Chem. 87,
+1322); ORCA 6.0.1 output, "L-OPT requested" notice (frame 41786's Phase 1 reactant optimisation).
