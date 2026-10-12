@@ -1,0 +1,152 @@
+Stationary-point barriers per frame (SP) - PLAN. Written 12 October 2026; committed before any SP input is generated,
+and the inputs before any SP run. Results folder 05_qmmm/24_sp_barriers; code phase1_system_dev/sp_prepare.py,
+sp_stage.py, sp_report.py (tier1-realism; sha256 at the end). Retained-final: this plan fixes the protocol, the smoke
+test's region rule and the reporting of the 30-frame package before any of it has run.
+
+DECISION (Jessica, 12 October 2026)
+Apply frame 820's stationary-point protocol (steps 18c-18f: transition-state optimisation with a hybrid Hessian,
+frequency check, IRC, reactant and product re-optimised in the same region and frozen surroundings) to every frame of
+the ensemble, with an extended region chosen by distance; smoke-test it on one frame, then run the 30 frames as one
+package.
+The draft C4 Amendment 2 (TS-anchored forth and back) is not pursued; its pilot stays [exploratory]. This departs from
+PILOT_A2_ADDENDUM1.txt, whose rule (fewer than 3 of 6 frames not met -> Amendment 2 written) the pilot met; the pilot's
+results (6 of 6 met) were seen before this decision. Reason: the literature review of 12 October (LITERATURE below)
+found stationary points in one region and one set of frozen surroundings to be the standard route to a QM/MM barrier;
+the TS-anchored cycle is one half of the alternating scheme (Senn & Thiel 2009, section 3.2). C4_CRITERIA.txt and
+Amendment 1 are unchanged; C4's running jobs finish and are reported as planned.
+
+WHAT HAS BEEN SEEN BEFORE THIS PLAN
+- C4 provisional report (C4_REPORT_PROVISIONAL.txt): accepted 0 of 30; the 13 frames assessed at step 2 all fail A1,
+  dE_reopt -1.84 to -11.56 kcal/mol. In 10 of those 13 runs the most-displaced atom is a water of the 1959-atom active
+  list 33-75 A from the substrate (1.4-4.2 A displacement); in the other 3 a protein atom 9.6-14.8 A away.
+- The pilot (pilot_a2, exploratory), six frames: |dR| <= 0.02 kcal/mol; B3 - B = +0.84 to +3.00 kcal/mol.
+- The NEB band energies of all 30 frames (c4_bands.tsv), including frame 42436: climbing image 7, k_low 4,
+  barrier_image0 6.38, barrier_klow 18.64, depth 12.26 kcal/mol.
+- Frame 820: +16.00 kcal/mol (BARRIER_FINAL.md). Audit A7 resolved: the converged TS has one imaginary mode,
+  -313.07 cm-1 (18c_reduced_region/ts_reduced.out, final NumFreq after OPTIMIZATION RUN DONE); -313.30 and -18.65 cm-1
+  are the starting Hessian's (same file, before cycle 1). ts_frequencies_summary.txt and BARRIER_FINAL.md quote the
+  latter.
+- New audit item A8 (PHASE1_AUDIT_CHECKLIST.md): every ensemble frame used frame 820's 1959-atom active list (R12). In
+  each of the 30 frames its 139 waters lie at a median 39-45 A from the substrate, none within 3.5 A, while 8-22 water
+  atoms within 3.5 A of the substrate (22-46 within 5 A; all of them water) were held fixed - in every reactant
+  optimisation, NEB band, C5 and C4 run. In frame 820 itself, 7 of the 139 waters are within 3.5 A and none of those
+  atoms is fixed.
+- Region sizes of all 30 frames (computed from the committed MD structures, frames/frame_*_CHA2.rst7 and the prmtop):
+  8 A 857-950 atoms (31-47 waters); 6 A 444-558 atoms (14-26 waters). No SP calculation has been run.
+
+LITERATURE (full papers in the library; DOIs below)
+Region. Chorismate-mutase QM/MM studies relax large regions but trace the path by restrained minimisation along
+r = d(C-O) - d(C-C), not by a saddle-point search: Ranaghan et al. 2004, atoms beyond 16 A fixed, waters 10-16 A
+restrained (their AM1 test: the restraints raised the barrier by 3.0 kcal/mol); Claeyssens et al. 2005, 25 A sphere,
+outer 5 A fixed; Senn et al. 2009, protein within 17 A and waters within 30 A free, "depending on the snapshot ... about
+9850 atoms". For saddle points the Thiel/Kastner protocol is a distance region: Cooper & Kastner 2014, "Whole residues
+(amino acids or water molecules) with at least one atom within 8 A of the proline N atom were optimized (about 360
+atoms), all other atoms were frozen to their positions from the MD. This is the same protocol as we typically employ";
+Kastner et al. 2007 (fluorinase), "All residues or water molecules within 8 A of SAM or F- were included in the
+optimization" (3960 degrees of freedom). Senn & Thiel 2009 (section 3.2): quasi-Newton optimisers scale as O(N^2) to
+O(N^3) and become "impractical for large systems"; the TS searches they describe use a core Hessian with
+microiterations. The ORCA 6.0 manual's QM/MM chapter describes microiterations only through its GROMACS interface;
+ORCA's OptTS works in redundant internal coordinates, which the manual warns are slow beyond about 2000 primitives (18c:
+1506 internal coordinates for the 181 atoms ORCA optimised, its 102 active atoms and their fixed neighbours; an 8 A
+region holds about nine times as many active atoms). Our outputs: 18b (OptTS, 1959 active atoms) was killed at 221 GB
+(limit 120 GB); 18c (102 atoms) converged in 21 cycles. The 8 A distance rule is therefore the largest literature-backed
+region in which ORCA's TS search is plausible; 6 A is the fallback; the smoke test decides (below).
+Frozen surroundings. Cooper & Kastner 2014: the frame's MD positions for every atom outside the region, for every state.
+Senn et al. 2009 (BsCM): reactant-state snapshots, the outside fixed. Ryde 2016 (section 4, item 7): "optimize the MM
+system for one state and employ this MM structure for all the other states"; if the results depend on that state, the
+model must be extended. Rod & Ryde 2005: with the environment fixed entirely, environments from reactant and product
+simulations gave forward barriers of 59 and 26 kJ/mol. Claeyssens et al. 2005 took snapshots from TS-restrained MD.
+Reactant. Ryde 2016 (section 2.5): all distant groups must stay in the same local minimum through a reaction sequence
+("a single water molecule at the periphery" can change the energy by 20 kJ/mol). Taking the reactant as the minimum
+reached from the TS (IRC, then minimisation) keeps reactant and TS in one basin of the surroundings.
+Frequencies. ORCA 6.0 manual: partial Hessian vibrational analysis (PHVA) "should be used for QM/MM optimized structures
+only to verify the nature of the stationary point"; with non-active atoms present ORCA selects PHVA itself.
+
+PROTOCOL (per frame F, radius d, surroundings S; ORCA 6.0.1, B3LYP-D3BJ/def2-SVP def2/J RIJCOSX, TightSCF, QM atoms
+6207-6230, charge -2, singlet, ff14SB/GAFF/TIP3P force field complex_solvated.ORCAFF.prms; atom indices 0-based)
+P1 Region: every residue (amino acid, water, ion, the substrate) with at least one atom within d of any atom 6207-6230,
+   whole, measured on the frame's MD structure (19_ensemble/frame_F/frame_F_CHA2.pdb). Primary d = 8 A.
+P2 Surroundings, shared by every state of the frame: S = md, the MD structure (primary); S = ci, the final band's
+   climbing image (the surroundings check under PACKAGE).
+P3 TS: start = region atoms from the band's climbing image (neb_MEP.allxyz), every other atom from S. OptTS TightOpt,
+   Calc_Hess true with Hybrid_Hess over the 24 QM atoms (as 18c), MaxIter 500. Change from 18c: TightOpt (max gradient
+   1e-4, RMS 3e-5 Eh/bohr, C4's thresholds) for every stationary point, because the region is about nine times larger.
+P4 TS check: NumFreq with only the 24 QM atoms active (PHVA, 144 displacements; the environment as optimised). Pass:
+   exactly one imaginary mode of magnitude >= 20 cm-1 (smaller imaginary values are listed, not counted). Change from
+   18c (NumFreq over all 102 active atoms): at ~950 atoms that would be ~5700 displacements.
+P5 IRC: from the TS, the 24 QM atoms moving and the environment held at the TS geometry, Hessian from P4 (InitHess read,
+   hessMode 0), both directions, MaxIter 100 (18d's settings). Pass: one end reactant-like (O-C 6214-6215 <= 1.80 A and
+   C-C 6207-6219 >= 2.40 A) and the other product-like (C-C <= 1.80 A, O-C >= 2.40 A). Change from 18d: 18d moved all
+   102 region atoms and read the full 102-atom Hessian.
+P6 R_IRC and P_IRC: Opt TightOpt of the region from the reactant-like and product-like IRC ends, MaxIter 500; pass:
+   converged and still reactant-like / product-like. Change from 18e/18f: those started from the step-15/17 minima.
+P7 R0 (check): Opt TightOpt of the region from the band's image 0 (the Phase 1 reactant) region atoms in S, MaxIter 500;
+   pass: converged and still reactant-like.
+P8 Frequencies of R_IRC, P_IRC, R0: as P4; a minimum has no counted imaginary mode.
+Energies: the last FINAL SINGLE POINT ENERGY (QM/MM) of each optimisation (as BARRIER_FINAL.md); kcal/mol = Eh x
+627.5094740631. Every check (sp_stage.py) also verifies that no atom outside the active atoms moved (2e-6 A).
+
+QUANTITIES (per frame, reported whatever they show)
+B_sp = E(TS) - E(R_IRC), the primary barrier. Complete when P3 converged, P4 passed, P5 passed, R_IRC converged (P6) and
+R_IRC has no counted imaginary mode (P8); otherwise the frame is reported with the step that failed and has no B_sp.
+dR0 = E(R0) - E(R_IRC) (the C4 question: is there a lower reactant than the one connected to the TS?); E(TS) - E(R0) is
+reported alongside, never in place of B_sp. dE_rxn = E(P_IRC) - E(R_IRC). The TS imaginary frequency; every counted and
+uncounted imaginary value; cycles, wall time, memory and file sizes of every job.
+
+SMOKE TEST (before the package)
+Frame 42436, chosen by a rule: the largest 8 A region of the 30 frames (950 atoms), so the worst case for cost. Both
+radii, S = md: f42436_r8 and f42436_r6, all eight jobs each (submit.sh). Region rule, fixed here: the 30 frames use 8 A
+if, at 8 A, every job ended inside its 176 h walltime with ORCA terminating normally, the TS, R_IRC, P_IRC and R0
+optimisations passed their checks (P3, P6, P7), the TS has exactly one counted imaginary mode (P4) and the IRC ends are
+one reactant and one product (P5); the frequencies of the three minima (P8) are results, not part of the rule; otherwise
+6 A if the same holds at 6 A; otherwise stop and report. sp_report.py smoke prints the verdict. The barrier values play
+no part in the rule. Frame 42436's runs at the chosen radius are that frame's package runs (same code, same rules); the
+other radius is reported as a region-size check on that frame.
+
+PACKAGE (after the smoke test meets the rule; one bundle)
+The other 29 frames at the chosen radius with S = md, all eight jobs each. Surroundings check: frames 20000, 44388 and
+59999 (the 1st, 15th and 30th by frame number) again with S = ci at the chosen radius; reported per frame as B_sp(ci) -
+B_sp(md). If the difference exceeds 2 kcal/mol in at least two of the three, the report states that the barrier depends
+on which state's surroundings are frozen (Ryde 2016, item 7), and both sets are carried forward.
+Ensemble (complete frames, S = md): count; mean and standard deviation (as Phase 1 and Claeyssens et al. report them);
+median; range; the exponential average -RT ln(mean exp(-B_sp/RT)) at 298.15 K (Cooper & Kastner 2014, their eq. 4).
+Per frame, beside B_sp: the band's barrier_image0 and barrier_klow (c4_bands.tsv), descriptive only. If fewer than 20 of
+30 frames are complete, the ensemble is reported but not used as the Phase 1 barrier until this plan is revisited.
+Whether B_sp becomes "the Phase 1 barrier" (audit item C3) is decided separately, after the package.
+
+EXPECTED SIZES (estimates from frame 820's files; the smoke test records the real ones in FILES_BEFORE_CLEANUP.txt)
+Per run folder at 8 A, while running: full-system trajectories 2.7 MB per optimisation cycle and per IRC step (18c:
+57.6 MB for 21 cycles; 18d: 233 MB for its whole path, 29 + 59 steps), up to ~1.4 GB per optimisation at 500 cycles;
+Hessian files of the TS optimisation over the whole region, likely several hundred MB each (18c: 12.4 MB with 102 active
+atoms; 18b: 1.19 GB with 1959); ORCA output text ~0.1-0.4 GB per optimisation. After each passing step the job deletes
+full-system trajectories, *.tmp and the TS step's Hessians and xz-compresses any output over 50 MB; expected ~0.1-0.3 GB
+kept per run folder (two start/end full-system xyz of 1.3-4 MB per step, compressed outputs). On a failure nothing is
+deleted. Disk check before each step: 10 GB free for the TS, 5 GB for IRC and minimisations, 3 GB for frequencies.
+
+LIMITATIONS (stated with the results)
+The 8 A region is smaller than the chorismate-mutase literature's 16-20 A (P1). Surroundings frozen at the
+reactant-state MD structure may favour the reactant (Rod & Ryde 2005); the surroundings check on three frames measures
+it. PHVA tests only the substrate block of the Hessian. The IRC holds the environment at the TS geometry; the
+minimisations then relax it. Potential energies only (no zero-point or thermal terms), one functional and basis, as
+frame 820.
+
+FILES AND CODE
+sp_prepare.py (generator, hpc1 login node): checks every source against the repos' sha256 records; writes the inputs,
+the start files of the TS and R0, eight PBS jobs and submit.sh per run folder; a second generation into a scratch folder
+must give byte-identical files. sp_stage.py (in the jobs): starts of later steps, checks, STAGE_RESULT.txt; a failed
+check stops the job, and PBS afterok stops every job that depends on it. sp_report.py: read-only report and the smoke
+verdict; it prints no B_sp for a frame that is not complete. The package's ensemble statistics and the surroundings
+check are computed by a script committed with the package's inputs, before any package result exists. Jobs: 16 cores,
+250 GB (TS; TS frequencies + IRC) or 180 GB (minimisations, frequencies), walltime 176 h, e-mail on abort only.
+  sha256 sp_prepare.py  0128b1a30e20d21b2c7ffb9e1a88c8eaaea5ce868a0a8f1bd058415e68c2e844
+  sha256 sp_stage.py    31d046b2912c056818e789a3b6a121428e9daf62e8140cbaf9293b638ca26909
+  sha256 sp_report.py   7d0f1d346de4707cb059092c30cc6aeef40c1b9a84eaefc22b7a816a73edb7f2
+
+References: Claeyssens, Ranaghan, Manby, Harvey & Mulholland 2005, Chem. Commun. 5068 (doi 10.1039/b508181e); Claeyssens
+et al. 2011, Org. Biomol. Chem. 9, 1578; Ranaghan, Ridder, Szefczyk, Sokalski, Hermann & Mulholland 2004, Org. Biomol.
+Chem. 2, 968 (doi 10.1039/b313759g); Senn, Kastner, Breidung & Thiel 2009, Can. J. Chem. 87, 1322 (doi 10.1139/V09-092);
+Senn & Thiel 2009, Angew. Chem. Int. Ed. 48, 1198 (doi 10.1002/anie.200802019); Kastner, Thiel, Senn, Sherwood & Thiel
+2007, J. Chem. Theory Comput. 3, 1064 (doi 10.1021/ct600346p); Cooper & Kastner 2014, ChemPhysChem (doi
+10.1002/cphc.201402382); Ryde 2016, Methods Enzymol. 577, 119 (doi 10.1016/bs.mie.2016.05.014); Rod & Ryde 2005, J.
+Chem. Theory Comput. 1, 1240 (doi 10.1021/ct0501102); ORCA 6.0 manual (FACCTs), QM/MM, geometry optimisation and
+frequency chapters; frame 820 files 05_qmmm/18b-18f, phase1_system_dev/step18c-18e.

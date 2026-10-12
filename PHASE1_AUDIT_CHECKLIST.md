@@ -158,7 +158,7 @@ denominator for the standard error.
 
 **Effort:** one script, minutes to run.
 
-### A7. The transition state has two imaginary modes, not one  ☐
+### A7. The transition state has two imaginary modes, not one  ☑ (resolved 12 Oct 2026: one; see the resolution below)
 
 `05_qmmm/18c_reduced_region/ts_frequencies_summary.txt` lists **−313.30 cm⁻¹**
 and **−18.65 cm⁻¹**, both flagged `***imaginary mode***`. The header of that same
@@ -193,6 +193,32 @@ an aside.
 versions of this checklist and of `PHASE1_ENSEMBLE_NOTES.md` — asserted a single
 imaginary mode, following `BARRIER_FINAL.md` rather than the frequency table.
 Both have been corrected.
+
+**Resolution (12 October 2026).** The two values are from the *starting* Hessian, not the converged TS.
+`ts_reduced.out` prints the OptTS starting Hessian before cycle 1 (energy −1076.104782 Eh): −313.30 and −18.65 cm⁻¹.
+The final NumFreq, after `OPTIMIZATION RUN DONE` (energy −1076.104998 Eh, 612 displacements), lists **one**
+imaginary mode, **−313.07 cm⁻¹**. `ts_frequencies_summary.txt` (and the "−313.30 cm⁻¹" in `BARRIER_FINAL.md`) quote
+the starting block; the files still need correcting. The frame-820 TS is a first-order saddle within its 102-atom
+region. (Full note: `05_qmmm/24_sp_barriers/SP_PLAN.txt`.)
+
+---
+
+### A8. The ensemble's fixed active list froze the first-shell waters  ☐
+
+Every ensemble frame reused frame 820's 1959-atom active list (`15_active_region/active_atoms_R12.txt`; the same list
+in every `reactant_opt.inp` and band `neb.inp`). Its 139 waters were chosen around frame 820's substrate. Measured on
+the MD structures of the 30 reported frames (`12_frame_selection/frames/frame_*_CHA2.rst7`):
+
+- the 139 listed waters lie at a median 39–45 Å from the substrate, none within 3.5 Å;
+- 8–22 atoms within 3.5 Å of the substrate, and 22–46 within 5 Å, are **not** in the list (all of them water), so the
+  first hydration shell was held at its MD positions in every reactant optimisation, NEB band, C5 run and C4 run;
+- frame 820 itself: 7 of the 139 waters are within 3.5 Å; nothing within 5 Å is fixed.
+
+In 10 of the 13 C4 runs assessed so far, the most-displaced atom is one of those distant waters (33–75 Å from the
+substrate, 1.4–4.2 Å displacement). Hypothesis, not yet tested: this contributes to the C4 reactant-end energy falls.
+
+**Fix:** a region chosen per frame by distance (whole residues and waters within 8 Å of the substrate, on that frame's
+MD structure) — the stationary-point protocol of `05_qmmm/24_sp_barriers/SP_PLAN.txt`.
 
 ---
 
@@ -250,6 +276,8 @@ This work uses NEB-CI followed by eigenvector-following TS optimisation, with
 frequency verification and IRC connecting the intended basins. The Hessian
 shows **two** imaginary modes, −313.30 and −18.65 cm⁻¹
 (`05_qmmm/18c_reduced_region/ts_frequencies_summary.txt`); see the new item A7.
+*Corrected 12 Oct 2026 (A7 resolution):* those two values are the starting Hessian's; the converged TS has one
+imaginary mode, −313.07 cm⁻¹.
 
 **Action:** none needed — but say so in the methods. This is an improvement over
 the reference protocol and currently goes unclaimed.
