@@ -1,0 +1,51 @@
+#!/bin/bash
+#PBS -N sp424366rf
+#PBS -l select=1:ncpus=16:mem=180gb
+#PBS -l walltime=176:00:00
+#PBS -m a
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/24_sp_barriers/f42436_r6/job_r_irc_freq.pbs.out
+set -u
+RD=/home/18660916/system_development/05_qmmm/24_sp_barriers/f42436_r6
+SD=/home/18660916/system_development/05_qmmm/24_sp_barriers
+ORCA=/home/apps2/ORCA/6.0.1/orca
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+PY() { env -u LD_LIBRARY_PATH python3 "$SD/sp_stage.py" "$@"; }
+used() { qstat -f "${PBS_JOBID:-none}" 2>/dev/null | grep -E "resources_used\.(mem|vmem|walltime|cput|ncpus)" | sed 's/^ */pbs_/'; }
+quit() { used; echo "end_job=$(date)"; exit "$1"; }
+run_step() {   # folder, ORCA basename, GB of free disk needed
+  cd "$RD/$1" || { echo "SP_$1_FAIL no folder $RD/$1"; quit 1; }
+  for f in "$2.inp" start.xyz complex_solvated.ORCAFF.prms; do [[ -s "$f" ]] || { echo "SP_$1_FAIL missing $1/$f"; quit 1; }; done
+  [[ -e "$2.out.xz" ]] && { echo "SP_$1_FAIL $1/$2.out.xz exists: this step was already run"; quit 1; }
+  [[ $(df -Pk . | awk 'NR==2{print $4}') -ge $(( $3 * 1000000 )) ]] || { echo "SP_$1_FAIL less than $3 GB free in $RD"; quit 1; }
+  ( set -o noclobber; : > "$2.out" ) 2>/dev/null || { echo "SP_$1_FAIL $1/$2.out exists: this step was already started"; quit 1; }
+  echo "step=$1 start=$(date)"
+  "$ORCA" "$2.inp" > "$2.out" 2>&1 </dev/null
+  echo "step=$1 orca_exit=$? end=$(date)"
+}
+finish_step() {   # folder, ORCA basename, 1 if the step passed its checks: sizes recorded (bytes, name); after a pass, full-system
+                  # trajectories and scratch files are deleted; any output over 50 MB is compressed with xz
+  cd "$RD/$1" || return
+  find . -maxdepth 1 \( -type f -o -type l \) -printf "%s %f\n" | LC_ALL=C sort -k2 > FILES_BEFORE_CLEANUP.txt
+  if [[ "$3" == 1 ]]; then
+    rm -f "$2"_trj.xyz "$2"_IRC_F_trj.xyz "$2"_IRC_B_trj.xyz "$2"_IRC_Full_trj.xyz ./*.tmp ./*.tmp.*
+    [[ "$1" == ts ]] && rm -f ./*.hess
+    [[ "$1" == irc ]] && rm -f freq.hess
+  fi
+  if command -v xz >/dev/null; then
+    for f in "$2.out" ./*activeRegion_trj.xyz; do
+      [[ -f "$f" ]] && [[ $(stat -c %s "$f") -gt 50000000 ]] && xz -T1 "$f"
+    done
+  fi
+  du -sk . | awk '{print "folder_kB_after_cleanup=" $1}'
+}
+echo "job=job_r_irc_freq host=$(hostname) start=$(date)"
+PY prep "$RD" r_irc_freq || { echo SP_r_irc_freq_FAIL; quit 1; }
+run_step r_irc_freq freq 3
+PY check_freq "$RD" r_irc_freq min && OK=1 || OK=0
+finish_step r_irc_freq freq $OK
+[[ $OK == 1 ]] && echo SP_r_irc_freq_PASS || { echo SP_r_irc_freq_FAIL; quit 1; }
+quit 0
