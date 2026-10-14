@@ -1,0 +1,173 @@
+Stationary-point barriers (SP) - ERRATUM 1 to SP_PLAN.txt and SP_AMENDMENT1.txt. Written 14 October 2026 from a
+line-by-line check of both files against the repos, the library and the ORCA outputs, asked for by Jessica while the
+Amendment 1 inputs were being committed (Project doc claude/SP_FINAL_CHECK_20261014.md); committed before any
+Amendment 1 run is submitted. It corrects statements only: no criterion, rule, threshold, input, code or run changes,
+and it decides nothing. Both files stay as committed (sha256 at the end); where they and this erratum differ on a fact,
+this erratum holds. Part B lists what the package's amendment has to settle. The progress readout that
+SP_AMENDMENT1.txt quotes (WHY) and A1 checks is committed beside this file, verbatim (SMOKE1_PROGRESS_20261013.txt).
+Retained-final.
+
+PART A - CORRECTIONS (what the file says; what the source shows; the source)
+
+A1 Smoke test 1's progress table (SP_AMENDMENT1.txt, WHY). Source: SMOKE1_PROGRESS_20261013.txt, which prints cycle 1,
+every third cycle and the last six of the 8 A TS; every second and the last six of the 8 A R0; every 16th and 10th
+and the last six of the 6 A TS and R0. Statements about cycles refer to the printed ones.
+- 8 A TS, "largest gradient 0.03-0.05 Eh/bohr, no lower than at cycle 6": from cycle 6 on, the printed largest
+  gradient is 0.0096-0.049 Eh/bohr: 0.028 at cycle 6, below that at cycles 27 and 33-36 (0.0096 at cycle 35), 0.049 at
+  cycle 39. The rest of the row holds.
+- 8 A R0, "energy still falling 1-3 kcal/mol per cycle, 23-28 min per cycle": over cycles 28-33 the energy (against
+  cycle 1) was -202.3, -203.6, -201.6, -204.6, -202.6 and -205.6 kcal/mol: falls of 1.3-3.0 kcal/mol alternating with
+  rises of 2.0 (cycles 30 and 32; rises also at cycles 14 and 18), -3.2 kcal/mol net over the five cycles. No
+  committed record supports "23-28 min per cycle": with the amendment's own "about 16 h into the jobs", this run's 33
+  cycles average about 29 min and the 8 A TS's 39 cycles about 25 min. The outputs' own timings replace these
+  figures when smoke test 1's outputs are committed.
+- 6 A TS, "reactant-like from about cycle 32 (O-C 1.53, C-C 2.93 A)": reactant-like (O-C <= 1.80 and C-C >= 2.40 A)
+  already at cycle 16, the first cycle printed after cycle 1 (O-C 1.753, C-C 2.682 A); 1.53 / 2.93 A is cycle 32.
+  From cycle 144 the printed distances are O-C 1.467-1.479 and C-C 3.239-3.291 A (the file: 1.47 / 3.26-3.29).
+  Negative eigenvalues: 2 at cycle 16, 3 at cycles 32-112, 5-10 from cycle 128 (the file: "5-10").
+
+A2 "the 41 first-shell waters of the 8 A region were held fixed in the band" (SP_AMENDMENT1.txt, WHY). The 8 A region
+of frame 42436 holds 41 waters (123 atoms), and all 123 atoms were held fixed in the band (f42436_r8/GENERATOR_LOG.txt:
+"123 region atoms were held fixed in the band (123 of them water atoms)"); they are not all first-shell. On the MD
+structure 18 of those atoms (from 6 waters) lie within 3.5 A of the substrate and 38 (from 14 waters) within 5 A
+(recomputed from 12_frame_selection/frames/frame_42436_CHA2.rst7, the prmtop and the active list of the band's
+neb.inp; the 6 A region's 22 waters hold the same 18 and 38 atoms).
+
+A3 18c's start (SP_AMENDMENT1.txt, WHY: "from the NEB-relaxed structure"). 18c started from step 18's TS-search geometry
+at its cycle 17, i.e. after the NEB and 16 cycles of the TS search over all 1959 active atoms:
+18c_reduced_region/ts_start.pdb equals frame 17 of 18_nebts/nebts.activeRegion_trj.xyz (87 frames, one per cycle) to
+0.0008 A over the 1959 active atoms, the PDB's precision (both files in their folder's hpc_text_outputs.tar.xz). The
+NEB's converged climbing image (nebts_NEB-CI_converged.xyz) differs from it by up to 0.14 A (substrate 0.13 A).
+notes/steps15-18_reaction_path_TS.md ("seeded from the best NEB structure") needs the same correction (B6).
+
+A4 18b (SP_AMENDMENT1.txt, WHY: "an exact Hessian over the large region exceeded the node's memory"; SP_PLAN.txt,
+LITERATURE: "killed at 221 GB (limit 120 GB)"). 18b, an OptTS over the 1959 active atoms with Calc_Hess true, built
+ORCA's hybrid Hessian with an exact part over 555 atoms by one-sided differences (ts_optfreq.out: "Number of displaced
+atoms ... 555", "Central differences ... NOT used", "Number of displacements ... 1665"). PBS killed the job for
+exceeding its own memory request, mem=120gb: "mem 221432992kb exceeded limit 125829120kb", i.e. 211 GB against 120 GB
+in PBS's units (1 gb = 1048576 kb; 221 is the kb figure divided by 10^6). It was killed after the last of its 1666
+gradient calculations (the 1665 displacements and the reference point) had started and before its first optimisation
+cycle ended; the only energy it printed is the starting point's. The notes' "1,666 displacements over roughly 278
+atoms" and "its single completed cycle" need the same correction (B6).
+
+A5 TS start distances (SP_AMENDMENT1.txt, A1.2: "frame 820: O-C 2.10, C-C 2.53 A; smoke test 1's 8 A start 2.17 / 2.47
+A"). Smoke test 1's TS start, at both radii, is O-C 2.250, C-C 2.440 A (f42436_r8 and f42436_r6 GENERATOR_LOG.txt: band
+19_ensemble, climbing image 7); 2.173 / 2.473 A is the 8 A run's cycle 39. Frame 820's converged TS (18c) is 2.111 /
+2.526 A. The sentence's point holds: the climbing images of all 30 frames, each from its final band in c4_bands.tsv
+(22 in 19_ensemble, 8 in 22_c5_nebci), lie in the TS class, O-C 2.048-2.299 and C-C 2.404-2.559 A (the class test
+fails only for O-C <= 1.80 with C-C >= 2.40 A, or C-C <= 1.80 with O-C >= 2.40 A).
+
+A6 The TS core step's Hessian and time (SP_AMENDMENT1.txt, A1.3: "eight core steps each with a 144-gradient Hessian";
+A1.6: "the substrate's numerical Hessian (144 displaced gradients) then tens of cycles, about 2-5 h"). The core step
+uses 18c's Hessian settings, and 18c's exact Hessian over the 24 substrate atoms took 72 displaced gradients, by
+one-sided differences (18c_reduced_region/ts_reduced.out: "Number of displaced atoms ... 24", "Central differences ...
+NOT used", "Number of displacements ... 72"; 73 gradient calculations with the reference point); 144 is P4's count
+(NumFreq, central differences), as SP_PLAN.txt P4 says. 18c's whole TS search, Hessian and 21 cycles, took about
+3600 s at 16 cores (its "Time for complete geometry iter" lines for cycles 1-20 sum to 3600 s: cycle 1 with the
+Hessian 1893 s, cycles 2-20 63-149 s each; cycle 21, which converged, prints none), so a TS core step as long as
+18c's takes about 1 h, not 2-5 h.
+
+A7 The environment step's time (SP_AMENDMENT1.txt, A1.3: "5000 steps at the expected 30-65 s per step (up to 90 h)",
+and the TS job's rough worst case, "about 150 h"). The pilot's L-Opt runs (8 cores) report 51.7-65.4 s per step (T1)
+and 58.4-69.3 s (R2) (the "Performance" lines of pilot_a2/T/T1_*/reopt.out.xz and pilot_a2/R/R2_*/reopt.out.xz); the
+30 s has no source. 5000 steps at up to 69 s take up to 96 h. With these numbers the TS job's worst case reads: a
+5000-step first environment step (96 h), eight core steps as long as 18c's (8 h) and seven later environment steps as
+long as the pilot's T1 runs (104-449 steps, 2.0-8.6 h each; 14-61 h in all): 118-165 h, inside the 176 h walltime.
+Longer later environment steps after a near-5000-step first one would reach the walltime, which A1.3 counts as a
+failure; smoke test 2 measures it.
+
+A8 Literature the amendment missed (SP_AMENDMENT1.txt, LITERATURE: "No paper in the library converges a TS with the
+alternating form"). True of the library's papers themselves, but one of them reports a chorismate-mutase TS found
+that way:
+- Ranaghan et al. 2004 (library), "Comparison with previous QM/MM modelling", on Hall, Hindle, Burton & Hillier 2000:
+  "the QM and MM regions are optimized 'asynchronously and self-consistently'. The QM region was held fixed whilst
+  purely MM (not QM/MM) optimizations were carried out and then QM atoms were optimized in a frozen field of static MM
+  atoms. Varying MM/CHELPG atomic charges of the QM atoms at each point along the reaction path were used to optimize
+  the MM region. The structures of chorismate, the TS and prephenate were optimized and characterized as stationary
+  structures at the B3LYP/6-31G(d) level. The model system was taken from the same crystal structure of BsCM as used
+  here (2CHT), and comprised 24 QM atoms and 4117 MM atoms." Ranaghan et al. add that Hall et al.'s barrier of 1.4
+  kcal/mol "is probably a QM/MM barrier (i.e. no MM energy included)" and lower than most studies, and that some
+  residues were oriented differently, "possibly due to choice of active site and QM/MM method used in optimization of
+  structures". Kastner et al. 2007 cite Hall et al. 2000, with Zhang et al. 2000, for the alternating scheme (their
+  refs 12 and 10). Hall et al. 2000 is not in the library and has not been read. Unlike Amendment 1, their MM steps
+  were MM-only, with fitted charges on the QM atoms; ORCA's L-Opt computes the full QM/MM energy and gradient.
+- Kastner, Senn, Thiel, Otte & Thiel 2006 (library; p-hydroxybenzoate hydroxylase), an adiabatic TS search that begins
+  with the environment: "L-BFGS steps were performed for all atoms of the active region except the reaction core until
+  the environment was converged to within a maximum gradient component of 0.45 x 10-3 Eh a0-1. One partitioned
+  rational function optimizer (P-RFO) step was then performed for the reaction core, using an explicit Hessian.
+  Continuing with the L-BFGS optimization, this process was iterated until the largest gradient component in the core
+  was less than 1.35 x 10-3 Eh a0-1" (a nine-atom core in an active region of about 3300 atoms).
+- Murphy, Philipp & Friesner 2000 (library; Kastner et al. 2007's ref 11, adiabatic; minimisation only): "the MM space
+  is first minimized with a frozen QM region. Following this MM minimization, ... a single geometry step is taken in
+  the QM region with the MM region held frozen."
+Amendment 1's cycles begin with the environment, as Kastner et al. 2006, Murphy et al. 2000 and Hall et al. 2000 (as
+Ranaghan et al. describe it) do; Zhang et al. 2000 begin with the QM sub-system.
+
+A9 "all C4 jobs have since ended" (SP_AMENDMENT1.txt, WHY). This rests on the queue listings Jessica pasted on 13
+October (20:45 SAST) and 14 October (07:08 SAST), which list no C4 job; neither listing is committed, and the C4 runs'
+outputs have not been analysed (B1).
+
+A10 Chorismate-mutase practice (SP_PLAN.txt, LITERATURE: chorismate-mutase QM/MM studies "trace the path by restrained
+minimisation along r = d(C-O) - d(C-C), not by a saddle-point search"). This holds for Ranaghan et al. 2004 (a harmonic
+restraint on the difference of the breaking C-O3 and forming C3-C9 bonds) and Claeyssens et al. 2005 ("restrained
+optimizations in both directions along the reaction coordinate"), and in substance for Senn et al. 2009, whose
+potential-energy profiles were "reaction-path calculations using the same RC definition as for the US simulations",
+with maxima located by cubic-spline fits (how the coordinate was held is not described). It is not true of every
+chorismate-mutase study: Hall et al. 2000 (A8) optimised and characterised the TS as a stationary structure. Ranaghan
+et al.'s 3.0 kcal/mol is the barrier increase from their boundary restraints "compared to the barriers found with
+fewer restraints" (AM1/CHARMM).
+
+A11 Ryde 2016, section 4, item 7 (SP_PLAN.txt, LITERATURE and PACKAGE). In full: "If relaxation of the MM system
+significantly changes the structures and energies, the approach needs to be partly modified. The first step is to
+optimize the MM system for one state and employ this MM structure for all the other states. If the results still
+depend on whether the MM system is relaxed or not, or if the results depend on the state for which the MM system is
+relaxed, the QM system needs to be extended until the energies are stable." SP_PLAN's "the model must be extended"
+should read "the QM system needs to be extended until the energies are stable". The PACKAGE's response when the
+surroundings check fails ("both sets are carried forward") is this project's choice, not Ryde's prescription (B4).
+
+A12 Context of three citations (SP_PLAN.txt, LITERATURE). Cooper & Kastner 2014's 8 A protocol comes from force-field
+calculations "to mimic QM/MM optimizations" (cyclophilin A; a truncated system of about 4600 atoms, about 360 of them
+optimised; transition states by a dimer method in DL-FIND, default criteria). Kastner et al. 2007's 8 A fluorinase
+region (3960 degrees of freedom) is from their energy-minimisation test (section III.D, started from a structure
+optimised under a constraint near the TS), not from a saddle-point search. Rod & Ryde 2005's 59 and 26 kJ/mol are
+forward barriers of catechol O-methyltransferase with the MM environment as "a static set of point charges", the same
+for every point of the path, averaged over 10 configurations from reactant- and product-complex simulations (their
+Figure 9).
+
+PART B - FOR THE PACKAGE'S AMENDMENT (nothing is decided here; each needs a decision, with its reason, before any
+package result exists)
+B1 C4. SP_PLAN.txt keeps C4_CRITERIA.txt and C4 Amendment 1 and drops Amendment 2, so C4's steps 3-6 (forth and back,
+   the result, the sensitivity test, downstream) still bind, and nothing schedules them; the C4 runs have ended (A9)
+   but are neither committed nor analysed. How C4 closes - its pre-registered steps, or an amendment replacing them -
+   has to be stated.
+B2 Attrition. SP_PLAN.txt reports the ensemble but does not use it as the Phase 1 barrier if fewer than 20 of the 30
+   frames are complete (and decides its use separately, after the package); C4_CRITERIA.txt stops if more than 3 of
+   the 30 frames are dropped. One rule for Phase 1, and a check whether failed frames differ from the rest.
+B3 Statistics. SP_PLAN.txt: mean and sd, median, range, exponential average; audit item C3: mean +- sem; C4 step 4:
+   mean +- sem with Ryde's (2017) cumulant. PHASE1_AUDIT_CHECKLIST.md notes that the exponential average is badly
+   conditioned above about 7 kJ/mol of spread (Ryde 2017); the final bands' barriers have an sd of 2.57-4.36 kcal/mol
+   (10.8-18.2 kJ/mol) by the two definitions (c4_bands.tsv). One primary statistic, fixed before the results.
+B4 The surroundings check. If it fails, Ryde's remedy is a larger QM system (A11), not two sets of results.
+B5 The barrier definition (audit item C3) and the designs. C4_CRITERIA.txt and phase2.2/PHASE22_PLAN_UPDATE_20261009.md
+   apply the enzyme's barrier definition to every barrier compared with it, the designs' included (like for like),
+   and C4_WAY_FORWARD_20261011.md, section 3.5, says "Freezing is a sensitivity test, never the production protocol for
+   designs." If B_sp (surroundings frozen outside the region) becomes the Phase 1 barrier, the design barriers need
+   the same definition or a stated bridge between the two.
+B6 Records. PHASE1_AUDIT_CHECKLIST.md item A4 ("Full characterisation on every frame. Not warranted."),
+   PHASE1_ENSEMBLE_NOTES.md (TS optimisation, frequencies and IRC "not repeated") and HANDOFF.md section 6 ("DECISION
+   TAKEN, 2026-09-28: do not run this stage") are superseded by SP_PLAN.txt without a recorded supersession;
+   05_qmmm/18c_reduced_region/ts_frequencies_summary.txt and phase1_system_dev/BARRIER_FINAL.md (code repo) quote the
+   starting Hessian's -313.30 cm-1 (audit item A7); notes/steps15-18_reaction_path_TS.md (code repo): step 18's cycle
+   count, 18b (A4), 18c's seed and "144 displacements" (A3, A6), and the "second, negligible imaginary value" that the
+   converged TS does not have.
+B7 The package script. SP_PLAN.txt (FILES AND CODE) has the ensemble statistics and the surroundings check computed by
+   a script committed with the package's inputs; none exists yet (spa_report.py computes neither).
+
+  sha256 SP_PLAN.txt                    c8eadbd9a5546fe644fe85a2c7d3e7e47c7117bb61a449a51ce50fb6945df1a6
+  sha256 SP_AMENDMENT1.txt              8f6128713b07ffc8d257120567d0cd8436608dd8048fe9ffb2a29a35f561b5be
+  sha256 SMOKE1_PROGRESS_20261013.txt   623901c11994ec94bd86d149ee81e020688aea4155471556bb9712601ba4fce5
+
+References added: Hall, Hindle, Burton & Hillier 2000, J. Comput. Chem. 21, 1433 (doi
+10.1002/1096-987X(200012)21:16<1433::AID-JCC2>3.0.CO;2-P; not in the library); Kastner, Senn, Thiel, Otte & Thiel 2006,
+J. Chem. Theory Comput. 2, 452 (doi 10.1021/ct050252w); Murphy, Philipp & Friesner 2000, J. Comput. Chem. 21, 1442 (doi
+10.1002/1096-987X(200012)21:16<1442::AID-JCC3>3.0.CO;2-O). The others are those of SP_PLAN.txt and SP_AMENDMENT1.txt.
