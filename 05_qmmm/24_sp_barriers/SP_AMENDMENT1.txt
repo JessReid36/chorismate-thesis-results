@@ -1,0 +1,229 @@
+Stationary-point barriers (SP) - AMENDMENT 1: the alternating scheme. Written 13 October 2026, revised 14 October after
+a check against the literature (nothing had been committed or run); committed before any Amendment 1 input is
+generated, and the inputs before any Amendment 1 run. SP_PLAN.txt stays as committed (sha256 at
+the end); this file changes only what it lists. Code phase1_system_dev/spa_prepare.py, spa_stage.py, spa_report.py
+(tier1-realism; sha256 at the end). Retained-final.
+
+DECISION (Jessica, 13 October 2026)
+Replace SP_PLAN's optimisations of the whole region (P3 TS, P6 R_IRC and P_IRC, P7 R0) by the alternating scheme of
+QM/MM optimisation: the 24 substrate atoms (the core) and the rest of the region (the environment) are optimised in
+turn, each with the other held fixed, until neither changes. Smoke-test it again on frame 42436 at 8 and 6 A.
+
+WHY: WHAT HAS BEEN SEEN BEFORE THIS AMENDMENT
+Smoke test 1 (SP_PLAN as committed; runs f42436_r8 and f42436_r6, submitted 12 October). Read-only readout of the
+running outputs on 13 October, 09:39 SAST, about 16 h into the jobs; no job had finished and no SP energy difference
+(barrier) has been computed:
+  run    cycles  energy vs its cycle 1  state
+  8 A TS     39  -184 kcal/mol          substrate still TS-like (breaking O-C 2.17, forming C-C 2.47 A); largest
+                                        gradient 0.03-0.05 Eh/bohr, no lower than at cycle 6; the Hessian update broke
+                                        down at cycle 9 (2850 negative eigenvalues); 10 negative eigenvalues at cycle
+                                        39, the followed one -1.15 against the reaction mode's -0.018 at the start
+  8 A R0     33  -206                   reactant; energy still falling 1-3 kcal/mol per cycle, 23-28 min per cycle
+  6 A TS    202  -313                   lost the transition state: reactant-like from about cycle 32 (O-C 1.53, C-C
+                                        2.93 A), at the reactant geometry since about cycle 144 (1.47 / 3.26-3.29 A);
+                                        5-10 negative eigenvalues; from the reactant basin it cannot end at a TS
+                                        that passes P4 and P5 (P3 itself has no class test for the TS)
+  6 A R0    124  -280                   reactant; RMS gradient met, largest gradient 4e-4 against 1e-4
+Every run started far from relaxed (the 41 first-shell waters of the 8 A region were held fixed in the band, A8; the
+atoms just outside the region were reset to the MD structure). Frame 820's TS run changed by 0.13 kcal/mol over its 21
+cycles.
+Earlier TS searches over large regions in this project (found when the repos were re-read on 13 October, before this
+amendment was designed):
+- Frame 820, step 18 (05_qmmm/18_nebts/nebts.out.xz, nebts.pbs.out): ORCA's TS optimisation over all 1959 active atoms
+  after the NEB, i.e. from an already relaxed environment. 87 cycles in 7 days, killed at the 168 h walltime; largest
+  gradient never below 1.1e-3 (tolerance 3e-4); 16-18 negative eigenvalues from cycle 59; the substrate held a TS
+  geometry (O-C 2.10, C-C 2.53 A) for about 70 cycles, then moved to the product side (C-C 1.76 A by cycle 87).
+  notes/steps15-18_reaction_path_TS.md says "roughly eighteen cycles"; the output shows 87 (a records fix).
+- Four ensemble frames' NEB-TS stage (24883, 26495, 34991, 43738; HANDOFF.md section 6): each killed at 176 h after 6-9
+  cycles, final largest gradients 0.00236, 0.00390, 0.00131 and 0.00191 (tolerance 3e-4), rising on 43738.
+- Step 18b: an exact Hessian over the large region exceeded the node's memory.
+What has converged in this project: 18c (TS search over 102 atoms with an exact substrate Hessian, from the NEB-relaxed
+structure, 21 cycles); NEB-CI and L-Opt minimisations of the 1959-atom region; the C4 pilot's T1 runs (pilot_a2, L-Opt
+of the 1935 environment atoms with the substrate held at the climbing image: 6 of 6 converged, 104-449 steps), which
+are the environment half of the alternating scheme. C4's own L-Opt runs: the 13 step-2 runs finished when the
+provisional report was printed (11 October) took 325-710 steps; 17 others, frame 42436's among them, were still running
+then; all C4 jobs have since ended, and their step counts are not part of what was seen (the C4 analysis has not been
+run).
+A first fix considered on 13 October (relax the environment, then run the TS search over the whole region) was
+withdrawn before anything was built: step 18 had in effect already tried it.
+On 14 October, before this was committed, the draft was checked element by element against the library and the ORCA
+manual (Project doc claude/SP_A1_LITERATURE_CHECK_20261014.md). That check, and a look at the committed C4 pilot energy
+files (pilot_a2/T/T1_*/reopt-minimize-ener.csv; see A1.3), are the only new material seen. The queue at 07:08 SAST that
+day: smoke test 1's 8 A TS (418077), 8 A R0 (418083) and 6 A TS (418085) still running, at about 38 h; the 6 A R0 job
+(418091) and its frequency job (418092) no longer listed, so ended. None of their outputs has been read since 13
+October, 09:39.
+
+LITERATURE (full papers in the library; DOIs below)
+Kastner et al. 2007, section I: "In microiterative schemes, the regions are optimized separately. One can either use an
+adiabatic scheme ... that is, fully optimize the outer region after each optimization step of the inner region, or use
+an alternating scheme ..., in which each region is completely optimized with the other one frozen."
+Senn & Thiel 2009, section 3.2: "Mutual convergence of the optimizations can be achieved in essentially two ways: 1)
+The adiabatic approach, in which the environment is fully relaxed in each macrostep. 2) The alternating scheme, in which
+the core and environment optimizations are alternately iterated to convergence, with the core atoms being kept fixed
+during the microiterations and vice versa." For transition states: "A core fragment is defined that contains the atoms
+immediately involved in the reaction. For these core degrees of freedom, the Hessean is calculated, and a traditional
+second-order algorithm takes an optimization step towards the saddle point. With the core kept frozen, the environment
+fragments are then fully relaxed ... This scheme thus searches for a first-order saddle point controlled by the
+(low-dimensional) core Hessean, while minimizing the energy with respect to the degrees of freedom of the environment."
+Zhang, Liu & Yang 2000 (one of Senn & Thiel's references for the alternating scheme), section II.B: the QM sub-system is
+optimised with the MM atoms fixed (quasi-Newton, redundant internal coordinates), the MM sub-system with the QM atoms
+fixed (truncated Newton, Cartesians), "(3) Repeating previous steps until both meet convergence criteria at the same
+geometry"; for their enzyme reactant, with "those atoms within 20 A ... allowed to move (3008 atoms)", "the convergence
+is quite rapid, no more than eight cycles. And the energy and gradient decrease monotonically and quickly."
+Where these papers locate transition states, they use the adiabatic form: Senn & Thiel's description above (one step
+towards the saddle, then the environment fully relaxed), and Senn et al. 2009's fluorinase work ("In
+microiterative transition-state searches, the core region, for which the Hessean is calculated, included the halide,
+C(5')H2, and S"). Zhang et al. use the alternating form for minima and for the points of a restrained path, and take the
+TS as that path's maximum. No paper in the library converges a TS with the alternating form. The ORCA 6.0 manual (QM/MM
+chapter, interface to GROMACS) documents a third variant for a TS: "This microiterative scheme can also be used to
+perform a transition state optimization ... you can carry out an optimization of the MM system and at the same time
+perform a transition state optimization of the QM system with ORCA", ORCA performing "a QM geometry optimization every
+time it is called by Gromacs". Not in the library and not read (cited as existing only): Prat-Resina, Bofill,
+Gonzalez-Lafont & Lluch 2004 (Int. J. Quantum Chem. 98, 367; the assessment of microiterative options for TS searches in
+enzymes that Senn & Thiel cite); Prat-Resina, Gonzalez-Lafont & Lluch 2003 (doi 10.1016/S0166-1280(03)00307-5); Turner,
+Moliner & Williams 1999 (doi 10.1039/a808364i); Billeter, Turner & Thiel 2000 (doi 10.1039/a909486e).
+How this amendment uses them: ORCA 6.0.1 has no microiterative driver of its own outside its GROMACS interface, which
+has never been set up for this system; writing one would mean writing our own optimiser. So the adiabatic form
+(environment re-relaxed after every core step) is not available here; the alternating form is, as separate ORCA jobs.
+The core is the QM region, as in Senn & Thiel's description ("The core contains (at least) the QM atoms"). For the TS,
+each core step is a full TS search of the 24 substrate atoms with their exact Hessian (18c's input, which converged
+here); the environment steps are the C4 pilot's T1 step. Zhang et al. evaluate the environment steps with fitted ESP
+charges for the QM density, and Kastner et al. with ESP charges plus energy and gradient corrections, a scheme that
+"retains the accuracy of a standard QM/MM optimization scheme" (their section IV); ORCA's L-Opt computes the full QM/MM
+energy and gradient at every step (the pilot's outputs time an SCF and a gradient per step), so no such approximation
+enters. In the limit of full convergence the energy gradient vanishes for core and environment alike, in either form;
+here the alternation stops at the tolerances of A1.3, so the point is stationary to those tolerances (A1.7). The core is
+a saddle point (TS) or minimum of the substrate with the environment fixed, and P4/P8 characterise it as SP_PLAN does.
+Senn & Thiel cite an assessment of microiterative options for an enzyme reaction; the convergence of the alternating
+form for a TS is tested here, not assumed: the step fails if it does not converge (A1.3).
+
+A1.1 PROTOCOL CHANGE (replaces the optimisation in P3, P6, P7; the starts and SP_PLAN's checks stay; A1.2 adds checks)
+Each of TS, R_IRC, P_IRC and R0 is found by cycles K = 1, 2, ..., 8, each cycle two ORCA jobs:
+  environment step: L-Opt (ORCA's Cartesian L-BFGS, run by its MD module), active atoms = the region without the 24
+    substrate atoms 6207-6230, so the substrate is fixed; TightSCF; TolMaxG 1.0e-4, TolRMSG 3.0e-5 Eh/bohr (the C4 and
+    pilot T1 thresholds, equal to TightOpt's gradient thresholds); MaxIter 5000 (see A1.3).
+  core step: active atoms = the 24 substrate atoms alone, the environment fixed. TS: OptTS TightOpt, Calc_Hess true,
+    Hybrid_Hess over the 24 atoms (P3's settings: an exact substrate Hessian at the start of every core step), MaxIter
+    500. R_IRC, P_IRC, R0: Opt TightOpt, MaxIter 500.
+Cycle 1's environment step starts from the step's SP_PLAN start (TS: region atoms from the band's climbing image in the
+MD-structure surroundings; R_IRC/P_IRC: the IRC ends; R0: region atoms from band image 0); every later environment step
+from the previous cycle's core result; every core step from its cycle's environment result. Every start file is checked
+against the sha256 recorded when the step that wrote it passed.
+
+A1.2 CHECKS OF EVERY STEP (spa_stage.py; a failed check fails the stationary point and stops its job)
+environment step: ORCA terminated normally; "The minimization has converged", with the largest and RMS gradients ORCA
+prints beneath it (if it prints none, those of the CSV's last step) at or below their thresholds; the energy over the
+last 50 optimiser steps fell by at most 2.5e-4 Eh (C4's plateau test; not applicable to a step of 50 or fewer optimiser
+steps, recorded as n/a); the substrate and every atom outside the region unmoved (2e-6 A). It also records the
+environment gradient where the step began (reported only; A1.3).
+core step: ORCA terminated normally; "THE OPTIMIZATION HAS CONVERGED"; every atom other than the 24 substrate atoms
+unmoved; the substrate reactant-like for R_IRC and R0, product-like for P_IRC (SP_PLAN's distance classes and checks)
+and, added here, neither reactant- nor product-like for the TS (SP_PLAN's P3 had no class test for the TS; a core TS
+search that ends in a minimum would fail P4 or P5 later, this stops the alternation at once). Every TS known in this
+project lies well inside the class (frame 820: O-C 2.10, C-C 2.53 A; smoke test 1's 8 A start 2.17 / 2.47 A).
+
+A1.3 CONVERGENCE OF THE ALTERNATION (Zhang et al.'s "both meet convergence criteria at the same geometry"; the numbers
+are fixed here, before any Amendment 1 input exists)
+The alternation has converged after cycle K >= 2 when all three hold:
+  (a) cycle K's environment step changed the energy by at most 0.10 kcal/mol (first minus last optimiser energy, in
+      absolute value; a rise is also printed as such);
+  (b) cycle K's core energy differs from cycle K-1's by at most 0.10 kcal/mol;
+  (c) no substrate atom moved more than 0.02 A between cycle K-1's and cycle K's core geometries.
+The stationary point is then cycle K's core geometry and its energy, the last FINAL SINGLE POINT ENERGY (QM/MM) of that
+core step. Not converged after cycle 8: the stationary point fails ("the alternation did not converge in 8 cycles").
+Why an energy test, and why these numbers: Zhang et al. state the rule in words ("until both meet convergence criteria
+at the same geometry") with an MM criterion of RMS gradient "less than 0.1 kcal/(mol*A)" (0.418 kJ/mol/A). Applied to
+the C4 pilot's six T1 runs - the environment relaxed around the climbing-image substrate, from the NEB's environment -
+that criterion was already met where each run began (RMS 0.090-0.212 kJ/mol/A, from line 2 of each energy file, 5e-6 to
+9e-6 A from the start; largest components 1.28-2.25 kJ/mol/A), yet the environment then gave up 0.27, 0.58, 0.96, 1.00,
+1.18 and 3.71 kcal/mol over 104-449 steps. An RMS-gradient test at that level would have called all six relaxed. Kastner
+et al. 2007 (section III.C) report the same effect: a standard optimisation under loose criteria ended 23-24 kJ/mol
+above the tightly converged one, "caused by the relatively loose convergence criteria applied to the whole system".
+Zhang's wording with ORCA's own thresholds instead (the environment step's first point already within TolMaxG and
+TolRMSG) would be the most literal test, but the pilot's six environment steps (T1) end at 90-98% of the
+largest-gradient threshold, so the core's own step tolerance (TightOpt, about 5e-4 A) can push a converged environment
+back over it. The rule above therefore measures what the barrier depends on: how much energy the environment and the
+core still gave up in the last cycle, and how far the substrate still moved. The environment gradient where each
+environment step began is recorded and printed as Zhang et al.'s criterion, reported only. The numbers: 0.10 kcal/mol is
+a tenth of the 1.0 kcal/mol tolerance used for C4's reactant tests (A1 of C4_CRITERIA.txt and the pilot's |dR|) and
+would have rejected all six T1 starts above; 0.02 A is a fifth of the "about 0.1 A" by which Zhang et al. stepped their
+reaction coordinate; 8 cycles is the most Zhang et al. needed ("no more than eight cycles"). Within every step the
+gradient criteria are TightOpt's, as SP_PLAN fixed. MaxIter 5000 for the environment step instead of the pilot's 2000:
+the pilot's and C4's starts were already relaxed by the NEB (pilot 104-449 steps; the 13 C4 step-2 runs reported on 11
+October 325-710 steps), whereas cycle 1 here starts from a region that smoke test 1 showed relaxing by 184-313 kcal/mol;
+5000 steps at the expected 30-65 s per step (up to 90 h) fit the 176 h walltime with room for the later, short cycles.
+The thresholds that decide convergence are unchanged; but as in SP_PLAN, a step that reaches its MaxIter, and a job that
+reaches the 176 h walltime, fail the stationary point, so these limits also decide what counts as feasible. All cycles
+of one stationary point run in one job (A1.4); a rough worst case for the TS job (a 5000-step first environment step,
+eight core steps each with a 144-gradient Hessian, seven later environment steps) is about 150 h.
+
+A1.4 UNCHANGED
+P1 (region), P2 (surroundings), P4 (TS frequencies, 24 atoms displaced), P5 (IRC from the TS, 24 atoms moving), P8
+(frequencies of the minima), the energies, QUANTITIES, the PACKAGE and its reporting, and the job layout (eight jobs per
+run, afterok dependencies, 16 cores, 250/180 GB, 176 h); each of the four optimisation jobs now runs a whole
+alternation, so it holds more work than SP_PLAN's single optimisation. P4 takes the converged TS, P5 the TS with its P4
+Hessian, P6 the IRC ends, P8 each converged minimum, exactly as in SP_PLAN.
+
+A1.5 SMOKE TEST 2 AND THE REGION RULE
+Frame 42436 again, both radii, S = md: run folders f42436_r8_a1 and f42436_r6_a1, with the same region (region.txt
+identical to f42436_r8 / f42436_r6) and start coordinates identical to smoke test 1's (the bundle checks both before
+committing the inputs). The region rule is SP_PLAN's, with "the TS, R_IRC, P_IRC and R0 optimisations passed their
+checks" read as "the TS, R_IRC, P_IRC and R0 alternations converged within 8 cycles, every step of every cycle passing
+its checks (A1.2)"; spa_report.py smoke prints the verdict. The barrier values play no part in the rule.
+Smoke test 1's runs (f42436_r8, f42436_r6) are exploratory from the commit of this amendment: they decide nothing, and
+whatever they reach is reported beside the Amendment 1 runs (spa_report.py prints E(TS) and E(R0) of each Amendment 1
+run minus those of the SP_PLAN run from the same start file, when both passed; reported only). Whether the running ones
+are stopped is Jessica's decision; their outputs are committed when they end, whatever they show.
+Machinery stops, fixed here: the job script stops a job before any check can run, and no record is written for that
+step, when there is too little free disk before a step; when the disk or quota filled during ORCA ("No space left on
+device" or "Disk quota exceeded" in the ORCA output, or under 1 GB free right after ORCA); when ORCA reports an input
+error ("INPUT ERROR" or "UNRECOGNIZED OR DUPLICATED KEYWORD") before its first energy; and when a start file is missing,
+exists already or is not the one recorded. A step that failed a check is also counted as a machinery stop when its ORCA
+output or its job's output reports a full disk or quota. spa_report.py prints "not decided" for that radius; the run
+folder is then renamed (suffix _stop1), generated again (byte-identical to the committed inputs) and submitted once more
+from the beginning, and the stop and its cause are reported. A second machinery stop of the same radius counts as a
+failure of the rule for that radius (spa_report.py applies this when the _stop1 folder exists). An input error means the
+input is wrong: it is corrected in a disclosed amendment and the radius run again. Every other end - a check that fails,
+ORCA ending abnormally for any other reason, MaxIter, the walltime - is a failure as defined above.
+The 30-frame package uses this amendment.
+
+A1.6 EXPECTED COST AND SIZES (estimates; the runs record the real ones)
+Per step: energy and gradient took 53-66 s per cycle in smoke test 1 at 16 cores (once 210 s, 6 A R0); the pilot's L-Opt
+took 52-65 s per step at 8 cores (its "Performance" lines). Cycle 1's environment step, a few hundred to a few thousand
+steps: about 4 h to 3.5 days; later environment steps start near a minimum (tens to hundreds of steps). TS core step:
+the substrate's numerical Hessian (144 displaced gradients) then tens of cycles, about 2-5 h; minimum core steps under 2
+h. Per stationary point, probably 1-3 days, at most about 7 (the walltime). Files: an environment step writes a
+full-system DCD trajectory of 0.67 MB per step (up to 3.3 GB at 5000 steps) and a full-system PDB, both deleted when the
+step passes; kept per cycle are the full-system end geometry (env.xyz about 2.4 MB, core.xyz about 3.8 MB), the energies
+per step (CSV) and the outputs (xz above 50 MB). Kept per run folder: about 0.1-0.3 GB. Disk checked before every step
+(20 GB free for alternation steps, since four jobs start together and each environment step can write 3.3 GB; df
+measures the filesystem, not a quota). On a failed check nothing in that step is deleted.
+
+A1.7 LIMITATIONS ADDED
+At convergence the environment was minimised for cycle K-1's core geometry, which differs from the final one by at most
+0.02 A (A1.3 c), and the core step held the environment fixed; the final point is therefore a stationary point to the
+tolerance of A1.3, not to TightOpt's tolerance over the whole region at once. As in SP_PLAN, P4 tests the substrate
+block of the Hessian with the environment fixed; the environment's response to motion along the reaction mode is not
+part of that test.
+
+A1.8 FILES AND CODE
+spa_prepare.py: sp_prepare.py with the alternation inputs (STEP/env.inp, STEP/core.inp) in place of ts.inp/opt.inp and
+the cycle loop in the job scripts; region and start files made exactly as sp_prepare.py makes them. spa_stage.py:
+sp_stage.py with the per-cycle preparation and checks (alt_prep, alt_check), the convergence decision (alt_decide) and
+the records; every cycle writes STEP/cKK_env or STEP/cKK_core/STAGE_RESULT.txt, the converged step STEP/final.xyz and
+STEP/final_region.xyz; every environment step's record holds the gradient where it began (Zhang's criterion,
+reported only). spa_report.py: the per-run report with every cycle and its file sizes, the records checked
+against the outputs (energies against the ORCA outputs; steps, energy drop and last-50 fall against the CSV; the last
+substrate shift against the core geometries; each part's start file against the geometry the part before it recorded),
+and the smoke verdict.
+  sha256 SP_PLAN.txt     c8eadbd9a5546fe644fe85a2c7d3e7e47c7117bb61a449a51ce50fb6945df1a6
+  sha256 spa_prepare.py  603e3b557a2e8140f433f483e6594d7c515db6e6c2a3add8fd0c9e6d7aee9723
+  sha256 spa_stage.py    22fde6196d724ac6014ca9b36e112e837a46f37252cf25aa13e9129a77ede5ec
+  sha256 spa_report.py   f367fa14d98955e2259007bc5fc035cce7d55312299ac8f73b1bfe220a510fa7
+
+References: Kastner, Thiel, Senn, Sherwood & Thiel 2007, J. Chem. Theory Comput. 3, 1064 (doi 10.1021/ct600346p); Senn &
+Thiel 2009, Angew. Chem. Int. Ed. 48, 1198 (doi 10.1002/anie.200802019); Zhang, Liu & Yang 2000, J. Chem. Phys. 112,
+3483 (doi 10.1063/1.480503); Senn, Kastner, Breidung & Thiel 2009, Can. J. Chem. 87, 1322 (doi 10.1139/V09-092); ORCA
+6.0 manual, QM/MM chapter (FACCTs); the four papers named under LITERATURE that are not in the library; SP_PLAN.txt and
+its references; frame 820 files 05_qmmm/18_nebts and 18c_reduced_region; C4 pilot 05_qmmm/23_c4_reactant/pilot_a2;
+HANDOFF.md section 6.
