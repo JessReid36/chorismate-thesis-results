@@ -1,0 +1,309 @@
+Stationary-point barriers (SP) - AMENDMENT 2: the package. Written 18 October 2026; committed before any package input
+is generated, and the inputs before any package run. SP_PLAN.txt, SP_AMENDMENT1.txt and SP_ERRATUM1.txt stay as
+committed (sha256 at the end); this file changes only what it lists. It settles the seven items of SP_ERRATUM1.txt Part
+B (B1-B7) and audit item C3. Each answer, its literature and the direction in which it moves the reported barrier are in
+PACKAGE_DECISIONS_LITERATURE_20261018.md (this folder; every paper read in full, three passes of checks, the second an
+independent review), cited below as DECISIONS Q1-Q7. Where this file adds to DECISIONS it says so ("added here"). This
+file was checked before commit by its author and, in two rounds, by an independent reviewer against the outputs, the
+library and the code. Code phase1_system_dev/spa_prepare.py, spa_stage.py and spa_report.py (changed: the cycle limit,
+A2.6) and spa_package.py with spa_package_stats.py (new: the package report, A2.9) (tier1-realism; sha256 at the
+end). C4 closes by 05_qmmm/23_c4_reactant/C4_CLOSURE.txt, committed with this file. Retained-final.
+
+WHAT HAS BEEN SEEN BEFORE THIS AMENDMENT
+- Smoke test 2 (SP_AMENDMENT1.txt A1.5): frame 42436, S = md, all eight jobs at each radius, outputs committed in this
+  folder (f42436_r8_a1, f42436_r6_a1; results 046e51a). spa_report.py smoke: both radii meet the region rule; "the 30
+  frames use 8 A". kcal/mol:
+     radius  B_sp   TS imaginary (cm-1)  dR0    dE_rxn  cycles TS/R_IRC/P_IRC/R0  job-hours (sum of walltimes)
+     8 A     14.03  -227.06              +1.85  -13.46  7/6/5/3                   61.3
+     6 A     12.96  -226.15              +0.11  -15.49  8/7/5/5                   66.6
+  No minimum has a counted imaginary mode. The TS jobs peaked at 197 GiB (8 A) and 175 GiB (6 A) of the 250 GiB
+  requested (PBS mem=250gb); the TS core step allows ORCA 12000 MB per core on 16 cores (%maxcore), about 179-188 GiB,
+  so the peak depends mainly on that setting (the 6 A region, about half as many atoms, peaked 22.5 GiB lower). The 8 A
+  TS core energy changed by 0.93, 0.42, 0.26, 0.21, 0.16 and 0.09 kcal/mol over cycles 2-7. The environment steps ran at
+  34-145 s per optimiser step (median 53 s over the 46 environment steps of both runs); the first environment step of
+  each stationary point took 136-493 optimiser steps (2.2-6.7 h).
+- Smoke test 1 (SP_PLAN.txt's whole-region optimisation; exploratory since Amendment 1). At 8 A its R0 (f42436_r8/r0,
+  308 cycles, a minimum by its frequencies) lies at -1074.573520 Eh, 2.85 kcal/mol below smoke test 2's R_IRC and 4.70
+  below smoke test 2's R0; the barrier from it to smoke test 2's TS is 16.88 kcal/mol. The geometries differ in waters
+  near the substrate: the H1 atom (atom 12229) of water residue 2382 lies 1.76 A from the ether oxygen O3 (atom 6214)
+  at the TS and 1.86 A in R_IRC, but 2.98 A and 3.12 A in smoke test 2's and smoke test 1's R0 (final_region.xyz of
+  each step; atoms numbered from 0 as in ORCA, residues from 1 as in 03_amber/tleap_build/complex_solvated.prmtop). At
+  6 A its R0 (f42436_r6/r0, -1073.934296 Eh, a minimum by its frequencies) lies 0.04 kcal/mol below smoke test 2's 6 A
+  R_IRC and 0.16 below smoke test 2's 6 A R0.
+- C4: only C4_REPORT_PROVISIONAL.txt, seen before SP_PLAN.txt (13 of 13 frames assessed at step 2 fail A1), and the
+  pilot (pilot_a2, exploratory); the C4 runs have ended and have not been collected or analysed (C4_CLOSURE.txt).
+- No package input exists. No frame other than 42436 has been run under SP_PLAN.txt or Amendment 1. Since smoke test 2:
+  the x77 collection (results 046e51a, 7f0e3ee) committed its outputs; DECISIONS (whose analyses of frame 42436 use
+  those committed outputs) and this amendment were written.
+
+A2.1 THE REACTANT: B_sp AND B_eff (DECISIONS Q1)
+B_sp = E(TS) - E(R_IRC) stays the primary barrier (SP_PLAN.txt QUANTITIES). Added for every complete frame and for the
+ensemble: the effective barrier B_eff = E(TS) - min(E(R_IRC), E(R0)). Where R0 lies below R_IRC, B_sp is reported as a
+lower bound of the barrier from the lowest reactant found. R0 is the package's only second reactant search, so B_eff
+captures only what R0 finds.
+Added here:
+- R0 enters only when it passed P7 (with A1.2's checks) and P8 shows it a minimum (no counted imaginary mode), the test
+  R_IRC must also pass; otherwise B_eff = B_sp and the frame is listed. Direction: this can only lower B_eff, towards
+  B_sp.
+- Frame 42436's B_eff in the ensemble uses its package R0 (f42436_r8_a1/r0), so it equals its B_sp, 14.03. Smoke test
+  1's R0 (16.88 from it, above; DECISIONS Q1 names that value) comes from SP_PLAN.txt's protocol, not Amendment 1's, so
+  it is reported beside the ensemble, not in it. Direction: compared with entering 16.88, the B_eff mean is lower by
+  2.85/n kcal/mol (about 0.1 at n = 30).
+- The name: Li & Hartke 2013 call the lower barrier, measured from the reactant connected to the TS, "effective" (it is
+  "lowered by this amount" when the cluster rearranges along the path). Here B_eff is the higher one, measured from the
+  lowest reactant found; the name follows DECISIONS, and the definition above is what counts.
+Why: B_sp was fixed before any result and measures from the reactant on the TS's own path, as the chorismate-mutase
+studies do (Claeyssens et al. 2005 and 2011; Senn et al. 2009; Ranaghan et al. 2004). Where a distinct lower reactant
+is known, the literature puts its cost into the barrier (Li & Hartke 2013; Claeyssens et al. 2011, p. 1583; Kastner et
+al. 2006, p. 457), which B_eff reports.
+Direction: B_eff >= B_sp in every frame.
+
+A2.2 ATTRITION AND RE-RUNS (B2; DECISIONS Q3)
+The 30 frames are those of 05_qmmm/23_c4_reactant/c4_bands.tsv, fixed in advance; none is replaced in the ensemble
+(A2.4's replacement concerns only the surroundings check). A frame is complete as SP_PLAN.txt QUANTITIES defines it (TS,
+TS frequencies, IRC, R_IRC and R_IRC frequencies passed). A frame that is not complete is reported with the step that
+failed, its reason and the values it reached: the failing step's record and, for an alternation, its cycle history
+(spa_package.py), and spa_report.py's full report of every run folder, committed beside the package's output.
+Re-runs:
+- A machinery stop (SP_AMENDMENT1.txt A1.5) in a step of the B_sp chain is handled as A1.5 states: the run folder is
+  renamed with _stop1, generated again and resubmitted once; a second machinery stop is a failure.
+- Added here: a machinery stop in a step outside the chain (P_IRC, R0 or their frequencies) re-runs only that job and
+  the job that depends on it, once, after the stopped step's folder and its job's output are renamed with _stop1 (the
+  dependent job never ran, PBS afterok, so its folder is only replaced); a second machinery stop fails that step. The
+  step folders and job scripts are taken from a fresh generation of the run folder into a scratch folder, checked byte
+  for byte against the committed inputs' sha256 (GENERATOR_LOG.txt); R0 starts from the same r0/start.xyz (checked
+  against starts.sha256), P_IRC from the same IRC end (spa_stage.py prep, as in the first run). Re-running the whole
+  folder would replace a complete B_sp, and the chain's steps and records stay as they are.
+- An input error is not re-run as a machinery stop: A1.5 has the input corrected in a disclosed amendment.
+- Added here: a job that has left the queue without its last line and without a record for its step is a machinery
+  stop. The bundle that collects the outputs checks qstat and records such jobs in the run folder's LEFT_QUEUE.txt,
+  which spa_package.py reads; until then the job is "not finished". When only that job is re-run, its line moves from
+  LEFT_QUEUE.txt into the renamed step folder.
+The ensemble needs at least 20 complete frames (SP_PLAN.txt PACKAGE); with fewer it is reported but not used as the
+Phase 1 barrier. C4's "more than 3 of the 30 frames dropped" rule belonged to C4's step 3 and is retired with it
+(C4_CLOSURE.txt); this rule replaces it for Phase 1. Twenty is a floor (Grossfield & Zuckerman 2009: fewer than about
+20 statistically independent configurations "should be considered unreliable"), not a guarantee of precision; the
+confidence interval (A2.3) shows the precision reached. The frames lie at least 650 ps apart, against 485 ps (5 tau of
+the slowest observable, DECISION_SAMPLING.md).
+Selectivity check (DECISIONS Q3 names it; its test and threshold are added here): whenever at least 2 frames have
+failed, the band barriers barrier_klow (c4_bands.tsv) of the failed frames against those of the complete frames, as the
+difference of means with its 95% confidence interval (Welch); with one failed frame, the rank of its band barrier among
+the complete frames'. If the interval excludes zero, the report states that failure is related to the band barrier and
+the direction in which the complete frames' mean may then be biased (higher band barriers among the failed frames:
+biased low). It changes no number.
+Direction: none; the check detects non-random failure.
+
+A2.3 STATISTICS AND THE PHASE 1 BARRIER (B3, audit item C3; DECISIONS Q4; replaces SP_PLAN.txt PACKAGE's "Ensemble"
+line and its "decided separately, after the package", and audit item C3's mean +- sem and C4 step 4's statistics, for
+the SP barrier)
+Primary, over the complete frames with S = md: the arithmetic mean of B_sp with the sd, the sem, the 95% confidence
+interval of the mean (t-distribution, n - 1 degrees of freedom) and n; every frame's value tabulated; the median and the
+range. It is compared, as the chorismate-mutase studies compare theirs, with the experimental activation enthalpy, 12.7
++- 0.4 kcal/mol, and with Claeyssens et al. 2011's enzyme barrier, 11.3 +- 1.8 kcal/mol (the barrier of the average of
+their 16 potential-energy profiles, with the sd of the 16 pathways; B3LYP/6-31G(d)/CHARMM27). The same statistics are
+given for B_eff.
+Comparisons between ensembles (the enzyme against water, or against a design): the difference of means with its 95%
+confidence interval (Welch-Satterthwaite).
+Secondary, as estimates of the free-energy barrier, compared with the experimental activation free energy, 15.4
+kcal/mol, at 298.15 K (SP_PLAN.txt): the exponential average -RT ln(mean exp(-B/RT)) (SP_PLAN.txt; Cooper & Kastner
+2014, eq. 4) and the cumulant estimate mean - sd^2/(2RT) (Ryde 2017, eq. 5). The sd in kJ/mol is stated against Ryde
+2017's Table 2 (the number of energies needed for 10 and 20 kJ/mol at 95% confidence) and against n; the table is for
+300 K, so (added here) the sd is scaled by 300/298.15 for the look-up, and the row at or above it is used (the tabulated
+numbers rise with sigma), the row below shown beside it. The cumulant estimate assumes a Gaussian distribution, and Ryde
+2017 asks for evidence of it ("it becomes more important to provide evidence that the distribution actually is
+Gaussian"): the histogram and normal plot (as Ryde 2017's SI Figure S1, here in text and in the table) and, added here,
+the Shapiro-Wilk test, the skewness and the excess kurtosis. p < 0.05 is reported as evidence against a normal
+distribution, and so against the cumulant estimate.
+The experimental values are Kast, Asif-Ullah & Hilvert 1996's, as Ranaghan et al. 2004 and Claeyssens et al. 2011 quote
+them.
+The Phase 1 barrier (audit item C3; added here, beyond DECISIONS, before any package value exists, in place of SP_PLAN's
+"decided separately, after the package"): when the package's conditions are met (at least 20 complete frames, A2.2; the
+surroundings check passed, A2.4; every record agrees with its output; nothing undecided), the Phase 1 barrier is the
+B_sp ensemble mean with its 95% confidence interval and n, B_eff given beside it. Frame 820's +16.00 kcal/mol
+(BARRIER_FINAL.md) is named as the earlier single-frame characterisation and is not averaged in. When the conditions are
+not met, the package gives no Phase 1 barrier and C3 stays open: after a failed surroundings check, A2.4's remedies
+follow; with fewer than 20 complete frames, whatever is done next is a new decision, written in an amendment before its
+runs and disclosed as made after the package's results.
+Direction: the mean is the highest of the three estimators; as an estimate of the free-energy barrier it is biased high
+(Cooper & Kastner 2014; Ryde 2017), and this is stated with it. C4 step 4 used Ryde's 300 K; at 298.15 K the cumulant
+estimate is about 0.03 kcal/mol lower at an sd of 2.4 kcal/mol (not material; stated). Settling C3 now moves nothing.
+
+A2.4 THE SURROUNDINGS CHECK (B4; DECISIONS Q5; replaces "and both sets are carried forward" in SP_PLAN.txt PACKAGE)
+The check is SP_PLAN.txt's: frames 20000, 44388 and 59999 again with S = ci at 8 A. Per frame the difference
+B_sp(ci) - B_sp(md) is reported; a frame exceeds when |B_sp(ci) - B_sp(md)| > 2 kcal/mol, and the check fails if at
+least two of the three exceed (B_eff(ci) - B_eff(md) reported only).
+Added here (DECISIONS Q5 did not cover it): if a check frame's md or ci run fails (finally, as A2.2 defines it), the
+check uses instead the nearest frame later in frame-number order (earlier, for 59999) whose md run is complete and which
+is neither a check frame nor already a replacement, assigned in the order 20000, 44388, 59999; a nearer frame whose md
+run is not yet decided is waited for, and a frame whose md run failed is passed over. The replacement is run once with
+S = ci (f<FRAME>_r8_ci_a1; its inputs generated and committed like the package's before it runs), and it is run even if
+the verdict is already reached, so that every place reports a difference. If it fails too, or no frame is left, that
+place has no difference. If neither outcome can then be reached, the check cannot be decided, and the ensemble is
+reported but not used as the Phase 1 barrier until a further amendment, written before any further result, settles it.
+Direction: none; the replacement depends on which runs completed, not on any barrier value.
+If the check fails, the B_sp ensemble is reported but not used as the Phase 1 barrier, and a further amendment, written
+before its runs, applies these remedies in this order, each re-checked on the same three frames:
+  (a) a larger relaxed region, towards the chorismate-mutase studies' 16-20 A (Ranaghan et al. 2004: atoms beyond 16 A
+      fixed; Claeyssens et al. 2005 and 2011: a 25 A sphere, the outer 5 A fixed; Senn et al. 2009: protein within 17 A
+      free). The check varies only atoms beyond 8 A, so this is the direct remedy;
+  (b) if the dependence persists, a larger QM region (Ryde 2016, section 4, item 7: "the QM system needs to be extended
+      until the energies are stable"), Arg90 first;
+  (c) free energies (Rod & Ryde 2005; Ryde 2016), outside the thesis's present scope.
+Putting (a) before (b) is DECISIONS' reading; Ryde 2016 prescribes (b). Each element is from the literature.
+Direction: (a) unknown. (b) is expected to lower the barrier, stated now: in the library a larger QM region lowered it
+each time - Lee et al. 2002 as Ranaghan et al. 2004 report it (chorismate mutase, RHF/4-31G: 19.7 -> 16.6 kcal/mol
+with Glu78 and Arg90 in the QM region); Kulik et al. 2016 (catechol O-methyltransferase: activation energies "decrease
+nearly monotonically from 24 kcal/mol ... to an asymptotic limit of 16 kcal/mol"); Li & Chan 2025 (chorismate mutase:
+rate constants 5-27 times higher with Arg7 and Glu78 added to a QM region that already held Arg90; rates, not
+barriers). A check that passes changes nothing.
+
+A2.5 THE DESIGNS' BARRIER (B5; DECISIONS Q6)
+Every barrier compared with the enzyme's, the bare substrate's (the uncatalysed reference) and every design's, is
+computed by the same chain with the enzyme's settings (substrate-only QM region, B3LYP-D3BJ/def2-SVP def2/J RIJCOSX,
+TightSCF, the same embedding): a TS optimised in that system with one counted imaginary mode (P4's test); an IRC in both
+directions whose ends are the reactant and the product of the same reaction (P5's test); the reactant and product
+minimised from the IRC ends; B = E(TS) - E(R_IRC); and B_eff from the lowest reactant found by a stated conformer search
+that includes the pseudo-diequatorial substrate conformer, reported beside B as in A2.1. Quasi-atoms are held fixed. The
+catalytic effect is the barrier difference (ddE) against the reference in the same medium; a flexible medium (explicit
+water) is averaged over configurations with A2.3's statistics. An NEB-CI may supply the TS start; frozen-field scores
+stay screening numbers. The medium is decided in Phase 2.2; the definition holds either way.
+Added here: in a medium of explicit molecules, "the same chain" includes the enzyme's region and surroundings - whole
+residues and waters within 8 A of the substrate relaxed by A1.1's alternation with A1.3's test, everything beyond held
+at that configuration's MD structure - so that design and enzyme barriers are computed alike. Every water within 8 A
+moves. 23_c4_reactant/pilot_a2/C4_WAY_FORWARD_20261011.md section 3.5 ("Freezing is a sensitivity test, never the
+production protocol for designs", after Dubey et al. 2020 and Rod & Ryde 2005) is superseded for the molecules beyond 8
+A, for that reason; for the enzyme, A2.4's check measures the effect of that boundary. Whether and how a design's frozen
+boundary is checked (a design may have no band, and so no climbing image to freeze around) is fixed in Phase 2.2's plan
+before its runs. In a medium without explicit molecules (gas phase, continuum) every atom but the quasi-atoms is
+optimised.
+This replaces, for every barrier compared with the enzyme's, the "relaxed NEB-CI barriers" of C4_CRITERIA.txt (WHAT THIS
+DOES TO THE DESIGN YARDSTICK).
+Direction: B is like for like by construction. B_eff is not quite: the enzyme's second reactant is R0 (from the band's
+image 0), a design's comes from the conformer search, and this is stated with the results. B_eff stops a design from
+looking better because its field favours a non-reactive conformer.
+
+A2.6 THE CYCLE LIMIT (DECISIONS Q7; changes SP_AMENDMENT1.txt A1.1's "K = 1, 2, ..., 8" and A1.3's "Not converged
+after cycle 8")
+The limit rises from 8 to 20 cycles; A1.3's convergence test (a)-(c) is unchanged. In the code: spa_prepare.py (the job
+scripts' cycle loop and messages), spa_stage.py (KMAX = 20: alt_prep's bounds, alt_decide's limit and its message "the
+alternation did not converge in 20 cycles") and spa_report.py (KMAX = 20, so that it reads 20 cycles; its smoke verdict
+keeps Amendment 1's text, which decided the region, and its docstring says so). Nothing else in them changes: the
+difference from the committed A1.8 versions is these lines and their docstrings. Frame 42436's package runs (smoke test
+2) ran under the 8-cycle limit and converged within 7 cycles, so the change does not touch them.
+Why: no paper sets a cycle cap; the schemes iterate until their criteria are met (Zhang, Liu & Yang 2000; Kastner et al.
+2006 and 2007; Murphy et al. 2000; Senn & Thiel 2009). Zhang et al.'s "no more than eight cycles" is an observation on
+one reactant minimisation, not a limit. A cap is a resource guard, like MaxIter. In smoke test 2's 8 A TS the core
+energy change shrank by factors of 0.45-0.79 per cycle and the substrate shift by 0.67-0.86. Assuming a change of 1.5
+kcal/mol at cycle 2 (the largest seen was 1.14, 6 A TS; 0.93 at 8 A), 20 cycles reach A1.3's 0.10 kcal/mol for factors
+up to about 0.86. Later cycles took up to 3.4 h (R_IRC at 8 A, cycle 3), so 20 cycles take about 68 h. The walltime
+(176 h) can bind before the cycle limit: a 5000-step first environment step takes about 73 h at the median rate of 53 s
+per step and about 96 h at the pilot's 69 s, the whole job then about 140-160 h, and at the slowest rate seen (145 s,
+one environment step) a 5000-step first step alone would exceed the walltime. A1.3 counts reaching the walltime as a
+failure. Smoke test 2's first environment steps took at most 493 optimiser steps. The number 20 is this amendment's;
+the literature supplies its role, not its value.
+Reported: every stationary point's cycle count, and which needed more than 8 (spa_package.py).
+Direction: the limit decides which frames finish, not their values (A2.2's check covers that). A2.11 adds the
+limitation.
+
+A2.7 C4 (B1; DECISIONS Q2)
+C4_CLOSURE.txt: C4's 35 runs and any M1 continuations are collected under the rule of 18 October (A2.10); steps 0-2
+are completed as pre-registered (C4_CRITERIA.txt with C4_AMENDMENT1.txt, M1 continuations included) and reported
+whatever they show; steps 3-6 are not run, for the reasons given there; the decision follows C4's provisional step-2
+results, and that file says so.
+
+A2.8 RECORDS (B6)
+These statements are superseded from this commit:
+- PHASE1_AUDIT_CHECKLIST.md item A4 ("Full characterisation on every frame. Not warranted."), PHASE1_ENSEMBLE_NOTES.md
+  (TS optimisation, frequencies and IRC "not repeated") and HANDOFF.md section 6 ("DECISION TAKEN, 2026-09-28: do not
+  run this stage"): by SP_PLAN.txt and this amendment.
+- 05_qmmm/18c_reduced_region/ts_frequencies_summary.txt and phase1_system_dev/BARRIER_FINAL.md (code repo): frame 820's
+  converged TS has one imaginary mode, -313.07 cm-1 (SP_PLAN.txt, audit item A7), not the starting Hessian's -313.30
+  and -18.65 cm-1.
+- notes/steps15-18_reaction_path_TS.md (code repo): step 18 ran 87 cycles (SP_AMENDMENT1.txt); 18b as SP_ERRATUM1.txt
+  A4; 18c's seed and its 72 displacements (A3, A6); the converged TS has no second imaginary value.
+The files are corrected in a separate records commit, each pointing here, before any package result is reported; this
+amendment is the record until then.
+
+A2.9 THE PACKAGE SCRIPT (B7)
+spa_package.py, with spa_package_stats.py (Python 3.6, standard library; it reads only, apart from an optional new TSV
+file), computes from the run folders and c4_bands.tsv everything A2.1-A2.6 report:
+- per frame: its state (complete; failed, with step, reason and values reached; a machinery stop not yet re-run, with
+  A2.2's instruction; an input error; not finished), B_sp, B_eff, dR0, E(TS) - E(R0), dE_rxn, the TS imaginary mode,
+  the cycle counts, the last cycle's core change, the state of P_IRC and R0 and their frequencies, and the band barriers
+  (descriptive);
+- attrition and the selectivity check; the ensemble statistics of B_sp and B_eff; the cycle counts; the surroundings
+  check with A2.4's replacement and its verdict; frame 42436's smoke-test-1 R0;
+- the Phase 1 barrier when A2.3's conditions are met, or why not.
+It first runs spa_report.py's report on every run folder and prints as PROBLEM every record that differs from its ORCA
+output; such an output is PROVISIONAL, and its numbers are not used until the record or the transfer is put right and
+the script run again. While anything is undecided (a job not finished, a machinery stop not yet re-run, a surroundings
+place without its difference yet, a PROBLEM) it marks its output PROVISIONAL. It is run once every package job has ended
+and again after every re-run; each output is committed whatever it shows, and the result is the first output with
+nothing undecided:
+  python3 spa_package.py SD 05_qmmm/23_c4_reactant/c4_bands.tsv SP_PACKAGE_TABLE.tsv
+Checks before this commit: the statistics agree with scipy 1.18.1 to 1e-9 on 53 reference values embedded in
+spa_package_stats.py (python3 spa_package.py selftest), and to 1e-10 or better over 3000 random samples of 3-40 values
+(the independent reviewer: 4000 samples, 3.2e-12). Ryde 2017's Table 2 is embedded as printed (PDF page 15 of the
+library's manuscript) and was checked entry by entry against the PDF's text. The script was run on frame 42436 rebuilt
+from the committed archives (B_sp 14.03, B_eff 14.03, dR0 +1.85; the smoke-test-1 line 2.85 and 16.88) and on
+synthetic packages built from it: all frames complete; failures of every kind; machinery stops in and outside the chain,
+with and without _stop1; an input error; a job not finished; surroundings checks that pass, fail, use a replacement and
+cannot be decided; a record altered against its output.
+
+A2.10 THE PACKAGE
+Run folders (SP_PLAN.txt PACKAGE; 8 A; Amendment 1's alternating scheme with A2.6's limit): the other 29 frames of
+c4_bands.tsv with S = md, f<FRAME>_r8_a1; frames 20000, 44388 and 59999 with S = ci, f<FRAME>_r8_ci_a1; frame 42436's
+package runs are smoke test 2's f42436_r8_a1. That makes 32 new run folders of eight jobs each (A1.4), 256 jobs. They
+are generated by spa_prepare.py on hpc1 from sources checked against their sha256, and a second generation into a
+scratch folder must be byte-identical. Before generation, SD's spa_prepare.py, spa_stage.py and spa_report.py are
+replaced by this amendment's versions and spa_package.py and spa_package_stats.py added, each checked against the sha256
+below (the job scripts call SD's spa_stage.py). The inputs, generator logs and sha256 records are committed before any
+job is submitted.
+Expected cost: about 2,000 job-hours if each new run folder costs what frame 42436's 8 A run did (61.3; 950 atoms, the
+largest 8 A region), more where an alternation needs more cycles.
+Disk (added here): at most three alternation jobs of one run folder run at once - job_ts and job_r0 start at submission,
+job_r_irc and job_p_irc after job_ts_freq_irc, while job_r0 may still run (A1.6's "four jobs start together" overstated
+this) - and each environment step may write up to 3.3 GB of trajectory before it passes (A1.6), so a run folder may need
+up to about 11 GB at once, and A1.6's check wants 20 GB free before each alternation step. Before submission the bundle
+measures the free space and the quota on hpc1 and submits at most (the smaller of the two, less 20 GB) / 11 GB run
+folders at a time, in frame-number order, the next wave when a wave's alternation jobs have ended; the waves are
+reported.
+Outputs: before anything is deleted from hpc1, every run folder's files are downloaded to the PC archive (sha256
+checked) and the readable outputs, geometries, Hessians, final wavefunctions and a manifest are committed (Jessica's
+rule of 18 October 2026; the x77 collection extended to the package's folders). C4's 35 runs and any M1 continuations
+are handled the same way (C4_CLOSURE.txt).
+
+A2.11 LIMITATIONS ADDED (stated with the results)
+- The region: on the one frame run at both radii, B_sp at 6 A and 8 A differ by 1.07 kcal/mol, above C4 step 5's 1.0
+  kcal/mol tolerance. The SP route has no further region test; A2.4 tests the frozen boundary on three frames.
+- The alternation stops while the energy is still falling slightly (A1.3); extrapolating smoke test 2's last cycles
+  leaves B_sp about 0.0-0.3 kcal/mol too high (DECISIONS Q7). Direction: upward.
+- B_eff captures only what R0 finds (A2.1).
+
+FILES AND CODE
+  sha256 SP_PLAN.txt                               c8eadbd9a5546fe644fe85a2c7d3e7e47c7117bb61a449a51ce50fb6945df1a6
+  sha256 SP_AMENDMENT1.txt                         8f6128713b07ffc8d257120567d0cd8436608dd8048fe9ffb2a29a35f561b5be
+  sha256 SP_ERRATUM1.txt                           6e58146782f280de97d208be37e9f0af3b0f87c87a4cc6d8db0d301ff58bd199
+  sha256 PACKAGE_DECISIONS_LITERATURE_20261018.md  67a435b09d2dd257af2f3606835116a25595e318c5cf6b6041f8801af371febe
+  sha256 23_c4_reactant/C4_CLOSURE.txt             b70e8a696ece15f559861d72f707078e8625f56b1c7928cc01937d703ae0f6cd
+  sha256 23_c4_reactant/c4_bands.tsv               f5c5d2da15a9145ba364ef187ef077aedfc9e47c2189cdaf8662470dde756d34
+  code (tier1-realism, phase1_system_dev/):
+  sha256 spa_prepare.py                            291de214c995c3a00f74488334544e7a3730f4976e0280d46cdaa22a07f0c296
+  sha256 spa_stage.py                              eedf52fd15db6847a6c56d335a528e92cf9e75f907f029b1e6a60537b4506181
+  sha256 spa_report.py                             c1e376625d17943f5fec546803d9865047a234aabbf1073d9fafb4a1d95b0782
+  sha256 spa_package.py                            64d1efb6a8d2ce13f270670c713e70c77a8d4f66f1baad360847009d3392afb9
+  sha256 spa_package_stats.py                      dcd2bced2d91b39bad75006826e45f97af8e38b152a99223e52966d4e9e64fbd
+  (Amendment 1's versions, A1.8: spa_prepare.py 603e3b55..., spa_stage.py 22fde619..., spa_report.py f367fa14...;
+  superseded for every run from this commit.)
+
+References: those of SP_PLAN.txt, SP_AMENDMENT1.txt, SP_ERRATUM1.txt and DECISIONS; cited here in addition or again:
+Claeyssens, Ranaghan, Lawan, Macrae, Manby, Harvey & Mulholland 2011, Org. Biomol. Chem. 9, 1578 (doi
+10.1039/c0ob00691b); Dubey et al. 2020, J. Am. Chem. Soc. (doi 10.1021/jacs.9b13029); Cooper & Kastner 2014,
+ChemPhysChem (doi 10.1002/cphc.201402382); Grossfield & Zuckerman 2009, Annu. Rep. Comput. Chem. 5, 23 (doi
+10.1016/S1574-1400(09)00502-7); Kast, Asif-Ullah & Hilvert 1996, Tetrahedron Lett. 37, 2691 (not in the library; as
+quoted by Ranaghan et al. 2004 and Claeyssens et al. 2011); Kulik, Zhang, Klinman & Martinez 2016, J. Phys. Chem. B (doi
+10.1021/acs.jpcb.6b07814); Lee, Worthington, Krauss & Brooks 2002, J. Phys. Chem. B 106, 12059 (not in the library; as
+Ranaghan et al. 2004 report it); Li & Chan 2025, J. Chem. Theory Comput. 21, 803 (doi 10.1021/acs.jctc.4c01698); Li &
+Hartke 2013, ChemPhysChem (doi 10.1002/cphc.201300323); Ryde 2017, J. Chem. Theory Comput. 13, 5745 (doi
+10.1021/acs.jctc.7b00826; the library's copy is the accepted manuscript); scipy 1.18.1 (scipy.stats), used only to check
+spa_package_stats.py.
