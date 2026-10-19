@@ -1,0 +1,76 @@
+#!/bin/bash
+#PBS -N sa248838rf
+#PBS -l select=1:ncpus=16:mem=180gb
+#PBS -l walltime=176:00:00
+#PBS -m a
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/05_qmmm/24_sp_barriers/f24883_r8_a1/job_r_irc_freq.pbs.out
+set -u
+RD=/home/18660916/system_development/05_qmmm/24_sp_barriers/f24883_r8_a1
+SD=/home/18660916/system_development/05_qmmm/24_sp_barriers
+ORCA=/home/apps2/ORCA/6.0.1/orca
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+PY() { env -u LD_LIBRARY_PATH python3 "$SD/spa_stage.py" "$@"; }
+used() { qstat -f "${PBS_JOBID:-none}" 2>/dev/null | grep -E "resources_used\.(mem|vmem|walltime|cput|ncpus)" | sed 's/^ */pbs_/'; }
+quit() { used; echo "end_job=$(date)"; exit "$1"; }
+run_step() {   # folder, ORCA basename, GB of free disk needed
+  cd "$RD/$1" || { echo "SP_$1_FAIL no folder $RD/$1"; quit 1; }
+  for f in "$2.inp" start.xyz complex_solvated.ORCAFF.prms; do [[ -s "$f" ]] || { echo "SP_$1_FAIL missing $1/$f"; quit 1; }; done
+  [[ -e "$2.out.xz" ]] && { echo "SP_$1_FAIL $1/$2.out.xz exists: this step was already run"; quit 1; }
+  [[ $(df -Pk . | awk 'NR==2{print $4}') -ge $(( $3 * 1000000 )) ]] || { echo "SP_$1_FAIL less than $3 GB free in $RD"; quit 1; }
+  ( set -o noclobber; : > "$2.out" ) 2>/dev/null || { echo "SP_$1_FAIL $1/$2.out exists: this step was already started"; quit 1; }
+  echo "step=$1 start=$(date)"
+  "$ORCA" "$2.inp" > "$2.out" 2>&1 </dev/null
+  echo "step=$1 orca_exit=$? end=$(date)"
+  if grep -q -i -e "No space left on device" -e "Disk quota exceeded" "$2.out" || [[ $(df -Pk . | awk 'NR==2{print $4}') -lt 1000000 ]]; then
+    echo "SP_$1_FAIL machinery stop: the disk filled during ORCA (message in $1/$2.out, or under 1 GB free after it); no check was run"; quit 1
+  fi
+  if grep -q -e "INPUT ERROR" -e "UNRECOGNIZED OR DUPLICATED KEYWORD" "$2.out" && ! grep -q "FINAL SINGLE POINT ENERGY" "$2.out" && [[ ! -s "$2-minimize-ener.csv" ]]; then
+    echo "SP_$1_FAIL machinery stop: ORCA reported an input error before its first energy (see $1/$2.out); no check was run"; quit 1
+  fi
+}
+finish_step() {   # folder, ORCA basename, 1 if the step passed its checks: sizes recorded (bytes, name); after a pass, full-system
+                  # trajectories and scratch files are deleted (in a cycle folder also the full-system PDB, the densities
+                  # and start.xyz, which is the previous part's recorded output); any output over 50 MB is compressed with xz
+  cd "$RD/$1" || return
+  find . -maxdepth 1 \( -type f -o -type l \) -printf "%s %f\n" | LC_ALL=C sort -k2 > FILES_BEFORE_CLEANUP.txt
+  if [[ "$3" == 1 ]]; then
+    rm -f "$2"_trj.xyz "$2"_IRC_F_trj.xyz "$2"_IRC_B_trj.xyz "$2"_IRC_Full_trj.xyz ./*.tmp ./*.tmp.*
+    [[ "$1" == irc ]] && rm -f freq.hess
+    [[ "$1" == */c[0-9][0-9]_* ]] && rm -f "$2"_trj.dcd "$2".pdb ./*.densities start.xyz
+  fi
+  if command -v xz >/dev/null; then
+    for f in "$2.out" ./*activeRegion_trj.xyz; do
+      [[ -f "$f" ]] && [[ $(stat -c %s "$f") -gt 50000000 ]] && xz -T1 "$f"
+    done
+  fi
+  du -sk . | awk '{print "folder_kB_after_cleanup=" $1}'
+}
+alternate() {   # step, GB of free disk needed per part: cycles K = 1..20 of environment step then core step, until
+                # spa_stage.py alt_decide finds the alternation converged (exit 0) or not converged after cycle 20 (exit 1)
+  local S=$1 K P C rc
+  for K in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+    for P in env core; do
+      C=$(printf "c%02d_%s" "$K" "$P")
+      PY alt_prep "$RD" "$S" "$K" "$P" || { echo "SP_${S}_FAIL alt_prep $S/$C"; quit 1; }
+      run_step "$S/$C" "$P" "$2"
+      PY alt_check "$RD" "$S" "$K" "$P" && OK=1 || OK=0
+      finish_step "$S/$C" "$P" "$OK"
+      [[ $OK == 1 ]] || { PY alt_fail "$RD" "$S" "$C did not pass its checks"; echo "SP_${S}_FAIL"; quit 1; }
+    done
+    PY alt_decide "$RD" "$S" "$K"; rc=$?
+    [[ $rc == 0 ]] && { echo "SP_${S}_PASS"; return 0; }
+    [[ $rc == 3 ]] || { echo "SP_${S}_FAIL"; quit 1; }
+  done
+  echo "SP_${S}_FAIL no decision after cycle 20"; quit 1
+}
+echo "job=job_r_irc_freq host=$(hostname) start=$(date)"
+PY prep "$RD" r_irc_freq || { echo SP_r_irc_freq_FAIL; quit 1; }
+run_step r_irc_freq freq 3
+PY check_freq "$RD" r_irc_freq min && OK=1 || OK=0
+finish_step r_irc_freq freq $OK
+[[ $OK == 1 ]] && echo SP_r_irc_freq_PASS || { echo SP_r_irc_freq_FAIL; quit 1; }
+quit 0
