@@ -1,0 +1,318 @@
+Stage 5 of the charged-sphere development: the design grid, the spheres' Lennard-Jones term L and the A matrix, on
+Phase 1's final geometries (pre-registered 19 October 2026; committed before any Stage 5 production input exists and
+before any SP package result other than frame 42436's (smoke test 2, already in SP_AMENDMENT2.txt) is read; plan:
+PHASE22_PLAN_UPDATE_20261009.md, section 5, "Stage 5", with the update appended on this date). Code (tier1-realism,
+phase2.2/): cs5_floors.py, cs5_grid.py, cs5_align.py, cs5_amatrix.py, cs5_report.py (sha256 at the end). This file was
+checked by its author in three passes and by an independent reviewer before commit; the reviewer's findings were
+addressed before commit.
+
+WHAT STAGE 5 PRODUCES
+The inputs of the optimiser stage, for every complete frame f of the SP package and every grid site i:
+  - the site's position (aligned frame of reference), layer and the charges it admits (sites.tsv);
+  - L[i,f], the sphere's Lennard-Jones energy at the TS minus at the reactant, kcal/mol (L.tsv);
+  - a[i,f] = V_TS,f(r_i) - V_R,f(r_i), the first-order barrier change per unit charge, kcal/mol per e (A.tsv); and
+    ap[i,f] = V_P,f(r_i) - V_R,f(r_i) (AP.tsv), kept for the optimiser stage's open question on path terms and not
+    used here.
+For a design with charges q_i on occupied sites, the surrogate barrier change of frame f is
+    ddE_f = sum_i ( a[i,f] q_i + L[i,f] )   (+ sum_i b_i q_i^2, the polarisation term, left to the optimiser stage)
+(approach document, "How a sphere's energy enters the design"; PHASE22_PLAN_UPDATE_20261009.md section 2). This is
+Sokalski's first-order model with a repulsive term: "A = E_EL,MTP(1) + E_EX(1)" (Sokalski 1985, Eq. 17, p. 404), whose
+electrostatic part for point charges is "A = sum_C q_C (V_TC - V_SC)" (Eq. 19, p. 404). Here the Lennard-Jones sphere
+stands for the exchange repulsion (and adds dispersion). The design and validation decisions themselves (budget,
+number of spheres, spread penalty, preorganisation term, re-scoring, null distribution) belong to the optimiser stage
+and are not fixed here.
+
+WHEN IT RUNS
+Production starts only when spa_package.py's FINAL output (SP_AMENDMENT2.txt A2.9: nothing undecided) states that the
+Phase 1 barrier conditions are met (A2.3: at least 20 complete frames, the surroundings check passed, every record
+agrees with its output). cs5_align.py extract enforces this: it takes that run's saved report and stops unless it
+reads "RESULT: FINAL (nothing undecided)" and "THE PHASE 1 BARRIER (A2.3; audit item C3): the conditions are met",
+and records the report's and the table's sha256. If they are not met, Stage 5 waits for the amendment that follows
+(A2.3, A2.4), because remedy (a) of A2.4 would change the geometries. Nothing in this file uses a package result.
+
+1. GEOMETRIES (cs5_align.py extract SD TABLE REPORT OUT; on hpc1 or on a copy of the run folders)
+Frames: every row of spa_package.py's FINAL per-frame table with surroundings "md" and state "complete" (SP_PLAN.txt
+QUANTITIES; A2.2). The surroundings-check runs (S = ci) are not used. Per frame, the substrate (atoms 6207-6230,
+0-based, ORCA's QMAtoms {6207:6230}) of:
+  TS  ts/final.xyz      the converged alternation's last core geometry (spa_stage.py), sha256 = ts/STAGE_RESULT.txt's
+  R   r_irc/final.xyz   the reactant on the TS's own path, B_sp's reactant (A2.1); sha256 = r_irc/STAGE_RESULT.txt's
+  P   p_irc/final.xyz   if p_irc passed (status=PASS, sha256 checked); otherwise the IRC's product end
+                        irc/p_irc_start.xyz (sha256 = irc/STAGE_RESULT.txt's p_irc_start_sha256), which check_irc
+                        labelled "product". P enters only the grid's surface and AP.
+R0 is not used: B_sp's reactant defines the design's barrier; a design whose field favours another reactant is caught
+by B_eff in validation (A2.5). Checks (all must pass, or the script stops): sha256 as above; 24 atoms in the
+substrate's element order; the same atom count in every full-system file; the O3-C4 and C1-C6 distances equal the
+stage record's break_A and form_A (or check_irc's recorded end) to 3 decimals.
+
+2. ALIGNMENT (cs5_align.py align; as s16_align_frames.py, D3)
+One rotation and translation per frame, fitted (Kabsch, reflection-guarded; s16's kabsch() unchanged) on the rigid
+core (C2, O3 and the six ring carbons; indices 3, 7, 8, 10, 12, 13, 15, 17) of the frame's R onto the reference R,
+applied unchanged to TS and P so the reactant-to-TS motion is kept. Reference: the lowest-numbered complete frame
+(20000, as D3, when it is complete). Checked: a proper orthonormal rotation; the inverse transform returns every
+original coordinate within 1e-8 A. Reported: the core RMSD after alignment per frame. Dittner's thesis aligns all
+frames before building the surface ("All frames are maximally compact or aligned for the reaction path", p. 10).
+
+3. FLOORS (fixed now: cs_stage5/floors.tsv, from cs5_floors.py, minima=all)
+How close a sphere (Amber N, R* 1.824 A, eps 0.170 kcal/mol) of charge q may sit to substrate atom J:
+  q >= +0.25, per level 0.25/0.50/0.75/1.00: min(LJ contact, the closest approach to J of any Stage 2 minimum at that
+       level) over Stage 2's 240 minima per level (four oxygen starts x 30 frames x R and TS), own basin and migrated:
+       each is a place where a sphere of that charge rests (gradient below 1e-5 kcal/mol/A). Made monotone in q (a
+       larger charge never has a larger floor; 3 entries raised). Rule B and "the smallest distance seen" are
+       Jessica's decisions of 19 October 2026. A charge between levels takes the lower level's floors. A floor is one
+       atom's closest approach, applied around that atom in every direction (section 4 tests what that allows).
+  0 < q < 0.25: the LJ contact (no Stage 2 data), with H8 at the +0.25 level.
+  q <= 0: the LJ contact. Stage 2 found no resting place for a negative sphere (1920 of 1920 starts escaped);
+       STAGE2_PROTOCOL.txt: "where a sign of charge has no contact minimum, the floor for it comes from the
+       Lennard-Jones pair minimum and Stage 3". H8 (GAFF ho) has no LJ: its q <= 0 floor is Stage 3's smallest
+       H8-sphere distance, 2.331 A (n1_41786_qm1, a -1 sphere in QM/MM, no artefact).
+  H8 for q > 0: the closest approach of positive minima, 3.68 A (+1) to 4.02 A (+0.25). These spheres rest at oxygens
+       (O4 and the carboxylates), so the values are distances seen from there, not a limit set by H8; Stage 2's rigid
+       model draws a +0.25 sphere inward at every one of the 217 anion/neutral sites beside H8 that therefore admit no
+       positive charge (2.52-3.68 A from H8; at +1, all but one). The floor jumps at q = 0 (2.331 A below, 4.016 A
+       above), and some sites admit two separate ranges, e.g. q in [-1, 0] and [0.5, +1]; the optimiser must allow
+       that (section 4, sites file columns q_min_neg and q_min_pos).
+  LJ contact = R_min,ij = (R_min,sphere + R_min,J)/2 on the full R_min (ORCA's rule; Stage 1 S1.4), i.e. R*_sphere +
+       R*_J, the sum of the two van der Waals radii.
+Migrated minima set 8 of the 24 +1 floors (floors.tsv, column closest_p100_at; H7's listed minimum lies at its LJ
+contact). STAGE2_REPRODUCIBILITY.txt (x46) described "own-basin rows, which are the distances the report and the grid
+floor use", written when the floor was to be the approach document's contact distance by atom type; rule B replaced
+that rule, and this is a deviation from that statement (section 9 (vi)). With own-basin minima only (cs5_floors.py
+minima=own), the floors that change are (+1 / +0.25 level, A; H1's does not): O3 3.508 / 3.508 against 2.745 / 3.036;
+C2 3.300 / 3.679 against 3.050 / 3.234; H4 3.283 / 3.283 against 3.054 / 3.283; O2 2.638 / 2.932 against 2.574 /
+2.887; H5 2.540 / 2.659 against 2.441 / 2.618; H2 2.481 / 2.606 against 2.435 / 2.593; O6 2.607 / 2.900 against 2.588
+/ 2.900. O3, the ether oxygen whose bond breaks, has no own-basin +1 minimum at all (every ether start migrates, WP5
+and Stage 2); its 2.745 A comes from a +1 sphere started at O3 in frame 48292's TS that came to rest 2.745 A from it.
+cs5_floors.py recomputes Stage 2's minima with Stage 2's own code and stops unless every one reproduces its
+cs2_contacts.tsv row: the same outcome, contact atom and nearest atom, and the contact, nearest and H8 distances
+within 1e-3 A for own-basin and migrated minima alike (x46's criterion, extended to the migrated minima because they
+set floors here). 960 of 960 do, all within 5e-5 A (the table's rounding). A rerun gives floors.tsv byte for byte.
+The floors were measured on the 30 Phase 1 band frames and are applied, per atom, to the package's geometries. Between
+frames the +1 contact distance varies with sd 0.034 A at carbA's oxygens (range 2.591-2.781 A) and 0.084 A at carbB's
+(2.610-2.872 A) (WP5_RIGID_REPORT.txt, all 30 frames), and each floor is the smallest over 60 geometries, so it
+already spans that variation; a package geometry whose own contact lies farther out admits sites nearer than its own
+contact by up to about that spread (towards a lower barrier), checked radially on the production geometries (section
+4) and guarded in validation by the screen "no sphere closer than its contact distance minus a tolerance" (approach
+document, validation protocol). Stage 3's QM/MM contacts agreed with the rigid model within 0.07 A.
+
+4. THE GRID (cs5_grid.py grid; then cs5_grid.py check)
+Each layer is Dittner's surface (thesis, Eq. 2.16, p. 18: a charge on the sphere of radius d_J about one atom J,
+outside every other; "a common vdW surface exposed by all atoms of all frames", p. 10; Dittner & Hartke 2018, p. 8:
+"The GOCAT consists of partial charges placed on a van der Waals surface. This surfaces encloses all frames along the
+whole reaction path"), with d_J the floor for the sphere's charge instead of a van der Waals radius. A sized, charged
+sphere comes to a distance that depends on its charge (Behrens' thesis, section 5.2, p. 60: the quasi-atoms are
+"locally optimized to their equilibrium distance"; Stage 2), so there are two layers, each one shell for its charges:
+  ANION/NEUTRAL layer  radii = the q <= 0 floors (LJ contact);
+  CATION layer         radii = the q = +1 floors: no nearer to atom J than any resting +1 sphere came (nearer than LJ
+                       contact to every atom but H3 and H7; 3.68 A from H8).
+A floor is applied around its atom in every direction, so the cation layer is an envelope: its sites are not all
+places where a +1 sphere rests (those are at the oxygens). What it allows is tested radially, with Stage 2's rigid
+model (Coulomb in vacuum with the substrate's charges, plus the LJ of section 5; wp5_rigid_lj_scan.py): at a site
+admitting positive charges, the force on the sphere along the site's outward normal, at every geometry, for the lowest
+admitted positive charge and for +1. An inward force means a sphere held on that line would come at least as near.
+Development grid: pushed outward at 10 of 2552 such sites, whose radial minimum lies at most 0.04 A farther out; at
+every other site and geometry the sphere is drawn inward (the dianion's -2 attracts it). Reported by cs5_grid.py check
+on the production grid (informative: the rigid model has no polarisation or solvent).
+Negative and neutral spheres at LJ contact rest nowhere (Stage 2); they are held there as Dittner's charges are held
+on the vdW surface, and as fixed spheres are in validation (A2.5).
+Union over every atom of every geometry: states R, TS and P of every complete frame, aligned. Per layer: candidate
+points on a Fibonacci lattice, density = 48 points per A^2 of each atom's sphere; kept if outside every sphere of
+every geometry; enclosed pockets removed by a flood fill from the box boundary (voxel vox = 0.25 A, box margin 6.0 A;
+a point is kept if its voxel, 1.5 voxels out along its sphere's normal, is reached); greedy Poisson-disk thinning at
+res = 0.5 A (Jessica, 19 October 2026) in a fixed order (frame by number, state R, TS, P; atom; lattice index); every
+open candidate point then lies within res of a site of its layer. A cation-layer site that lies on the anion/neutral
+surface (clearance to the q <= 0 floors zero within 1e-6 A) is dropped when an anion/neutral site within res admits
+every charge it admits: there the two surfaces coincide and the anion/neutral layer holds that place at the same
+resolution (so every candidate point lies within 2 res of a site admitting its charges). Cation sites inside that
+surface (at the oxygens) and outside it (beside H8) are kept. Each site admits every charge whose floors it clears at
+every geometry: q in [-1, 0] if it clears the q <= 0 floors; q in [q_min_pos, +1] for the smallest positive level
+whose floors it clears; an empty site (no sphere, no L) is always allowed. The charge bounds [-1, +1] e are Dittner's
+typical values (thesis p. 19: "[q_low, q_up] = [-1, +1] e"). Resolution and separation are separate
+(GRID_DESIGN_DECISIONS.md at the repo root, section 1): the minimum distance between two spheres, 3.25 A (approach
+document, Stage 5: sigma of two Amber N spheres, 3.648 A / 2^(1/6), the analogue of Behrens' sigma = 3.55 A threshold,
+p. 60), is the optimiser's constraint, over both layers; it is not a grid parameter. cs5_grid.py check must PASS: it
+re-derives, from the geometries and floors.tsv alone, every site's admitted charges, clearance, on_atom/on_state and
+distance columns; checks every admitted charge clears its floors at every atom of every geometry; checks the frame set
+and the sha256 of the geometries, floors and force field against the sites file's header; and that two sites of one
+layer are at least res apart. cs5_grid.py lj and cs5_amatrix.py stop unless the aligned geometries are those the sites
+file records (sha256).
+
+5. L (cs5_grid.py lj)
+L[i,f] = E_LJ(sphere at i, substrate at TS_f) - E_LJ(sphere at i, substrate at R_f), with the substrate's committed LJ
+parameters (05_qmmm/13_bridge/complex_solvated.ORCAFF.prms, rows 6208-6231), combined as ORCA does (arithmetic mean
+of R_min, geometric mean of eps; Stage 1 S1.4, WP1), E = eps_ij [(R_min,ij/r)^12 - 2 (R_min,ij/r)^6]. ORCA
+force-switches LJ from 10 A, which below 10 A adds one constant per pair (WP1: about 1-4e-4 kcal/mol) that cancels in
+TS - R; the header reports the summed |E_LJ| of pairs at 10 A or more, where the switch acts (development grid: at
+most 0.003 kcal/mol per site). L enters every barrier
+change quoted as a result (reporting commitment 2). Sphere-sphere terms are equal at R and TS (spheres fixed) and
+cancel. cs5_grid.py ljcheck must PASS: the same formula against ORCA's own MM energies in Stage 4c's eight L1
+arrangements (dE_LJ(L1), STAGE4C_REPORT.txt, 3 decimals), within 0.0015 kcal/mol (seen: 0.0005).
+
+6. THE A MATRIX (cs5_amatrix.py prepare; stage5_a.pbs on hpc1; cs5_amatrix.py assemble)
+New in vacuo single points of the bare dianion at every complete frame's aligned R, TS and P:
+  ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF / %maxcore 3000 / %pal nprocs 8 end / %scf MaxIter 300 end /
+  * xyzfile -2 1 substrate.xyz   (as 05_qmmm/20_invacuo and s17_verify_amatrix.sh; ORCA 6.0.1)
+then orca_vpot of each density at every site (points in Bohr with ORCA's factor, 1/0.5291772083). The level is the
+production level that Stage 4e kept (SIGN ROBUST) and the package's QM level (A2.5). In vacuo densities, because the
+design environment is the bare substrate plus spheres (s15_dv_matrix.py, point 3; D1). a = (V_TS - V_R) x
+627.5094740631; a < 0: a positive charge there lowers the barrier (s15's convention, validated by s1_signcheck.py
+and by Stage 4e's probes, whose first-order parts equal A_v2's within 4%).
+Checks in assemble (all must PASS, or A.tsv is not written):
+  (a) every run: ORCA TERMINATED NORMALLY, SCF CONVERGED, 118 electrons, echoed coordinates equal substrate.xyz
+      (1e-5 A); every vpot.out holds one value per site at the points written (1e-6 Bohr), so the row order holds;
+  (b) rigid-motion invariance: the frame with the largest alignment rotation is run again in its own coordinates with
+      the sites taken back by the inverse transform; max |V_own - V_aligned| <= 1e-4 Eh per e (0.06 kcal/mol per e);
+  (c) finite difference: at the first frame, at the sites nearest O3, O5 and O1 at R, ORCA point charges of +0.05
+      and -0.05 e at R and TS give a_fd = [E_TS(+) - E_TS(-) - E_R(+) + E_R(-)] / 0.1 x 627.5094740631, which must
+      equal a within 0.01 kcal/mol per e + 1% of |a| (Hellmann-Feynman; at 0.05 e the third-order part is about 1e-4
+      of a, from Stage 4e's 3-4% at 1 e);
+  (d) every input is unchanged since prepare (INPUT_CHECKSUMS.sha256); runs.tsv and row_order.tsv are what prepare
+      writes for these geometries and sites; each run's substrate.xyz is the aligned geometry byte for byte (the
+      invariance run's, its inverse transform within 1e-8 A); the sites file was built on these geometries.
+A_REPORT.txt also tabulates each frame's in vacuo energies at R, TS and P and its in vacuo barrier E(TS) - E(R), for
+the downstream quantities that need them (C4_CLOSURE.txt step 6: stab_TS).
+About 3n + 13 single points of about 70 s each on 8 cores (Stage 4e's L1 runs), one PBS job (8 cores, 24 GB, 24 h).
+
+7. IF A CHECK FAILS
+Geometry, alignment, floors, check, ljcheck or (a)-(d): the cause is found and fixed in the code or inputs and the
+step is rerun from its inputs; the fix and its reason are recorded in an amendment committed before the rerun's output
+is read. No threshold in this file is changed after the result it applies to has been seen.
+
+8. OUTPUTS (committed as physical files, rule of 18 October 2026)
+cs_stage5/extracted/ (EXTRACT.txt and the 24-atom R, TS, P per frame), cs_stage5/aligned/ (ALIGNMENT.txt,
+transform.txt and the aligned geometries), cs_stage5/sites.tsv, cs_stage5/L.tsv, the check output (with the radial
+test) and the ljcheck output,
+cs_stage5/a_matrix/ (inputs as prepared, committed before the job runs; then every job.out, vpot.out and the PBS log),
+cs_stage5/A.tsv, AP.tsv and A_REPORT.txt, and STAGE5_REPORT.txt (cs5_report.py). A rebuild of the grid from the
+committed inputs on the machine that built it must give sites.tsv byte for byte.
+Reported in STAGE5_REPORT.txt (descriptive; no verdict depends on them): frames used and P's source per frame; core
+RMSDs per frame; sites per layer and per admitted-charge class; coverage (largest distance from an open candidate
+point to its layer's nearest site before the drop, below res by construction); nearest-neighbour distances; the
+closest site to O3 and to each carboxylate oxygen per layer; L's range and per-site mean; a's range, the fraction of
+entries (sites x frames) with a < 0, and per layer the sites where every frame agrees on the sign of a; A against A_v2
+at the new sites nearest each grid_v2 site (frames in common only; informative, since the geometries differ).
+
+9. DEVIATIONS FROM THE APPROACH DOCUMENT AND THE PLAN, each judged against the alternative
+  (i) Geometries: the SP package's TS, R_IRC and P (C4_CLOSURE.txt step 6; A2.5) instead of the "C4/C5 geometries".
+      C4 closed without step 3 and the package supersedes the band barriers; the design must be built on the
+      geometries whose barriers it will be compared with. More likely to succeed: yes; there is no other final set.
+  (ii) Two layers with floors by charge, instead of one floor "at the most strongly attracted charge for that atom
+      type" (approach document, Stage 5) and instead of one layer (PHASE22_PLAN.txt 3.1: "keep. One layer, as agreed";
+      PHASE22_PLAN_UPDATE_20261009.md section 1: "one shell to start"). Those statements were made for a surface of
+      bare point charges and set one surface rather than several shells (Phase 2's 3, 4 and 5 A shells); here each
+      layer is the first shell for its own charges. As worded, the approach document's rule puts every charge at the
+      +1 distances: an anion 2.6 A from a carboxylate oxygen, a neutral sphere inside its LJ wall, where no such
+      sphere comes (Stage 2: no negative sphere rests anywhere; weaker cations rest farther out, e.g. +0.25 at 2.85 A
+      against +1 at 2.59 A from carbA's oxygen). Stage 2's protocol already sends negative charges to the LJ contact.
+      Jessica chose two layers on 19 October 2026 ("so that we depend on the charge as we will be varying them", her
+      message that day). More likely to succeed: yes. A design that relies on contacts no sphere of its charge makes
+      (a like charge pressed on a carboxylate) is the kind the substrate's relaxation in validation undoes (WP6, plan
+      section 4 item 5), and the one-layer alternative at LJ contact for every charge would hold cations 0.76-0.91 A
+      farther from the oxygens than they come (O3 and the carboxylate oxygens).
+  (iii) P in the union, where grid_v2 used R and TS. Dittner's surface encloses every frame of the path, product
+      included (thesis p. 10; Dittner & Hartke 2018, p. 8 of 60). A fixed sphere must not sit inside the product's
+      floors, because the validation chain runs the IRC to the product (A2.5).
+  (iv) Resolution 0.5 A, where grid_v2 used 1.0 A (Jessica, 19 October 2026). Dittner's charges move continuously on
+      the surface; a finer grid is closer to that.
+  (v) A from new single points on the aligned geometries rather than s15's reuse of densities in each frame's own
+      coordinates: the package's densities in vacuo do not exist yet, and running on the aligned geometries removes
+      the per-frame back-transform that once scrambled A_v1. Check (b) measures the invariance this relies on.
+  (vi) Floors from every Stage 2 minimum, migrated ones included, where STAGE2_REPRODUCIBILITY.txt (x46) described the
+      grid floor as using own-basin rows (section 3). Rule B ("as close as Stage 2's spheres were seen to rest")
+      counts a migrated minimum as what it is, a place where a sphere of that charge rests; x46's sentence described
+      the earlier floor rule. Own-basin only would put no cation nearer the ether oxygen O3 than LJ contact (3.508 A),
+      although a +1 sphere rests 2.745 A from it, and although Arg90's side chain sits near 3 A from it in the enzyme
+      (Burschowsky et al. 2014, p. 17520, the isosteric Arg90Cit variant: "Cit90 is positioned within 3.2 A (average
+      over four active sites) from the ether oxygen of 4", the TS analogue, "and within 3.0 A from the corresponding
+      O7 of chorismate"). More likely to
+      succeed: all minima, because the alternative removes the region the enzyme itself uses. The migrated minima are
+      made reproducible by the extended stop rule (section 3).
+
+10. DIRECTION OF EACH CHOICE (towards or away from a lower designed barrier)
+  - Floors for q <= 0 at LJ contact (not the +1 distances): negative and neutral spheres sit farther out, so their
+    effects are smaller in size than the approach document's rule would give: away.
+  - Positive floors from the closest approach of any minimum of the level ("smallest distance seen"), migrated minima
+    included: towards. Against own-basin minima only, the development grid has 1228 cation sites instead of 1109, and
+    117 of them lie nearer O3 than 3.508 A (66 nearer than 3.0 A; closest 2.745 A) instead of none.
+  - Floors applied around each atom in every direction (an envelope): towards, since sites lie at an atom's floor in
+    directions where no sphere was seen to rest. The radial test bounds it: a sphere held on each site's normal comes
+    at least as near at all but 10 of 2552 sites, and those 10 lie at most 0.04 A inside their radial minimum.
+  - H8's floors for q > 0 (3.68-4.02 A, distances seen from spheres resting at oxygens): away; 217 sites beside H8
+    admit no positive charge although the rigid model draws a +0.25 sphere inward at every one of them.
+  - Monotonicity raised 3 entries (farther out): away.
+  - Floors measured on the Phase 1 frames, applied to the package's: where a package contact lies farther out than the
+    floor, sites may be nearer than that frame's own contact by up to the frame-to-frame spread (sd 0.03-0.08 A):
+    towards; tested radially on the production grid.
+  - The two-layer grid offers positive charges, beside the cation layer, the LJ-contact positions of the anion/neutral
+    layer: more choices can only keep or lower the best surrogate barrier: towards.
+  - P in the union: removes sites: away.
+  - Resolution 0.5 A: more sites; can only keep or lower the best surrogate barrier: towards (closer to Dittner's
+    continuous surface).
+  - R_IRC, not the lowest reactant: none by construction (B_eff is reported in validation; A2.5).
+  - L without ORCA's force switch: at most about 0.003 kcal/mol per site (header): none material.
+  - New single points (v): none expected; (b) and (c) test it.
+
+11. WHAT WAS SEEN BEFORE THIS FILE
+Stages 0-4e and their reports; the Phase 1 band geometries and A_v2; a development build of this grid and L on the 30
+Phase 1 band frames (phase2.2/aligned/, s16's alignment), recorded in cs_stage5/exploratory/STAGE5_DEV_EXPLORATORY.txt
+with its outputs: two layers, 1541 anion/neutral and 1228 cation sites (83 dropped on the shared surface), L from
+-5.56 to +3.38 kcal/mol; the radial test and the own-basin comparison of sections 4, 9 and 10, on the same frames.
+An earlier drop rule removed every cation site that clears the q <= 0 floors; it also removed the 277 cation sites
+beside H8 that lie outside the anion/neutral surface (by up to 1.16 A), 266 of them more than 0.5 A from any
+anion/neutral site that admits a positive charge, so cations there had no place; it was replaced by the rule in
+section 4 before this file was written.
+Of the SP package, only frame 42436's results were seen: smoke test 2 is that frame's package run (SP_AMENDMENT2.txt
+A2.10), and its results are in SP_AMENDMENT2.txt. Its TS, R_IRC and P_IRC geometries (results 046e51a) were used to
+test the code on a mock package, with two synthetic rigid copies: extraction, alignment, a three-frame grid, L and
+A-matrix inputs with fabricated outputs. No number from those tests is used here; they show only that the code works.
+
+12. LITERATURE (each read in the project library; page numbers as printed)
+  Dittner, PhD thesis, Kiel 2019 (gocat_2.pdf): p. 10 ("All frames are maximally compact or aligned for the reaction
+    path"; "One GOCAT surrounds all these frames at once"; "a common vdW surface exposed by all atoms of all frames";
+    "qi in [-1.0, +1.0], a minimum distance as r_ij >= r_min = 1.0 A"); p. 18, Eq. 2.16 and "in most cases a vdW
+    surface was used such that {d_J} are the atom-dependent vdW surface radii", and, of his ESP optimisations, "mostly
+    three frames were used (R, TS, P)"; p. 19 ("This general procedure is not limited to vdW surfaces and can be
+    extended to work with any other surface"; "Typical values used are r_min = 1 A and [q_low, q_up] = [-1, +1] e");
+    p. 75 ("a numerically tessellated exposed surface of all atoms of all frames").
+  Dittner & Hartke 2018, J. Chem. Theory Comput. (Just Accepted manuscript, acs.jctc.8b00151.pdf), p. 8 of 60 (quoted
+    in section 4) and p. 9 of 60 ("a common van-der-Waals (vdW) surface enclosing all these 20 frames"; charges
+    "constrained to be positioned on the vdW surface").
+  Behrens, PhD thesis, Kiel 2024 (gocat_1.pdf), section 5.2, pp. 59-60: Lennard-Jones potentials added to point
+    charges give quasi-atoms; "the charges remain on the surface of the QM molecules throughout the reaction, as their
+    equilibrium distance is well defined"; quasi-atoms "are always locally optimized to their equilibrium distance and
+    either kept fixed in the one-embedding scheme, or optimized together with the reacting molecules"; footnote 1:
+    sigma_i = sigma_j = 3.55 A for sp3-carbon quasi-atoms. Section 4.3, p. 49: with both charge and LJ parameters
+    optimised, "the resulting behavior is almost identical to the behavior in a charge-only case".
+  Burschowsky et al. 2014, Proc. Natl. Acad. Sci. USA (pnas.1408512111.pdf), p. 17520 (quoted in section 9 (vi)).
+  Sokalski 1985, J. Mol. Catal. 30, 395 (0304-5102(85)85049-5): Eqs. 17 and 19, pp. 404-405 (quoted above); "the
+    difference of molecular potentials VTC - VSC represents the catalytic activity of a single unitary positive point
+    charge ... for any fractional point charge, including negative charges"; "Such optimal charge configuration
+    positioned on the van der Waals volume of reactants".
+  Project records: CHARGED_SPHERE_DEVELOPMENT_APPROACH.docx (Stage 5, validation protocol); PHASE22_PLAN.txt 3.1;
+    PHASE22_PLAN_UPDATE_20261009.md (sections 2, 4, 5 and the reporting commitments); STAGE2_PROTOCOL.txt;
+    STAGE3_REPORT.txt; STAGE1_CRITERIA.txt S1.4; WP1_REPORT.txt; STAGE4C_REPORT.txt; STAGE4E_REPORT.txt;
+    s15_dv_matrix.py; s16_align_frames.py; GRID_DESIGN_DECISIONS.md (repo root) section 1; STAGE2_REPRODUCIBILITY.txt;
+    WP5_RIGID_REPORT.txt; 05_qmmm/24_sp_barriers/SP_AMENDMENT2.txt (A2.1-A2.5, A2.9, A2.10);
+    05_qmmm/23_c4_reactant/C4_CLOSURE.txt.
+
+13. FILES (sha256)
+Code (tier1-realism, phase2.2/; committed with this file):
+  4cfb9dff93adbe2987e3a77f0f3546e3cd0106a55ff19aadb07b541b0c84c5ee  cs5_floors.py
+  c2d46f2fc3a5ad9d6e0a20d7fd3ce26b834a4eb67070757bff3f4c251032259d  cs5_grid.py
+  45c61efd3f2c81d82ca41628dff82c9b363d400c1abe58232db8c99a0cb8a824  cs5_align.py
+  525b1443ce29e105b11295d182467966e22227881c095a75c4bb2ebf7de6b568  cs5_amatrix.py
+  d077394be9245f079b3623a48d55cf1879aa38902a64f6f980bbd3c87d3f9e7d  cs5_report.py
+Committed code it imports, unchanged (Stage 2):
+  a58979edbf3111eea8f35425b4ecef65dc97494384d4212ea604ef2fc1bf22ac  cs2_contact_scan.py
+  bb93299cddaa5337e69a40428d6dcbd4c926b0537f8dcd526998df9b3173412b  wp5_rigid_lj_scan.py
+Committed with this file (results, phase2.2/cs_stage5/):
+  0f534d6bdd9527d3800d1210d6c71893c7faae956f6161b5d500b26de8bf1de1  floors.tsv
+  819dbc61e74f9312df45be34625ed2b03a8f564e2bded93417c4026995c65d75  exploratory/STAGE5_DEV_EXPLORATORY.txt
+  3e58f24e7cb8d419a7ce836233a18dcd259852b2cae33f08a3d69d470f72f779  exploratory/dev_sites.tsv
+  16d0b1d2394920d18d4e296d6da6407838f37d4ff43658e6e29ab9796f986506  exploratory/dev_L.tsv
+Inputs read (results repo):
+  3181d624af818b668375a8dc4dd137708eeb8f80cc2ae616767334ae1ace4980  05_qmmm/13_bridge/complex_solvated.ORCAFF.prms
+  2aea31bc39b460cb6de3db228b65e9ea213e2ecb007c059c779ef09db7000960  phase2.2/cs_stage2/cs2_contacts.tsv
+  4a2b549e3b16e7f030d3ddb552de840bf9fd81b7fe3996d5949ad49b4e93f249  phase2.2/cs_stage4c/STAGE4C_REPORT.txt
+  c4886e0a4652289b6fe0fbdcc0f07455a35eb1207c8b3434a2f11be05f17bde7  phase2.2/aligned/ALIGNMENT.txt
+  89744458b648506a67b799bb4ad3e59f12b03945fa50beddc725518d40ca654d  phase2.2/grid_v2.tsv
+  f3ef5eb046ca34d7837da4d4a86b47657a6bc146342d4a9683988449845d67db  phase2.2/A_v2.tsv

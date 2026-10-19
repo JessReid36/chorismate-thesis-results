@@ -346,3 +346,39 @@ now; their inputs are committed later, before they run.
   the single point and image 0 at those rounded coordinates: with full-precision xyz input the two agree within 0.002
   kcal/mol. Image 0 of every Phase 1 band therefore sits about 0.18 kcal/mol above its optimised reactant, and each
   image-0 barrier is about that much too low. C4, and any later input built from it, uses xyz end points.
+
+## Update: Stage 5 pre-registered (19 October 2026)
+
+`cs_stage5/STAGE5_CRITERIA.txt`, committed before any Stage 5 production input exists and before any SP package
+result other than frame 42436's (smoke test 2) is read; code `cs5_floors.py`, `cs5_grid.py`, `cs5_align.py`,
+`cs5_amatrix.py`, `cs5_report.py` (tier1-realism, phase2.2/).
+
+- **Geometries.** Section 5's "C4/C5 geometries" are replaced by the SP package's: the substrate at each complete
+  frame's TS, R_IRC and P (P_IRC, or the IRC's product end where P_IRC did not pass), aligned as s16 does
+  (`05_qmmm/23_c4_reactant/C4_CLOSURE.txt` step 6; `05_qmmm/24_sp_barriers/SP_AMENDMENT2.txt` A2.5). Stage 5 runs
+  once spa_package.py's FINAL output states the Phase 1 barrier conditions are met (A2.3).
+- **Grid: two layers with floors by charge** (Jessica, 19 October 2026). The approach document's single floor "at the
+  most strongly attracted charge" would place anions and neutral spheres where no such sphere rests (Stage 2: no
+  negative sphere rests anywhere; weaker cations rest farther out). Each layer is Dittner's union-of-spheres surface
+  over R, TS and P of every frame: the anion/neutral layer at the Lennard-Jones contact, the cation layer no nearer
+  any atom than a resting +1 sphere came (every Stage 2 minimum, migrated ones included: a deviation from
+  `cs_stage2/STAGE2_REPRODUCIBILITY.txt`'s description, disclosed in the criteria); every site carries the charges
+  whose floors it clears, and a radial test with Stage 2's rigid model checks what the cation layer allows. Resolution
+  0.5 A (Jessica, 19 October 2026); the 3.25 A sphere spacing stays the optimiser's constraint, over both layers.
+  Floors: `cs_stage5/floors.tsv` (Stage 2's minima recomputed, 960 of 960 reproduced).
+- **L and A.** L per site and frame, as ORCA's Lennard-Jones (checked against Stage 4c's L1 runs within 0.0005
+  kcal/mol). A from new in vacuo B3LYP-D3BJ/def2-SVP single points at the aligned R, TS and P, with orca_vpot at the
+  sites; checks of row order, rigid-motion invariance and a finite-difference comparison with point-charge single
+  points. V at P is kept (AP) for the optimiser stage's question on path terms.
+- **Path judged more likely to succeed:** the two-layer grid, because a design relying on contacts no sphere of its
+  charge makes is the kind the substrate's relaxation undoes (section 4 item 5); and every minimum rather than
+  own-basin ones, because own-basin floors would keep every cation farther than 3.5 A from the ether oxygen, where
+  Arg90 sits in the enzyme.
+- **Direction**, stated in full in the criteria (section 10): negative and neutral spheres held at Lennard-Jones
+  contact, H8's floors for cations and P in the union act against a lower designed barrier; floors from every minimum
+  (O3's 2.745 A), applied around each atom in every direction, the finer resolution and the added contact positions
+  for cations act towards it.
+- **Seen before the criteria:** a development build on the Phase 1 band frames
+  (`cs_stage5/exploratory/STAGE5_DEV_EXPLORATORY.txt`): 1541 anion/neutral and 1228 cation sites at 0.5 A.
+- **Order (section 5):** the SP package; then Stage 5's production (on hpc1: extraction and the A-matrix job; on the
+  PC: alignment, grid, L, checks); then Stage 6 and the optimiser stage, whose decisions are not fixed here.

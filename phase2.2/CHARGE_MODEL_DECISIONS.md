@@ -218,3 +218,19 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   same reactant geometry, so stab_TS stays the barrier difference at one geometry. The same definition applies to the
   bare substrate's and the designs' relaxed barriers, so reference 2 stays like for like. Fixed before any Phase 2.2
   design's relaxed barrier exists (reporting commitment 5).
+
+## Update: Stage 5 pre-registered (19 October 2026)
+
+- **D2.** How close a site may sit now depends on the sphere's charge (`cs_stage5/STAGE5_CRITERIA.txt`, floors in
+  `cs_stage5/floors.tsv`): q <= 0 at the Lennard-Jones contact (H8: Stage 3's 2.331 A); 0 < q < 0.25 at the
+  Lennard-Jones contact (H8: the +0.25 level's); q >= +0.25 at the closest approach of Stage 2's resting spheres of
+  that level (every minimum, migrated ones included), where nearer. The grid has two layers (anion/neutral and
+  cation) and each site admits only the charges whose floors it clears. A site is still an abstract quasi-atom, not a
+  named group.
+- **D3.** Unchanged in method: s16's rigid-core fit, now applied to the SP package's R_IRC with the same transform on
+  TS and P (`cs5_align.py`); the reference is the lowest-numbered complete frame's R_IRC (frame 20000's, as before,
+  when that frame is complete).
+- **D5.** The barrier definition recorded in "Update: C4 pre-registered" above is superseded for every barrier
+  compared with the enzyme's by `05_qmmm/24_sp_barriers/SP_AMENDMENT2.txt` A2.5 (TS, IRC, minimised ends, B = E(TS) -
+  E(R_IRC), B_eff beside it; quasi-atoms held fixed), as `05_qmmm/23_c4_reactant/C4_CLOSURE.txt` records.
+- **D1.** Unchanged.

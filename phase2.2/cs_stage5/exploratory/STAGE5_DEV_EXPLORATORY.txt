@@ -1,0 +1,88 @@
+Stage 5 development build - exploratory, not pre-registered, not a result (19 October 2026)
+
+What this is. The Stage 5 code (cs5_floors.py, cs5_grid.py, cs5_align.py, cs5_amatrix.py, cs5_report.py) run and
+tested before STAGE5_CRITERIA.txt was written, on inputs that are not Stage 5's production inputs: the 30 Phase 1 band
+frames (R, TS and P of 05_qmmm/20_invacuo) as s16_align_frames.py aligned them onto frame 20000's reactant
+(phase2.2/aligned/). Its purposes: test the code, show what each floor rule does, and give the optimiser stage a grid
+and L to develop against before the SP package ends. Its sites and L are not used for any reported design.
+
+Files here
+  dev_sites.tsv   cs5_grid.py grid phase2.2/aligned 05_qmmm/13_bridge/complex_solvated.ORCAFF.prms
+                  phase2.2/cs_stage5/floors.tsv (default parameters: density 48, res 0.5, vox 0.25, margin 6, R,TS,P)
+  dev_L.tsv       cs5_grid.py lj on dev_sites.tsv
+  (the commands are run from the results repo root; cs5_grid.py check on dev_sites.tsv: PASS)
+
+THE GRID (dev_sites.tsv)
+  anion/neutral layer  1541 sites (lattice 15,890,040 points; 24,723 outside every sphere; none enclosed)
+  cation layer         1228 sites (1311 after thinning; 83 lay on the anion/neutral surface and were dropped)
+  admitted charges     anion/neutral layer: q <= 0 only 217 (beside H8); q <= 0 and any q > 0 1274; q <= 0 and
+                       q >= 0.50 24; q >= 0.75 18; q >= 1.00 8. Cation layer: q >= 1.00 only 787; q >= 0.75 72;
+                       q >= 0.50 82; q >= 0.25 10; q <= 0 and q >= 1.00 277 (beside H8, outside the anion/neutral
+                       surface).
+  coverage             every open candidate point lies within 0.5 A of a site of its layer (max 0.4971 and 0.4996 A,
+                       below res by construction); nearest neighbour over both layers 0.068-0.627 A, median 0.515 A
+  closest approach     cation layer: O3 2.745 A (130 sites within 3.6 A); carboxylate oxygens O1 2.588, O2 2.574,
+                       O5 2.610, O6 2.588 A (464 sites within 2.8 A of one). Anion/neutral layer: O3 3.508 A (98
+                       within 3.6 A); every carboxylate oxygen 3.485 A (its LJ contact).
+  The cation layer's nearest approaches to the carboxylate oxygens, 2.574-2.610 A, are the smallest of Stage 2's +1
+  minima (O2's 2.574 A from a migrated minimum, the others' own range 2.59-2.87 A; WP5: carbA 2.591-2.781,
+  carbB 2.610-2.872 A over 30 frames).
+
+THE DROP RULE, CHANGED BEFORE THE CRITERIA WERE WRITTEN
+  First version: drop every cation-layer site that clears the q <= 0 floors ("the anion/neutral layer holds it").
+  That dropped 360 sites: 83 on the anion/neutral surface (duplicates at the grid's resolution) and 277 beside H8,
+  outside that surface by up to 1.16 A, on the +1 floor of H8 (3.68 A, the closest a +1 sphere resting at an oxygen
+  came to H8), where the anion/neutral surface lies nearer (its H8 floor is 2.331 A; its sites there lie 2.52 A or
+  more from H8) and admits no positive charge; 266 of the 277 were more than 0.5 A from any anion/neutral site that
+  admits a positive charge. So cations had no place beside the
+  hydroxyl. Rule adopted: drop a cation site only if it lies on the anion/neutral surface (clearance to the q <= 0
+  floors zero within 1e-6 A) and an anion/neutral site within 0.5 A admits every charge it admits. Here all 83
+  on-surface sites meet the second condition (the nearest anion/neutral site is within 0.496 A).
+
+EARLIER ONE-LAYER BUILDS (earlier versions of the code; for comparison; superseded)
+  option (i), one layer at the q <= 0 floors for every charge: this is the anion/neutral layer alone, 1541 sites (1542
+  when thinned in the earlier geometry order P, R, TS: greedy thinning depends on its order by about one site; the
+  order is now fixed as frame, then R, TS, P);
+  rule B as one layer at the +1 floors for every charge (the approach document's wording): 1202 sites at density 48,
+  1088 at 24, 1042 at 12 (the count at 0.5 A depends on the lattice density, which the criteria fix at 48).
+
+RADIAL TEST (cs5_grid.py check; Stage 2's rigid model: Coulomb in vacuum with the substrate's charges, plus LJ)
+  At every site that admits a positive charge, the force on the sphere along the site's outward normal, at all 90
+  geometries: for the lowest admitted positive charge and for +1, it pushes the sphere outward at 10 of 2552 sites
+  (largest 6.21 kcal/mol/A; radial minimum at most 0.04 A farther out); everywhere else the dianion draws it inward,
+  so a sphere held on that line would come at least as near as the site. Beside H8, at the 217 anion/neutral sites
+  that admit no positive charge (2.52-3.68 A from H8), a +0.25 sphere is drawn inward at every one, a +1 sphere at all
+  but one: the H8 floors for positive charges keep cations out of a region the rigid model would let them reach.
+
+FLOORS FROM OWN-BASIN MINIMA ONLY (cs5_floors.py minima=own; the alternative to the criteria's rule)
+  Changed +1 floors: O3 3.508 (2.745 with all minima), C2 3.300 (3.050), H4 3.283 (3.054), O2 2.638 (2.574), H5 2.540
+  (2.441), H2 2.481 (2.435), O6 2.607 (2.588). Grid: 2650 sites (1541 and 1109) against 2769; no cation site nearer
+  O3 than 3.508 A, against 117 (66 nearer than 3.0 A); 444 cation sites within 2.8 A of a carboxylate oxygen, against
+  464. Radial test: 3 of 2433 sites pushed outward (at most 0.03 A).
+
+L (dev_L.tsv), kcal/mol
+  range -5.557 to +3.379 over sites and frames, median -0.010; per-site mean over frames: anion/neutral layer -0.067
+  to +0.090 (at LJ contact the sphere sits near its well, so TS - R changes little), cation layer -2.302 to +0.560
+  (inside the LJ wall, where a cation is held against the Coulomb attraction that brings it there).
+  Pairs at 10 A or more (ORCA's force switch): their summed |E_LJ| is at most 0.003 kcal/mol per site and geometry.
+  ljcheck against ORCA (Stage 4c's L1 runs, eight arrangements): largest |difference| 0.0005 kcal/mol (PASS).
+
+TESTS OF THE PRODUCTION PATH (no production input made; of the package, only frame 42436's smoke-test runs used)
+  cs5_floors.py: 960 of 960 Stage 2 minima reproduced, own-basin and migrated (largest difference 5e-5 A, the table's
+    rounding); floors.tsv identical on a rerun.
+  cs5_align.py: on smoke test 2's frame 42436 (f42436_r8_a1 TS, R_IRC, P_IRC; results 046e51a) and two synthetic
+    copies (one rigidly moved, with P_IRC marked failed so P comes from the IRC end; one moved with 0.02 A noise): the
+    rigid copy aligns onto the original to 1e-10 A; internal distances kept to 1e-10 A; refused as required: a
+    PROVISIONAL table, a package report without "the conditions are met", a changed byte (sha256), two substrate rows
+    swapped (O3-C4 against the record), a wrong break_A, a stage not passed, a wrong p_irc_from, a truncated file.
+  cs5_amatrix.py: on the synthetic three-frame set, with ORCA outputs made from Stage 4e's real outputs as templates
+    and potentials from a point-charge model, A was reproduced to 5e-7 kcal/mol per e and checks (a)-(d) passed; each
+    failed when its fault was injected (a swapped vpot row, a shifted invariance run, a wrong finite-difference
+    energy, an edited input, a changed substrate.xyz). Its parsers on real outputs: s15's committed vpot files
+    (s15_dv2) give A_v2 to 5e-7 kcal/mol per e; Stage 4e's +-1 probe runs give (E(+1) - E(-1))/2 = 1.026-1.038 x
+    A_v2's a at the five probe sites, as Stage 4e reported (the third-order part at 1 e).
+  cs5_grid.py check: refused a changed q_min_pos, clearance, on_atom, site number, floors sha256, and a site moved
+    0.2 A inside its floor; cs5_grid.py lj refused a different aligned folder from the one the grid was built on.
+  The grid and the A-matrix inputs were identical on a rerun.
+
+Environment: python 3.13.16, numpy 2.5.3, scipy 1.18.1 (Claude's workspace).
