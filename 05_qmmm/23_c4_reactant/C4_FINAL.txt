@@ -1,0 +1,84 @@
+C4 FINAL: the result of audit item C4, steps 0-2 on all 35 runs, as C4_CLOSURE.txt sets out. Written 19 October 2026,
+after the runs were collected (results d3f72f4) and before anything else was done with them. C4_CRITERIA.txt,
+C4_AMENDMENT1.txt and C4_CLOSURE.txt govern; this file records what was run and what it showed. Retained-final.
+
+WHAT WAS RUN
+- Inputs: the 35 runs (S0 x 5, S2 x 30) as committed in results d3f72f4 (x81; records in
+  00_admin/hpc_outputs_c4/batch_1): each run's hpc_text_outputs_1.tar.xz, extracted and checked against its manifest
+  (595 files), with runs.tsv, c4_bands.tsv, active_atoms.txt and frames/ from this folder. Every file of the 35 runs is
+  also in a sha256-checked archive on Jessica's PC (PC_ARCHIVES.tsv); nothing has been deleted from hpc1.
+- Code (repo chorismate-thesis-code, tier1-realism, 471da61, phase1_system_dev/): c4_analyse.py, the pre-registered
+  analysis (C4_CRITERIA.txt), and c4_analyse_a1.py, the amended one (C4_AMENDMENT1.txt), unchanged since they were
+  committed.
+- In this folder (results repo, 05_qmmm/23_c4_reactant/c4_final_scripts/): x_check.py, which repeats check X from the
+  committed geometries, and x82_c4_final.sh, which ran everything on Jessica's PC and committed this record.
+- Run twice from the committed files, by Claude (Python 3.13) and on Jessica's PC (x82): the six outputs were
+  byte-identical (sha256 below), as was x_check.py's line.
+
+M1 CONTINUATIONS (C4_CLOSURE.txt item 2): none needed. Every one of the 35 runs is finished in M1's sense (ORCA
+terminated normally, "The minimization has converged.", and the energy over the final 50 steps fell by at most
+2.5e-4 Eh).
+
+MACHINERY
+  G   generator (GENERATOR_LOG.txt, results abb2e9d, 10 October): 182 sources each match their sha256; in all 30 frames
+      image 0 = reactant.pdb, the atoms outside the active region unmoved in image k_low, k_low's substrate = the
+      committed path and its energy label, all to 0.0e+00; no start above 0.25 A from its MD structure (largest 0.249).
+  X   extract=ok in all 35 job outputs (c4_extract.py, exit 0); repeated here from the committed reopt.xyz and
+      start.xyz: largest coordinate change of an atom outside the active region 4.0e-07 A (limit 2e-6).
+  M0  pass, all 35 runs (both analyses).
+  M1  35 of 35 finished.
+  M2  pre-registered (E_start - Ew, the written label): median -0.009, range -0.443 to +0.026 kcal/mol; fails for
+      S2_24883 and S2_42436, whose frames therefore "wait" in C4_REPORT.txt. As amended (C4_AMENDMENT1.txt: the
+      geometries on disk are the final band's; only the labels written beside them are one NEB iteration old), against
+      E of the final band: median -0.000, range -0.003 to +0.003; pass, all 35. No corrected runs were needed or made.
+  informative: ORCA's final single point minus the optimiser's last energy, -0.002 kcal/mol in every run.
+
+STEP 0 (diagnosis; it changes nothing below)
+  The five frames with an image-0 run (S0): "incomplete optimisation" in all five - re-optimising image 0 alone falls
+  further than the dip (F0 against d, kcal/mol: 23268 16.84/12.81, 42436 16.07/12.26, 44388 10.91/8.41, 49592
+  11.24/7.24, 54795 10.90/8.40). The S0 and S2 runs end within 0.04 kcal/mol and 0.013 A (active-region RMS) of each
+  other in four of them, and 1.30 kcal/mol and 0.032 A apart in 42436 (C4_A1_REPORT.txt; the pre-registered report
+  leaves 42436 blank, its S2 run waiting on M2). Frames 33320 and 41786 have no dip (k_low = 0); their F0 is 11.56
+  and 4.58.
+
+STEP 1 (the band barriers; descriptive, C4_CLOSURE.txt)
+  B = E_ci - E_klow: 12.87 to 21.17 kcal/mol over the 30 frames; from image 0, E_ci - E_0: 2.42 to 19.30. Per frame
+  in c4_results.tsv and c4_a1_results.tsv (barrier_klow, barrier_image0). Step 2 finds that k_low is not a reactant in
+  any frame, so B is measured from a point that is not a minimum; "the band barriers stay descriptive" (C4_CLOSURE.txt).
+
+STEP 2 (is k_low a reactant of its frame?)
+  Accepted: 0 of 30, in both analyses.
+  A1  fails in every assessed frame. Amended (dE_reopt = E_min - E_klow): all 30 frames, -11.56 to -1.73 kcal/mol,
+      median -3.75. Pre-registered formula: the 28 frames not waiting on M2, -11.56 to -1.72, median -3.67.
+  A2  passes in all 30: substrate RMSD to its MD structure 0.11 to 0.22 A (threshold 0.30).
+  A3  fails in 23268 only (active-region RMS displacement from image 0 0.231 A; threshold 0.20); 0.07 to 0.18 elsewhere.
+  So in none of the 30 frames is the band's lowest image at or before the climbing image a reactant by C4's test:
+  re-optimising it lowers the energy by 1.7 to 11.6 kcal/mol while the substrate stays within 0.22 A of its MD
+  structure. This is C4's answer to the audit's question (C4_CLOSURE.txt), for the write-up.
+
+STEPS 3-6: not run (C4_CLOSURE.txt). Both scripts still print "-> step 3" beside failing frames and a step-4 block
+("fewer than two accepted frames: no statistics"); read them as "fails step 2" and "no C4 result". The tables'
+barrier_reopt column (E_ci - E_min: 14.71 to 26.89 in c4_results.tsv, 14.71 to 26.90 in c4_a1_results.tsv) pairs a
+re-optimised reactant with the band's climbing image and is descriptive only, not a Phase 1 barrier;
+SP_AMENDMENT2.txt A2.3 settles the Phase 1 barrier.
+
+DIRECTION
+C4_CLOSURE.txt disclosed, before these results: "Not running step 3 removes a band-repair candidate that step 2's
+provisional data (re-optimised reactants 1.84-11.56 kcal/mol below k_low, pre-registered formula) suggest would give
+higher barriers than the bands'." The final data bear out its premise in all 30 frames: the re-optimised reactant lies
+below k_low in every frame (amended dE_reopt -11.56 to -1.73 kcal/mol). On the stationary-point route that direction
+is carried by B_eff, reported beside B_sp for every frame (SP_AMENDMENT2.txt A2.1).
+
+FILES (the outputs and records are in this folder; the two analysis scripts in the code repo, phase1_system_dev/)
+  sha256 C4_REPORT.txt        04207e1405ed9a0e553d5da138614de35a085b98814d07e3a4e9b4c54f9cecf7  c4_analyse.py
+  sha256 c4_results.tsv       0078396f741d04efe65c00deedca4ec695374fa87d5412fe0e6b0c276fc5f17b  c4_analyse.py
+  sha256 c4_step0.tsv         a48718cca253211ad8666e708a57981388aa3783d95cec340e88a506bed7ce05  c4_analyse.py
+  sha256 C4_A1_REPORT.txt     ce2127039582f71a5cbddd4bfc5cedc0bdd6f8b78f83f765372777b3e8d48fa2  c4_analyse_a1.py
+  sha256 c4_a1_results.tsv    96c4d8ea213963f8964fb7328a625b6055a5689bbee588f88a03b4b876112443  c4_analyse_a1.py
+  sha256 c4_a1_step0.tsv      a48718cca253211ad8666e708a57981388aa3783d95cec340e88a506bed7ce05  c4_analyse_a1.py
+  sha256 c4_analyse.py        9daac3f68f392763609ad2810285584c1a44ca8843f954ab277eafbf4d3ad805
+  sha256 c4_analyse_a1.py     c3a0f3a1f7ffc6bd91c682b6600afd933c5dbdd5e666e637c9d2621c8f466788
+  sha256 C4_CRITERIA.txt      04e6161a4824006c536925b8e5c052b0631ff6f2bb5d00453af8f70da7a4ecfa
+  sha256 C4_AMENDMENT1.txt    df8198dcc86e7de76416aa276a1738444128f6eba13085c7c56fbd1aeebfaaf8
+  sha256 C4_CLOSURE.txt       b70e8a696ece15f559861d72f707078e8625f56b1c7928cc01937d703ae0f6cd
+  x_check.py: X from the committed geometries: 35 runs; largest coordinate change of an atom outside the active region 4.0e-07 A (limit 2e-6)
