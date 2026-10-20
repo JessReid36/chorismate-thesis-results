@@ -1,0 +1,42 @@
+Stage 5 - AMENDMENT 1: how cs5_grid.py writes a number that rounds to zero. Written 19 October 2026; committed before
+any Stage 5 production input exists. STAGE5_CRITERIA.txt stays as committed (results 5d2041c; sha256 at the end); this
+file changes only what it lists.
+
+WHAT HAPPENED
+x85 rebuilt the development grid on Jessica's PC (python 3.12.3, numpy 1.26.4, scipy 1.11.4) and found 30 rows
+different from the committed exploratory/dev_sites.tsv, which was built in Claude's workspace (python 3.13.16, numpy
+2.5.3, scipy 1.18.1) (exploratory/PC_REPRODUCTION.txt). Rebuilt in Claude's workspace with Jessica's versions, 80 rows
+differed. All were in the column clearance_A, and all were "0.0000" against "-0.0000". A site on its own layer's
+surface has a clearance of zero within floating-point noise of order 1e-16, and the sign of that noise depends on the
+machine's arithmetic (the processor and numpy's vectorised routines). Positions, layers, admitted charges and every
+other column were identical. Jessica's own rebuild, compared with the sign of zero removed, was identical to the
+committed grid (her check, 19 October 2026: "same grid: only the sign of zero differed"). The criteria require a
+byte-identical rebuild only on the machine that built the grid (section 8), so this is a difference between machines,
+not a failed criterion. It is removed so that anyone can rebuild the grid byte for byte on any machine.
+
+CHANGE
+cs5_grid.py writes every number in sites.tsv (coordinates, clearance_A, q_min_neg, q_min_pos, the d_ columns) and in
+L.tsv through a new function fmt(): a value that rounds to zero at the printed precision is written without a sign.
+Nothing else in the code changes; the difference from the committed file is that function and the two write
+statements. cs5_grid.py check compares numbers, not text, so its verdict cannot change. In section 13 of
+STAGE5_CRITERIA.txt the sha256 of cs5_grid.py is replaced by:
+  697da9e1af52a48d618b7c46fbed933157f40eca7fb101dcb7eab2e497a2480d  cs5_grid.py
+
+MEASURED BEFORE COMMIT
+- The development grid built with the amended code is byte-identical under numpy 2.5.3 and numpy 1.26.4 (Claude's
+  workspace, sha256 55127ff36c1c4692bb38586f47601c30b8ea7cfdaceac2654a391e25914e560c). Its rows equal the committed
+  dev_sites.tsv with the sign of zero removed, and check passes on it.
+- Its L is byte-identical under both versions (sha256 e3915f4a97f1eb996684a963d8cf5b4f0a86870aca34dfa18560cec35f74e7a1)
+  and equals the committed dev_L.tsv with the sign of zero removed (one value).
+- The 21 end-to-end tests pass under both numpy versions, and the mock grid and L are byte-identical between them.
+- x86 rebuilds the development grid and L on Jessica's PC with the amended code and stops unless both match the
+  sha256 above. Its record is exploratory/A1_REPRODUCTION.txt.
+
+DIRECTION: none. No site, position, charge, floor or energy changes; only how zero is written.
+
+The committed development files (exploratory/dev_sites.tsv, exploratory/dev_L.tsv) keep the earlier formatting. They
+are exploratory and are not rewritten (results commits add files only).
+
+  sha256 STAGE5_CRITERIA.txt   7f31af503993ec3eb73e2f2d1553392947562fe66531c4324514eef2f283a737
+  sha256 cs5_grid.py (before)  c2d46f2fc3a5ad9d6e0a20d7fd3ce26b834a4eb67070757bff3f4c251032259d
+  sha256 cs5_grid.py (after)   697da9e1af52a48d618b7c46fbed933157f40eca7fb101dcb7eab2e497a2480d

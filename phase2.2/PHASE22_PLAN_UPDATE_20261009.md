@@ -382,3 +382,10 @@ result other than frame 42436's (smoke test 2) is read; code `cs5_floors.py`, `c
   (`cs_stage5/exploratory/STAGE5_DEV_EXPLORATORY.txt`): 1541 anion/neutral and 1228 cation sites at 0.5 A.
 - **Order (section 5):** the SP package; then Stage 5's production (on hpc1: extraction and the A-matrix job; on the
   PC: alignment, grid, L, checks); then Stage 6 and the optimiser stage, whose decisions are not fixed here.
+
+## Update: Stage 5 Amendment 1 (19 October 2026)
+
+`cs_stage5/STAGE5_AMENDMENT1.txt`, committed before any Stage 5 production input exists: cs5_grid.py writes a number
+that rounds to zero without a sign. x85's rebuild of the development grid on Jessica's PC differed from Claude's only
+in "-0.0000" against "0.0000" (floating-point noise whose sign depends on the machine); with the fix the grid and L are
+byte-identical across machines. Direction: none. Nothing else in Stage 5 changes.
