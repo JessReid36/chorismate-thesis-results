@@ -234,3 +234,105 @@ mapping back to residues is out of scope. The decisions above are updated as fol
   compared with the enzyme's by `05_qmmm/24_sp_barriers/SP_AMENDMENT2.txt` A2.5 (TS, IRC, minimised ends, B = E(TS) -
   E(R_IRC), B_eff beside it; quasi-atoms held fixed), as `05_qmmm/23_c4_reactant/C4_CLOSURE.txt` records.
 - **D1.** Unchanged.
+## Update: the optimiser stage decided (20 October 2026)
+
+Jessica decided the ten open questions of the optimiser stage on 20 October 2026. The reasoning, the library
+citations by page, and the direction of each choice are in `phase2.2/OPTIMISER_DECISIONS_20261020.md`, committed
+with this update. Every value below is fixed in the optimiser-stage pre-registration, written before any design is
+read; nothing here is chosen by the barriers its designs reach.
+
+**The inputs the optimiser receives** are fixed by Stage 5: the sites of the two-layer grid with the charges each
+admits, a = V_TS - V_R per site and frame, L per site and frame, and the 3.25 A minimum spacing. Production uses the
+SP package's complete frames; the development set (`cs_stage5/exploratory/dev_sites_a2.tsv`, `dev_L.tsv`,
+`dev_A/A_dev.tsv`) is for code testing only and nothing it produces is a result.
+
+- **O1. Polarisation (b) is not in the optimiser's score.** The score is linear: mean over frames of
+  sum_i (a_if q_i + L_if z_i), plus the frame penalty of O5. The pool is re-scored with full def2-SVP single points,
+  which contain b and every cross term exactly at the frozen geometry. Frozen magnitudes run 10-31 % small until
+  re-scored (Stage 4c) and are never quoted as results. Rank correlation was 1.000 on eight widely separated
+  arrangements, so near-ties may still reorder; that is what the re-scoring is for.
+- **O2. The reactant-gradient (preorganisation) term moves to the re-scoring step. CHANGE, signed off.**
+  `PHASE22_PLAN_UPDATE_20261009.md` section 4 item 5 and section 5 require the term in the design objective. Inside
+  the MILP it would need each site's unit-charge force on every substrate atom with the electronic response, about
+  166 000 SCF-plus-gradient calculations; the nuclear-only version ignores screening, which is large here. It
+  therefore enters the re-scored objective instead, as kappa x max(0, G_add,R - G0)^2 summed over frames, where
+  G_add,R is the RMS gradient the design adds over the bare substrate at the same geometry. G0 and kappa come from
+  Stage 6, which also relaxes a few development-set designs at larger n (for example n = 5, 10, 20), fixed in Stage
+  6's own pre-registration. If Stage 6 fixes no threshold, G_add,R is reported for every design without a penalty and
+  that is stated as a limitation. The TS gradient is recorded beside it. Direction: the MILP's pool may hold
+  stronger-pulling designs than the committed plan would have allowed (towards a lower frozen barrier at that step);
+  the re-scoring term then acts against them.
+- **O3. The budget is a sum-of-squares budget, sum_i q_i^2 <= B. CHANGE in timing, signed off.** A linear score puts
+  every charge at a bound, so without a budget "more charges, lower barrier" is built in. Phase 2b recorded both
+  outcomes: a linear objective drove charges to +-1 and the designs fragmented; a convex quadratic penalty gave
+  fractional charges (0.06-0.29 e) that did not. HiGHS takes no quadratic rule, so q^2 is replaced by 21 tangent
+  lines at q = -1.0, -0.9, ..., +1.0; because they lie below the curve, a design's true sum_i q_i^2 may exceed B by
+  at most 0.0025 e^2 per sphere (0.05 e^2 at n = 20), and the true value is reported with every design. **B is sized
+  without reference to any barrier:** for each trial B, stress-test designs that spend the whole budget as close to
+  the substrate as the grid allows are built, and B is the largest value at which they still pass the plan's two
+  electronic screens (the HOMO-LUMO gap and the shift of the substrate's Hirshfeld charges), both measured against
+  the bare substrate at the same geometry, basis and level. The number of designs per B, the B values, the frames and
+  the pass rate are pre-registered; the estimate given to the supervisor is 20 designs at each of 5 values of B on 5
+  frames at R and TS, about 1000 single points and 17 node-hours. **The change in timing:** the plan fixes those
+  screens' thresholds in the validation pre-registration, which falls after the optimiser stage; they are brought
+  forward into the optimiser-stage pre-registration, written before any design is read. Direction: a smaller B acts
+  against a lower barrier, and taking the largest B the screens allow is the most permissive choice consistent with
+  them.
+- **O4. Total charge is not forced to zero.** It is reported with every design. A potential constant over the
+  substrate cancels from a, because the substrate carries -2 at both R and TS, so GOCAT's reason for imposing
+  neutrality (an artificial constant-shift freedom in its database) does not apply to this score. Forcing neutrality
+  would place compensating anions around a dianion, the electronically risky direction (Stage 4c: net-negative
+  arrangements raise the substrate's highest occupied orbital). Direction: compared with neutrality, a free total
+  admits more cations near O3, towards a lower barrier; stated with the results.
+- **O5. Frames are combined as the mean plus lambda x semi-deviation.** The semi-deviation is
+  (1/F) sum_f max(0, dE_f - mean), the average amount by which frames come out worse than the mean; being better on
+  some frames is never penalised. Lambda is not tuned: it is tied to the 95 % confidence interval as
+  lambda = t(0.975, F-1) / (0.399 sqrt(F)), which makes the score about the least favourable end of the design's
+  interval - 0.94 at F = 30, 1.03 at 25, 1.17 at 20 - and is computed from the package's final F. The normal
+  assumption sets only the size of lambda. Every complete package frame is weighted equally. The mean is what the
+  comparison with the enzyme uses (SP Amendment 2 A2.3) and the most stable statistic for ranking alternatives
+  (Ryde 2017). Direction: neutral to conservative, since the penalty only adds.
+- **O6. n is solved upward from 3 and stopped by a rule.** Solve n = 3, 4, 5, ... and stop at the first n whose best
+  design does not beat the best at n - 1 by more than both (i) the half-width of the paired 95 % interval of the
+  per-frame differences - descriptive, not a true test, because both designs were chosen on those same frames, which
+  is stated - and (ii) a pre-registered fraction of the score for method and basis uncertainty (the records give
+  about 12 % against MP2 from Stage 4e and up to 23 % or 3.2 kcal/mol per arrangement across bases from Stage 4c; the
+  fraction, for example 15 %, is fixed in the pre-registration). Every n before the stopping point goes forward. n
+  counts spheres whatever their charge; a sphere may carry q = 0 where its site admits it and then acts only through
+  L, and the number of neutral spheres is reported. Solve times are measured on the development set, not assumed.
+- **O7. Pool, re-scoring and short list.** Per n, the 10 best **distinct** designs, where a new design must place at
+  least one sphere more than 1.5 A from every sphere of each earlier design (1.5 A is less than half the 3.25 A
+  spacing, so the rule forbids exactly the shifted copies; it ignores charges, so the same sites with different
+  charges count as the same design). **The best 20 of the pool are re-scored** on every frame at R and TS with full
+  def2-SVP single points, run as energy-plus-gradient for O2: about 1200 calculations, about 20 node-hours at Stage
+  4d's energy-only timing, plus a gradient overhead to be measured. Jessica chose 20 rather than the 100 the draft
+  proposed, to be widened later if wanted; the pool is kept, so the further 80 can be re-scored without redoing
+  anything, and whether 20 sufficed is judged by how much re-scoring reorders those 20 before the short list is
+  fixed. **The short list is the top ~10 overall plus the best of each carried-forward n** (about 10 to 28 designs).
+  The records' wider reading, the top ~10 per carried-forward n (up to 180 designs), is not taken: that coverage was
+  part of what replaced the optimality certificate, so the short list is narrower than the records envisaged, and
+  every carried-forward n still contributes its best design.
+- **O8. "Optimal" keeps its 2 September meaning.** Each solve reports its gap as a property of that score and those
+  rules. "Certified" is not carried into the new code or the write-up as a claim, and "optimal catalyst" is never
+  used.
+- **O9. No path constraints in the MILP.** Path validity is tested on the relaxed chain of SP Amendment 2 A2.5, where
+  Dittner's later work also moved it. The electrostatic part of each design's frozen change in reaction energy,
+  sum_i q_i (V_P - V_R), is reported from the product-side potentials Stage 5 keeps; Stage 5 produces no Lennard-Jones
+  term at P, so this is not the full reaction-energy change.
+- **O10. The null distribution is random designs under the same rules.** Two kinds per n, under the same n, admitted
+  charges, spacing and budget: (i) random sites with random charges drawn uniformly inside the budget and moved to
+  the nearest admitted value, redrawn only if that pushes sum_i q_i^2 above B, with the acceptance rate reported; and
+  (ii) random sites with their best charges, which tests whether choosing the sites matters. 10 000 of each per n at
+  first order, and 50 in total re-scored with full single points. Each design is reported with its percentile in both.
+  The exact sampling rule shapes the distribution and is pre-registered.
+- **Negative spheres** were settled by the two-layer grid (Stage 5 Amendment 2, above): the MILP gives each site one
+  yes/no per admitted charge range, and at most one of a site's ranges may be chosen.
+
+**Order of work from here.** The optimiser code is written and tested on the development set (nothing it produces
+there is a result); Stage 6 runs as already planned and fixes G0 and kappa; the optimiser-stage pre-registration is
+written, fixing lambda from the final F, the stopping fraction, the pool sizes, the sampling rules, the null sample
+sizes, the screens' thresholds, the B-calibration procedure and the code's sha256; B is calibrated and recorded; then
+production runs on the Stage 5 production inputs once the SP package is FINAL.
+
+**Four corrections to our reading of the library** were found while this draft was written and are recorded in
+`phase2.2/LIBRARY_ERRATUM1_20261020.md`. None changes a result or any decision above.
