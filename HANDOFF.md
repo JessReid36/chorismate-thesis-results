@@ -263,6 +263,14 @@ At the magnitudes a design uses — Dittner and Hartke report converged values n
 -0.11 and +0.09 e — it is about **0.01 kcal/mol**, fifty times below the
 resolution limit. The failure measured at unit charge does not transfer.
 
+**Erratum (20 October 2026), `phase2.2/LIBRARY_ERRATUM1_20261020.md` item 2:** those two
+values are Dittner and Hartke's **one-charge** (N_Ch = 1) results, not the magnitudes of
+their multi-charge designs, which carry labelled charges up to 0.294 e. Scaling the same
+measurement gives about 0.1 kcal/mol at 0.3 e and about 1.1 kcal/mol at +/-1 e, so
+"fifty times below the resolution limit" holds only for charges of about 0.1 e. Nothing
+rests on the estimate: the optimiser re-scores its pool with full single points, which
+contain the cross terms exactly.
+
 ### B6, frame sensitivity — design against the ensemble mean
 
 | | Spearman | top-10 kept | max per-site difference |

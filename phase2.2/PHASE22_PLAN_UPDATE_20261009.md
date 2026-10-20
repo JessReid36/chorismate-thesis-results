@@ -399,3 +399,16 @@ development set a -1 sphere at any of them raises the barrier (first order). Jes
 placed on a layer built for positive ones, and chose this amendment (option 1) over handling it only in the null
 distribution. The same sites, positions, floors, L and A rows; 277 cation-layer sites now admit +1 only. The amended
 development grid is exploratory/dev_sites_a2.tsv. Direction: away, or none.
+## Erratum pointer (20 October 2026): library erratum 1
+
+`phase2.2/LIBRARY_ERRATUM1_20261020.md` corrects two claims about the GOCAT papers. No result changes.
+
+- Item 1. The Tier 2 paragraph above says the design in Dittner & Hartke 2018's Fig. 11 "has charges within +-0.751 e",
+  and `PHASE22_PLAN.txt` says the same. That range is the figure's colour scale, printed in its caption. The charges
+  labelled in Fig. 11 reach 0.193 e, and in Fig. 8 0.294 e; the paper prints no charge bounds in its main text. The
+  point both records make, that their charges do not saturate at the bound, stands and is stronger at 0.193 e.
+- Item 2. `HANDOFF.md` §5 B5's "-0.11 and +0.09 e" are that paper's one-charge (N_Ch = 1) values.
+
+Checked and not changed: Behrens' sigma = 3.55 A (erratum item 3), and the absence of any charge budget in the
+catalytic-field papers (item 4). `PHASE22_PLAN.txt` is a pre-registration and is not rewritten; the erratum is the
+correction of record.
