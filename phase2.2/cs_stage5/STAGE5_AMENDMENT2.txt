@@ -1,0 +1,75 @@
+Stage 5 - AMENDMENT 2: charges q <= 0 only on the anion/neutral layer. Written 20 October 2026; committed before any
+Stage 5 production input exists. STAGE5_CRITERIA.txt and STAGE5_AMENDMENT1.txt stay as committed (sha256 at the end);
+this file changes only what it lists.
+
+WHAT WAS FOUND
+On 20 October 2026 Jessica viewed the development grid with the development A matrix (exploratory/dev_A/, results
+6edfbb1), showing negative spheres only. Beside H8 a second, farther-out set of positions appeared. These are the 277
+cation-layer sites beside H8:
+  - they sit 3.68 A from H8, the closest a positive sphere may come there (floors.tsv);
+  - they lie outside the anion/neutral layer, which reaches 2.52 A from H8 on this grid;
+  - so they clear the q <= 0 floors, and section 4's rule ("Each site admits every charge whose floors it clears at
+    every geometry: q in [-1, 0] if it clears the q <= 0 floors") admitted q in [-1, 0] there.
+Everywhere else, negative and neutral spheres have positions only at Lennard-Jones contact, on the anion/neutral layer.
+Only beside H8 did they also get a second set, farther out, built for positive spheres. Jessica's question (20 October
+2026): "we are working with -1 spheres not +1 in this instance so why are we placing spheres on a layer that is not
+designed for them?" Her decision, the same day, between this amendment and handling it only in the optimiser's null
+distribution: "lets go with option 1".
+
+What those positions do, measured on the development set (first order, frozen geometry; exploratory):
+  - a -1 sphere at any of the 277 sites raises the barrier: mean over the 30 frames +0.79 to +3.39 kcal/mol, and
+    raised in every frame at 238 of them;
+  - a neutral sphere there acts only through L: mean -0.04 to +0.01 kcal/mol.
+So the optimiser would not choose them for a negative sphere. They would, however, bias the null distribution (the
+optimiser stage's random arrangements). Random negative spheres drawn from them only raise the barrier, which makes
+random designs worse and optimised designs look better by comparison.
+
+CHANGE
+- Section 4: "q in [-1, 0] if it clears the q <= 0 floors" becomes "q in [-1, 0] if it is an anion/neutral-layer site
+  and clears the q <= 0 floors; cation-layer sites admit positive charges only".
+- Section 3: "some sites admit two separate ranges, e.g. q in [-1, 0] and [0.5, +1]" stays true for the 50
+  anion/neutral-layer sites that admit [-1, 0] and a positive range from 0.50, 0.75 or 1.00. The 277 cation-layer sites
+  beside H8 now admit +1 only.
+- cs5_grid.py:
+  - admitted() takes each site's layer and admits q <= 0 on the anion/neutral layer only;
+  - grid and check both use it;
+  - the sites file's header states the rule;
+  - the module's description says why.
+  Nothing else changes. The cation layer's drop rule depends only on a site's clearance to the q <= 0 floors and on its
+  positive charges, so the same sites are kept, at the same positions, in the same order. Floors, L and the A-matrix
+  rows are unchanged.
+- In section 13 of STAGE5_CRITERIA.txt the sha256 of cs5_grid.py (Amendment 1's) is replaced by:
+  15ec6f0e13caf4c2222be2d0bbd40cb13f0b921dc2785f9b0410f4edfe9db173  cs5_grid.py
+
+MEASURED BEFORE COMMIT
+- The development grid built with the amended code is byte-identical under numpy 2.5.3 and 1.26.4 (Claude's workspace):
+  sha256 43be59bc86273c2a7f063965a429dc7dd8aa39957080f7b0de57548561b645e8, committed as
+  exploratory/dev_sites_a2.tsv. Against Amendment 1's build (sha256 55127ff3...) exactly 277 rows differ. All of them
+  are cation-layer rows, and in each only q_min_neg differs, -1.00 becoming 0.00. The header states the new rule.
+  check passes on it.
+- check on the amended code rejects a cation-layer row that claims q <= 0 ("q_min_neg -1.00, should be 0.00"). The
+  Amendment 1 code rejects the amended grid, as it should.
+- Its L rows equal the committed exploratory/dev_L.tsv with the sign of zero removed. exploratory/dev_A/A_dev.tsv still
+  applies row for row: same sites, same order.
+- The 21 end-to-end tests pass under both numpy versions.
+- x88 rebuilds the development grid on Jessica's PC with the amended code. It stops unless the result matches the
+  sha256 above and its rows equal dev_sites.tsv apart from those 277 q_min_neg entries and the sign of zero. Its record
+  is exploratory/A2_REPRODUCTION.txt.
+
+DIRECTION, added to section 10:
+  - q <= 0 on the anion/neutral layer only. This removes 277 negative and neutral positions beside H8, all farther out
+    than contact.
+  - For designs, none expected: a -1 sphere there only raises the barrier at first order, and a neutral one moves it
+    by at most 0.04 kcal/mol (mean L). Neutral and negative spheres beside H8 keep their contact positions on the
+    anion/neutral layer.
+  - For the null distribution: random negative spheres are no longer drawn from positions that only raise the barrier.
+    That makes random designs no worse than the grid's own rule implies: away from a more favourable comparison.
+  Overall: away, or none.
+
+The committed development files (exploratory/dev_sites.tsv, dev_L.tsv, dev_A/) are not rewritten (results commits add
+files only). From this amendment on, the development set's admitted charges are those of exploratory/dev_sites_a2.tsv.
+
+  sha256 STAGE5_CRITERIA.txt    7f31af503993ec3eb73e2f2d1553392947562fe66531c4324514eef2f283a737
+  sha256 STAGE5_AMENDMENT1.txt  59a907ed496234b34cae3fa09ed92f229f205465e11e9d9deae43a134846621d
+  sha256 cs5_grid.py (before)   697da9e1af52a48d618b7c46fbed933157f40eca7fb101dcb7eab2e497a2480d
+  sha256 cs5_grid.py (after)    15ec6f0e13caf4c2222be2d0bbd40cb13f0b921dc2785f9b0410f4edfe9db173

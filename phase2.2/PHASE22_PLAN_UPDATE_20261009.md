@@ -389,3 +389,13 @@ result other than frame 42436's (smoke test 2) is read; code `cs5_floors.py`, `c
 that rounds to zero without a sign. x85's rebuild of the development grid on Jessica's PC differed from Claude's only
 in "-0.0000" against "0.0000" (floating-point noise whose sign depends on the machine); with the fix the grid and L are
 byte-identical across machines. Direction: none. Nothing else in Stage 5 changes.
+
+## Update: Stage 5 Amendment 2 (20 October 2026)
+
+`cs_stage5/STAGE5_AMENDMENT2.txt`, committed before any Stage 5 production input exists: charges q <= 0 are admitted on
+the anion/neutral layer only. Beside H8 the cation layer lies outside the anion/neutral layer, so section 4's rule had
+given negative and neutral spheres a second, farther-out set of 277 positions there, and nowhere else. On the
+development set a -1 sphere at any of them raises the barrier (first order). Jessica asked why negative spheres were
+placed on a layer built for positive ones, and chose this amendment (option 1) over handling it only in the null
+distribution. The same sites, positions, floors, L and A rows; 277 cation-layer sites now admit +1 only. The amended
+development grid is exploratory/dev_sites_a2.tsv. Direction: away, or none.
