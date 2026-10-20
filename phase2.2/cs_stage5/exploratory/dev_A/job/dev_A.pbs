@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -N cm_s5xdevA
+#PBS -l select=1:ncpus=1:mem=8gb
+#PBS -l walltime=04:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs5x_dev_A/dev_A.pbs.out
+# EXPLORATORY development A matrix (cs5x_dev_amatrix.py): orca_vpot on the committed 20_invacuo densities, no SCF.
+# The orca_vpot call is s15_dv_matrix.py's (verified 30 September 2026). Restartable.
+set -uo pipefail
+ORCA=/home/apps2/ORCA/6.0.1
+VAC=/home/18660916/system_development/05_qmmm/20_invacuo
+W=/home/18660916/system_development/phase2.2/cs5x_dev_A
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="$ORCA/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+# the densities must be the committed ones (05_qmmm/20_invacuo/CHECKSUMS_binaries.sha256) before anything is evaluated
+( cd "$VAC" && sha256sum -c "$W/densities.sha256" ) > densities_check.txt 2>&1 || { echo "FAIL: a density on hpc1 is not the committed one (densities_check.txt)"; exit 1; }
+echo "densities: $(grep -c ': OK$' densities_check.txt) of 120 match the committed sha256"
+ok=0; miss=0
+for f in $(cat frames.txt); do
+  for tag in R TS; do
+    gbw="$VAC/sp_${f}_${tag}.gbw"; out="vpot_${f}_${tag}.out"
+    [ -s "$gbw" ] || { echo "MISSING $gbw"; miss=$((miss+1)); continue; }
+    [ -s "$out" ] && { ok=$((ok+1)); continue; }
+    "$ORCA/orca_vpot" "$gbw" "sp_${f}_${tag}.scfp" "points_${f}.xyz" "$out" "$VAC/sp_${f}_${tag}" > /dev/null 2>&1
+    if [ -s "$out" ]; then ok=$((ok+1)); else echo "FAILED $f $tag"; miss=$((miss+1)); fi
+  done
+done
+echo "evaluated=$ok missing_or_failed=$miss"
+echo "end=$(date)"
