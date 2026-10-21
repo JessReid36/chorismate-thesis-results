@@ -1,0 +1,54 @@
+Stage 6 - the eight additivity single points. Added 21 October 2026, after phase2.2/cs_stage6/relax/ was committed
+(results 307e129, walltimes patched in ff8fdc5) and after its 14 frozen single points were submitted, and before any
+relaxation. STAGE6_CRITERIA.txt is unchanged and needs no amendment: this file records that the first generation of
+the inputs FAILED TO IMPLEMENT one of the measurements the criteria already lists, and what was added to implement it.
+
+WHAT WAS MISSING
+
+STAGE6_CRITERIA.txt, WHAT IS MEASURED PER ARRANGEMENT, lists:
+
+   "first-order additivity at fixed geometry: the sum of the one-sphere effects against the measured effect of S6-2
+   and S6-3 (single points only, no relaxation)."
+
+The inputs as first generated contain no one-sphere LJ-sphere run. S6-P is the only one-sphere arrangement and it is
+a BARE point charge with all four Lennard-Jones fields zeroed, so it is not the one-sphere effect of a sphere and
+cannot stand in for one. The quantity was therefore not computable from the committed inputs.
+
+WHAT WAS ADDED, AND WHY IT IS NOT A NEW CHOICE
+
+One LJ sphere at each distinct (site, charge) pair that S6-2 and S6-3 already fix, at R and at TS, single points
+only, as the criteria says:
+
+   folder                    site    charge      used by        why it is this charge
+   ADD-s1690_qp10000         1690    +1.0000     S6-2, S6-3     both designs put this charge at this site
+   ADD-s678_qm10000           678    -1.0000     S6-2           S6-2's second sphere
+   ADD-s678_qm07625           678    -0.7625     S6-3           S6-3 re-optimised the charge at the same site
+   ADD-s540_qm06500           540    -0.6500     S6-3           S6-3's third sphere
+
+Four pairs, two geometries, eight single points of about five minutes each. Site 678 appears twice and the two are
+NOT interchangeable: the electrostatic part of the score is linear in q by construction, a_i q_i, and whether the
+measured effect is also linear in q is part of what this test checks, so each sphere is run at the charge its design
+gives it rather than at a reference charge and scaled.
+
+Nothing is chosen here. Every site and every charge is one the pre-registered placement rule already produced and
+ARRANGEMENTS.txt already records. No arrangement is added, none is changed, and nothing about S6-2 or S6-3 moves.
+
+WHAT WAS NOT TOUCHED
+
+ARRANGEMENTS.txt is NOT regenerated or replaced, for the reason STAGE6_ERRATUM2.txt E6.6 and E6.7 give: re-running
+cs_opt_milp.py returns the identical designs but can record a different strategy and certified gap, because its
+fallback is decided by a 120 s wall-clock probe. On the generation that produced these eight folders, every one of
+the 110 committed files outside the record was reproduced byte for byte, and S6-10's line again came back as
+"strategy lp, certified gap 0.21594" against the committed "strategy full, certified gap 0.00000" - the same design,
+the weaker claim. The committed record stands and these runs were copied in beside it; INPUT_CHECKSUMS.sha256 gained
+the new files' entries with every existing entry unchanged and re-verified against disk.
+
+The 14 frozen single points already submitted are unaffected and were not resubmitted. They remain correct and
+sufficient for ddE(frozen) and for G_add: ORCA's EnGrad on these QM/MM jobs writes the energy and the gradient of
+exactly the 24 QM atoms, checked against WP4's committed armb_freecart/job.engrad, and the g(0) and E(0) those two
+quantities need come from S6-C's pair.
+
+DIRECTION
+
+None. No decision, threshold, tolerance, criterion, arrangement or reported quantity changes. A measurement the
+criteria already required becomes computable, and the omission is recorded rather than quietly repaired.
