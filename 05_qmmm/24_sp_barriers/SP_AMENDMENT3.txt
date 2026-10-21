@@ -1,0 +1,149 @@
+Stationary-point barriers (SP) - AMENDMENT 3: the jobs' memory requests. Written 21 October 2026, after the package's
+first 44.7 hours in the queue. SP_PLAN.txt, SP_AMENDMENT1.txt, SP_ERRATUM1.txt and SP_AMENDMENT2.txt stay as committed
+(sha256 at the end); this file changes only what it lists. It changes one number per job type and nothing else: no
+geometry, no level of theory, no convergence threshold, no check, no ORCA input. Code phase1_system_dev/spa_prepare.py
+(changed: the memory column of JOBS, A3.2) (tier1-realism; sha256 at the end). Retained-final.
+
+WHAT WAS SEEN BEFORE THIS AMENDMENT
+The package's 32 run folders (256 jobs) were submitted in one wave on 19 October 2026 at 14:31:56 SAST
+(package_waves/wave_1.txt). No package result has been read: no run folder holds an output, no spa_package.py report
+exists, and the only SP barrier seen remains frame 42436's from smoke test 2, already disclosed in SP_AMENDMENT2.txt.
+This amendment rests on PBS accounting (memory, virtual memory, walltime) and on queue states, not on any energy.
+
+A3.1 WHAT THE QUEUE SHOWED, AND WHY
+
+qstat -u 18660916 on 21 October 2026 at 11:12 SAST, 44.7 h after submission: of the 256 jobs, 3 running, 61 queued,
+192 held on their afterok dependencies. None had finished. The longest-running job (419762, frame 20000's job_ts) had
+16:47 elapsed, so it began about 27.9 h after submission.
+
+The 192 held are exactly the jobs that wait on another: each run folder submits job_ts and job_r0 with no dependency
+(submit.sh), so 32 folders make 64 dependency-free jobs, and 61 + 3 = 64. Every job that COULD run was eligible and
+three were running. wave_1.txt records no per-user limit on queued work. The jobs were therefore waiting for nodes
+that could offer 180 or 250 GB, not for one another.
+
+What the two smoke tests had already measured, in their committed PBS accounting
+(f42436_r8_a1/ and f42436_r6_a1/hpc_text_outputs_2_*.tar.xz, lines pbs_resources_used.*; GiB = 1048576 kb, as
+SP_AMENDMENT2.txt counts them):
+
+   job               requested   mem 6 A   mem 8 A   vmem 6 A   vmem 8 A   walltime 6 A   walltime 8 A
+   job_ts              250 gb     174.74    197.28     209.07     209.08      21:51:38       17:31:43
+   job_ts_freq_irc     250 gb       3.95      4.10      20.99      20.99       08:20:27       04:45:57
+   job_r_irc           180 gb       2.21      2.25      14.06      14.12       11:59:09       13:59:17
+   job_r_irc_freq      180 gb       4.09      3.97      20.99      20.99       01:10:18       01:09:23
+   job_p_irc           180 gb       2.19      2.22      14.08      14.08       12:12:27       10:47:21
+   job_p_irc_freq      180 gb       4.10      4.09      20.99      20.99       01:10:30       01:13:29
+   job_r0              180 gb       2.29      2.36      14.22      14.21       08:36:43       10:30:33
+   job_r0_freq         180 gb       3.93      4.09      20.99      20.99       01:13:29       01:18:34
+
+job_ts's two peaks are the 197 GiB and 175 GiB SP_AMENDMENT2.txt already records, so these readings agree with that
+file. The other SEVEN job types stayed under 4.11 GiB at both region sizes while asking for 180 or 250 GB. The widest
+gap is job_ts_freq_irc, which asks for 250 GB, used 4.10 GiB, and sits on each folder's critical path
+(job_ts -> job_ts_freq_irc -> job_r_irc -> job_r_irc_freq).
+
+Consequence for the time the package would take. Its compute is 32 x 61.3 = about 1960 job-hours (the 61.3 job-hours
+of SP_AMENDMENT2.txt's 8 A smoke test). At the three concurrent jobs observed that is about 27 days of compute alone,
+before each folder's four critical-path steps each wait again for a large-memory node. Nothing was failing; the
+package was starved of nodes it did not need.
+
+A3.2 THE CHANGE
+
+In phase1_system_dev/spa_prepare.py, the memory column of JOBS (one number per job type):
+
+   job_ts                250 -> 250 gb   (unchanged; measured 197.28 GiB, and its %maxcore 12000 on 16 cores allows
+                                          about 188 GiB, so this request is the one that is needed)
+   job_ts_freq_irc       250 ->  64 gb
+   job_r_irc             180 ->  64 gb
+   job_r_irc_freq        180 ->  64 gb
+   job_p_irc             180 ->  64 gb
+   job_p_irc_freq        180 ->  64 gb
+   job_r0                180 ->  64 gb
+   job_r0_freq           180 ->  64 gb
+
+This replaces SP_PLAN.txt's "250 GB (TS; TS frequencies + IRC) or 180 GB (minimisations, frequencies)" by "250 GB (TS)
+or 64 GB (TS frequencies + IRC, minimisations, frequencies)". Everything else in that sentence - 16 cores, walltime
+176 h, e-mail on abort only - stays.
+
+64 gb is 15.6 times the largest memory any of the seven used (4.10 GiB) and 3.05 times the largest virtual memory
+(20.99 GiB). PBS enforces the first of these: SP_ERRATUM1.txt A4 records a kill as "mem 221432992kb exceeded limit
+125829120kb", a memory figure against a memory limit.
+
+WHAT IS NOT CHANGED, AND THE RISK THAT LEAVES
+
+%maxcore is left as it is: 12000 MB per core for the TS core step, 6000 for the other core and environment steps, 8000
+for the frequencies and the IRC. Lowering it would change what ORCA may do, and so could change a number; this
+amendment changes only what PBS is asked for. ORCA was nowhere near those ceilings (6000 MB per core on 16 cores
+allows about 94 GiB; the optimisations used 2.2 GiB), but the ceiling is still above the new request. If some frame
+needed more than 64 GB, PBS would kill that job, its afterok chain would stop, and the frame would be re-run under
+SP_AMENDMENT2.txt A2.2, which already governs a machinery stop. That failure is visible and recoverable; it is
+accepted here in exchange for the throughput, and if it happens for any frame the record will say so.
+
+A3.3 WHAT IS DONE TO THE JOBS ALREADY IN THE QUEUE
+
+A run folder is handled only if it is untouched: every one of its eight jobs is in state Q or H, and the folder holds
+no job output (no job_*.pbs.out) and no step record. For such a folder the eight queued jobs are deleted, the nine
+generated files that this amendment changes are replaced (A3.4), and the eight jobs are resubmitted with the same
+afterok structure submit.sh uses.
+
+A run folder that is not untouched is left exactly as it is and listed as deferred. That covers a folder with a job
+still running - at 11:12 SAST on 21 October, frame 20000 (job_ts 419762, job_r0 419768) and frame 21634 (job_ts
+419770) - and a folder in which any job has begun to write. Nothing of a running job is interrupted: SP_PLAN's
+discipline is that a run is stopped only when it is clearly not working, and these are working. A deferred folder is
+resubmitted by a later bundle once its running jobs have ended and its state is settled, under this same amendment.
+
+The state is read from PBS when the change is applied, not from the state recorded above, so which folders are
+untouched may differ by then. A folder in any state this rule does not cover stops the bundle for that folder and is
+reported; nothing is guessed.
+
+A3.4 WHAT IS REPLACED IN A RUN FOLDER, AND WHAT IS NOT
+
+Of the 27 files and 9 links a run folder holds, the amended generator changes nine: the eight job_*.pbs and
+GENERATOR_LOG.txt, which records their sha256. Every ORCA input (core.inp, env.inp, freq.inp, irc.inp), both start
+files, region.txt, starts.sha256, submit.sh and all nine links are byte for byte what is committed, because the change
+touches only the memory line of the PBS header. Each job_*.pbs differs from the committed one in exactly one line,
+"#PBS -l select=1:ncpus=16:mem=...gb", and the bundle checks that before it replaces anything: a fresh generation into
+a scratch folder on hpc1, then a comparison showing that the other 18 files and 9 links are unchanged and that each
+job script's only difference is that line. If anything else differs, nothing is replaced.
+
+Replacing those files cannot disturb a running or queued job, because PBS takes its copy of a job script when the job
+is submitted; a job already in the queue is unaffected by the file on disk. That is also why the queued jobs have to
+be deleted and submitted again rather than altered in place.
+
+A3.5 THIS IS NOT A MACHINERY STOP
+
+Deleting a queued job here is a disclosed correction, as SP_AMENDMENT2.txt A2.2 provides for ("an input error is not
+re-run as a machinery stop: A1.5 has the input corrected in a disclosed amendment"). It is none of the machinery stops
+A1.5 fixes, which are disk, quota, ORCA input errors and start-file faults. It therefore consumes no frame's single
+allowed re-run, and no run folder is renamed _stop1 for it. A frame that later suffers a genuine machinery stop still
+has its one re-run.
+
+A2.2 also counts "a job that has left the queue without its last line and without a record for its step" as a
+machinery stop, which a deleted job would otherwise satisfy. Two things keep that from being misread. Only untouched
+folders are handled, so there is no step record or output for a deleted job to be matched against. And each handled
+folder's SUBMITTED is replaced by the new job ids, with the first wave's kept beside it as SUBMITTED.wave1, so the
+bundle that later collects the outputs and writes LEFT_QUEUE.txt reads the ids that are really in the queue. The
+deleted ids are listed in this amendment's record in package_waves/ and are not jobs of the package any more.
+
+DIRECTION
+
+None on any reported quantity. The calculations, their inputs, their thresholds and their checks are identical; only
+the memory asked of the scheduler differs, and in six of the seven cases the ORCA ceiling is unchanged too. No
+package result had been read when this was written.
+
+SHA256
+
+Unchanged by this amendment, as committed:
+  sha256 SP_PLAN.txt          c8eadbd9a5546fe644fe85a2c7d3e7e47c7117bb61a449a51ce50fb6945df1a6
+  sha256 SP_AMENDMENT1.txt    8f6128713b07ffc8d257120567d0cd8436608dd8048fe9ffb2a29a35f561b5be
+  sha256 SP_ERRATUM1.txt      6e58146782f280de97d208be37e9f0af3b0f87c87a4cc6d8db0d301ff58bd199
+  sha256 SP_AMENDMENT2.txt    180a280a9f9193a7322e233941661bde79277e5008ffcb1e2fdf8dba948f459f
+
+Code (chorismate-thesis-code, tier1-realism), changed by A3.2:
+  sha256 spa_prepare.py       66c9f4a4e3544e58e866baeb33afa7e9717711f124a249a5ee3ef737a64cec8f
+    was, as SP_AMENDMENT2.txt records it
+                              291de214c995c3a00f74488334544e7a3730f4976e0280d46cdaa22a07f0c296
+    The difference is the memory column of JOBS and the comment above it, and nothing else; the bundle that applies
+    this amendment shows that each generated job script differs from the committed one in its "#PBS -l select=" line
+    alone, and that every other generated file and link is unchanged.
+
+Unchanged by this amendment, as SP_AMENDMENT2.txt records them: spa_stage.py, spa_report.py, spa_package.py,
+spa_package_stats.py.
