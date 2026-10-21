@@ -1,0 +1,51 @@
+Stage 6, the frozen half: the design's effect and its added gradient at the fixed geometries.
+cs6_analyse.py sha256 6e0d0f90e0e7ab3f2f9da7c527e192c1686a6c77a885df6ccc4caf560665052a
+relax/ARRANGEMENTS.txt sha256 651e7e228e1409f052bb024b42d125ab59bc86ebee789f3dd60ad1eb5f9c6038
+
+(d) every input file is unchanged since it was generated (141 entries in INPUT_CHECKSUMS.sha256)
+(a,b,c) all 22 frozen single points of 11 arrangements read: terminated normally, SCF converged, 118
+        electrons, coordinates echoed as generated, the MM point-charge count equal to the sphere count,
+        and each job.engrad holding the 24 QM atoms plus its own spheres, identified by its own atom
+        block, with coordinates matching combined.xyz and an energy matching job.out's QM/MM total
+(e) the control's energies equal the A-matrix job's own in vacuo values for this frame to within 2.9e-10 Eh (R) and 1.4e-10 Eh (TS)
+    the bare substrate's barrier at these frozen geometries: 18.4610 kcal/mol (A_REPORT.txt: 18.4610)
+
+WHAT EACH ARRANGEMENT GIVES, at the fixed geometries
+  ddE(frozen) negative lowers the barrier. 'score' is the MILP's linear estimate, sum a*q + sum L.
+  The LJ columns are ORCA's own MM energy difference against the score's L term: cs5_grid.py defines
+  L[i] as the sphere's Lennard-Jones energy at TS minus at R, and a QM/MM run reports exactly that as its
+  (MM) energy, so the two are the same quantity measured and estimated. The control has no MM region.
+                         n  ddE(frozen)        score difference    LJ meas.     sum L     G_add,R  G_add,TS
+  S6-P                   1      -7.6757      -6.6778    -0.9979     +0.0000   +0.0000      4.9892    5.7715
+  S6-2                   2     -12.3835     -11.2184    -1.1651     +0.6156   +0.6156      7.0922    7.4313
+  S6-3                   3     -14.7270     -12.8573    -1.8697     +0.6569   +0.6569      7.7689    8.2142
+  S6-5                   5     -18.1606     -15.6204    -2.5402     +0.3317   +0.3317     10.1852   10.8932
+  S6-10                 10     -21.8164     -18.0551    -3.7613     -0.0216   -0.0216     12.1710   11.4675
+  S6-20                 20     -24.8261     -19.6537    -5.1724     -0.1362   -0.1362     13.2692   12.3535
+  ADD-s1690_qp10000      1      -7.1128      -6.1149    -0.9979     +0.5629   +0.5629      4.7470    5.2527
+  ADD-s540_qm06500       1      -2.9590      -2.8635    -0.0954     +0.0413   +0.0413      2.5361    2.2774
+  ADD-s678_qm07625       1      -3.7531      -3.8789    +0.1258     +0.0527   +0.0527      3.5520    3.1438
+  ADD-s678_qm10000       1      -4.8872      -5.1035    +0.2163     +0.0527   +0.0527      4.6207    4.0493
+
+
+  THE L MATRIX, MEASURED: across the 9 sphere arrangements the measured Lennard-Jones contribution
+  differs from the score's sum L by at most -0.0000 kcal/mol (S6-20). cs5_grid.py computes L classically
+  from the same Amber N parameters ORCA uses here, so agreement is a check of the grid's own
+  arithmetic and of the force field it was handed, not of any physics.
+
+  G_add is an RMS over all 72 Cartesian components of the added gradient, in kcal/mol/A. For scale only,
+  and not as a bound: a relaxed GOCAT design reaches about 1 kcal/mol/A and Dittner's frozen-path designs
+  sat near 11.3 on the NORM, which for 24 atoms is 11.3/sqrt(72) = 1.33 as an RMS.
+
+FIRST-ORDER ADDITIVITY AT FIXED GEOMETRY (STAGE6_CRITERIA.txt; the ADD-* runs)
+  S6-2 measured -12.3835, sum of its one-sphere effects -12.0000, additivity error -0.3835 kcal/mol (3.1 % of the measured effect)
+      ADD-s1690_qp10000  -7.1128
+      ADD-s678_qm10000   -4.8872
+  S6-3 measured -14.7270, sum of its one-sphere effects -13.8248, additivity error -0.9022 kcal/mol (6.1 % of the measured effect)
+      ADD-s1690_qp10000  -7.1128
+      ADD-s678_qm07625   -3.7531
+      ADD-s540_qm06500   -2.9590
+
+NOTHING HERE IS A BARRIER. These are effects at fixed geometries, the quantity the MILP's score estimates;
+the catalytic verdict remains A2.5's relaxed chain, and Loss, the two survival criteria, G0 and kappa all
+wait on the relaxations.
