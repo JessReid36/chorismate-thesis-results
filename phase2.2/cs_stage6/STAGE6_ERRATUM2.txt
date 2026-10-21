@@ -1,0 +1,100 @@
+Stage 6 - ERRATUM 2: the stage's cost, and the walltime the job scripts request. Written 21 October 2026, after the
+arrangements were generated and committed (results 307e129) and before any Stage 6 job was submitted.
+STAGE6_CRITERIA.txt stays as committed (results b04a17b); this file corrects an arithmetic slip in its COST section
+and records a change to a resource request that the criteria does not fix. NO DECISION, THRESHOLD, TOLERANCE,
+CRITERION, ARRANGEMENT OR REPORTED QUANTITY CHANGES.
+
+E6.4 THE COST, CORRECTED BY A FACTOR OF ABOUT EIGHT
+
+STAGE6_CRITERIA.txt's COST section reads, as STAGE6_ERRATUM1.txt E6.3 already corrected its first sentence:
+
+   "... Stage 6 as specified is 7 arrangements x 2 sides (R and TS) plus the frequency jobs, about 16-20 jobs of
+   that size: of order 60-120 core-hours, requested as 8 cores and 24 GB each."
+
+"60-120 core-hours" is wrong. It is the JOB-HOUR count, not the core-hour count, and the two differ by the 8 cores
+each job requests. One job alone exceeds the stated budget for the whole stage: WP4's armb_freecart took 6 h 42 m on
+8 cores, which is 53.6 core-hours.
+
+The stage as generated (results 307e129, phase2.2/cs_stage6/relax/) is:
+
+   7 arrangements x 2 geometries x 1 relaxation   14 jobs   about 6-7 h each    8 cores   about 750-780 core-hours
+   7 arrangements x 2 geometries x 1 single point 14 jobs   about 5 min each     8 cores   about 9 core-hours
+                                                  --------                                 ---------------------
+                                                  28 jobs                                  about 760-790 core-hours
+
+plus the frequency calculation that rides in each of the 7 TS relaxations, which armb_freecart did not run and whose
+cost is therefore not measured here; a frequency job on 24 atoms at this level is of the same order as the
+optimisation, so the honest figure is OF ORDER 800-1100 CORE-HOURS, or 100-140 job-hours at 8 cores.
+
+The job count is also sharper than "16-20": it is 28, because every arrangement gets a frozen single point as well as
+a relaxation at each geometry, and the frequency job shares the TS relaxation's submission rather than being its own.
+Nothing follows from the correction except planning: no criterion, tolerance or threshold refers to the cost.
+
+E6.5 THE WALLTIME THE SCRIPTS REQUEST
+
+STAGE6_CRITERIA.txt fixes the request as "8 cores and 24 GB each" and says nothing about walltime. The first
+generation of the inputs took WP4's job.pbs as its template and so asked for 168:00:00 for EVERY job, the frozen
+single points included. That is wrong for them in the same way the SP package's memory request was wrong: PBS routes
+by the resources asked for, so a job that runs for five minutes while asking for a week queues behind week-queue
+work for no reason. SP_AMENDMENT3 is the precedent for correcting a resource request that no pre-registration fixes.
+
+   the 14 frozen single points   168:00:00 -> 02:00:00
+   the 14 relaxations            168:00:00, unchanged
+
+02:00:00 is generous by a factor of about twenty: the A-matrix job ran 16 single points of this same 24-atom
+substrate at this same level in about 75 minutes of wall time, so about 5 minutes each, and the Stage 6 single points
+differ only by having MM spheres present, which cost essentially nothing. The relaxations keep WP4's own request
+because armb_freecart, the run STAGE6_ERRATUM1.txt names as the protocol, took 6 h 42 m and a design with more
+spheres may need more cycles than one sphere did; a shorter request would risk a job being killed for the sake of
+queue position, which is the wrong trade for a six-hour job.
+
+The 8 cores and 24 GB are NOT changed. Both are what the criteria fixes and both are measured rather than guessed:
+armb_freecart ran this exact job on 8 cores with 24 GB.
+
+E6.6 THE INPUTS ARE PATCHED, NOT REGENERATED, AND WHY THAT IS THE CAREFUL CHOICE
+
+The obvious way to apply E6.5 is to amend cs6_arrange.py and regenerate. That was tried first and it was WRONG, for
+a reason worth recording because it applies to any later regeneration of an optimiser output.
+
+Regenerating re-runs cs_opt_milp.py. Its "auto" strategy gives the full search a 120 s probe and falls back to the
+LP-guided search if the full search has not finished in that time (OPTIMISER_DECISIONS_20261020.md and the code's
+own notes: the fallback exists so the search adapts to the machine it is on). The DESIGN is the same either way -
+on a check of the regenerated output against the committed one, every site, charge, a, L and score of all seven
+arrangements was identical, as were every combined.xyz, every site.ORCAFF.prms and every job.inp - but what the
+record SAYS about how the design was found is not:
+
+   committed (results 307e129)   S6-10   strategy full   certified gap 0.00000
+   a later run on the same files S6-10   strategy lp     certified gap 0.21594
+
+Both are valid. "full" means the search closed the gap itself and the design is provably the best n = 10 design
+this score and these rules admit anywhere on the grid; "lp" means only that the design is within 0.216 kcal/mol of
+it. The committed line is the stronger claim AND it is the one that was actually proved. Regenerating would replace
+a proved record with a weaker one for no reason except that the second run was slower, which is exactly the kind of
+drift a pre-registered record exists to prevent.
+
+So the 14 single-point job.pbs are PATCHED in place, by patch_walltime.py, and ARRANGEMENTS.txt is not touched. It
+records the sha256 of the script that generated the arrangements, and that script - c51d160250989479... - is the one
+that generated them; the amended script changes only the walltime line it writes.
+
+WHAT MUST NOT HAVE CHANGED, stated before the patch runs, every item a stop:
+  - exactly 14 files change, all of them */[RT]*_sp/job.pbs, each in exactly one line, its walltime line;
+  - each patched file equals byte for byte what the amended cs6_arrange.py's own job_pbs_text would write for it,
+    so the patch and the generator agree and neither is taken on trust;
+  - every combined.xyz, every site.ORCAFF.prms, every job.inp, all 14 relaxation job.pbs and ARRANGEMENTS.txt are
+    byte-identical, re-checked by sha256 after the patch;
+  - INPUT_CHECKSUMS.sha256 is updated for exactly those 14 entries in its existing order, and every other entry is
+    re-verified against the file on disk.
+
+E6.7 A LIMITATION THIS UNCOVERED, RECORDED FOR STAGE 5 PRODUCTION
+
+cs_opt_milp.py's recorded "strategy" and "certified_gap" are not reproducible across runs, because the fallback is
+decided by a wall-clock probe. The design is reproducible; the account of how it was reached is not. Nothing in
+Stage 6 depends on it - the gap is reported, not used in any criterion, and Stage 6 is not regenerating - but a
+production run whose certified gaps are a reported result should fix the strategy explicitly rather than leave it
+to "auto", or record the probe and the machine alongside the gap. This is a limitation of the record, not of any
+design, and no result reported anywhere changes because of it.
+
+DIRECTION
+
+None. The arrangements, the charges, the sites, the protocol and every measured quantity are untouched. This file
+corrects a cost figure that nothing depends on and an unregistered resource request that would have cost queue time.
