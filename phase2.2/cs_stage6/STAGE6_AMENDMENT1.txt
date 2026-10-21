@@ -1,0 +1,129 @@
+Stage 6 - AMENDMENT 1: the A matrix of frame 42436. Written 21 October 2026, the same day as STAGE6_CRITERIA.txt and
+before any Stage 6 input was generated or any Stage 6 job submitted. STAGE6_CRITERIA.txt stays as committed (results
+b04a17b; sha256 at the end); this file corrects one contradiction in it and adds the step that resolves it. No other
+rule changes: the quantity, the tolerance and its floor, the two survival criteria, the relaxation protocol, the
+failure criteria, the direction and the stated limitations all stand exactly as pre-registered. Decided by Jessica on
+21 October 2026. Retained-final.
+
+THE CONTRADICTION
+
+STAGE6_CRITERIA.txt specifies arrangements that cannot be built from the inputs the same file provides.
+
+It says, under THE GRID (line 61):
+
+   "The A matrix for this frame is not rebuilt; the arrangements are placed by the rule below from the development A
+   matrix's ranking of the corresponding sites, and the frozen effects Stage 6 needs are computed directly from the
+   single points it runs (below), not from an A column."
+
+and then, under THE ARRANGEMENTS:
+
+   "S6-2   two spheres: the most barrier-lowering admitted site of this grid, then the next that is at least 3.25 A
+   from it ..."
+   "S6-5, S6-10, S6-20  the committed optimiser's own best design at n = 5, 10 and 20 on this grid
+   (cs_opt_milp.py, code tier1-realism 148683d)"
+
+Both of those need an A column for THIS grid:
+  - "the most barrier-lowering admitted site" per unit charge is exactly a_if = V_TS,f(r_i) - V_R,f(r_i), the A
+    matrix (cs5_amatrix.py; Sokalski 1985 Eq. 19);
+  - cs_opt_milp.py's interface is "solve <sites.tsv> <L.tsv> <A.tsv>": it cannot run without A.
+
+The development A matrix cannot stand in for it. It is built on the development grid, whose sites are a different
+set; at the NEB band geometries, not the package's stationary points; and in the development alignment's coordinate
+frame, not frame 42436's. Borrowing its ranking by proximity would need an approximate transform between two
+different site sets, which is not a rule that can be pre-registered.
+
+Nothing had been generated or run when this was found, so no Stage 6 input, output or number is affected.
+
+A6.1 THE STEP THAT IS ADDED
+
+The A column of frame 42436 is built on the Stage 6 grid with the committed cs5_amatrix.py (chorismate-thesis-code,
+tier1-realism, phase2.2/; sha256 at the end), which is the machinery Stage 5 production uses, run here for one frame:
+
+   python3 cs5_amatrix.py prepare  <aligned_dir> <sites.tsv> <OUT> [HPC_DIR]     (PC; writes the inputs, committed)
+   qsub OUT/stage5_a.pbs                                                          (hpc1, one job)
+   python3 cs5_amatrix.py assemble <aligned_dir> <sites.tsv> <WORK> <OUT_RESULTS>  (PC, on the fetched outputs)
+
+It computes its own in vacuo B3LYP-D3BJ/def2-SVP densities of the bare substrate at this frame's R, TS and P and runs
+orca_vpot at every grid site, with that script's own checks (a-d). Its output is written to
+cs_stage6/A_f42436.tsv (and AP_f42436.tsv, which Stage 6 does not use), and its sha256 is recorded with the
+arrangements.
+
+Consequences, stated rather than left implicit:
+1. STAGE6_CRITERIA.txt's sentence "The A matrix for this frame is not rebuilt" is WITHDRAWN. The clause that follows
+   it - placing the arrangements from the development A matrix's ranking - is withdrawn with it, because it was the
+   part that could not be done.
+2. The same file's "On the PC; no HPC, no new single points" (line 58) remains true OF THE GRID, which is still built
+   on the PC from committed files with no new single points. It was never true of the stage as a whole, and this
+   amendment makes that explicit: Stage 6 now has two HPC steps, this A-matrix job and then the relaxations.
+3. Everything the criteria says about the arrangements now works as written, including the optimiser's own designs at
+   n = 5, 10 and 20, with the A column this step produces.
+4. The frozen effects Stage 6 measures are still computed from the single points it runs, not from the A column. A is
+   used ONLY to place the arrangements. That part of the withdrawn sentence was correct and is kept.
+
+A6.2 WHY THIS RATHER THAN A RULE THAT NEEDS NO A MATRIX
+
+The alternative was to place the arrangements by a purely geometric rule - the admitted site nearest O3, then
+successive sites respecting the 3.25 A spacing - which needs no A column and no HPC job.
+
+Claude's assessment, and the reason for the choice: G0 will be applied to designs the optimiser produces, and the
+relationship between how hard a design pulls and how much effect it loses on relaxation need not be the same for an
+optimiser-placed design as for a hand-ruled one, because the optimiser exploits the grid in ways a geometric rule
+does not. A threshold fitted to rule-placed arrangements risks not transferring to the designs it will be used on.
+The geometric rule is cheaper and avoids an HPC dependency, but it saves that cost in the one place where it matters
+most. Jessica agreed on 21 October 2026.
+
+A6.3 WHAT THIS COSTS
+
+One PBS job for one frame. For scale: the development A matrix covered 2769 sites across 30 frames in a single job
+(cs_stage5/exploratory/dev_A/, hpc1 job 420253); this is the same work for one frame and one grid. It is requested as
+cs5_amatrix.py's own job script writes it, and it does not compete with the SP package's 16-core, 64-250 GB jobs.
+
+A6.3b TWO THINGS ABOUT THE REUSED SCRIPT, RECORDED SO NEITHER IS MISREAD
+
+1. CHECK (b) OF cs5_amatrix.py IS VACUOUS HERE, AND ITS PASS MEANS NOTHING FOR STAGE 6. That check is
+   "rigid-motion invariance: the alignment frame with the largest rotation is also run in its own (original)
+   coordinates, with the sites taken back by its inverse transform; max |V_original - V_aligned| <= 1e-4 Eh/e". With
+   one frame and no alignment the transform is the identity, so the "original" and "aligned" coordinates are the same
+   file and the check compares a calculation with itself: prepare reports "rotation 0.0 deg" and one of the 16 runs
+   (inv_42436_R) is a duplicate that cannot fail. A_REPORT.txt will nevertheless print check (b) as passed. It
+   carries no information about this frame, and no claim about rigid-motion invariance is made from Stage 6. The
+   other checks do their work: (a) normal termination, SCF convergence, 118 electrons, echoed coordinates and one
+   vpot value per site; (c) the finite-difference test of a at three sites with +-0.05 e, which is 12 of the 16 runs
+   and is the substantive check that A is right; (d) the inputs unchanged since prepare. Stage 5 production will
+   exercise (b) properly, having many frames with real rotations.
+2. THE JOB IS NAMED cm_s5a, NOT A STAGE 6 NAME, because the committed Stage 5 script writes its own job script and
+   this amendment does not fork it for a name. Its output path IS redirected to the Stage 6 folder, by cs5_amatrix.py
+   prepare's own HPC_DIR argument, so nothing is written into cs_stage5/. In qstat this job appears as cm_s5a: it is
+   Stage 6's A-matrix job and not the start of Stage 5 production.
+
+A6.4 ORDER OF WORK FOR STAGE 6, AS AMENDED
+
+1. On the PC: extract the 24 substrate atoms of frame 42436's R, TS and P from the committed archives (cs6_prepare.py
+   extract, with the checks STAGE6_CRITERIA.txt lists); build the grid and L with the committed cs5_grid.py; write
+   the A-matrix job inputs with the committed cs5_amatrix.py prepare. Commit all of it.
+2. On hpc1: the one A-matrix job.
+3. On the PC: assemble A; place the seven arrangements of STAGE6_CRITERIA.txt with the committed cs_opt_milp.py where
+   the rule calls for it; write the relaxation job inputs. Commit all of it, for checking before anything is
+   submitted.
+4. On hpc1: the relaxation jobs.
+5. On the PC: cs6_analyse.py - G_add, Loss, the Spearman test, and G0 and kappa or the fallback. Commit.
+
+DIRECTION
+
+None. No decision, threshold, tolerance, criterion or reported quantity differs from STAGE6_CRITERIA.txt. This
+amendment only makes an input available that the criteria's own placement rule already required.
+
+SHA256
+
+Unchanged by this amendment, as committed (results b04a17b):
+  sha256 STAGE6_CRITERIA.txt   010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+
+Code used by the step this amendment adds (chorismate-thesis-code, tier1-realism, phase2.2/), as committed:
+  sha256 cs5_amatrix.py        525b1443ce29e105b11295d182467966e22227881c095a75c4bb2ebf7de6b568
+  sha256 cs5_grid.py           15ec6f0e13caf4c2222be2d0bbd40cb13f0b921dc2785f9b0410f4edfe9db173
+  sha256 cs_opt_milp.py        a2e640b1072e7568343749bc3d3b43a6730ddd10d8c0970e3042961c1dffc6f2
+
+New code committed with this amendment (chorismate-thesis-code, tier1-realism, phase2.2/):
+  sha256 cs6_prepare.py        f77efa39771e3b07b49453fb1713b86c9662ef23a7ca0c625d8f0e5bf1371097
+    its "extract" mode only; the "arrange" mode is committed with the arrangements at step 3 above, once the A column
+    exists to test it against, and its sha256 is recorded there.
