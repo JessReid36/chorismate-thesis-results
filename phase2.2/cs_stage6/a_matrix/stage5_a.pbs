@@ -1,0 +1,44 @@
+#!/bin/bash
+#PBS -N cm_s5a
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/a_matrix/stage5_a.pbs.out
+# Stage 5 A matrix (cs5_amatrix.py, STAGE5_CRITERIA.txt): 16 in vacuo single points, orca_vpot on the sp and inv runs.
+# Restartable: a run whose job.out ends normally is not repeated; its vpot.out is made if missing.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/a_matrix
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+  if [ "$2" != "-" ] && [ ! -s "$d/vpot.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then
+    ( cd "$d" && "$ORCA/orca_vpot" job.gbw job.scfp "$W/$2" vpot.out job > vpot.log 2>&1 ); echo "$1 vpot_exit=$? lines=$(wc -l < "$d/vpot.out")"
+  fi
+}
+run sp_42436_R points.xyz
+run sp_42436_TS points.xyz
+run sp_42436_P points.xyz
+run inv_42436_R points_inv.xyz
+run fd_42436_R_1678_p -
+run fd_42436_R_1678_m -
+run fd_42436_TS_1678_p -
+run fd_42436_TS_1678_m -
+run fd_42436_R_1954_p -
+run fd_42436_R_1954_m -
+run fd_42436_TS_1954_p -
+run fd_42436_TS_1954_m -
+run fd_42436_R_1612_p -
+run fd_42436_R_1612_m -
+run fd_42436_TS_1612_p -
+run fd_42436_TS_1612_m -
+echo "end=$(date)"
