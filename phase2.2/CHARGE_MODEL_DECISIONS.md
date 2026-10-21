@@ -402,3 +402,40 @@ frozen-versus-relaxed bias; the shared figure of 10 kcal mol-1 A-1 is a norm in 
 the two theses' page offsets, verified against their footers; and the version-of-record pages of Dittner & Hartke
 2018, which the library holds only as a Just Accepted manuscript but which Chapter 6 of Dittner's thesis reprints
 with the journal's own pagination. None changes a result or any decision.
+
+## Erratum: the WP4 run Stage 6's relaxation protocol is taken from (21 October 2026)
+
+`phase2.2/cs_stage6/STAGE6_ERRATUM1.txt`, written before any Stage 6 relaxation input was generated and before any
+relaxation job was submitted. **No decision, threshold, tolerance, criterion or reported quantity changes.**
+
+`STAGE6_CRITERIA.txt` cites `phase2.2/wp4_s13_rerun/armb_anch/job.inp` as the relaxation protocol and then describes
+a protocol that run does not have. `armb_anch` is the **anchored** variant: its `ActiveAtoms` lists twenty of the 24
+substrate atoms, holding ring carbons C5, C6, C7 and C8 fixed, and it optimised in ORCA's default redundant internal
+coordinates. The criteria's own description - "`ActiveAtoms` = the substrate only ... Cartesian coordinates" - is
+`armb_freecart`, the all-24-active Cartesian run with `ProjectTR false` and `MaxIter 1000`. That is the protocol
+Stage 6 uses; the erratum names it and quotes its `job.inp` in full.
+
+Four things in the criteria confirm the free-Cartesian run is what it meant, so this is a mis-citation and not a
+change of mind: its own wording; its request for "the substrate's centroid displacement, rotation and internal
+RMSD", which are only separable when the substrate may move as a whole, and which the internal-coordinate runs
+report as exactly 0.0000; its request for "the forming C1-C6 distance before and after", where C6 is substrate index
+12 and one of the four atoms `armb_anch` pins; and the stage's question, since a distortion measured with the ring
+pinned is partly a measure of the pinning.
+
+WP4's own addendum says its "conclusions on the representation rest on the anchored variants". That holds for WP4's
+question - whether a +1 site carrying a real atom's LJ wall stops where the rigid model says - which needs a
+substrate that cannot run away from the site. Stage 6 asks how far the substrate moves, which needs one that can.
+The erratum records the two stages taking different variants of the same protocol for those stated reasons.
+
+**The WP4 figures are corrected.** `STAGE6_DECISIONS_20261021.md`'s table "What WP4 already tells us" is correctly
+labelled but quotes the anchored pair. Under Stage 6's protocol, from the same committed `wp4_results.tsv`: the bare
++1 charge opens C1-C6 from 3.158 to 4.148 A and collapses onto O2 at 0.952 A; the N-sized LJ sphere opens it to
+3.838 A and stops at 2.537 A, integrity pass. The sphere-versus-bare-charge conclusion is unchanged and the collapse
+and integrity limits are taken from WP4's criteria rather than from these numbers. What changes is the size of the
+sphere's advantage in distortion: 0.68 A of opening against the bare charge's 0.99 A, where the anchored pair read
+0.55 A against 1.51 A. Smaller, and therefore more dependent on the control S6-C, which is why the control was
+specified.
+
+**The cost estimate stands.** The criteria's "`armb_anch` ... 46 cycles and 5 h 58 m" is the wrong run.
+`armb_freecart` took 195 cycles and 6 h 42 m on the same 8 cores and 24 GB - four times the cycles, each much
+cheaper, 12 % more wall time - so about 6 h per relaxation and 60-120 core-hours for the stage remain as written.

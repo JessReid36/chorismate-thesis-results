@@ -1,0 +1,153 @@
+Stage 6 - ERRATUM 1: the WP4 run the relaxation protocol is taken from, and the WP4 figures quoted from it.
+Written 21 October 2026, before any Stage 6 relaxation input was generated and before any relaxation job was
+submitted. STAGE6_CRITERIA.txt stays as committed (results b04a17b) and STAGE6_AMENDMENT1.txt as committed
+(results bfb0a12); this file corrects a mis-citation in the first and the figures quoted from it in the second
+place they appear. NO DECISION, THRESHOLD, TOLERANCE OR CRITERION CHANGES: the protocol STAGE6_CRITERIA.txt
+DESCRIBES is the protocol Stage 6 will use. It named the wrong WP4 run as the example of it.
+
+THE ERROR
+
+STAGE6_CRITERIA.txt, under THE RELAXATION (lines 80-83), reads:
+
+   "WP4's protocol (phase2.2/wp4_s13_rerun/armb_anch/job.inp), which is committed and has run:
+      ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM Opt
+      %maxcore 3000 / %pal nprocs 8 / %scf MaxIter 250 / %geom MaxIter 500
+      QMAtoms {0:23}; ActiveAtoms = the substrate only; the spheres fixed in the force field; Cartesian
+      coordinates."
+
+The second line and the citation are armb_anch's. The third line is not armb_anch. Its actual job.inp has
+
+   ActiveAtoms {0 1 2 3 4 5 6 7 8 9 11 14 16 17 18 19 20 21 22 23} end
+
+- TWENTY of the 24 substrate atoms. Indices 10, 12, 13 and 15 (ring carbons C5, C6, C7, C8 in the Stage 6 naming)
+are HELD FIXED; "anch" is short for anchored, and that was WP4's deliberate choice for its own question. And
+armb_anch has a bare "%geom MaxIter 500 end", so it optimised in ORCA's default redundant internal coordinates,
+not in Cartesian coordinates. WP4_CRITERIA_CARTESIAN.txt records the distinction: "The armX_free runs optimised
+in redundant internal coordinates ... The armX_freecart runs start from byte-identical files and differ only in
+the optimisation coordinates (Cartesian, ProjectTR false, MaxIter 1000)".
+
+So the criteria described the protocol it wants - the whole substrate free, Cartesian - and cited a run that is
+neither.
+
+E6.1 THE RUN THAT IS MEANT, AND THE PROTOCOL AS IT WILL BE
+
+phase2.2/wp4_s13_rerun/armb_freecart/job.inp, committed, run and converged in 195 cycles:
+
+   ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM Opt
+   %maxcore 3000
+   %pal nprocs 8 end
+   %scf MaxIter 250 end
+   %geom
+     MaxIter 1000
+     coordsys cartesian
+     ProjectTR false
+   end
+   %qmmm
+     QMAtoms {0:23} end
+     ActiveAtoms {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23} end
+     ORCAFFFilename "site.ORCAFF.prms"
+   end
+   * xyzfile -2 1 combined.xyz
+
+All 24 substrate atoms active; the spheres are atoms 24 upward and are absent from ActiveAtoms, so they are
+frozen, as the criteria requires. Cartesian coordinates with ProjectTR false, so the substrate may translate and
+rotate as a whole. The reactant side uses Opt as above; the TS side uses OptTS followed by a frequency job, as
+STAGE6_CRITERIA.txt already states. That is the whole protocol, and it is the one the criteria's own sentence
+describes.
+
+E6.1b FOUR INTERNAL CONFIRMATIONS THAT THIS IS THE INTENDED PROTOCOL, NOT A CHANGE OF MIND
+
+(a) The criteria's own words. "ActiveAtoms = the substrate only" and "Cartesian coordinates" are both true of
+    armb_freecart and both false of armb_anch. The description, not the citation, is what the rest of the file
+    was written against.
+(b) The criteria's own measured quantities. WHAT IS MEASURED PER ARRANGEMENT asks for "the substrate's centroid
+    displacement, rotation and internal RMSD, as WP4 reported them". Those three are only separable when the
+    substrate can move as a whole. In redundant internal coordinates it cannot: WP4_CRITERIA_CARTESIAN.txt
+    records that in armb_free "the substrate's centroid did not move (1e-6 A)", and wp4_results.tsv gives
+    centroid_shift 0.0000 for both internal-coordinate free runs. A criteria that asks for a centroid
+    displacement has already chosen Cartesian.
+(c) The reported distance. WHAT IS MEASURED PER ARRANGEMENT asks for "the forming C1-C6 distance before and
+    after, against the control's". C1 and C6 are substrate indices 0 and 12 - measured directly from
+    armb_freecart/combined.xyz, 0-12 is the only atom pair in the substrate at WP4's recorded C1C6_start of
+    3.1584 A - and index 12 is one of the four atoms armb_anch holds fixed. A criteria that reports the forming
+    C1-C6 distance cannot be taking its protocol from a run that pins C6.
+(d) Stage 6's question requires it. Stage 6 measures how far a frozen design pushes the substrate. Measured with
+    four ring carbons pinned, part of the answer is the pinning, not the design; and a design's spheres sit around
+    the ring, which is exactly what armb_anch held still.
+
+E6.1c WHY WP4'S OWN PREFERENCE FOR THE ANCHORED RUNS DOES NOT TRANSFER
+
+WP4_CRITERIA_CARTESIAN.txt states: "WP4's conclusions on the representation rest on the anchored variants; these
+runs show what a lone site or group does to a substrate that is free to move as a whole." That is correct for
+WP4's question, which was whether a +1 site carrying a real atom's LJ wall stops where the cheap rigid model says
+it stops. To test a stopping distance the substrate must not be free to run away from the site, or the distance
+measures the chase and not the wall. Stage 6 asks the opposite question - how much the substrate moves - and for
+that the substrate must be free, or the measurement is of the restraints. The two stages therefore take different
+variants of the same WP4 protocol for stated reasons, and this file is where that is recorded.
+
+E6.2 THE WP4 FIGURES, CORRECTED
+
+STAGE6_DECISIONS_20261021.md lines 199-205 give a table "What WP4 already tells us". Its rows are labelled
+arma_anch and armb_anch and the figures in them are correct for those runs; they are the ANCHORED variants, and
+so not the ones this stage's protocol corresponds to. Under the protocol of E6.1, from the same committed
+wp4_results.tsv:
+
+   one site, all 24 substrate atoms free, Cartesian   C1-C6            closest O       integrity
+   bare +1 point charge (arma_freecart)               3.158 -> 4.148 A  O2 0.952 A      collapse
+   N-sized LJ sphere   (armb_freecart)                3.158 -> 3.838 A  O2 2.537 A      pass (max bond change
+                                                                                        0.042 A, limit 0.15 A)
+
+and, for the record, the anchored pair that was quoted:
+
+   bare +1 point charge (arma_anch)                   3.158 -> 4.673 A  O2 0.951 A      collapse
+   N-sized LJ sphere   (armb_anch)                    3.158 -> 3.713 A  O2 2.711 A      verdict "reported",
+                                                                                        integrity pass
+
+What does not change: the sphere does not collapse onto the substrate where the bare charge does, 2.54 A against
+0.95 A, in both variants. STAGE6_DECISIONS_20261021.md's collapse threshold of 1.2 A and integrity limit of 0.15 A
+are taken from WP4's criteria, not from these numbers, and are unaffected; the bare charge's 0.95 A is the same to
+within 0.001 A in either variant.
+
+What does change, and is the reason this erratum exists rather than a footnote: the SIZE of the sphere's advantage
+in substrate distortion. Fully free, the sphere opens C1-C6 by 0.68 A against the bare charge's 0.99 A. Anchored,
+the same pair read 0.55 A against 1.51 A. The advantage is real in both but considerably smaller in the variant
+Stage 6 uses, and the difference between 0.68 and 0.99 A is not large against the 0.15 A integrity limit. Stage 6's
+control S6-C is what will say how much of even that 0.68 A is the design rather than the substrate descending from
+a geometry that is not its own minimum - which is the reason the control was specified, and this correction makes
+it more load-bearing, not less.
+
+E6.3 COST, CORRECTED, ESTIMATE UNCHANGED
+
+STAGE6_CRITERIA.txt's COST section reads "WP4's armb_anch, the same protocol on one sphere, converged in 46 cycles
+and 5 h 58 m on 8 cores with 24 GB". It is not the same protocol. The figures for the protocol of E6.1, from the
+committed job.out.xz of each run and job.pbs:
+
+   armb_freecart   195 cycles   6 h 41 m 45 s   8 cores, 24 GB
+   arma_freecart   213 cycles   6 h 23 m 17 s   8 cores, 24 GB
+   armb_anch        46 cycles   5 h 57 m 44 s   8 cores, 24 GB
+
+The Cartesian runs need about four times the cycles but each cycle is much cheaper, so the wall time is 12 % higher,
+not fourfold. The criteria's estimate - about 6 h per relaxation, 16-20 jobs, of order 60-120 core-hours at 8 cores
+and 24 GB - therefore stands as written. MaxIter 1000 rather than 500 matters: 195 cycles would have hit a 500-cycle
+ceiling comfortably, but a design with several spheres may need more than one sphere did, and the higher ceiling is
+part of the protocol for that reason.
+
+DIRECTION
+
+None. The protocol is unchanged from what STAGE6_CRITERIA.txt describes; this file names the run it should have
+cited, records why Stage 6 takes the free-Cartesian variant where WP4 rested on the anchored one, and corrects the
+quoted WP4 figures and the quoted cost. No threshold, tolerance, criterion, arrangement, or reported quantity is
+added, removed or altered.
+
+VERIFICATION OF THIS FILE
+Every quotation and figure above was re-read from the committed sources before this file was written, not carried
+over from working notes:
+  the quoted criteria passages          sed -n '80,83p;113p;205p' phase2.2/cs_stage6/STAGE6_CRITERIA.txt
+  armb_anch's 20 active atoms           parsed from phase2.2/wp4_s13_rerun/armb_anch/job.inp; missing 10,12,13,15
+  armb_freecart's job.inp               quoted verbatim from the committed file
+  cycle counts 195 / 213 / 46           grep -c 'GEOMETRY OPTIMIZATION CYCLE' on each job.out.xz
+  wall times                            'TOTAL RUN TIME' in each job.out.xz; resources from each job.pbs
+  every distance and verdict            phase2.2/wp4_s13_rerun/wp4_results.tsv
+  C1-C6 = indices 0,12                  computed from armb_freecart/combined.xyz; unique pair at 3.1584 A
+  centroid_shift 0.0000 for the         wp4_results.tsv, and WP4_CRITERIA_CARTESIAN.txt's own "1e-6 A"
+    internal-coordinate free runs
