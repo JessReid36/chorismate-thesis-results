@@ -1,0 +1,64 @@
+SELF-TEST  (cs_opt_milp.py)
+
+1. one sphere, closed form
+   [PASS] MILP -1.350223 at site [23] q +1.00; closed form -1.350223 at site 23 q +1.00
+
+2. every rule honoured, on a crowded instance with both layers
+   [PASS] exactly n spheres
+   [PASS] every charge inside a range its site admits
+   [PASS] no two spheres closer than 3.25 A
+   [PASS] d_f = sum_i a_if q_i + sum_i L_if z_i (worst 6.2e-15)
+   [PASS] dbar is the mean and u is the semi-deviation
+   [PASS] objective = mean + lambda x semi-deviation
+
+3. the q^2 stand-in stays inside its bound
+      n=2 B=0.50: true sum q^2 = 0.5000, stand-in charged 0.5000, over by 0.0000 e^2 (0.00000 per sphere)
+      n=4 B=1.00: true sum q^2 = 1.0051, stand-in charged 1.0000, over by 0.0051 e^2 (0.00127 per sphere)
+      n=6 B=2.00: true sum q^2 = 2.0113, stand-in charged 2.0000, over by 0.0113 e^2 (0.00188 per sphere)
+   [PASS] worst overshoot 0.00188 e^2 per sphere, bound 0.0025
+
+4. with lambda = 0 and no bound active, the charges are proportional to -a
+   [PASS] charges [-0.488, 0.155, 0.195] against the closed form [-0.49, 0.151, 0.192] (worst 0.0038; 201 tangents)
+   [PASS] score -0.6960 against the closed form -0.6960
+
+5. with a bound active, the optimality conditions hold directly
+   [PASS] mu = 0.2235 > 0; interior sites satisfy q = -a/(2mu) (worst 0.0033); bounded sites take the sign that lowers the score
+   [PASS] the budget still holds: sum q^2 = 2.6000 against B = 2.60
+
+6. the cliques forbid exactly what the pairwise rules forbid
+   [PASS] 80 close pairs all covered by 26 cliques (0 pairs needed their own)
+   [PASS] every pair inside a clique really is closer than 3.25 A, so no valid design is excluded
+   [PASS] same optimum from cliques (-2.137478, 921 rows) and pairs (-2.137478, 975 rows)
+
+7. distinct-design cuts return designs that are not shifted copies
+   [PASS] 4 designs found
+   [PASS] all supports distinct
+   [PASS] each design places at least one sphere more than 1.5 A from every sphere of each earlier design
+   [PASS] the pool is in order, best first: -4.0177  -3.9869  -3.9751  -3.9371
+
+8a. with no electrostatic term, L alone chooses the sites
+   [PASS] sites [2, 16, 21], the three most negative mean L (expected [2, 16, 21])
+
+8b. B = 0 leaves the charges at the stand-in's own bound, not at zero
+   [PASS] every |q| <= 0.050 e, the envelope's bound at B = 0 (largest 0.0500)
+   [PASS] sites [2, 12, 16] and score -0.190005 against the closed form [2, 12, 16], -0.190005
+   [PASS] the true sum q^2 is 0.00750, within the 0.0025 e^2 per sphere the stand-in may leave
+
+9. the two tangent forms allow the same designs, and the tied one relaxes tighter
+   [PASS] same optimum: tied -2.522147, plain -2.522147
+   [PASS] relaxed bound: tied -2.5738 against plain -3.8703, so the tied form leaves the solver far less to search
+   [PASS] the tied form keeps the same budget bound (over by 0.00069 e^2 per sphere)
+
+10. the LP-guided search returns a design of the FULL problem, with a true bound
+   [PASS] both searches returned a design
+   [PASS] the restricted design obeys every rule of the full problem and its arithmetic re-checks
+   [PASS] it is no better than the full optimum (-3.7399 against -3.7399), as a design on fewer sites must be
+   [PASS] the bound -3.7596 really does bound the full optimum -3.7399
+   [PASS] the reported gap 0.0197 is objective minus bound, and covers the real shortfall 0.0000
+
+11. 'auto' keeps the full search when it finishes, and falls back correctly when it does not
+   [PASS] with time to finish, auto returns the full search's design (-3.7399, gap 0.0e+00)
+   [PASS] with no time, auto falls back to the LP-guided search; its bound and gap still hold (-3.7399, gap 0.0197)
+   [PASS] an unproven probe design that beats the fallback is kept, with the tighter of the two bounds
+
+ALL SELF-TESTS PASSED

@@ -1,0 +1,30 @@
+Optimiser stage code, tested on Jessica's PC by x93_optimiser_code.sh (2026-10-21T05:37Z)
+python 3.12.3, numpy 1.26.4, scipy 1.11.4 (Linux-7.0.0-38-generic-x86_64-with-glibc2.39)
+code tier1-realism 148683d: phase2.2/cs_opt_milp.py sha256 a2e640b1072e7568343749bc3d3b43a6730ddd10d8c0970e3042961c1dffc6f2
+                           phase2.2/cs_opt_null.py sha256 d8ded2d50395c25e7fc410ac23edc6b9963716fd8a82414912016fbd8bd13ed7
+                           phase2.2/OPTIMISER_CODE_README.md sha256 86016d86d62613bec92a2dbf370cce968234df52d845864aeb3b9c2f63379ebf
+inputs (results main): phase2.2/cs_stage5/exploratory/dev_sites_a2.tsv (269f54b), phase2.2/cs_stage5/exploratory/dev_L.tsv and phase2.2/cs_stage5/exploratory/dev_A/A_dev.tsv (6edfbb1)
+settings of the runs below: B = 2.0, lambda = 0.94 (the decisions' value at F = 30), spacing 3.25 A, 21 tangents,
+  n = 4 with 3 distinct designs for SOLVE_DEV.txt, n = 3 to 10 for TIME_DEV.txt, 200 draws for NULL_DEV.txt
+EXPLORATORY: every run here is on the development set (sites, L and A of cs_stage5/exploratory), which is a test set
+  for the code. NOTHING in these files is a result, and no barrier in them is quoted as one. Production runs on the
+  Stage 5 production inputs once the SP package is FINAL, with B from the electronic-screen calibration and lambda
+  from the package's final frame count.
+self-tests: SELFTEST_MILP.txt and SELFTEST_NULL.txt, both ALL SELF-TESTS PASSED on this PC before anything was
+  committed; the script stops without committing if either reports a failure.
+
+Two things to keep in mind when reading TIME_DEV.txt, neither of them a fault in the code:
+
+1. ROWS MARKED 'lp' CARRY A GAP, AND AT LARGE n IT EXCEEDS THE GAIN. Rows marked 'full' are exact (gap 0). Where
+   the full search cannot close the gap within its probe time, the row falls back to the LP-guided search and
+   reports the gap against the whole grid's bound. Where that happens depends on the scipy build: in Claude's
+   workspace (scipy 1.18.1) the full search was exact to n = 9; on scipy 1.11.4 it was exact to n = 6, and n = 7-9
+   came back 'lp' with the same objectives and gaps of 0.012-0.086. At B = 2.0 the gap grows to about 0.49 kcal/mol
+   by n = 20, while the improvement from one n to the next falls to about 0.08. Consecutive n are therefore NOT
+   separable at those sizes: n = 20 is not "better than" n = 19 by 0.08 when each carries a gap of about 0.5.
+   Decision O6's stopping rule asks for a gain beating both the frame spread and the method uncertainty, and the
+   frame spread alone (the semi-deviation is about 1.6 here) should stop the sweep in the single digits. Where the
+   comparison falls on 'lp' rows, the gaps are part of it and are stated.
+2. TIMINGS DO NOT CARRY ACROSS SCIPY VERSIONS. The same LP-guided solve at n = 12 took 78 s under scipy 1.18.1 and
+   377 s under scipy 1.11.4. The designs were identical in every digit; only the time differed. The timings in this
+   file are this PC's, with the version named above.
