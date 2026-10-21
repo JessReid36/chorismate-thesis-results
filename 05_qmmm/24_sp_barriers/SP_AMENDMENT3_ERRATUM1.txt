@@ -1,0 +1,49 @@
+Stationary-point barriers (SP) - AMENDMENT 3, ERRATUM 1. Written 21 October 2026, the same day as SP_AMENDMENT3.txt
+and after it was applied. SP_AMENDMENT3.txt stays as committed (results 77f5d23); this file corrects one factual
+sentence in it and changes no decision, no rule, no number and no result.
+
+THE ERROR
+
+SP_AMENDMENT3.txt A3.3 reads:
+
+   "That covers a folder with a job still running - at 11:12 SAST on 21 October, frame 20000 (job_ts 419762, job_r0
+   419768) and frame 21634 (job_ts 419770) - and a folder in which any job has begun to write."
+
+A3.1 carries the same mistake, calling 419770 "frame 21634's job_ts".
+
+419770 is not frame 21634. Its PBS job name is sa200008tsc, which qstat abbreviates to "sa200008t*": frame 20000,
+radius 8, job_ts, with the trailing "c" that spa_prepare.py adds for a surroundings-check run (S = ci). It belongs to
+f20000_r8_ci_a1. Frame 21634's job_ts was 419778 and was queued, not running.
+
+The reading came from the abbreviated job name in the qstat output of 11:12 SAST; the "c" was in the truncated part.
+The first wave's run folders were submitted in alphabetical order (f20000_r8_a1, f20000_r8_ci_a1, f21634_r8_a1, ...),
+not with the three surroundings-check folders last, so the second block of eight ids is frame 20000's ci folder.
+
+WHAT IS TRUE
+
+The two folders deferred when the amendment was applied are f20000_r8_a1 and f20000_r8_ci_a1, both of frame 20000:
+
+   f20000_r8_a1      job_ts 419762 (running), job_r0 419768 (running), its other six held
+   f20000_r8_ci_a1   job_ts 419770 (running), its other seven held or queued
+
+This is what package_waves/x94/QSTAT_BEFORE.txt and X94_RECORD.txt record, both committed with the applied
+amendment (results e23c85f): those files were written from what PBS said at the time and are correct. Only the two
+sentences quoted above are wrong.
+
+WHY IT CHANGES NOTHING
+
+A3.3's rule is stated on the state of a folder, not on the identity of any frame: "a run folder is handled only if it
+is untouched: every one of its eight jobs is in state Q or H, and the folder holds no job output and no step record",
+and the state "is read from PBS when the change is applied, not from the state recorded above". The bundle read the
+state itself and deferred the two folders that were not untouched. The named ids in A3.1 and A3.3 are illustrative.
+Frame 21634 was handled as an untouched folder, which was correct: all eight of its jobs were queued.
+
+A note worth keeping with this correction, which the wrong reading obscured: frame 20000 is the alignment reference
+for Stage 5 ("the lowest-numbered complete frame (20000, as D3, when it is complete)", STAGE5_CRITERIA.txt), and the
+other deferred folder is that same frame's surroundings check (A2.4). So both deferred folders belong to the one
+frame Stage 5 aligns on, and neither has been resubmitted yet. They are resubmitted by the bundle that follows, once
+their running jobs have ended, under SP_AMENDMENT3.txt A3.3 unchanged.
+
+DIRECTION
+
+None. No decision, rule, threshold, input, calculation or reported quantity differs.

@@ -1,0 +1,231 @@
+Stage 6 of the charged-sphere development: what a frozen design does when the substrate is let go, and the threshold
+and weight of the preorganisation term (pre-registered 21 October 2026; committed before any Stage 6 input is
+generated and before any SP package result other than frame 42436's - smoke test 2, already in SP_AMENDMENT2.txt - is
+read; plan: PHASE22_PLAN_UPDATE_20261009.md section 5 "Stage 6", and decision O2 of OPTIMISER_DECISIONS_20261020.md,
+which says "G0 and kappa come from Stage 6"). Reasoning and the literature behind every choice:
+STAGE6_DECISIONS_20261021.md (this repo, phase2.2/), with the library corrections it rests on in
+LIBRARY_ERRATUM2_20261021.md. Code already committed and used here (tier1-realism, phase2.2/): cs5_grid.py,
+cs5_floors.py and cs_opt_milp.py (sha256 at the end). cs6_prepare.py (extracts the substrate, builds the grid, places
+the arrangements and writes the jobs) and cs6_analyse.py (reads the outputs and fits G0 and kappa) are committed WITH
+the Stage 6 inputs, before any Stage 6 job is submitted, and their sha256 are recorded there: nothing in this file
+depends on them, and every rule, threshold and tolerance this stage uses is fixed below. Decided by Jessica on
+21 October 2026. Retained-final.
+
+WHAT STAGE 6 PRODUCES
+1. G0 and kappa for the preorganisation term of decision O2, or a statement that no threshold could be fixed and the
+   term is reported without a penalty (O2's own fallback).
+2. The size of the relaxation problem: how far the substrate moves when a frozen design is imposed on it, against a
+   no-sphere control, and what that costs in compute (PHASE22_PLAN_UPDATE_20261009.md section 5, "size of the
+   relaxation problem").
+3. Whether 2 and 3 spheres together collapse onto the substrate or break its bonds, and whether their effects add at
+   fixed geometry (the plan's three criteria for this stage).
+Nothing Stage 6 produces is a barrier that is quoted as a result. The catalytic verdict remains the relaxed NEB-CI
+chain of SP_AMENDMENT2.txt A2.5.
+
+WHEN IT RUNS
+Now, in parallel with the SP package (Jessica, 21 October 2026). Stage 6 does not wait for Stage 5 production and
+does not read any new package result: it runs on frame 42436, whose results were seen and disclosed in
+SP_AMENDMENT2.txt. Its jobs are 8 cores and 24 GB (below), so they do not compete with the package's 16-core,
+64-250 GB jobs for the nodes the package needs.
+
+THE GEOMETRIES
+Frame 42436, radius 8 A, from the committed smoke test (f42436_r8_a1), which SP_AMENDMENT2.txt records as "that
+frame's package run":
+  reactant   05_qmmm/24_sp_barriers/f42436_r8_a1/r_irc/final.xyz    (converged, 6 cycles)
+  TS         05_qmmm/24_sp_barriers/f42436_r8_a1/ts/final.xyz       (converged, 7 cycles)
+  product    05_qmmm/24_sp_barriers/f42436_r8_a1/p_irc/final.xyz    (for the grid surface only)
+These are the same three files STAGE5_CRITERIA.txt section 8 names as Stage 5 production's per-frame inputs, so the
+geometries are at the production protocol. Each holds the whole solvated system (55680 atoms); what Stage 6 takes
+from it is the 24 substrate atoms, indices 6207-6230 counting from zero as ORCA does, the same 24 atoms
+SP_AMENDMENT1.txt A1.1 calls the core and spa_prepare.py optimises as such. Their sha256, and those of the committed
+archives they are extracted from, are recorded at the end and checked before anything is written.
+
+WHY NOT THE DEVELOPMENT SET. Its reactant is NEB band image 0 and its TS is the climbing image; neither is a
+stationary point. C4 re-optimised those band reactants and found dE_reopt of -1.84 to -11.56 kcal/mol, which is why
+C4 rejected image 0 as a reactant definition. A relaxation from such a start is dominated by the substrate falling
+towards its own minimum, and a TS relaxation from a climbing image without a TS search slides downhill. A threshold
+measured there would not mean the same thing in production.
+
+THE LIMITATION THIS LEAVES, AND WHAT IS DONE ABOUT IT. Stage 6 calibrates on ONE frame. Decision O2 already records
+that applying a 2-3 sphere threshold at up to 20 spheres is an extrapolation; this adds a second, from one frame to
+the ensemble. Fixed here in advance: once Stage 5 production exists, G0 is CONFIRMED on the two lowest-numbered
+complete frames other than 42436, by re-measuring the same pairs and reporting whether G0 would have changed. It is
+NOT re-tuned. If it would have changed by more than the spread of the pairs it was fitted to, that is reported as a
+limitation of the short list, and the designs already chosen are not re-ranked.
+
+THE GRID
+Built by the committed cs5_grid.py, with the committed floors.tsv, on frame 42436's own R, TS and P - the Stage 5
+rule and resolution, applied to one frame. On the PC; no HPC, no new single points. Written to
+cs_stage6/sites_f42436.tsv with L to cs_stage6/L_f42436.tsv, and labelled a Stage 6 input, NOT Stage 5 production:
+the production grid's surface is the union over every complete frame, so a one-frame grid is tighter than production
+and its site numbering is its own. The A matrix for this frame is not rebuilt; the arrangements are placed by the
+rule below from the development A matrix's ranking of the corresponding sites, and the frozen effects Stage 6 needs
+are computed directly from the single points it runs (below), not from an A column.
+
+THE ARRANGEMENTS (placed by rule, never by reading a barrier)
+  S6-2   two spheres: the most barrier-lowering admitted site of this grid, then the next that is at least 3.25 A
+         from it, charges at the budget's optimum for those two fixed sites (B as the code's default, 2.0 e^2, which
+         is a code-test value and not the calibrated B);
+  S6-3   three spheres by the same rule;
+  S6-5, S6-10, S6-20  the committed optimiser's own best design at n = 5, 10 and 20 on this grid
+         (cs_opt_milp.py, code tier1-realism 148683d), which is what decision O2 asks Stage 6 to relax;
+  S6-C   the no-sphere control, relaxed from the same start. This is what WP4 lacked and what makes every number
+         above interpretable;
+  S6-P   one bare point charge of +1 at S6-2's first site, as the comparator for what the sphere model buys
+         (Jessica, 21 October 2026).
+The ranking rule, the spacing and the budget are fixed here; no arrangement is chosen or rejected by the effect it
+produces.
+
+THE RELAXATION
+WP4's protocol (phase2.2/wp4_s13_rerun/armb_anch/job.inp), which is committed and has run:
+  ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM Opt
+  %maxcore 3000 / %pal nprocs 8 / %scf MaxIter 250 / %geom MaxIter 500
+  QMAtoms {0:23}; ActiveAtoms = the substrate only; the spheres fixed in the force field; Cartesian coordinates.
+The reactant side uses Opt from r_irc/final.xyz. The TS side uses OptTS from ts/final.xyz followed by frequencies; a
+TS that does not return exactly one imaginary mode is reported as such and is not used for a relaxed barrier. The
+control S6-C runs the same two jobs with no spheres present. This is Behrens' one-embedding scheme with the embedding
+frozen, which PHASE22_PLAN_UPDATE_20261009.md section 4 item 3 already adopted for validation.
+
+THE QUANTITY
+For a design D at a geometry X, over the N = 24 substrate atoms:
+  g_i(D) = the gradient on atom i with the design's spheres present at X
+  g_i(0) = the gradient on atom i with no spheres at the same X
+  G_add(X) = sqrt( (1/3N) sum_i |g_i(D) - g_i(0)|^2 )     kcal mol-1 A-1, an RMS
+G_add,R and G_add,TS are reported for every arrangement. Decision O2 penalises the reactant one; the TS one is
+recorded because it costs nothing once the gradient exists and because both GOCAT authors check all three stationary
+points.
+THE QUANTITY IS NAMED BECAUSE THE PUBLISHED FIGURES ARE NOT COMPARABLE. Dittner penalises the gradient NORM above
+10 kcal mol-1 A-1 and Behrens the RMS above 10; for 24 atoms those differ by sqrt(72) = 8.49, so the same printed
+figure is about eight and a half times apart in strictness (LIBRARY_ERRATUM2_20261021.md item 2). Both use the TOTAL
+gradient; the ADDED form here is this project's own, adopted because our frames are enzyme geometries in vacuo where
+the bare substrate already carries a gradient. Neither published threshold is carried over. For scale only, not as a
+bound: a genuinely relaxed GOCAT design reaches gradients "around 1 kcal mol-1 A-1" (Dittner thesis ESI, printed
+p. 361) and his frozen-path designs sat at about 11.3 on the norm (printed p. 303).
+
+WHAT IS MEASURED PER ARRANGEMENT
+  ddE(frozen)   the design's effect at the fixed geometries, from single points at R and TS with and without the
+                spheres - the quantity the MILP's score estimates;
+  ddE(relaxed)  the same after the substrate is relaxed with the spheres frozen, R by Opt and TS by OptTS;
+  Loss          ddE(frozen) - ddE(relaxed), with the control's own change subtracted so that Loss is the design's
+                share and not the substrate's descent from a geometry that is not its own minimum;
+  G_add,R and G_add,TS;
+  the forming C1-C6 distance before and after, against the control's;
+  the substrate's centroid displacement, rotation and internal RMSD, as WP4 reported them;
+  the closest sphere-to-substrate-atom distance;
+  the largest change in any substrate bond;
+  the TS's imaginary mode count after relaxation;
+  first-order additivity at fixed geometry: the sum of the one-sphere effects against the measured effect of S6-2 and
+  S6-3 (single points only, no relaxation).
+
+THE TWO SURVIVAL CRITERIA, REPORTED SEPARATELY
+A design "survives" is reported under both of these, never as one number:
+  (i)  EFFECT: ddE(relaxed) is still negative, and Loss is within the tolerance below;
+  (ii) GEOMETRY: the relaxed point is still a stationary point of the right kind - no collapse, bonds intact, and for
+       the TS exactly one imaginary mode.
+Why both: Dittner's carry-over of PM7 designs to PBE0 succeeded for 83-100 % of designs when the question was only
+whether the barrier was still lower, and for 2.8-80 % when the stationary points were also required to still be
+stationary, the whole gap being the residual gradient (thesis Tables 6.2 and 6.3, printed pp. 164-165). G0 IS FITTED
+ON THE STRICTER OF THE TWO, i.e. on arrangements that meet (ii) as well as (i).
+FAILURE, both taken from WP4 so neither is invented here: a sphere-to-substrate-atom distance under 1.2 A is
+collapse; a substrate bond moving by more than 0.15 A is broken integrity. A collapsed or broken arrangement is
+reported and excluded from the fit, with the exclusion stated.
+
+THE TOLERANCE, AND WHERE IT COMES FROM
+No published source states a tolerance of the form "at least X per cent of a predicted effect must survive a fuller
+treatment"; 21 papers were read in full to establish that, and the nearest things to acceptance criteria are Ryde's
+protocol with no number (Methods Enzymol. 2016, section 4 item 7) and two noise-floor arguments (Kastner 2006
+p. 459; Cooper & Kastner, Table 1 discussion). The tolerance here is therefore proposed, and the analogy it rests on
+is named rather than implied:
+  LOSS MUST BE BELOW 15 % OF |ddE(frozen)|.
+15 % is not a new constant: it is the fraction decision O6 already requires for the method-and-basis uncertainty
+("The fraction to use (for example 15 %) is fixed in the pre-registration"), so the project carries one such number,
+fixed once, used in both places. The analogy supporting that value, with every figure checked against the paper:
+  - a single frozen or minimised structure sits about 10-15 % from the sampled answer in three different enzymes:
+    PHBH 112.3 against 101.5 kJ/mol (Kastner 2006, Table 1, p. 458), TIM 21.9 against 19.8 kcal/mol (Zhang 2000
+    p. 3491 against Hu 2007 p. 399), cyclophilin A 87.5 against 75.9 kJ/mol (Cooper & Kastner, Table 1);
+  - a frozen-geometry first-order electrostatic model of exactly this project's form, Delta = sum q (V_TS - V_R),
+    retains 86.7 %, 98.6 %, 94.2 %, 94.8 % and 92.1 % of the ab initio effect where the effect is of appreciable
+    size (Sokalski 1985, Table 2, printed p. 406, column d), an error of 1 to 13 %;
+  - this project's own Stage 4c measured 10-31 % with the ranking preserved.
+THE FLOOR CLAUSE, which Sokalski's data forces: at his one weakly-interacting site the true effect is
+-0.59 kcal/mol and the model gives -2.20, so the absolute error of 1.6 kcal/mol is unremarkable while the ratio is
+meaningless. Therefore, if |ddE(frozen)| is smaller than 3.2 kcal/mol - the absolute method-and-basis figure the
+records already give, per arrangement across bases (STAGE4C, plan update) - the arrangement's survival is NOT
+ASSESSABLE. It is reported as such and does not enter the fit for G0.
+REPORTED ALONGSIDE: the frame spread, so a reader who prefers the noise-floor rule of Kastner and of Cooper &
+Kastner can apply it to the same numbers. On one frame the paired per-frame interval does not exist, so what is
+reported is the absolute method-and-basis figure and the relaxation's own convergence tolerance.
+
+HOW G0 AND kappa ARE FIXED
+The form is decision O2's, which is Behrens' Eq. 3.2 (printed p. 21), one-sided and quadratic:
+    the re-scoring objective gains   kappa * max(0, G_add,R - G0)^2, summed over frames
+(Notation: this project's kappa is Behrens' alpha. In his thesis kappa weights a different term, the
+energy-stabilisation penalty of his Eq. 3.3, "usually chosen at around 10^4" - not a value for ours.)
+Then, in this order:
+1. TEST whether G_add,R predicts Loss at all, over the arrangements that meet both survival criteria and are
+   assessable: Spearman rank correlation, reported with its confidence interval. This is the test decision O2 asks
+   for.
+2. IF IT PREDICTS (the interval excludes zero, in the direction that more pull means more loss):
+   G0 = the largest G_add,R whose measured Loss is within the tolerance;
+   kappa = the value for which kappa * (G_max - G0)^2 equals the Loss measured at G_max, the largest G_add,R
+   observed. The penalty is then an estimate of the effect a design is expected to lose, in the score's own units,
+   rather than a free scale factor, and kappa needs no separate choice.
+3. IF IT DOES NOT PREDICT: decision O2's fallback, unchanged. No penalty; G_add,R is reported for every design; the
+   short list carries the limitation.
+
+DIRECTION
+The term Stage 6 calibrates acts AGAINST a lower frozen barrier: it penalises designs that pull hard. Within the
+stage, a larger G0 or a smaller kappa is the more permissive choice, towards a lower barrier. Nothing here is chosen
+by the barrier any design reaches: the geometries are fixed in advance, the arrangements are placed by rule, the
+tolerance and its floor are fixed before any relaxation runs, and kappa follows from the measurement.
+For context, and to be stated with the results rather than left implicit: a gradient penalty on a fixed path is a
+keep-away term. Behrens, printed p. 67: "The penalty employed to do this is obviously minimized when the charged
+particles are further away from the center, weakening the interaction and additional gradient introduced." Because
+decision O2 applies the term at re-scoring and not inside the MILP, the pool still contains the close-contact
+designs; the bias affects the ranking, and that is stated with the short list.
+
+WHAT STAGE 6 CANNOT SETTLE
+1. One frame; the confirmation rule above is the mitigation, not a fix.
+2. 2-3 spheres, used at up to 20. Including n = 5, 10 and 20 narrows it, but those designs come from a one-frame
+   test grid.
+3. Relaxation is not validation. Stage 6 relaxes the substrate with the spheres frozen at fixed geometries; the
+   verdict is A2.5's relaxed chain.
+4. The spheres stay frozen. Dittner's own view is that the honest fix is relaxing the path inside the search
+   (J. Chem. Phys. 152, 114106, p. 114106-6: once the path relaxes, "all criteria referring to gradient norms ...
+   are all per constructionem not present anymore"), which this project does not do and cannot afford. Stage 6
+   measures the size of the error that choice leaves, which is the most that can be claimed for it.
+5. How much of the achievable catalysis a frozen-path search can find at all. Dittner's best static designs reached
+   24-41 % of the effect his relaxed-path designs reached (thesis Table 7.1, printed p. 203, with the barriers of
+   printed pp. 185, 192 and 195). That is a limitation of this project's whole approach and is stated in the
+   write-up, not something Stage 6 can remove.
+For the floor of the comparison, and worth keeping with the null distribution of decision O10: none of 1000 random
+designs was catalytic at PBE0 in Dittner's test, at either 3 or 10 charges (thesis Table 6.2, printed p. 164).
+
+COST
+WP4's armb_anch, the same protocol on one sphere, converged in 46 cycles and 5 h 58 m on 8 cores with 24 GB. The
+spheres sit in the force field and not the QM region, so 2 or 3 cost essentially the same as 1. Stage 6 as specified
+is 7 arrangements x 2 sides (R and TS) plus the frequency jobs, about 16-20 jobs of that size: of order 60-120
+core-hours, requested as 8 cores and 24 GB each.
+
+SHA256 OF EVERY INPUT AND OF THE CODE
+
+The geometries, as extracted from the committed archives of 05_qmmm/24_sp_barriers/f42436_r8_a1/ (results repo):
+  final.xyz, ts            1b211df5892824d3d96c8c3db1372c190dc901294e23cf8407b0ded81503e5da
+  final.xyz, r_irc         490499a6cb6fc211d2bea8dd29fe61a7278b4e21b23d309b096bd0b0b9272646
+  final.xyz, p_irc         41499338c87c6f43d58a1b8807fa8a805c4196e5f86c4ef23391f8bdeaa0a34f
+The archives themselves, as committed:
+  hpc_text_outputs_2_ts.tar.xz      6f01f6a3efe5c0d0b94c0de9de805a23cc126e7fde7e9f50de25bdbf465c9022
+  hpc_text_outputs_2_r_irc.tar.xz   3f9ae488565c11d6b9aa14f98886a5e37e6dfe0b4e314038778a35d359bf354b
+  hpc_text_outputs_2_p_irc.tar.xz   5a7dc261ad844bcb80e1679a120595ae84a7bfae5b5be1f9bec3f2ba6817d326
+
+The floors, as committed (phase2.2/cs_stage5/floors.tsv):
+  floors.tsv               0f534d6bdd9527d3800d1210d6c71893c7faae956f6161b5d500b26de8bf1de1
+
+The code used here, as committed (chorismate-thesis-code, tier1-realism, phase2.2/):
+  cs5_grid.py              15ec6f0e13caf4c2222be2d0bbd40cb13f0b921dc2785f9b0410f4edfe9db173
+  cs5_floors.py            4cfb9dff93adbe2987e3a77f0f3546e3cd0106a55ff19aadb07b541b0c84c5ee
+  cs_opt_milp.py           a2e640b1072e7568343749bc3d3b43a6730ddd10d8c0970e3042961c1dffc6f2
+
+The force field is the committed 05_qmmm/13_bridge/complex_solvated.ORCAFF.prms that cs5_grid.py already requires,
+with the substrate rows 6208-6231 as STAGE5_CRITERIA.txt records; its sha256 is the one c4_sources.sha256 holds and
+is checked against that record rather than restated here.

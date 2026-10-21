@@ -336,3 +336,69 @@ production runs on the Stage 5 production inputs once the SP package is FINAL.
 
 **Four corrections to our reading of the library** were found while this draft was written and are recorded in
 `phase2.2/LIBRARY_ERRATUM1_20261020.md`. None changes a result or any decision above.
+
+## Update: Stage 6 pre-registered and decided (21 October 2026)
+
+Pre-registered in `phase2.2/cs_stage6/STAGE6_CRITERIA.txt`, with the reasoning and the citations in
+`phase2.2/STAGE6_DECISIONS_20261021.md`. Committed before any Stage 6 input is generated. Stage 6 is what decision O2
+waits on: it fixes **G0** and **kappa** for the preorganisation term, or reports that no threshold could be fixed.
+
+- **It runs now, in parallel with the SP package**, and reads no new package result. The geometries are frame 42436's
+  committed smoke-test stationary points (`r_irc/final.xyz`, `ts/final.xyz`, `p_irc/final.xyz` for the grid surface),
+  which `SP_AMENDMENT2.txt` records as that frame's package run and which are the same three files Stage 5 production
+  consumes per frame. The development set is **not** used: its reactant is NEB image 0 and its TS the climbing image,
+  neither a stationary point, and C4 measured those band reactants as 1.84 to 11.56 kcal/mol above their own minima.
+- **The grid** is the committed `cs5_grid.py` rule with the committed `floors.tsv`, applied to that one frame on the
+  PC. It is a Stage 6 input, not Stage 5 production: the production surface is the union over every complete frame,
+  so a one-frame grid is tighter and carries its own site numbering.
+- **The arrangements** are placed by rule and never by the effect they produce: two and three spheres by ranking and
+  the 3.25 A spacing; the committed optimiser's own designs at n = 5, 10 and 20; a **no-sphere control**, which WP4
+  lacked and which makes every number interpretable; and one bare **+1 point charge** as the comparator for what the
+  sphere model buys (Jessica, 21 October).
+- **The relaxation** is WP4's committed protocol - `QMMM Opt`, `ActiveAtoms` the 24 substrate atoms, the spheres
+  frozen in the force field, Cartesian, B3LYP-D3BJ/def2-SVP - with `OptTS` and frequencies on the TS side. 8 cores
+  and 24 GB per job, about 16-20 jobs, so it does not compete with the package for large-memory nodes.
+- **The quantity is named, because the published figures are not comparable.** G_add is the **RMS** over the 24
+  substrate atoms of the gradient the design **adds** (design minus bare at the same geometry). Dittner penalises the
+  gradient **norm** above 10 kcal mol-1 A-1 and Behrens the **RMS** above 10; for 24 atoms those differ by
+  sqrt(72) = 8.49. Both penalise the **total** gradient, so the added form is this project's own, adopted because our
+  frames are enzyme geometries in vacuo where the bare substrate already carries a gradient. Neither published
+  threshold is carried over.
+- **Survival is reported under two criteria, never as one number**: the effect still favourable, and the geometry
+  still a stationary point of the right kind (no collapse under 1.2 A, no bond moving more than 0.15 A, exactly one
+  imaginary mode at the TS - the first two from WP4). Dittner's PM7 to PBE0 carry-over succeeded for 83-100 % of
+  designs on the first question and 2.8-80 % when the second was also asked, the whole gap being the residual
+  gradient. **G0 is fitted on the stricter of the two.**
+- **The tolerance.** No published source states one of the form "at least X per cent must survive"; 21 papers were
+  read in full to establish that. Loss must be below **15 % of the design's own frozen effect** - not a new constant,
+  but the fraction decision O6 already requires for the method-and-basis uncertainty, so the project carries one such
+  number used in both places. The analogy supporting the value: a single frozen or minimised structure sits about
+  10-15 % from the sampled answer in three different enzymes (PHBH 112.3 against 101.5 kJ/mol; TIM 21.9 against 19.8
+  kcal/mol; cyclophilin A 87.5 against 75.9 kJ/mol), and a frozen first-order electrostatic model of exactly this
+  project's form retains 87-99 % of the ab initio effect where the effect is of appreciable size (Sokalski 1985,
+  Table 2). Stage 4c measured 10-31 % for our own first-order score.
+- **A floor clause**, which Sokalski's data forces: at his one weakly-interacting site the true effect is
+  -0.59 kcal/mol and the model gives -2.20, so the ratio is meaningless while the absolute error is unremarkable. If
+  a design's frozen effect is smaller than 3.2 kcal/mol - the absolute method-and-basis figure the records already
+  give - its survival is **not assessable**, is reported as such, and does not enter the fit.
+- **kappa follows from the measurement** rather than being chosen: it is the value for which the penalty at the
+  largest observed G_add,R equals the Loss measured there, so the penalty estimates the effect a design is expected
+  to lose, in the score's own units.
+- **One frame is a limitation, and the mitigation is fixed in advance**: once Stage 5 production exists, G0 is
+  **confirmed** on the two lowest-numbered complete frames other than 42436 and **not re-tuned**; if it would have
+  changed by more than the spread of the pairs it was fitted to, that is reported as a limitation of the short list.
+- **Direction.** The term acts against a lower frozen barrier. Stated with the results, not left implicit: a gradient
+  penalty on a fixed path is a keep-away term (Behrens, printed p. 67), and because decision O2 applies it at
+  re-scoring rather than inside the MILP, the pool keeps the close-contact designs while the ranking is biased
+  against them.
+- **What Stage 6 cannot settle**, recorded rather than discovered later: one frame; 2-3 spheres applied at up to 20;
+  relaxation is not validation; the spheres stay frozen, which Dittner's 2020 work says is the thing to fix; and a
+  frozen-path search found only 24-41 % of the effect his relaxed-path search found. For the floor of that
+  comparison: none of 1000 random designs was catalytic at PBE0 in his test.
+
+**Four further corrections to our reading of the library** were found while this was drafted and are recorded in
+`phase2.2/LIBRARY_ERRATUM2_20261021.md`: Rod & Ryde's "59 vs 26 kJ/mol" is two frozen choices rather than a
+frozen-versus-relaxed bias; the shared figure of 10 kcal mol-1 A-1 is a norm in one thesis and an RMS in the other;
+the two theses' page offsets, verified against their footers; and the version-of-record pages of Dittner & Hartke
+2018, which the library holds only as a Just Accepted manuscript but which Chapter 6 of Dittner's thesis reprints
+with the journal's own pagination. None changes a result or any decision.
