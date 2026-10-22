@@ -1,0 +1,79 @@
+Stage 6 - DIAGNOSTIC 1: how the eight single points were actually obtained. Written 22 October 2026, the same day.
+
+This records an HPC-operations fact, not a scientific one. No decision, threshold, tolerance, criterion, arrangement,
+input file or reported quantity changes, and STAGE6_CRITERIA.txt is untouched. It exists because seven of sixteen
+submissions were lost to one bad compute node, and a record that showed only the eight that worked would be a record
+of a cleaner run than the one that happened.
+
+N1  WHAT WAS SUBMITTED
+
+The eight diagnostic single points of STAGE6_DIAGNOSTIC1_20261022.txt were submitted once, and the failures
+resubmitted twice, for sixteen submissions in all. Nine ran. Seven did not.
+
+   job      folder                 node      walltime used  exit  outcome
+   421258   DIFF-S6-20/R_sp        comp042   00:15:32          0   ran
+   421259   DIFF-S6-20/TS_sp       not recorded  ~00:10        0   ran
+   421260   DIFF-S6-2/R_sp         comp036   00:00:00         -2   FAILED
+   421261   DIFF-S6-2/TS_sp        comp055   00:07:09          0   ran
+   421262   DIFF-S6-C/R_sp         comp036   00:00:00         -2   FAILED
+   421263   DIFF-S6-C/TS_sp        comp036   00:00:00         -2   FAILED
+   421264   DIFF-S6-P/R_sp         comp036   00:00:00         -2   FAILED
+   421265   DIFF-S6-P/TS_sp        comp036   00:00:00         -2   FAILED
+   421266   DIFF-S6-2/R_sp         comp042   00:08:22          0   ran, resubmission 1
+   421267   DIFF-S6-C/R_sp         comp043   00:04:55          0   ran, resubmission 1
+   421268   DIFF-S6-C/TS_sp        comp036   00:00:00         -2   FAILED, resubmission 1
+   421269   DIFF-S6-P/R_sp         comp055   00:11:03          0   ran, resubmission 1
+   421270   DIFF-S6-P/TS_sp        comp036   00:00:00         -2   FAILED, resubmission 1
+   421271   DIFF-S6-C/TS_sp        comp043   not recorded      0   ran, resubmission 2, host pinned
+   421272   DIFF-S6-P/TS_sp        comp055   not recorded      0   ran, resubmission 2, host pinned
+
+Three walltimes read "not recorded": PBS keeps finished-job detail only briefly and those three had aged out of
+qstat -xf by the time this was written. The node and the exit status for 421271 and 421272 are the hosts they were
+pinned to and the fact that both produced a normal job.out; nothing is inferred beyond that.
+
+N2  WHAT THE FAILURE WAS, AND WHAT IT WAS NOT
+
+Every failure is on comp036 and every success is not. PBS exit -2 is a job-execution failure: the job never reached
+the submission script, used 00:00:00 of walltime and wrote no output at all - not a job.out, and not even the
+job.pbs.out that PBS itself creates. A job that dies this way is indistinguishable, from the file system alone, from
+a job that has not started.
+
+It is NOT an input problem, and the evidence is in the table rather than in an argument:
+
+  - DIFF-S6-2/R_sp failed on comp036 while its own TS twin ran on comp055 in the same submission batch, and the two
+    differ only in geometry;
+  - DIFF-S6-C/TS_sp and DIFF-S6-P/TS_sp were checked against their R twins with diff after they had failed twice:
+    job.inp is byte-identical and job.pbs byte-identical apart from the job name and the directory;
+  - all four designs eventually ran to normal termination from the SAME unmodified files;
+  - the first three runs that succeeded already established that ma-def2-SVP with def2/J is accepted, that the
+    20-sphere QM/MM job works at the new basis, and that job.engrad comes out at the expected size.
+
+The scheduler kept choosing comp036 because a node on which nothing ever runs is always the idlest node available,
+so the fault is self-reinforcing: each resubmission was sent to the same broken node first.
+
+An earlier hypothesis - that the plain-QM control was the odd one out because it alone has no %qmmm block - was
+WRONG and is recorded as wrong. Both S6-P jobs and S6-2/R are QM/MM and were among the failures.
+
+N3  WHAT WAS DONE ABOUT IT
+
+The last two were resubmitted with the host named on the qsub command line:
+
+   qsub -l select=1:ncpus=8:mem=24gb:host=comp043 job.pbs
+
+This is a RESOURCE REQUEST and nothing else, of the same kind as the walltime corrected in STAGE6_ERRATUM2 and the
+memory corrected in SP_AMENDMENT3, and no pre-registration fixes where a job runs. It was passed on the command line
+specifically so that the committed job.pbs files were NOT edited: all 30 files under phase2.2/cs_stage6/diffuse/
+still match INPUT_CHECKSUMS.sha256 as x97j committed them, which cs6_diagnostic1.py's own run re-verified. The
+cores, the memory and the walltime asked for are unchanged.
+
+N4  WHAT THIS MEANS BEYOND THIS DIAGNOSTIC
+
+comp036 should be reported to the HPC administrators with job IDs 421260, 421262, 421263, 421264, 421265, 421268
+and 421270.
+
+The wider risk is not this stage. These were five-minute jobs in the short queue and their absence was obvious
+within the hour, and the x97k bundle refused to measure anything while any output was missing rather than
+measuring the six it had. A week-queue job that dies this way looks exactly like a week-queue job that has not
+started yet, and the SP package has many of those queued. Anything that concludes a job "has not started" from the
+absence of its output is unsafe on this cluster; the plain qstat -u 18660916 record, with Exit_status from
+qstat -xf, is the only evidence of what happened to a job.

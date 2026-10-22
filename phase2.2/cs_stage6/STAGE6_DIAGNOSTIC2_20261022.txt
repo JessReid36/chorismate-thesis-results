@@ -1,0 +1,155 @@
+Stage 6 - DIAGNOSTIC 2: the charge-magnitude scan. Does the linear coefficient the optimiser uses survive a change
+of basis and of environment, and where does the linear model stop being valid? Written 22 October 2026, after
+DIAGNOSTIC1_RESULT.txt returned NOT USABLE AS THEY STAND and before any relaxation input is regenerated.
+
+THIS IS A DIAGNOSTIC AND NOT A METHOD CHANGE. STAGE6_CRITERIA.txt fixes B3LYP-D3BJ/def2-SVP in vacuo for everything
+Stage 6 reports and that stays fixed. PHASE22_PLAN.txt section 2.2's decision to run no continuum alongside the
+charges stays in force. No number these runs produce replaces a reported number, enters a fit, or changes a
+criterion, tolerance or threshold. They exist to say whether a reported number can be believed, and to measure a
+quantity the pre-registration already names as neglected.
+
+D2.1 WHY
+
+This measurement is not new. s11_probe_scan_result.txt ends:
+
+    STILL PENDING: the charge-magnitude scan at 3.2 A (q = 0.25, 0.5, 1.0, 1.5), which
+    fits ddE(q) = a*q + b*q^2 and so measures the linear coefficient the MILP uses and the
+    differential polarisation it neglects. PBS 414212.
+
+and the companion table in OUTPUT_EXCERPTS_20260929.md headed "Charge-magnitude scaling: does the even part go as
+q^2?" is empty. The scan was designed on 30 September 2026 and never produced a result. Three things since have
+made it the decisive measurement rather than a loose end.
+
+First, PHASE22_PLAN.txt lists as surrogate level 2 "LINEAR electrostatic response, neglecting the measured b*q^2
+polarisation term". The term is neglected by design and its size at the designs' own geometry has never been
+measured.
+
+Second, the only measurement of it anywhere - phase2b_charge_design/06b_inner_shell/, 29 September 2026 - was made
+at def2-SVPD with CPCM epsilon = 4, that is with diffuse functions AND the dianion bound. It found the odd part
+recovered to 1.1 per cent of q*Dv at 3.0 A and to 20 per cent at 2.5 A, with the even part 12.9 and 23.2 per cent.
+Every Stage 6 design places its closest sphere at 2.85 to 2.96 A, between those two rows. The production pipeline
+then moved to def2-SVP in vacuo, where neither quantity has been measured.
+
+Third, s11_probe_scan_result.txt's own finding 1 - "NO ELECTRONIC OVER-POLARISATION ANYWHERE FROM 1.5 TO 10 A, AT
+FIXED GEOMETRY" - was obtained at "! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF", in vacuo. That is the one
+condition in which the effect cannot appear: no diffuse functions, around a density whose highest electrons are
+not bound and therefore have nowhere to go. Two measurements in the repository disagree and the pipeline inherited
+the reassuring one. DIAGNOSTIC1_RESULT.txt has now shown a 118 per cent movement with a sign reversal.
+
+D2.2 WHAT IS RUN
+
+One site, both geometries, both signs, four magnitudes, five conditions. 93 single points of about five minutes.
+
+   SITE        1690, which is S6-P's site and the top-ranked site of the committed grid, at
+               44.207824 19.215457 38.959451. Its committed a is -6.67782 kcal/mol per e (A_f42436.tsv via
+               relax/ARRANGEMENTS.txt). A_REPORT.txt's finite-difference check (c) validated a at sites 1678,
+               1954 and 1612 at +-0.05 e and NOT at 1690, so this also extends that validation to the site every
+               design uses.
+
+   GEOMETRIES  frame_42436/reactant_qm.xyz and transition_state_qm.xyz, the committed Stage 6 geometries, byte for
+               byte, with their recorded sha256 checked.
+
+   CHARGES     q = +-0.05, +-0.25, +-0.50, +-1.00 e. Both signs at every magnitude, because that is what separates
+               the response into its parts: odd(q) = [ddE(+q) - ddE(-q)]/2 is the first order the MILP uses and
+               even(q) = [ddE(+q) + ddE(-q)]/2 is the polarisation it neglects. +-0.05 is A_REPORT.txt's own
+               finite-difference step; +-1.00 is the charge bound the grid admits; nothing outside [-1, +1] is run
+               because the optimiser cannot use it.
+
+   A BARE POINT CHARGE, not an LJ sphere, in every run. This is forced and not a convenience. STAGE6_FINDINGS
+   _20261022.md Finding 4 measured the LJ sphere against the bare charge at this very site and found they differ by
+   exactly L, 0.0000 kcal/mol, with identical electronic deviation - necessarily, since the Lennard-Jones term
+   never enters the QM Hamiltonian. So the electronic response is the same object either way, L is a classical
+   number already committed in L_f42436.tsv, and a bare charge is what cs5_amatrix.py itself uses for the A matrix
+   and its finite-difference check. It is also what makes the continuum conditions runnable at all: ORCA 6.0.1
+   refuses CPCM together with its QM/MM module but permits CPCM with %pointcharges, which is what the
+   29 September runs used.
+
+   CONDITIONS  a 2 x 2 in basis and environment, plus one convergence point:
+
+      C1   def2-SVP      in vacuo          the production condition. STAGE5_CRITERIA.txt section 6's own level,
+                                           and its keyword line must equal cs5_amatrix.py's HEAD byte for byte.
+      C2   def2-SVP      CPCM epsilon 4    isolates the continuum at fixed basis
+      C3   ma-def2-SVP   in vacuo          DIAGNOSTIC 1's condition
+      C4   ma-def2-SVP   CPCM epsilon 4    isolates the basis at fixed continuum; diffuse AND bound, the condition
+                                           in which the linear response has ever been found accurate
+      C5   def2-SVPD     in vacuo          the convergence point, and CHARGE_MODEL_DECISIONS.md D1's own
+                                           outstanding guard: "the polarisation term b is the quantity most
+                                           affected by an unbound dianion, so WP7 repeats two sites at def2-SVPD"
+
+   The 2 x 2 is the point. Basis and environment have never been varied independently in this project, and
+   Diagnostic 1 changed only the basis while the one favourable measurement changed both.
+
+   ALSO, three runs that cost nothing and settle a separate question: the VERTICAL DETACHMENT ENERGY of the bare
+   dianion at the reactant geometry, as E(monoanion, charge -1, doublet, same geometry) - E(dianion), at def2-SVP,
+   ma-def2-SVP and def2-SVPD in vacuo. Finding 8 reads a positive HOMO as meaning the highest electrons are
+   unbound. Two papers held in chorismate-refs say that inference is not valid for DFT orbitals: Rienstra-Kiracofe
+   et al., Chem. Rev. 2002, 102, 231, p. 246, attributes positive anion HOMOs to self-interaction error in inexact
+   functionals and notes hybrids "often produce negative HOMO energies for even anions"; Galbraith & Schaefer,
+   JCP 1996, 105, 862, p. 863, states that "the physical significance of the orbitals obtained from density
+   functional methods is questionable". The VDE is the quantity that settles it, and no paper held computes it, or
+   the HOMO, for the chorismate dianion in any basis.
+
+D2.3 WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+The quantities are, per condition: a_est, the slope of the odd part as q -> 0, taken as odd(0.05)/0.05; b, the
+curvature from the even part; and q*, the largest magnitude at which |even(q)| stays under 10 per cent of
+|odd(q)|.
+
+  THE A MATRIX DOES NOT REPRODUCE ITS OWN RESPONSE - tested first, and the most serious outcome - if a_est at C1
+  disagrees with the committed a of -6.67782 by more than A_REPORT.txt's finite-difference tolerance. C1 is the
+  level and the site that produced that number, and analyse separately requires C1's two bare energies to
+  reproduce A_REPORT.txt's committed in vacuo values to below 1e-6 Eh, so a disagreement here is not a basis or
+  environment question at all: either the A matrix's construction or its row order is wrong at this site. That
+  would have to be found before any comparison below means anything, and it would put every design in Stage 6 and
+  every number downstream of the A matrix in question. It is tested first for that reason.
+
+  THE A MATRIX IS SOUND if a_est at C1 agrees with the committed a of -6.67782 within A_REPORT.txt's own
+  finite-difference tolerance, 0.01 kcal/mol per e plus 1 per cent of |a| (that is, within 0.0768), AND a_est at
+  C3 agrees with C1 within the same tolerance. The linear coefficient is then basis-independent, Stage 5's A
+  column stands untouched, and the whole of Diagnostic 1 is a statement about charge MAGNITUDE and not about the
+  surrogate's coefficients. The way forward is then the formulation: a minimum sphere-to-substrate distance, a
+  total-field budget sum_i |q_i| <= B1 of the kind s14_design_milp.py already implements, and a per-site cap at q*.
+
+  THE A MATRIX IS BASIS-SENSITIVE AND MUST BE RE-DERIVED if a_est at C3 differs from C1 by more than decision O6's
+  15 per cent method-and-basis figure. Stage 5's A column, every design built on it, and every number downstream
+  of it would then have to be rebuilt at a basis that is stated and justified. This is the expensive branch and it
+  must be identified rather than avoided.
+
+  QUALIFIED, in between: a_est moves by more than the finite-difference tolerance but less than 15 per cent. The
+  coefficients are then usable with the movement stated as a method uncertainty.
+
+  SEPARATELY, ON THE ENVIRONMENT: if b at C4 is smaller in magnitude than half of b at C3, binding the density
+  materially improves the linearity of the response, and the design environment becomes a live question on grounds
+  of model validity rather than of results. PHASE22_PLAN.txt section 2.2's double-counting argument would then have
+  to be weighed against it explicitly, with the measured differential continuum effect of 0.431 kcal/mol
+  (SOLVATION_DECISION_NOTE.md) as the cost. If instead b at C4 and C3 agree within half, the continuum does not
+  fix the response, section 2.2 stands untouched, and no part of this diagnostic argues for reopening it.
+
+  ON CONVERGENCE: if b at C5 (def2-SVPD) agrees with C3 (ma-def2-SVP) within 25 per cent, the minimal augmentation
+  is converged enough to be read as an answer. If it does not, neither diffuse basis is an arbiter and the
+  bracketing in the assessment stands as the honest conclusion.
+
+  ON BINDING: a NEGATIVE vertical detachment energy means the dianion is genuinely metastable to electron loss at
+  that condition, and Finding 8's reading is vindicated on the right quantity. A POSITIVE VDE means the species is
+  bound despite the positive HOMO, Finding 8's second half must be withdrawn as an artefact of reading Koopmans'
+  theorem off a DFT orbital, and "the designs make it worse" ceases to be a finding.
+
+No threshold here is new. The 0.01 + 1 per cent is A_REPORT.txt's existing finite-difference tolerance, the 15 per
+cent is decision O6's existing method-and-basis figure, and the 10 per cent defining q* is a stated convention for
+reporting rather than a criterion anything passes or fails. Nothing is accepted or rejected on the strength of them.
+
+D2.4 WHAT THIS DOES NOT TEST
+
+The geometries, which are frame 42436's committed stationary points throughout; Finding 7's 33.8 kcal/mol descent
+is untouched by anything here. Additivity, which Finding 2 measured at def2-SVP only and which the four ADD-* runs
+would have to repeat. More than one site: site 1690 is where every design puts its largest positive charge, and a
+coefficient that survives there may still fail elsewhere on the grid. More than one frame. And whether any
+admissible charge distribution can lower this barrier usefully, which is the open question of the project and is
+not what a scan at one site can answer.
+
+DIRECTION
+
+None. No decision, threshold, tolerance, criterion, arrangement or reported quantity changes, and the stage's
+method remains B3LYP-D3BJ/def2-SVP in vacuo. What changes is whether the A matrix is known to be sound, what the
+largest usable per-site charge is, and whether the environment question is reopened - and D2.3 fixes which before
+the runs go in.
