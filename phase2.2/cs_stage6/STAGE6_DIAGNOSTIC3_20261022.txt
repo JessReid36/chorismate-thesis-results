@@ -1,0 +1,150 @@
+Stage 6 - DIAGNOSTIC 3: does the designed charge need Pauli repulsion? Written 22 October 2026, after
+DIAGNOSTIC2_RESULT.txt and before Stage 7's constraints are fixed.
+
+THIS IS A DIAGNOSTIC AND NOT A METHOD CHANGE. STAGE6_CRITERIA.txt and STAGE5_CRITERIA.txt are untouched,
+PHASE22_PLAN.txt section 2.2 stays in force, and no number these runs produce replaces a reported number or alters
+a criterion. It exists because the answer decides whether the charge bound in Stage 7 is a measured property of the
+substrate or a workaround for a defect in the charge model, and those are different things.
+
+D3.1 WHY
+
+DIAGNOSTIC2_RESULT.txt measured the response at site 1690 to a bare point charge, both signs, four magnitudes, five
+conditions. At q <= 0.50 e every condition is internally consistent: even/q^2 is constant to between 0.6 and 4.7
+per cent and odd/q to between 0.03 and 0.94 per cent. At q = 1.00 e, two of the five stop being consistent, and
+they are the two with diffuse functions and no continuum:
+
+   ma-def2-SVP in vacuo   even/q^2  -1.480 (q<=0.50)  ->  +0.972 (q=1.00)   sign inverted
+                          ddE(+q)   -3.9781 at 0.50   ->  -3.8579 at 1.00   NON-MONOTONE: more charge, less effect
+   def2-SVPD   in vacuo   even/q^2  -1.532            ->  -0.737            halved
+                          odd/q     -7.4706           ->  -6.7768           down 9 per cent
+
+def2-SVP shows none of it, and neither CPCM condition does.
+
+IT MUST NOT BE CONCLUDED FROM THIS THAT def2-SVP IS CORRECT. It has no diffuse functions, so the substrate's
+density has nowhere to leak, and it therefore cannot exhibit the effect whether or not the effect is real. The
+diffuse sets are the more faithful description of an anion's density - Rienstra-Kiracofe et al., Chem. Rev. 2002,
+102, 231, p. 244: "It is common knowledge that a proper description of the electronic structure of atomic and
+molecular anions requires basis sets with diffuse functions."
+
+The named explanation is a defect in the CHARGE MODEL, not in the basis. Marefat Khah, Reinholdt, Olsen, Kongsted
+and Hattig, J. Chem. Theory Comput. 2020, doi:10.1021/acs.jctc.9b01162, held as acs.jctc.9b01162.pdf:
+
+   "In most QM/MM approaches, the MM environment is described by classical mechanical potentials acting only on
+    the nuclei, e.g., pair-wise 6-12 Lennard-Jones potentials. The missing effect of the Pauli repulsion on the
+    electronic wavefunction leads to the so-called electron spill-out (ESO) problem. This problem manifests itself
+    as an unphysical leaking of the electron density into the MM environment. The ESO diminishes the accuracy of
+    the calculations and in some cases causes completely unphysical results; in particular, when diffuse basis
+    functions are required to capture the physical character o[f the states]"
+
+and their own symptom, in a different observable but the same shape as ours:
+
+   "Some of the excitation energies that should be above 5 eV collapse with PE to unphysically low values if
+    diffuse basis functions allow the electrons to spill out into the environment. This problem disappears if the
+    ECPs are added."
+
+This applies to us exactly, and STAGE6_FINDINGS_20261022.md Finding 4 is the proof that it applies: at a fixed
+geometry the Lennard-Jones sphere and the bare point charge at this very site differ by exactly L, the classical
+Lennard-Jones energy, with identical electronic deviation - "necessarily, since the Lennard-Jones term never
+enters the QM Hamiltonian." Our charge sites therefore have a wall for nuclei and NO wall for electrons.
+
+Two consequences worth stating plainly, because both change earlier reasoning in this project:
+
+  (a) Capping |q| to stay below where the anomaly appears would be avoiding the regime in which the model is
+      wrong, not fixing it. If the charge bound is to be lowered it must be because the SUBSTRATE cannot be
+      described there, not because the charge model cannot.
+
+  (b) PHASE22_PLAN.txt section 2.3 called replacing point charges with Gaussian-smeared charges "the main physical
+      change", and CHARGE_MODEL_DECISIONS.md line 158 records that smearing is unavailable in ORCA, a loss this
+      project has carried since 30 September. The same paper settles that it would not have helped here:
+      "[smearing] can, in effect, lift the electrostatic singularities that occur at MM sites with point
+      multipoles and provide a more accurate description of the continuous charge distribution in the shortrange
+      including charge penetration effects. However, these methods do not capture the effects of the Pauli
+      exchange repulsion on the electronic wavefunction." The missing piece was always Pauli repulsion.
+
+D3.2 WHAT IS RUN
+
+The published cure is a one-centre pseudopotential on the MM site, and the parameters are in that paper's
+supporting information, held as ct9b01162_si_001.pdf, Tables S1 to S3 for He, Ne and Ar, "fitted to reproduce with
+zero electrons the orbital energies" of the relevant shells - that is, pure repulsive potentials with no
+electrons, which is exactly a Pauli wall. THEY ARE NOT USED HERE. Table S2 for Ne states ncore = 10 and lmax = 3
+but then lists a d local block together with a d-f term, which is internally inconsistent in TURBOMOLE's ECP
+format, and converting it to ORCA's NewECP form would require guessing which label is wrong. That is deferred to
+its own step, with the parameters recorded here so the deferral is explicit and not a loss of the reference.
+
+What is run instead needs no new capability and no guessed parameter: REPLACE THE POINT CHARGE WITH A REAL ION,
+which has electrons and therefore has Pauli repulsion by construction.
+
+   M0  bare substrate, charge -2, 118 electrons                        ALREADY COMMITTED (qscan C1/C5 bare_R, bare_TS)
+   M1  substrate + a bare +1 POINT CHARGE at site 1690                 ALREADY COMMITTED (qscan C1/C5 qp1000_R, qp1000_TS)
+   M2  substrate + Na+ as a QM ATOM at site 1690, charge -1, 128 e     NEW
+   M3  substrate + K+  as a QM ATOM at site 1690, charge -1, 136 e     NEW
+   M4  substrate + a GHOST Na at site 1690 (basis functions only, no
+       nucleus, no electrons, no charge), charge -2, 118 e             NEW
+   M5  substrate + a GHOST K at site 1690, same                       NEW
+
+at both committed geometries and at both def2-SVP and def2-SVPD in vacuo: 16 new single points of a few minutes.
+M0 and M1 are read out of the committed qscan outputs archive rather than re-run, so the comparison is against the
+same numbers Diagnostic 2 reported.
+
+   ddE(model) = [E_TS(model) - E_TS(bare)] - [E_R(model) - E_R(bare)], kcal/mol, each model against the bare
+   substrate at the same basis. The ion's own energy cancels in the difference of differences.
+
+   WHY TWO IONS. Na+ has an ionic radius of about 1.02 A and K+ about 1.38 A, against about 1.70 A for the van der
+   Waals radius of a guanidinium carbon. Na+ therefore UNDER-represents the wall a real arginine presents, and K+
+   less so. If the effect grows from Na+ to K+ that is the signature of Pauli repulsion and it tells us how far a
+   point charge is from standing for a group of that size. Na+ alone would give only a lower bound.
+
+   WHY THE GHOSTS. Adding an ion adds basis functions, and basis functions alone lower the substrate's energy
+   differentially between R and TS. M4 and M5 carry the same basis functions with no nucleus, no electrons and no
+   charge, so they measure that contribution on its own. Without them the comparison between M1 and M2 would
+   confound Pauli repulsion with basis-set superposition.
+
+   WHAT IS NOT RUN, and deliberately: a guanidinium fragment, which is the group the design is meant to stand for.
+   It requires choosing a position AND an orientation, and that is a modelling decision to be taken deliberately
+   rather than folded into a diagnostic. It is the natural next step if this one finds an effect.
+
+D3.3 WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+The quantities are ddE(M1) through ddE(M5) at each basis, and the basis-corrected ion effect
+
+   ion(X)  =  ddE(real ion X)  -  ddE(ghost X)
+
+which is what the ion does beyond providing basis functions, against ddE(M1), what a bare point charge of the same
+monopole does.
+
+  THE GHOST CONTROL MUST PASS FIRST. If |ddE(ghost)| exceeds 0.30 kcal/mol at either basis, the basis-set
+  contribution is not negligible and no comparison below is clean; the result is then reported as inconclusive
+  with the ghost values given, and a counterpoise treatment is required before this question can be answered.
+
+  THE POINT CHARGE IS AN ADEQUATE SURROGATE AT +1 e if |ion(Na) - ddE(M1)| and |ion(K) - ddE(M1)| are both under
+  10 per cent of |ddE(M1)| at def2-SVPD. The q = 1.00 anomaly of Diagnostic 2 would then NOT be a Pauli-repulsion
+  artefact, something else would be responsible, and the measured charge bound would stand as an empirical
+  property of the substrate's response rather than as a defect of the charge model.
+
+  THE POINT CHARGE IS NOT AN ADEQUATE SURROGATE AT +1 e if either differs by more than 10 per cent. The anomaly is
+  then explained, the correct remedy is a Pauli wall for the electrons and not a lower charge bound, and Stage 7
+  must not adopt the 0.25 e cap as a design constraint - it would be concealing a model defect behind a
+  restriction on the design space.
+
+  AND THE SIZE TEST, which is what bears on back-designing to residues: if |ion(K)| differs from |ion(Na)| by more
+  than 10 per cent, the effect depends on the size of the wall. A single point charge then cannot represent a
+  guanidinium at this distance at any magnitude, independently of what the barrier does, and the representation
+  itself has to change rather than its parameters. If they agree within 10 per cent the effect is insensitive to
+  the wall's size over this range, which would be evidence that a point charge plus a single transferable
+  pseudopotential is enough.
+
+No threshold here is new in kind; the 10 per cent is stricter than decision O6's 15 per cent method-and-basis
+figure and is used as a yardstick for reporting, not as a criterion anything passes or fails. Nothing is accepted
+or rejected on the strength of it.
+
+D3.4 WHAT THIS DOES NOT TEST
+
+Whether an ion is a good model of a residue - it is not, and D3.2 says why. The relaxed geometry, where a real ion
+would move and a point charge would be approached; Finding 4 says the Lennard-Jones wall's entire value is there
+and this diagnostic is at fixed geometry only. Any charge magnitude other than +1 e, since an ion's charge is not
+adjustable. Negative charge, for the same reason. More than one site, and more than one frame.
+
+DIRECTION
+
+None. The outcome decides whether Stage 7's charge bound is a measured property of the substrate or a workaround,
+and D3.3 fixes which before the runs go in.
