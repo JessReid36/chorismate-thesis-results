@@ -1,0 +1,119 @@
+#!/bin/bash
+#PBS -N cm_s6q
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/qscan/qscan.pbs.out
+# Stage 6 DIAGNOSTIC 2 (cs6_qscan.py, STAGE6_DIAGNOSTIC2_20261022.txt): 93 single points.
+# Restartable: a run whose job.out ends normally is not repeated. One PBS job, so one node lottery
+# rather than 93 - see diffuse/RUN_NOTES_20261022.txt for why that matters on this cluster.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/qscan
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run C1/bare_R
+run C1/qp0050_R
+run C1/qm0050_R
+run C1/qp0250_R
+run C1/qm0250_R
+run C1/qp0500_R
+run C1/qm0500_R
+run C1/qp1000_R
+run C1/qm1000_R
+run C1/bare_TS
+run C1/qp0050_TS
+run C1/qm0050_TS
+run C1/qp0250_TS
+run C1/qm0250_TS
+run C1/qp0500_TS
+run C1/qm0500_TS
+run C1/qp1000_TS
+run C1/qm1000_TS
+run C2/bare_R
+run C2/qp0050_R
+run C2/qm0050_R
+run C2/qp0250_R
+run C2/qm0250_R
+run C2/qp0500_R
+run C2/qm0500_R
+run C2/qp1000_R
+run C2/qm1000_R
+run C2/bare_TS
+run C2/qp0050_TS
+run C2/qm0050_TS
+run C2/qp0250_TS
+run C2/qm0250_TS
+run C2/qp0500_TS
+run C2/qm0500_TS
+run C2/qp1000_TS
+run C2/qm1000_TS
+run C3/bare_R
+run C3/qp0050_R
+run C3/qm0050_R
+run C3/qp0250_R
+run C3/qm0250_R
+run C3/qp0500_R
+run C3/qm0500_R
+run C3/qp1000_R
+run C3/qm1000_R
+run C3/bare_TS
+run C3/qp0050_TS
+run C3/qm0050_TS
+run C3/qp0250_TS
+run C3/qm0250_TS
+run C3/qp0500_TS
+run C3/qm0500_TS
+run C3/qp1000_TS
+run C3/qm1000_TS
+run C4/bare_R
+run C4/qp0050_R
+run C4/qm0050_R
+run C4/qp0250_R
+run C4/qm0250_R
+run C4/qp0500_R
+run C4/qm0500_R
+run C4/qp1000_R
+run C4/qm1000_R
+run C4/bare_TS
+run C4/qp0050_TS
+run C4/qm0050_TS
+run C4/qp0250_TS
+run C4/qm0250_TS
+run C4/qp0500_TS
+run C4/qm0500_TS
+run C4/qp1000_TS
+run C4/qm1000_TS
+run C5/bare_R
+run C5/qp0050_R
+run C5/qm0050_R
+run C5/qp0250_R
+run C5/qm0250_R
+run C5/qp0500_R
+run C5/qm0500_R
+run C5/qp1000_R
+run C5/qm1000_R
+run C5/bare_TS
+run C5/qp0050_TS
+run C5/qm0050_TS
+run C5/qp0250_TS
+run C5/qm0250_TS
+run C5/qp0500_TS
+run C5/qm0500_TS
+run C5/qp1000_TS
+run C5/qm1000_TS
+run VDE/C1_mono_R
+run VDE/C3_mono_R
+run VDE/C5_mono_R
+echo "end=$(date)"
