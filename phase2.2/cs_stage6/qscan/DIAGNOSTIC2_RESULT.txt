@@ -1,0 +1,74 @@
+STAGE 6 - DIAGNOSTIC 2 RESULT: the charge-magnitude scan at site 1690
+
+Measured by cs6_qscan.py analyse. The verdict rule is STAGE6_DIAGNOSTIC2_20261022.txt D2.3, fixed before
+the runs went in and applied here unchanged. STAGE6_CRITERIA.txt's method is unchanged and nothing below
+replaces a reported number.
+
+ddE(q) = [E_TS(q) - E_TS(0)] - [E_R(q) - E_R(0)], kcal/mol, negative lowers the barrier.
+odd(q)  = [ddE(+q) - ddE(-q)]/2   the first order the MILP uses
+even(q) = [ddE(+q) + ddE(-q)]/2   the polarisation it neglects
+
+C1  def2-SVP  in vacuo
+      q      ddE(+q)    ddE(-q)     odd       even    even/|odd|   odd/q
+     0.05    -0.3363     0.3313    -0.3338    -0.0025       0.7%    -6.6760
+     0.25    -1.7317     1.6051    -1.6684    -0.0633       3.8%    -6.6736
+     0.50    -3.5896     3.0823    -3.3360    -0.2536       7.6%    -6.6719
+     1.00    -7.6757     5.6542    -6.6649    -1.0108      15.2%    -6.6649
+   a_est (odd/q at q=0.05) -6.6760    b (even/q^2 at q=1.00) -1.0108    q* (even <= 10% of odd) 0.50 e
+
+C2  def2-SVP  CPCM eps=4.0
+      q      ddE(+q)    ddE(-q)     odd       even    even/|odd|   odd/q
+     0.05    -0.4006     0.3935    -0.3970    -0.0036       0.9%    -7.9408
+     0.25    -2.0712     1.8988    -1.9850    -0.0862       4.3%    -7.9401
+     0.50    -4.3129     3.6258    -3.9693    -0.3436       8.7%    -7.9387
+     1.00    -9.2980     6.5640    -7.9310    -1.3670      17.2%    -7.9310
+   a_est (odd/q at q=0.05) -7.9408    b (even/q^2 at q=1.00) -1.3670    q* (even <= 10% of odd) 0.50 e
+
+C3  ma-def2-SVP  in vacuo
+      q      ddE(+q)    ddE(-q)     odd       even    even/|odd|   odd/q
+     0.05    -0.3635     0.3561    -0.3598    -0.0037       1.0%    -7.1956
+     0.25    -1.8935     1.7073    -1.8004    -0.0931       5.2%    -7.2017
+     0.50    -3.9781     3.2379    -3.6080    -0.3701      10.3%    -7.2160
+     1.00    -3.8579     5.8008    -4.8293     0.9715      20.1%    -4.8293
+   a_est (odd/q at q=0.05) -7.1956    b (even/q^2 at q=1.00) +0.9715    q* (even <= 10% of odd) 0.25 e
+
+C4  ma-def2-SVP  CPCM eps=4.0
+      q      ddE(+q)    ddE(-q)     odd       even    even/|odd|   odd/q
+     0.05    -0.4561     0.4447    -0.4504    -0.0057       1.3%    -9.0086
+     0.25    -2.3991     2.1149    -2.2570    -0.1421       6.3%    -9.0282
+     0.50    -5.1222     3.9711    -4.5467    -0.5756      12.7%    -9.0934
+     1.00   -11.3337     6.9758    -9.1548    -2.1789      23.8%    -9.1548
+   a_est (odd/q at q=0.05) -9.0086    b (even/q^2 at q=1.00) -2.1789    q* (even <= 10% of odd) 0.25 e
+
+C5  def2-SVPD  in vacuo
+      q      ddE(+q)    ddE(-q)     odd       even    even/|odd|   odd/q
+     0.05    -0.3749     0.3674    -0.3712    -0.0038       1.0%    -7.4233
+     0.25    -1.9531     1.7692    -1.8612    -0.0919       4.9%    -7.4446
+     0.50    -4.1183     3.3523    -3.7353    -0.3830      10.3%    -7.4706
+     1.00    -7.5135     6.0402    -6.7768    -0.7367      10.9%    -6.7768
+   a_est (odd/q at q=0.05) -7.4233    b (even/q^2 at q=1.00) -0.7367    q* (even <= 10% of odd) 0.25 e
+
+THE TESTS OF D2.3
+
+  committed a (A_f42436.tsv)                         -6.67782
+  a_est at C1 (def2-SVP in vacuo)                    -6.67597   |diff| 0.0019  (tolerance 0.0768)
+  a_est at C3 (ma-def2-SVP in vacuo)                 -7.19560   |diff| vs C1 0.5196 = 7.8%  (O6: 15%)
+  b at C3 / b at C4 (does binding fix linearity)     +0.9715 / -2.1789
+  b at C3 / b at C5 (is ma-def2-SVP converged)       +0.9715 / -0.7367
+
+VERDICT PER D2.3: QUALIFIED
+  - a_est moves by more than the finite-difference tolerance but less than O6's 15 per cent; usable with the movement stated as a method uncertainty.
+
+  ON THE ENVIRONMENT: the continuum does not fix the response (|b(C4)| is not under half |b(C3)|); PHASE22_PLAN.txt 2.2 stands untouched
+  ON CONVERGENCE: neither diffuse basis is an arbiter (b differs by more than 25 per cent between ma-def2-SVP and def2-SVPD)
+
+VERTICAL DETACHMENT ENERGY at the reactant geometry (E(monoanion) - E(dianion))
+
+   C1  def2-SVP       VDE  -0.3167 eV   -> the dianion is METASTABLE to electron loss at this condition
+   C3  ma-def2-SVP    VDE  +0.5123 eV   -> the dianion is BOUND at this condition
+   C5  def2-SVPD      VDE  +0.5013 eV   -> the dianion is BOUND at this condition
+
+  A negative VDE vindicates Finding 8's reading on the right quantity. A positive VDE means the
+  species is bound despite a positive HOMO, and Finding 8's second half must be withdrawn as an
+  artefact of reading Koopmans' theorem off a DFT orbital (D2.2, and Rienstra-Kiracofe et al. 2002
+  p. 246 / Galbraith & Schaefer 1996 p. 863, both held in chorismate-refs).
