@@ -1,0 +1,41 @@
+#!/bin/bash
+#PBS -N cm_s6p
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=06:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/pauli/pauli.pbs.out
+# Stage 6 DIAGNOSTIC 3 (cs6_pauli.py, STAGE6_DIAGNOSTIC3_20261022.txt): 16 single points.
+# Restartable: a run whose job.out ends normally is not repeated.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/pauli
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run def2-SVP/M2_Na_R
+run def2-SVP/M2_Na_TS
+run def2-SVP/M3_K_R
+run def2-SVP/M3_K_TS
+run def2-SVP/M4_ghostNa_R
+run def2-SVP/M4_ghostNa_TS
+run def2-SVP/M5_ghostK_R
+run def2-SVP/M5_ghostK_TS
+run def2-SVPD/M2_Na_R
+run def2-SVPD/M2_Na_TS
+run def2-SVPD/M3_K_R
+run def2-SVPD/M3_K_TS
+run def2-SVPD/M4_ghostNa_R
+run def2-SVPD/M4_ghostNa_TS
+run def2-SVPD/M5_ghostK_R
+run def2-SVPD/M5_ghostK_TS
+echo "end=$(date)"
