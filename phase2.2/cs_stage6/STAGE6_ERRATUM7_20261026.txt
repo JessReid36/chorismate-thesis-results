@@ -1,0 +1,294 @@
+STAGE 6 - ERRATUM 7, 26 October 2026
+
+Follows STAGE6_ERRATUM6_20261026.txt. Pre-registrations and committed results are never edited.
+This erratum corrects statements made in documents committed earlier the same day, and records what
+reading the whole of chorismate-refs established. The first item is the most serious thing in it and
+is therefore first.
+
+
+E7.1  RETRACTION: THERE WAS NO FABRICATED QUOTATION
+
+WORKLOG_20261026.md states:
+
+   "A fabricated quotation was caught and discarded. A sentence was offered as verbatim Dittner
+    section 8.3 - '...these are not specifically favored by additional objective function
+    ingredients'. The phrase 'specifically favored' occurs nowhere in the extracted thesis text,
+    including after collapsing whitespace and ligatures."
+
+STAGE6_ASSESSMENT2_20261026.md section 12 quotes the passage in full and states of it:
+
+   "It does not exist."
+
+BOTH STATEMENTS ARE WITHDRAWN. THE QUOTATION IS REAL.
+
+It is in the Dittner dissertation, in the Prospects chapter, and reads:
+
+   "of the search space used in this Thesis. However, these are not speci<fi>cally favored
+    by additional objective function ingredients. In other words, no fundamental new"
+
+where <fi> is the typographic ligature U+FB01. A search for the eight ASCII characters
+"specifically" returns zero matches in the extracted text; a search for the same word set with the
+ligature returns one. The claim that ligatures had been collapsed before concluding the quotation
+did not exist was FALSE WHEN IT WAS WRITTEN. No such normalisation had been performed.
+
+What this means, stated plainly rather than softened. An earlier session quoted the source
+correctly. A later session - the one that wrote Erratum 5, Assessment 2 and the 26 October work log
+- accused it of the single failure HANDOVER_20261026.md section 10 names as the worst available
+here, and committed that accusation to the permanent record, on the strength of a typographic
+ligature in a PDF text extraction. The accusation is withdrawn in full and without qualification.
+
+Two things are NOT withdrawn, because they were independently correct. The substantive reading of
+the surrounding passage stands: Dittner does propose regularisation penalties on charge values as
+FUTURE WORK in the Prospects chapter, for parsimony and interpretability, and states that simpler
+solutions "are not specifically favored by additional objective function ingredients" in the work as
+performed. And nothing in Stage 6 ever rested on the quotation, in either direction.
+
+
+E7.2  WHY IT HAPPENED, AND THE FOUR WAYS THIS LIBRARY DEFEATS A NAIVE SEARCH
+
+The failure was not carelessness about chemistry. It was trusting a negative result from a string
+search over PDF-extracted text. Four distinct mechanisms in chorismate-refs produce a false negative,
+all four of them confirmed by direct inspection:
+
+  LIGATURES         The Dittner dissertation sets fi, ff, ffi as single code points U+FB01, U+FB00,
+                    U+FB03. "specifically", "effect" and "difficult" are not searchable as ASCII.
+  OCR SUBSTITUTION  b508181e (Claeyssens) renders "mol-1" as "mol21" and "=" as "5", so its
+                    "average barrier height of 16.2 kcal mol-1" is stored as "16.2 kcal mol21".
+                    1.471933 (Galbraith) renders the minus sign as the digit 2, so -0.378 reads
+                    as 20.378 and -6.1965 as 26.1965. ANY NUMBER TAKEN FROM THAT FILE MUST BE
+                    RE-CHECKED AGAINST THE PDF BEFORE IT ENTERS A DOCUMENT.
+  TWO-COLUMN TEXT   Most of these PDFs extract with both columns on one physical line. A sentence's
+                    second half can be hundreds of lines from its first, with unrelated text
+                    between. A contiguous-substring search cannot match such a sentence at all.
+  SOFT HYPHENATION  A word split across a line break ("regulari-" / "zation") matches neither half.
+
+Three further quotations were reported unverifiable on 26 October for reasons two and three. Two of
+the three were subsequently found and are genuine. The lesson recorded here is narrow and should be
+applied literally: IN THIS PROJECT, A FAILED TEXT SEARCH IS NOT EVIDENCE OF ABSENCE. It is evidence
+that the search failed.
+
+cs_citecheck.py is committed alongside this erratum so that the check is mechanical and repeatable
+rather than a matter of care. It normalises ligatures, combining marks and soft hyphenation, splits
+elided quotations at the ellipsis and verifies each fragment separately, falls back from exact
+substring matching to n-gram coverage so that two-column breakage does not produce a false negative,
+and reports anything it cannot match as UNMATCHED - never as absent, and never as fabricated.
+
+
+E7.3  THE ENZYME FIELD COMPARATOR: THREE NUMBERS WITHDRAWN, THE COMPARISON REBUILT
+
+STAGE6_ASSESSMENT2_20261026.md section 4 states:
+
+   "Siddiqui & Dubey (PCCP 2022, 24, 1974, doi:10.1039/d1cp03978d) report the field projected along
+    the breaking ether C-O of wild-type BsCM as -0.20 V/A without solvent and -0.53 with, R90A at
+    -0.133 and R90G at -0.095, so Arg90's own share is roughly 0.1 to 0.2 V/A."
+
+That paper is NOT in chorismate-refs. The numbers came from a web-search summary during the y02/y03
+literature pass, which is precisely what the project's own rule forbids. WITHDRAWN: the -0.20, the
+R90A -0.133, the R90G -0.095, and the derived statement that Arg90's share is 0.1 to 0.2 V/A. Also
+withdrawn is any use of "0.20 to 0.53 V/A" as the wild-type range, including in
+Y03_FIELD_CALIBRATION_RESULT.txt and the 26 October work log. The designs are NOT "about eight times
+Arg90's share"; that quantity is not available from this library.
+
+ONE ENDPOINT SURVIVES AND IS CITABLE. au3c00536 (Siddiqui, Stuyver, Shaik & Dubey, JACS Au 2023, 3,
+3259) IS in the library, its section 4.1 is titled "LEF in Chorismate Mutase", and its Figure 2c is
+labelled "LEF= -0.53 V/A" with the caption stating "(C-O bond axis) overlaid on the TS structure,
+and local electric field quantification in the WT enzyme along the reaction axis". That is the only
+field value for this enzyme anywhere in chorismate-refs. Two independent full readings of the
+chorismate and the electric-field groups of papers confirmed that no other exists.
+
+The replacement comparison, every value from a paper in the library:
+
+   wild-type chorismate mutase, C-O reaction axis    -0.53 V/A        au3c00536 Fig. 2c
+   ketosteroid isomerase, C=O, vibrational Stark     144 +- 6 MV/cm   Fried & Boxer, annurev
+   TEM-1 beta-lactamase, engineered series           -171 to -138 MV/cm   au3c00536
+   PaAPase, WT to Q6 variant                         -15.3 to +21.5 MV/cm au3c00536
+   applied OEEF, QM/MM practice                      0.5 V/A          jacs.9b13029
+   applied OEEF, Diels-Alder                         up to ~0.0125 a.u.   nchem.2651
+
+Unit anchors as printed: "Note that 1 MV cm-1 = 10-2 V A-1" (au3c00536) and "1 a.u. = 51.4 V A-1"
+(nchem.2651). So KSI's 144 MV/cm is 1.44 V/A.
+
+On that axis the Stage 6 designs, at 0.82 to 1.21 V/A along the breaking C-O, sit between the only
+published field for this enzyme and the strongest measured enzyme field known, and above current
+applied-field practice. S6-20's mean of 1.633 V/A and E5's peak of 2.920 V/A are above KSI. This is
+a stronger statement than the withdrawn one and it rests entirely on papers in the library.
+
+A quantitative link from field to barrier is also available: "where DDE (kcal mol-1) is the change
+in energy difference between the two reference points, F is the OEEF vector (expressed in V A-1),
+and Dmu is the difference in the dipole", i.e. DDE = 4.8 F.Dmu - carried with the authors' own
+caveat that it is "only a crude, zeroth-order, approximation".
+
+
+E7.4  THE DIELECTRIC CAVEAT: SOURCE WITHDRAWN, DIRECTION PRESERVED
+
+Assessment 2 section 10 attributes to Burschowsky et al. (FEBS Open Bio 2017, doi
+10.1002/2211-5463.12224) the figures 36.6 kJ/mol at eps = 1, about 18 at converged eps, against an
+experimental 27.2, and the conclusion "In this exact enzyme, vacuum overshoots by 35 per cent". That
+paper is not in chorismate-refs and those numbers appear in no paper that is. ALL FOUR FIGURES AND
+THE 35 PER CENT ARE WITHDRAWN.
+
+The direction of the error is independently supported and may be retained, without a number:
+Warshel et al. (cr0503106) state that microscopic studies "frequently overestimate the electrostatic
+effect, because microscopic studies usually drastically underestimate the dielectric effect for
+charge-" separation, and the Menshutkin study (jacs.9b13029) quantifies screening in the same
+direction. So: a vacuum point-charge model is expected to OVERSTATE the catalytic effect a given
+charge set would deliver in a protein. The magnitude of that overstatement is not established here.
+
+
+E7.5  WHAT ARG90 IS WORTH, FROM A PAPER THAT IS IN THE LIBRARY
+
+Replacing the withdrawn field share, pnas.1408512111 reports that "the positively charged arginine
+contributes up to 5.9 kcal/mol to transition state stabilization but only 0.6 kcal/mol to the"
+ground-state binding energy. That is a transition-state-versus-ground-state split for a single
+charge in this exact enzyme, which is what a charge-design thesis needs and what the withdrawn field
+numbers were being used as a proxy for. au3c00536 Figure 2b additionally gives (kcat/Km)/kuncat of
+6x10^10 M-1 for wild type against <10^4 M-1 for R90A.
+
+Note for the record: NO R90G DATA EXISTS IN THIS LIBRARY. Only R90A, R90K and R90Cit.
+
+
+E7.6  CITATION INTEGRITY: 37 OF 69 CITED DOIs ARE NOT IN THE LIBRARY
+
+CITATION_INTEGRITY_20261026.md, produced mechanically by cs_citecheck.py and committed with this
+erratum, lists every DOI cited anywhere in the results repository and whether the paper is in
+chorismate-refs. 32 are present; 37 are not.
+
+This is not an accusation that those claims are wrong. It is a statement that they cannot currently
+meet the project's own evidence rule, and that the gap is now on the record and countable instead of
+latent. Re-running cs_citecheck.py after adding papers is the way to close it.
+
+
+E7.7  THERE IS NO NORM BUDGET IN THE GOCAT LITERATURE. THE Sq^2 CONSTRAINT IS THIS PROJECT'S OWN
+
+A full reading of both Kiel dissertations and both journal papers establishes the complete GOCAT
+constraint set: a fixed number of charges N_Ch; per-charge box bounds q_i in [-1, +1] e; a minimum
+INTER-CHARGE separation r_min, 1 A by default and varied to 0.1 A and 3.0 A in specific studies;
+charges pinned to a common van der Waals surface or to a 7.5 A sphere; and a total-charge equality,
+sum q_i = 0, in the neutral runs. There is no minimum charge-to-substrate distance; the surface does
+that work.
+
+NO L1 BUDGET, NO L2 BUDGET, NO LASSO, NO RIDGE PENALTY AND NO SPARSITY TERM IS IMPOSED ON THE DESIGN
+CHARGE VECTOR ANYWHERE IN THAT LITERATURE. A mechanical sweep for lasso, elastic net, sparsity,
+cardinality, Tikhonov, budget, l1 and l2 returns nothing; the one genuine occurrence of "Ridge"
+concerns RESP charge FITTING, not design; and the only regularisation passage is the Prospects one
+quoted in E7.1, which proposes it as future work and states it was not done.
+
+CONSEQUENCE FOR STAGE 7: the Sq^2 <= B budget is this project's own contribution and must be
+presented as such. It must never be attributed to Dittner or Hartke. Two honest hooks exist for
+MOTIVATING it, neither of which is a precedent: the saturation result, where the thesis reports "a
+convergence of the final maximal catalytic effect" and N_Ch = 10 to 20 changes nothing; and the
+Prospects passage. A third, in the opposite direction, deserves equal prominence: Behrens reports
+that "fewer than 12 charges are not enough to reproduce the reference fit" precisely because
+|q| <= 1 e, which is the mirror of this project's own finding that 18 of the 20 top-ranked sites
+admit only q = 1.00.
+
+
+E7.8  THE ECP CENTRES ARE A PUBLISHED PSEUDOPOTENTIAL, USED OUTSIDE ITS VALIDATED DOMAIN
+
+Extending Erratum 6 E6.1. The Ne> centres in cs_stage4b and cs_stage4c are, parameter for parameter,
+the "Ne ecp-all" of Marefat Khah et al. (acs.jctc.9b01162) - the same paper Finding 4 rests on. Its
+supporting information gives ncore = 10, lmax = 3, s-d 54.5100 / 2 / 2.0475, p-d 1.46500 / 2 /
+0.44815, d-f -0.8380 / 2 / 0.49205 and the null reference 0.0000 / 2 / 1.0000. L0_E5_R/job.inp
+carries the same six numbers in ORCA's column order. That is a properly sourced choice and it is
+citable.
+
+IT IS ALSO AN EXTRAPOLATION BEYOND WHAT THOSE AUTHORS TESTED, AND THEY NAMED THE ASSUMPTION BEING
+BROKEN. The ECPs were fitted on neutral rare-gas atoms with zero electrons to reproduce virtual
+orbital energies, and are placed on MM atoms assumed to "fulfill the octet rule, i.e., have no
+dangling bonds that might serve as electron acceptors". A centre carrying a net +-1 e charge is
+exactly such an acceptor. Stage 7 should state this as a limitation of the ECP-shielded arrangements
+rather than leave it implicit.
+
+
+E7.9  THE REGIME STAGE 6 OCCUPIES IS NOT COVERED BY THE CHARGE-DESIGN LITERATURE
+
+Two findings combine, and the combination matters more than either.
+
+First, a compact basis does not prevent electron spill-out; it conceals it. Nabo et al. (1.4962367)
+explain a transition visible at small basis and lost at larger basis by noting that compact sets "do
+not allow the wave function to spread out", and Marefat Khah report that "the amount of ESO varies a
+lot with the inclusion of diffuse functions". EVERY COMMITTED STAGE 6 DESIGN WAS EVALUATED AT
+def2-SVP. A CLEAN verdict at def2-SVP is therefore not evidence that spill-out is absent.
+
+Second, the GOCAT work escapes the problem by construction rather than by remedy. Behrens states
+that "With larger basis functions, electron density spilling can become a problem, where the density
+is overpolarized due a strong interaction with the pure Coulomb charge with no Pauli repulsion", and
+immediately that for "minimal basis semi-empirical methods, however, this is not an issue that needs
+to be addressed at this point". Neither GOCAT paper mentions spill-out at all.
+
+So a charge design evaluated at B3LYP/def2-SVP sits in a regime the published charge-design
+literature does not cover: too large a basis for GOCAT's escape, too compact a basis for the
+QM/MM spill-out literature's diagnostics to fire. That is simultaneously a genuine novelty claim for
+this thesis and a genuine risk to its numbers, and Stage 7 should make both statements, together.
+
+One encouraging precedent in the same reading: Coulomb collapse is a named GOCAT failure mode -
+"by using a vdW surface for the point charge entities, Coulomb implosion is an issue" - and the
+remedy proposed is "adding Lennard-Jones potentials to the respective" entities. This project's LJ
+spheres therefore have precedent.
+
+
+E7.10  D6.3's INDICATORS ARE NOT THE LITERATURE'S INDICATORS
+
+Across the six spill-out and embedding papers, the documented signatures are: a virtual orbital
+localising on an environment site; the LUMO escaping into the environment; excitation energies
+collapsing; oscillator strength vanishing. NO PAPER IN THIS LIBRARY REPORTS SCF CONVERGENCE
+BEHAVIOUR OR POPULATION ANALYSIS AS A SPILL-OUT SIGNATURE, and none gives a distance or a
+charge-magnitude threshold for its onset.
+
+D6.3's four indicators - SCF cycle ratio, HOMO-LUMO gap, Loewdin charge and dipole - therefore have
+no literature backing as diagnostics for the effect they were built to detect. This does not make
+D6, D8 or D9 wrong about what they measured; it bears on what those measurements can be said to
+mean. It also removes a route to the budget: no charge-magnitude or distance threshold can be
+borrowed from this literature, which independently reinforces Diagnostic 9's negative result.
+
+ORCA's own release note adds a further reason to distrust one of them: version 6.0's SCF convergers
+"are more robust now and on average take about 20% fewer cycles than before to reach convergence",
+so a cycle count is a property of the converger version and not of the wavefunction.
+
+A replacement that IS anchored. Galbraith & Schaefer (1.471933) distinguish a genuinely bound anion
+from a basis-set artefact by ORBITAL COMPOSITION, not by orbital energy: for unbound Ne- "this basis
+function was essentially the sole contributor to the highest occupied orbital", whereas for bound
+F- "the diffuse functions contributed a negligible amount". They also warn that a positive HOMO
+energy is not the test, since "the physical significance of the orbitals obtained from density
+functional methods is questionable". Their conclusion is explicitly scoped to electrons "bound as
+strongly as in F2" and they decline to extend it to loosely bound cases. That paper concerns
+MONOANIONS ONLY and must not be cited for a dianion claim; for dianions, Dreuw & Cederbaum
+(cr0104227) show the sign of a vertical detachment energy flipping between a non-diffuse DZP basis
+and the same basis with diffuse functions added.
+
+
+E7.11  POTENTIAL ENERGIES AND FREE ENERGIES ARE BEING COMPARED ACROSS THE WRITE-UP
+
+Both Mulholland-group chorismate papers report POTENTIAL energy barriers and say so: "in this study
+are electronic energies and the experimental values" / "are free energies; however, entropic effects
+are relatively small". The experimental anchors are ddG = 15.4 and ddH = 12.7 kcal/mol for BsCM, and
+24.5 / 20.7 in water, with a catalytic effect of about 9.1 kcal/mol - the last of which now has
+three independent sources in the library (Claeyssens 9.1; Ranaghan 9.4 calculated against 9.1
+experimental; Warshel's Table 1 at 9.0 and Table 3 at 9.1 observed).
+
+Any comparison of a computed barrier with an experimental one must state which quantity is which.
+Two further traps in the same paper: B313759G gives the experimental solution barrier as 25.4 in its
+abstract and 24.5 everywhere else - cite 24.5; and its Table 3 "gas phase" values are single points
+on enzyme-path geometries, with the footnote "Single point calculations on geometries taken from the
+6-31G(d)/CHARMM22 enzyme path", so they are not gas-phase optimised barriers.
+
+Finally, the two published transition-state geometries disagree by more than the grid spacing this
+project uses: Ranaghan puts the TS at C-O 2.28 and C-C 2.58 A, Claeyssens at 2.02 and 2.63 A. Neither
+should be treated as the transition-state geometry.
+
+
+E7.12  WHAT THIS ERRATUM DOES NOT DO
+
+It does not revisit any measured result. DIAGNOSTIC6_RESULT.txt, DIAGNOSTIC8_RESULT.txt and
+DIAGNOSTIC9_RESULT.txt are untouched, as are their pre-registrations and every erratum before this
+one. Diagnostic 9's falsification of the peak-field hypothesis is unaffected: it rests on 225 runs
+from the committed record and on no literature value.
+
+It does not establish that any unmatched quotation is fabricated. On the tree this erratum is
+committed to, cs_citecheck.py reports 122 quotations it cannot match, and after E7.1 the correct
+reading of that number is the
+cautious one: most will come from the 37 absent papers, some from quotation marks the parser read
+wrongly, and the residue needs checking by hand against the PDF. The whole point of E7.1 is that the
+inference from "not found" to "not real" is the one this project got wrong.
+
+It does not make the def2-SVP Stage 6 corpus safe. E7.9 states a risk that is not resolved here.
