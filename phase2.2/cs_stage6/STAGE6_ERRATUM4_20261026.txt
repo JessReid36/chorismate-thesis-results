@@ -1,0 +1,425 @@
+STAGE 6 - ERRATUM 4, 2026-10-26
+Six defects in DIAGNOSTIC 6's instrument and in what three Stage 6 documents say about it. Every one measured.
+
+Pre-registrations and criteria are never edited. This erratum does not alter STAGE6_CRITERIA.txt,
+STAGE6_DIAGNOSTIC4_20261023.txt, STAGE6_DIAGNOSTIC6_20261026.txt, STAGE6_DIAGNOSTIC7_20261026.txt,
+STAGE5_CRITERIA.txt, PHASE22_PLAN.txt, STAGE4_CRITERIA.txt, STAGE4B_CRITERIA.txt, STAGE4C_CRITERIA.txt or any
+other pre-registration, and it does not alter any committed result file. DIAGNOSTIC6_RESULT.txt stands exactly as
+committed, and so does every verdict in it: that is measured below, not assumed. STAGE6_ERRATUM3_20261026.txt is
+itself never edited either; E4.2 corrects a sentence in it by record, not by amendment.
+
+It also does not change cs6_audit.py. Four of the six items below are defects in that program. Changing it would
+change DIAGNOSTIC6_RESULT.txt, and re-running a diagnostic is a decision with a pre-registration of its own.
+What to do about them is set out at the end and is Jessica's to decide.
+
+HOW THE SIX WERE ESTABLISHED. Four read-only probes, no new calculation, no network, nothing written into either
+repo by them. Each reuses cs6_audit.py's own parser, cs6_audit.read(), unchanged and imported rather than
+retyped, so no threshold and no field is re-expressed. Two of them re-run cs6_audit's verdict() as well,
+transcribed structurally because it is a closure inside main(). The first probe reproduces DIAGNOSTIC6_RESULT.txt
+exactly - 1680 completed runs on this dianion, 352 controls, 1264 point-charge single points, 47 geometry
+optimisations, 63 QM/MM - so it is reading the same corpus the committed result read, and every difference below
+is a real difference and not an artefact of a second parser. The probes are
+WORKLOG_20261026.md section Q; they are scratch and are not committed.
+
+A NOTE ON QUOTATION. Every quotation is verbatim. Where a source's line wrapping differs from this file's, the
+quotation is reflowed to this width and nothing else is changed; where the wrap itself is worth seeing, it is
+kept and said so. The one multi-line block reproduced line for line is DIAGNOSTIC6_RESULT.txt's counts
+paragraph in E4.4(ii), checked against the file character by character.
+
+A NOTE ON DIRECTION, because it is the thing that matters most here. Four of these six corrections run AGAINST
+the charge representation: they make the committed picture of its failure earlier, broader, or less well
+supported than it looked. Two run in the flattering direction. Each item below states which, in its own words,
+and no item is softened or omitted on account of it.
+
+
+E4.1  "IT WAS RECORDED AND NEVER READ" IS TOO BROAD. STAGE 4 AND STAGE 4B READ IT, AND REPORTED FAILURES ON IT,
+      EIGHTEEN DAYS EARLIER
+
+STAGE6_DIAGNOSTIC6_20261026.txt D6.0 closes its table of the frozen def2-SVP runs with:
+
+   "The cycle count triples and the gap falls below 1 eV. It was recorded and never read."
+
+and cs6_audit.py's own docstring puts it more broadly still:
+
+   "The breakdown was recorded in the original outputs from the
+    first design run onward and was never read."
+
+   (quoted across its two source lines, cs6_audit.py lines 11-12)
+
+The narrow claim is true. Diagnostics 1 to 5 read energies, not one of them read the cycle count or the gap, and
+nothing read either quantity for the Stage 6 design runs. The broad claim is not true. Two committed reports read
+exactly these indicators and recorded failures on them on 8 October 2026, eighteen days before Diagnostic 6:
+
+   phase2.2/cs_stage4/STAGE4_REPORT.txt, commit 7785dbf, 2026-10-08
+      "S4.2 polarisation term at contact: b(SVPD) -14.2406 vs b(SVP) -9.8413 kcal/mol, change 44.7%
+       (criterion < 10%) -> FAIL"
+      and, in the same file, the density indicator in all but name:
+      "informative Mulliken charge on O2 (nearest the sphere): q=0 -> q=+1 change -0.0231 e (SVP) vs
+       -1.4809 e (SVPD)"
+
+   phase2.2/cs_stage4b/STAGE4B_REPORT.txt, commit 1382b07, 2026-10-08
+      "q=+1.00  SVPD gap 0.55 eV, deviation from trend -17.179 kcal/mol (SVP 3.34 eV, -0.272) -> NOT safe"
+      and the conclusion of Arm A:
+      "safe distance by charge (smallest tested distance from O2 at which that charge, and every larger tested
+       distance, is safe):
+          q=+0.50: none of the tested distances
+          q=+0.75: none of the tested distances
+          q=+1.00: none of the tested distances"
+
+So the HOMO-LUMO gap was read, at def2-SVPD, over four distances and three positive magnitudes, and reported with
+a verdict, before any Stage 6 arrangement existed. A reader of D6.0 as written would not know that.
+
+WHAT D6 MAY PROPERLY CLAIM, and what is withdrawn. The claim that survives is the narrower one: these indicators
+were never read AT def2-SVP AGAINST A SAME-BASIS CHARGE-FREE CONTROL, which is the comparison D6 introduced, and
+were never read for the Stage 6 design runs at all. That is a real and sufficient novelty. The unqualified
+sentences above are withdrawn; neither may be quoted.
+
+WHAT IS NOT WITHDRAWN. Nothing in D6's measurement depends on the observation being first. Its thresholds,
+controls, specificity check and verdicts are unaffected.
+
+DIRECTION: flattering, and recorded for that reason. This correction says the project caught the gap collapse
+earlier than D6.0 implies, which reflects better on the record, not worse. Nothing is claimed from it. It is
+written down because it was stated and was wrong.
+
+WHAT IT RAISES AND DOES NOT SETTLE. Stage 4b's own resolution, recorded in CHARGE_MODEL_DECISIONS.md's dated
+section "Update 9 October 2026 - after Stage 4b", was "with def2-SVP the bare sphere stands; a diffuse basis
+needs the Ne-type pseudopotential". Stage 6 then ran its designs at def2-SVP under that decision. D6 is the
+finding that def2-SVP's own wavefunction health fails there too - a question Stage 4 and 4b did not ask, since
+both compared def2-SVP against def2-SVPD rather than either against a charge-free control. The decision was
+therefore taken on the evidence available, and D6's finding is new against it. Whether the def2-SVP leg of that
+9 October decision must now be revisited is a decision, not an erratum item, and it is Jessica's.
+
+
+E4.2  E3.3's def2-SVP CLAUSE OVERSTATES BY ONE RUN. THREE OF THE FOUR ARE STRAINED; lam075_R IS CLEAN
+
+STAGE6_ERRATUM3_20261026.txt E3.3 says:
+
+   "DIAGNOSTIC 6 classifies the def2-SVPD field runs at lambda = 0.75 and 1.00 - all four, both states - as
+    COLLAPSED, and the def2-SVP runs at lambda = 0.75 and 1.00 as STRAINED."
+
+The def2-SVPD clause is right: four runs, all four COLLAPSED, and DIAGNOSTIC6_RESULT.txt lists them. The
+def2-SVP clause reads as four and the committed result lists three. Read out of DIAGNOSTIC6_RESULT.txt's own
+"EVERY COLLAPSED OR STRAINED SINGLE POINT" table, the nb 264 field rows are 33, 42 and 47 cycles - three rows,
+not four. Identified in the committed archive field_outputs.tar.xz, with the nb 264 control medians D6 printed
+(15 cycles, gap 3.278 eV, maxLoewdin 0.387 e, dipole 8.12 D):
+
+   def2-SVP/lam075_R    14 cycles   gap 1.051 eV   maxLw 0.437 e   dip  7.04 D   ->  CLEAN
+   def2-SVP/lam075_TS   33 cycles   gap 1.019 eV   maxLw 0.435 e   dip  8.87 D   ->  STRAINED (cycles)
+   def2-SVP/lam100_R    42 cycles   gap 0.610 eV   maxLw 0.455 e   dip  9.15 D   ->  STRAINED
+   def2-SVP/lam100_TS   47 cycles   gap 0.924 eV   maxLw 0.454 e   dip 11.86 D   ->  STRAINED
+
+lam075_R is CLEAN on both tests and not marginally: 14 SCF cycles is BELOW the control median of 15, and its
+1.051 eV gap is above the 1.0 eV absolute floor the STRAINED test requires. The sentence is corrected to: the
+def2-SVP field runs at lambda = 1.00, both states, and the TRANSITION STATE at lambda = 0.75, are STRAINED; the
+REACTANT at lambda = 0.75 is CLEAN.
+
+THE CONCLUSION OF E3.3 IS UNCHANGED, and it is important to be exact about why, because this correction runs in
+the flattering direction and must not be allowed to do any work it cannot do.
+
+   (a) The defensible domain is a property of the WORSE state, not the better one. A barrier needs both. At
+       lambda = 0.75 the transition state is STRAINED, so lambda = 0.75 does not yield a usable barrier however
+       the reactant is classified.
+   (b) E3.3's leading criterion is the def2-SVPD quartet, all four COLLAPSED at lambda = 0.75 and 1.00. That is
+       untouched.
+   (c) lam075_R's margin is 0.051 eV above an absolute threshold of 1.0 eV that D6.0 itself discloses was chosen
+       after the outputs had been inspected. A verdict resting on 0.05 eV against a hand-chosen floor is not
+       something to lean on in either direction, and this erratum leans on it only to refuse a claim, never to
+       support one.
+
+DIRECTION: flattering, by one run, and explicitly denied any consequence. lambda <= 0.50 stands.
+
+
+E4.3  DIAGNOSTIC 4 CALLS sum q^2 <= 2.00 "THE PRE-REGISTERED BUDGET". IT IS AN UNCALIBRATED CODE DEFAULT, AND
+      THE ARGUMENT RESTING ON IT IS NOT ESTABLISHED
+
+STAGE6_DIAGNOSTIC4_20261023.txt uses the phrase twice:
+
+   "At the measured per-site cap the LINEAR optimum under the pre-registered budget sum q^2 <= 2.00 never
+    reaches 0.80 e: water-filling over the 30 to 35 mutually separated sites the grid admits gives a largest
+    charge of 0.56 to 0.70 e. So the measured cap would not bind on a Stage 7 design at all, and Stage 7 written
+    on it alone would be a pre-registration that constrains nothing."
+
+   "If lambda_quad = 1.00 there is no total-field bound inside the range a design can reach under the
+    pre-registered budget, and the per-site cap is the only bound required."
+
+Three committed sources say that value is not a pre-registered design budget:
+
+   phase2.2/cs_stage6/STAGE6_CRITERIA.txt, in the S6-2 arrangement rule - "charges at the budget's optimum for
+   those two fixed sites (B as the code's default, 2.0 e^2, which is a code-test value and not the calibrated
+   B)". So the criteria fix B, but only as the value at which S6-2's and S6-3's charges are assigned once their
+   sites are chosen, and they name it a code-test value in the same breath.
+
+   phase2.2/cs_opt_milp.py (code repo), the optimiser's own parameter table -
+   '"budget": 2.0,  # B in e^2, sum_i q_i^2 <= B (O3). Production B comes from the screens.'
+
+   phase2.2/OPTIMISER_CODE_README.md - "that the calibration of B (decision O3) should have in view", written of
+   a calibration still to be done.
+
+So B = 2.0 e^2 is a code default awaiting calibration, fixed by STAGE6_CRITERIA for two arrangements of one
+stage. It is not a pre-registered bound on what a design may reach. The phrase "the pre-registered budget" is
+withdrawn in both places.
+
+WHAT FOLLOWS. DIAGNOSTIC 4's MEASUREMENT is untouched - lambda_quad is read from the committed runs and does not
+involve B. What is withdrawn is the ARGUMENT at the first quotation: that the measured per-site cap "would not
+bind on a Stage 7 design at all". That argument needs a budget, and there is no pre-registered one, so it is NOT
+ESTABLISHED. Under a smaller calibrated B the per-site cap may well bind. Stage 7 must not be written on the
+assumption that it cannot.
+
+FLAGGED, NOT ASSERTED, because I have not recomputed it: the water-filling figure of 0.56 to 0.70 e assumes
+charges may be chosen freely on the admitted sites. OPTIMISER_CODE_README.md records that "1228 of the 2769
+development sites cannot carry zero charge" and that "1064 sites admit only |q| = 1". On those sites a sphere
+costs the budget at least its floor squared, so at B = 2.0 e^2 a cation-layer design can hold about two spheres,
+not thirty. Whether that changes the 0.56 to 0.70 e figure depends on which grid and which layer D4 meant, and I
+have not established that. It is an open question, not a finding.
+
+DIRECTION: against the representation, and against the convenience of the plan. Withdrawing this removes a
+reason that had been offered for NOT writing a per-site cap into Stage 7. The cap may be needed after all.
+
+Note for the record: STAGE6_DIAGNOSTIC7_20261026.txt, already committed at 03edda7, mentions no sum q^2 budget
+anywhere. It is unaffected and needs no change.
+
+
+E4.4  TWO BOOKKEEPING DEFECTS IN cs6_audit.py. ONE CHANGES NO VERDICT; THE OTHER MAKES A PUBLISHED TABLE MEAN
+      SOMETHING OTHER THAN ITS HEADING
+
+(i) THE CONTROL SET IS NOT FILTERED THE WAY THE CLASSIFIED SET IS. cs6_audit.py builds the controls every
+threshold is anchored to from the charge count alone -
+
+   g = [d for d in good if d["nb"] == nb and d["npc"] == 0]
+
+- while the single points it classifies are filtered on the optimisation count as well -
+
+   sp = [d for d in good if 0 < d["npc"] <= MM_NPC and d["nopt"] == 0]
+
+- and the result file states the reason the two should match: "a charge-free control is NOT like-for-like once
+the geometry has moved". So a charge-free GEOMETRY OPTIMISATION enters the control medians, which is exactly what
+that sentence forbids.
+
+MEASURED. 2 of the 352 controls are geometry optimisations. Both are at nb 264, both in
+phase2_charge_design/08_validate_relaxed/hpc_text_outputs.tar.xz. Filtering them out moves one published number,
+the nb 264 gap median, from 3.2780 to 3.2600 eV; the cycle, Loewdin and dipole medians do not move at all.
+ZERO of the 1680 classifications change. The reason is structural rather than lucky: the STRAINED gap test is
+"gap below 1.0 eV AND below half its own control's gap", and half of either median is about 1.63 eV, so the
+absolute 1.0 eV floor binds and the control gap is never the operative threshold at this basis.
+
+So this is a real defect in the program with no effect on any committed verdict. DIAGNOSTIC6_RESULT.txt's
+specificity check, control table and every classification stand as committed.
+
+(ii) TWO OF THE FOUR CATEGORIES OVERLAP BY 46 RUNS, AND ONE PUBLISHED TABLE IS ALMOST ENTIRELY THE RUNS THE SAME
+PARAGRAPH SAYS ARE EXCLUDED. The categories are
+
+   mm = [d for d in good if d["npc"] > MM_NPC]
+   go = [d for d in good if d["npc"] > 0 and d["nopt"] > 0]
+
+so any QM/MM run that is also an optimisation is in both. Measured: 46 runs are in both, and none is in no
+category, which is exactly why the published counts sum to 1726 against a corpus of 1680 -
+
+   "1680 completed single points and optimisations on this dianion (118 electrons, 59 occupied)
+    352 carry no point charges and are the controls; 1264 are point-charge single points; 47 are
+    point-charge geometry optimisations, reported separately because a charge-free control is NOT
+    like-for-like once the geometry has moved. A further 63 runs carry more than 200 point charges and
+    are QM/MM calculations whose charges are an MM environment rather than a designed arrangement;
+    they are excluded from every table below."
+
+The arithmetic is the smaller half. The table headed "THE POINT-CHARGE GEOMETRY OPTIMISATIONS, REPORTED APART"
+is built from go and prints
+
+   CLEAN         46
+   POLARISED      1
+
+Measured: of those 47 runs, 46 carry 55656 point charges - they are the QM/MM runs the paragraph above says are
+excluded from every table below - and exactly ONE is a design-scale arrangement:
+phase2_charge_design/08_validate_relaxed/ropt_charged.out, 2 point charges, nb 264, 6 SCF cycles, gap 3.378 eV,
+POLARISED. The two charge-free optimisations of item (i) are that run's charge-free counterparts in the same
+archive.
+
+SO THE "CLEAN 46" IS 46 MM-ENVIRONMENT QM/MM RUNS AND IS NOT EVIDENCE ABOUT DESIGNED CHARGES AT ALL. It must not
+be quoted as reassurance that point-charge geometry optimisations are healthy. The evidence that table actually
+holds on designed charges is one run, and it is POLARISED. Nothing in the committed record quotes that table, so
+nothing downstream needs withdrawing.
+
+DIRECTION: against the representation. A reading that looked like 46 clean optimisations is one polarised one.
+
+
+E4.5  cs6_audit.py OPENS ONLY TARBALLS. 415 COMPLETED RUNS ON THIS DIANION WERE NEVER OPENED, AND THE def2-SVP
+      ONSET IN THE PUBLISHED RECORD IS LATER THAN THE FULL RECORD SUPPORTS
+
+cs6_audit.py's stated scope is "every committed ORCA output on the chorismate dianion". Its walker is
+
+   for a in sorted(p for p in root.rglob("*.tar.xz") if ".git" not in p.parts):
+
+and it opens each with tarfile. The results repo also holds 808 singly-compressed .xz files that are not
+tarballs and that tarfile never sees, of which 588 are ORCA outputs (file names ending .out.xz; the rest are
+.xyz.xz, .gbw.xz, .densities.xz and .pc.xz).
+
+MEASURED, with cs6_audit.read() unchanged over those files: 415 of them are completed single points on this
+dianion that the audit would have classified. That is 20 per cent of the record missing from a diagnostic whose
+scope is all of it. 119 carry no point charge file; 257 would enter the published single-point tables; 24 are
+QM/MM.
+
+DOES THE PUBLISHED RESULT CHANGE? NO, AND THIS WAS CHECKED RATHER THAN ASSUMED. Re-forming every control median
+from the fuller control set and re-running cs6_audit's verdict() over the 1264 single points it published, ZERO
+change category. The medians move as follows, and no run crosses a threshold on any of it:
+
+      nb   basis         controls        median cycles        median gap (eV)
+     264   def2-SVP      94 -> 139       15.0 -> 15.0         3.278 -> 3.246
+     402   def2-SVPD     34 ->  72       14.0 -> 15.0         3.573 -> 3.435
+     240   (cs_stage4e)   0 ->   6       none -> 14.5         none -> 8.689
+     682   def2-TZVPD     0 ->  30       none -> 17.0         none -> 2.665
+
+WHAT THEY WOULD ADD, AND THE ONE READING THAT CHANGES. 257 single points: 250 CLEAN, 7 STRAINED, 0 COLLAPSED.
+The seven are
+
+   def2-SVP   npc 3   34 cycles  gap 1.282 eV   phase2.2/cs_stage4c/L1_E5_R/job.out.xz
+   def2-SVP   npc 3   35 cycles  gap 1.402 eV   phase2.2/cs_stage4c/L1_E5_TS/job.out.xz
+   def2-SVP   npc 3   31 cycles  gap 2.046 eV   phase2.2/cs_stage4c/L1_E7_R/job.out.xz
+   def2-SVP   npc 3   33 cycles  gap 1.975 eV   phase2.2/cs_stage4c/L1_E7_TS/job.out.xz
+   def2-SVPD  npc 1   26 cycles  gap 0.550 eV   phase2.2/cs_stage4/sp_svpd_qp1/job.out.xz
+   def2-SVPD  npc 1   25 cycles  gap 0.542 eV   phase2.2/cs_stage4b/A_svpd_d290_qp1/job.out.xz
+   def2-SVPD  npc 1   19 cycles  gap 0.867 eV   phase2.2/cs_stage4b/A_svpd_d320_qp1/job.out.xz
+
+At def2-SVPD this changes nothing: the published table already reports COLLAPSED runs from 1 to 20 charges, so
+collapse at a single charge is already in the record, and these three confirm it at two further distances.
+
+AT def2-SVP IT CHANGES THE ONSET. The lowest charge count at which any def2-SVP single point in
+DIAGNOSTIC6_RESULT.txt is STRAINED or COLLAPSED is 10. In the full record it is 3: four Stage 4c runs at three
+charges take 31 to 35 SCF cycles against a control median of 15. THE ONSET AT def2-SVP IS THREE CHARGES, NOT TEN.
+Any statement of where def2-SVP begins to fail must use 3.
+
+DIRECTION: against the representation, and firmly. def2-SVP fails earlier than the committed table shows.
+
+
+E4.6  CHARGE DELIVERED ON AN ECP CENTRE READS AS NO CHARGE, SO THE OBVIOUS FIX FOR E4.5 IS THE WRONG ONE
+
+cs6_audit.py detects charges from one printed line only:
+
+   pc = re.search(r"Reading point charge file\s*\.*\s*ok \((\d+) point charges\)", s)
+
+Stage 4b's Arm B and the whole of Stage 4c's L0, L2 and L3 levels do not use a point-charge file. They place the
+charge on a coreless Ne> ECP centre - Marefat Khah's Ne-type pseudopotential, which is the Pauli wall itself.
+Such a run prints no point-charge line at all, so it reads npc = 0 and would be taken for a CHARGE-FREE CONTROL.
+
+VERIFIED IN THE OUTPUTS, not inferred. phase2.2/cs_stage4c/L0_E5_R/job.out.xz echoes
+
+   | 30>   Ne>  1.000000     47.48070500    24.05965300    54.92320200  NewECP
+   | 42>   Ne> -1.000000     52.34180500    30.42611100    53.41665400  NewECP
+   | 54>   Ne>  1.000000     44.86287900    24.52784100    57.08792800  NewECP
+
+and contains zero "Reading point charge file" lines. It is a three-charge arrangement that reads as a control.
+
+MEASURED over all 119 loose charge-free-looking runs, by reading the Ne> charge out of each: 59 carry a charged
+Ne> centre - 48 in cs_stage4c, 11 in cs_stage4b, including B_ecp_svp_qp1 and B_ecp_svpd_qp1 at q = +1. The other
+60 are genuine (42 have Ne> centres at zero, 18 have no Ne> centre). By basis, the controls the fuller corpus
+would add and how many are charged: nb 264, 45 of which 22; nb 402, 38 of which 21; nb 682, 30 of which 16.
+
+WHY THIS MATTERS MORE THAN THE COUNT. Charged runs have lower gaps, more cycles, larger Loewdin charges and
+larger dipoles than charge-free ones. Putting them in the control pool RAISES the cycle, Loewdin and dipole
+medians and LOWERS the gap median, and every threshold is a multiple of a control median. The classifier becomes
+MORE PERMISSIVE and under-reports collapse. So pointing the walker at the loose files without fixing charge
+detection first would bias the audit in the flattering direction - which is the single worst thing that could be
+done to it.
+
+DIAGNOSTIC 6 AS COMMITTED IS THEREFORE THE CONSERVATIVE READING. Having opened none of these files, it was
+contaminated by none of them. Checked rather than assumed: all 352 of its controls were re-opened from the
+tarballs and NOT ONE contains an Ne> ECP centre at all, charged or otherwise, so none of them is a charged
+arrangement reading as a control. This is the second of the two flattering items and it is not a reason for
+comfort: E4.5 and E4.6 happen to cancel in D6's favour, and that is luck, not design.
+
+AND ONE SUBSTANTIVE CONSEQUENCE, which is the most important thing in this erratum. D6.5 says:
+
+   "It does not establish a usable charge model - a Pauli wall for electrons is the fix and it is untested here."
+
+The Pauli wall is not untested in this project. STAGE4B_CRITERIA.txt pre-registered the test and the decision
+that follows from it:
+
+   "B1 PASS: with def2-SVPD and the ECP at contact, the gap at q = +1 is at least 2.0 eV, the deviation from the
+    trend at q = +1 is within 0.5 kcal/mol, and b agrees between def2-SVP and def2-SVPD within 10%."
+
+   "B1 fails: Arm A's safe distances become the rule for positive spheres in the grid, and Gaussian-smeared
+    spheres (PySCF) are the next option to assess."
+
+B1 FAILED. STAGE4B_REPORT.txt: "B1 (SVPD, ECP sphere at contact): gap at q=+1 3.64 eV; deviation from trend at
+q=+1 -1.432 kcal/mol (+0.75: -0.739); b SVP -9.681 / SVPD -12.835 (32.6%) -> FAIL".
+
+Read directly out of the two committed outputs, at IDENTICAL coordinates (the Ne> centre of B_ecp_svpd_qp1 and
+the sphere of sp_svpd_qp1 both sit at 40.83200000 18.75000000 42.55100000, the contact position), the same basis
+and the same charge:
+
+   bare sphere, point charge +1, def2-SVPD    gap 0.550 eV   26 SCF cycles   cs_stage4/sp_svpd_qp1
+   Ne> ECP sphere, q = +1, def2-SVPD          gap 3.637 eV   14 SCF cycles   cs_stage4b/B_ecp_svpd_qp1
+
+So the mechanism claim is RIGHT, and measured: a Pauli wall recovers 3.09 eV of gap at the same geometry and
+takes the SCF from 26 cycles to 14. What it does not do is fix the energies. B1 required the deviation from the
+trend within 0.5 kcal/mol and b within 10 per cent, and got -1.432 kcal/mol and 32.6 per cent.
+
+THE WALL FIXES THE INDICATOR DIAGNOSTIC 6 MEASURES AND NOT THE QUANTITY A BARRIER NEEDS. "A Pauli wall for
+electrons is the fix" is therefore withdrawn as written. What may be said is: a Pauli wall demonstrably restores
+wavefunction health, and the one committed test of whether it also restores the energetics failed its own
+pre-registered criterion. A CLEAN verdict from Diagnostic 6 is necessary and is not sufficient.
+
+DIRECTION: against the plan, and this is the item to carry forward. The fix Stage 7 was expected to rest on is
+already measured as not sufficient, in a committed report, by a pre-registered criterion it failed.
+
+
+WHAT THIS ERRATUM DOES NOT DO, AND WHAT IS LEFT TO DECIDE
+
+It changes no pre-registration, no criteria file, no result file and no code. Six corrections to the record, four
+of them against the charge representation.
+
+Open, and Jessica's to decide, each needing a dated pre-registration of its own rather than an edit:
+
+   1. Whether to fix cs6_audit.py's four defects - the control filter, the category overlap, the tarball-only
+      walker and the point-charge-only charge detection - and re-run it. A re-run produces a NEW result file; it
+      does not edit DIAGNOSTIC6_RESULT.txt. E4.6 is the binding constraint: charge detection must be fixed in the
+      same change as the walker, or the audit gets more permissive rather than more complete.
+   2. Whether the def2-SVP leg of the 9 October 2026 decision in CHARGE_MODEL_DECISIONS.md must be revisited in
+      the light of D6, now that E4.5 puts the def2-SVP onset at three charges.
+   3. What follows from B1's failure for Stage 7. STAGE4B_CRITERIA.txt's own pre-registered consequence was that
+      "Arm A's safe distances become the rule for positive spheres in the grid", and Arm A recorded none at
+      q >= +0.50, with Gaussian-smeared spheres named as the next option and recorded elsewhere as unavailable in
+      ORCA. Whether that consequence was carried out is not established here and is not asserted.
+   4. The electron-count limit E3.2 already flagged: cs6_audit filters to 118 electrons, so the 128- and
+      136-electron ion runs are unclassified. Unchanged by this erratum and still open.
+
+
+VERIFICATION
+
+Every quotation above was re-read from the committed source named beside it, in the clones of
+jessreid36/chorismate-thesis-results and jessreid36/chorismate-thesis-code, on 2026-10-26. Sources re-read:
+
+   phase2.2/cs_stage6/STAGE6_DIAGNOSTIC6_20261026.txt        D6.0 line 22; D6.5 lines 112-114
+   phase2.2/cs_stage6/DIAGNOSTIC6_RESULT.txt                 the counts paragraph; the control table; the onset
+                                                             tables; the COLLAPSED/STRAINED listing; the
+                                                             REPORTED APART table
+   phase2.2/cs_stage6/STAGE6_ERRATUM3_20261026.txt           E3.3; E3.2's electron-count limit
+   phase2.2/cs_stage6/STAGE6_DIAGNOSTIC4_20261023.txt        lines 26-29 and line 78
+   phase2.2/cs_stage6/STAGE6_CRITERIA.txt                    the S6-2 rule, lines 66-68
+   phase2.2/cs_stage4/STAGE4_REPORT.txt                      in full
+   phase2.2/cs_stage4b/STAGE4B_REPORT.txt                    Arm A and B1
+   phase2.2/cs_stage4b/STAGE4B_CRITERIA.txt                  B1, B2 and the Decisions block, lines 41-52
+   phase2.2/cs_stage4b/STAGE4B_AMENDMENT1.txt                in full - it changes no decision rule
+   phase2.2/cs_stage4b/sphere_positions.tsv                  the d2674 contact coordinates
+   phase2.2/cs_stage4c/STAGE4C_CRITERIA.txt                  the arrangements and the L0-L3 levels
+   phase2.2/CHARGE_MODEL_DECISIONS.md                        the dated section of 9 October 2026
+   phase2.2/OPTIMISER_CODE_README.md                         O3 and the budget-and-cation-layer section
+   phase2.2/cs_opt_milp.py            (code repo)            the parameter table and the constraint list
+   phase2.2/cs6_audit.py              (code repo)            read(), the control build, the four category
+                                                             definitions, verdict() and the walker
+
+Measured, not quoted, by the four read-only probes in WORKLOG_20261026.md section Q, every one reusing
+cs6_audit.read() unchanged: the 1680/352/1264/47/63 reproduction; the 2 optimisations among the controls and the
+zero resulting verdict changes; the 46-run category overlap and the composition of the REPORTED APART table; the
+415 never-opened runs, their effect on every control median and the zero resulting verdict changes; the 257 runs
+they would add and the 7 STRAINED among them; the def2-SVP onset of 3 against the published 10; and the 59
+charged Ne> centres among the 119 loose charge-free-looking runs; and the re-opening of all 352 committed
+controls to confirm none carries an ECP centre. The gap and cycle figures for sp_svpd_qp1 and B_ecp_svpd_qp1,
+and the Ne> coordinates and charges, were read from the committed job.out.xz files directly; the bare sphere's
+position was read from cs_stage4/sp_svpd_qp1/combined.xyz, where it is the 25th atom.
+
+Commit dates were read with git log on the files themselves: 7785dbf and 1382b07, both 2026-10-08.
+
+Corrections to my own statements made earlier in this session, recorded because they were stated and were wrong:
+I told Jessica that sum q^2 <= 2.00 was "not pre-registered". That is imprecise in the other direction -
+STAGE6_CRITERIA.txt does fix B = 2.0 e^2, for S6-2 and S6-3, while calling it a code-test value. E4.3 states it
+correctly. I also described the control-filter defect as a defect in D6's result; it is a defect in the program
+that changes no verdict in the result, as E4.4(i) now measures.
