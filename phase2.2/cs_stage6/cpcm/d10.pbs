@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -N cm_d10_cpcm
+#PBS -q day
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=06:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/cpcm/d10.pbs.out
+
+# Diagnostic 10: sixteen single points, run one after another in one job.
+# Pre-registration: phase2.2/cs_stage6/STAGE6_DIAGNOSTIC10_20261026.txt
+set -uo pipefail
+BASE="/home/18660916/system_development/phase2.2/cs_stage6/cpcm"
+cd "$BASE" || exit 1
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+
+fail=0
+for d in $(ls -d */ | sed 's#/##' | sort); do
+  [ -f "$d/job.inp" ] || continue
+  echo "--- $d  $(date +%H:%M:%S)"
+  ( cd "$d" && /home/apps2/ORCA/6.0.1/orca job.inp > job.out 2>&1 </dev/null )
+  rc=$?
+  grep -q 'ORCA TERMINATED NORMALLY' "$d/job.out" || { echo "    FAILED rc=$rc"; fail=1; }
+  rm -f "$d"/job.gbw "$d"/job*.tmp "$d"/job.densities 2>/dev/null
+done
+echo "all runs done $(date)"
+
+if [ "$fail" -ne 0 ]; then
+  echo "AT LEAST ONE RUN FAILED - not measuring. Inspect the job.out files."
+  exit 1
+fi
+
+echo "=== measuring against the pre-registered rule ==="
+# cs10_cpcm.py is committed here beside the inputs, byte-identical to the code repo's copy, so the
+# job needs no path to the code checkout. The harness verifies the two match before committing.
+python3 -B "$BASE/cs10_cpcm.py" measure "$BASE" "/home/18660916/system_development" "$BASE/result" 2>&1 | tail -70
+
+echo "end=$(date)"
