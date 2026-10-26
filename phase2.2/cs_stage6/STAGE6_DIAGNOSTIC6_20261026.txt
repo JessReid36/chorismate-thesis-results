@@ -1,0 +1,116 @@
+STAGE 6 - DIAGNOSTIC 6, PRE-REGISTERED 2026-10-26
+A wavefunction-health audit of every committed ORCA output on the chorismate dianion
+
+This file is pre-registered. It is never edited. Changes go into a dated amendment or erratum.
+
+
+D6.0  WHY, AND A DISCLOSURE THAT BELONGS FIRST
+
+Diagnostics 1 to 5 read energies. Not one of them read the SCF cycle count or the HOMO-LUMO gap. Those two
+fields were in the committed frozen outputs from the first design run, and they say this, at def2-SVP, with no
+diffuse function anywhere in the calculation:
+
+   design   charges   SCF cycles R/TS   gap R / TS (eV)   max |Loewdin|   dipole R
+   S6-C        0        12 / 16          3.400 / 2.286       0.384          8.39
+   S6-P        1        15 / 16          3.190 / 2.134       0.384          6.88
+   S6-2        2        15 / 16          2.287 / 1.589       0.394          6.49
+   S6-3        3        16 / 16          2.129 / 1.508       0.398          7.31
+   S6-5        5        12 / 21          1.756 / 1.205       0.430          6.68
+   S6-10      10        36 / 40          0.854 / 0.980       0.448          8.21
+   S6-20      20        42 / 47          0.610 / 0.924       0.455          9.15
+
+The cycle count triples and the gap falls below 1 eV. It was recorded and never read.
+
+THE DISCLOSURE: the four thresholds D6.3 fixes were chosen AFTER those outputs had been inspected. This is
+therefore not a blind test, and it is not presented as one. Three things are done about it instead of claiming
+otherwise. Every threshold is anchored to the charge-free control runs of the SAME basis-set size in the same
+corpus, not to an absolute value picked freely. The control distributions are printed in the result, so the
+separation can be checked by eye. And a specificity check is printed: how many of the charge-free controls the
+classifier itself flags, which should be zero and is reported whatever it is.
+
+
+D6.1  WHAT IS READ, AND FROM WHERE
+
+Every *.tar.xz committed in the results repo is opened and every ORCA output inside it is read. NO CALCULATION
+IS PERFORMED AND NO NETWORK IS USED. A run is kept only if it is this system and completed: a final single
+point energy present, ORCA's own printed electron count equal to 118, exactly 59 occupied orbitals, terminated
+normally, and no "SCF NOT CONVERGED". Files named *.pbs.out are excluded - they are batch logs, and an earlier
+draft of this audit mistook twenty of them for failed calculations.
+
+Per run, only fields ORCA itself printed: the last SCF cycle count, the HOMO-LUMO gap from the orbital-energy
+block, the dipole magnitude, the largest Loewdin charge on a LIGHT atom (Na, K, Mg, Ca, Li, Zn, Fe, Cl, Br, I
+excluded, because a metal may legitimately carry a large one), the number of point charges ORCA confirmed
+reading, and the number of geometry-optimisation cycles.
+
+Three separations are made before anything is classified.
+
+  - Runs carrying more than 200 point charges are QM/MM calculations whose charges are an MM environment, not a
+    designed arrangement. One such run reads 55,656 of them. They are excluded from every table.
+  - Geometry optimisations are reported apart from single points. Once the geometry has moved, a charge-free
+    control is not like-for-like, so their verdicts carry much less weight and must not be quoted as collapses.
+  - Controls are grouped by basis-set size, which separates def2-SVP (264 functions), ma-def2-SVP (328),
+    def2-SVPD (402) and the composite methods B97-3c (358), r2SCAN-3c (374) and HF-3c (88). A Loewdin charge is
+    basis-dependent, so it is used ONLY as a difference against a same-basis control and never as an absolute.
+
+
+D6.2  WHAT IS NOT DONE
+
+No calculation is submitted. No criterion, threshold, tolerance, method, arrangement or reported number
+changes. STAGE6_CRITERIA.txt, STAGE5_CRITERIA.txt and PHASE22_PLAN.txt section 2.2 are untouched. Every
+committed result file stands as committed, DIAGNOSTIC4_RESULT.txt and DIAGNOSTIC5_RESULT.txt included.
+
+This diagnostic does not say what the correct barrier is for any run. It says only which committed numbers
+should not be quoted.
+
+
+D6.3  THE CLASSIFICATION, FIXED BEFORE THE CORPUS WAS SCANNED IN FULL
+
+For each run, against the MEDIAN of the charge-free controls at the same basis-set size:
+
+   MOVED   max |Loewdin| at least 0.25 e above the control, OR dipole at least 2.0 times it
+   SICK    gap below 1.0 eV AND below half the control's own gap, OR at least 2.0 times the control's cycles
+
+   CLEAN       neither
+   POLARISED   MOVED but not SICK. THIS IS NOT A FAULT. It is what a strong external field is supposed to do,
+               and it is named so that it is not mistaken for one.
+   STRAINED    SICK but not MOVED. A near-degeneracy: single-reference closed-shell DFT is not reliable there.
+   COLLAPSED   both. The density has moved and the SCF is unwell - the signature of density captured by a
+               positive point charge with no Pauli wall for electrons, which is Finding 4's defect and the
+               effect Marefat Khah et al. JCTC 2020 doi:10.1021/acs.jctc.9b01162 call unphysical leaking of
+               the electron density.
+
+The conjunction matters and was arrived at by testing. A Loewdin criterion applied ALONE classified 616 of 832
+def2-SVP point-charge single points as collapsed, including runs with a 3.85 eV gap converging in 14 cycles -
+that is ordinary polarisation, not a failure, and a classifier that condemns it is wrong. Requiring relocation
+AND an unwell SCF reduces that to 54 and leaves the healthy-but-polarised runs correctly named.
+
+The gap test carries both an absolute floor and a control-relative one for the same reason: the B97-3c controls
+sit at a median gap of 1.468 eV and the r2SCAN-3c controls at 1.777 eV, so an absolute 1.0 eV floor alone would
+condemn those methods for behaving the way they natively behave.
+
+
+D6.4  THE READINGS
+
+  (a) THE SPECIFICITY CHECK. How many charge-free controls are classified anything but CLEAN. Zero is the only
+      result that licenses the rest of the table; any other number is reported and said to mean the thresholds
+      are too tight.
+
+  (b) VERDICTS BY BASIS SET, for point-charge single points.
+
+  (c) AT HOW MANY CHARGES DOES EACH BASIS COLLAPSE. The number of point charges in the collapsed runs of each
+      basis. This is the reading that answers why the representation passed its own tests and then failed, and
+      it is the reason this diagnostic exists.
+
+  (d) INDICATORS AGAINST CHARGE COUNT AT def2-SVP, banded. def2-SVP has no diffuse functions and is the basis
+      every committed Stage 6 design was evaluated at, so its quiet failure is the one that matters most.
+
+  (e) EVERY COLLAPSED OR STRAINED SINGLE POINT, named, with its archive, charge count, basis and reason.
+
+
+D6.5  WHAT THIS CANNOT TEST
+
+Nothing is computed, so no hypothesis the committed outputs do not already contain can be tested. It cannot say
+what the right answer is for a run it flags. It does not establish a usable charge model - a Pauli wall for
+electrons is the fix and it is untested here. The thresholds are post-hoc, as D6.0 states. The geometry
+optimisations are classified against controls that are not like-for-like. And a run called CLEAN is clean only
+on these four indicators: it is not thereby converged, nor basis-converged, nor right.
