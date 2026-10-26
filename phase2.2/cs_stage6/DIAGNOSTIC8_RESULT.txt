@@ -1,0 +1,244 @@
+STAGE 6 - DIAGNOSTIC 8 RESULT: the wavefunction-health audit re-run over the corpus it should have had
+
+Measured by cs8_audit.py. NO NEW CALCULATION AND NO NETWORK. DIAGNOSTIC6_RESULT.txt is not edited and
+STAGE6_DIAGNOSTIC6_20261026.txt is not amended. D6.3's classification rule is applied UNCHANGED: every
+threshold is imported from cs6_audit.py, and cs6_audit.read() parses every output here exactly as it
+did there. One variable changes between stages, and it is the corpus, never the rule.
+
+   cs6_audit.py              sha256 19f63857536fb66645d8f31d286c21404159d672a4fa73a94c7b2ac8e90cfa7b
+   DIAGNOSTIC6_RESULT.txt    sha256 34945bc1731d9f0c0859c72a681877cc4415dff2e019a6fbefa1fdfc2c0a366b
+   read from                 phase2.2/cs_stage6/DIAGNOSTIC6_RESULT.txt
+
+THE GATE, WHICH PASSED
+
+   Stage 1 below is D6 exactly as published. Before any new reading was computed, the ENTIRE text of
+   DIAGNOSTIC6_RESULT.txt was rebuilt from stage 1 and compared with the committed file byte for byte.
+   It matched. Every number D6 printed therefore comes back out of this script's corpus reader, its
+   control medians and its reproduction of D6.3 - so the stages below differ from D6 only where a
+   defect named in Erratum 4 has been corrected, and nowhere else. Had it not matched, this file would
+   not exist: the script stops there and reports the first differing line, because no later reading
+   would be interpretable.
+
+WHAT EACH STAGE FIXES
+
+   stage 1   D6 as published. The gate, not a reading.
+   stage 2   + controls restricted to charge-free SINGLE POINTS (D6 pooled charge-free geometry
+             optimisations into the control medians, against its own D6.1), and the run categories
+             made disjoint (D6 counted a QM/MM optimisation in two categories at once). E4.4 i, ii.
+   stage 3   + loose .xz outputs opened (E4.5: cs6_audit.py walked *.tar.xz only), and point charges
+             detected from Ne> centres as well as from a point-charge file (E4.6).
+
+   Stage 3's two fixes are made TOGETHER and cannot be separated. They pull opposite ways: the walker
+   ADDS runs, and most of the added runs carry their charges as Ne> centres, so without the charge fix
+   they would enter as charge-free CONTROLS and loosen every threshold in the table. Reporting the
+   stages nested is what keeps the two directions visible instead of netted.
+
+(a) THE CORPUS AT EACH STAGE
+
+   stage        kept  controls   cf-opt    pc-sp   pc-opt   QM/MM
+   1 (D6)       1680       352        0     1264       47      63
+   2            1680       350        2     1264        1      63
+   3            2095       469        2     1521       16      87
+
+   Stage 1's five columns sum to 1726 against 1680 runs kept: D6's categories overlap. Stage 3's sum to 2095 against 2095: a partition.
+
+   controls  charge-free single points (stage 1: charge-free runs of any kind, which is the defect)
+   cf-opt    charge-free geometry optimisations, split out at stage 2 and never used as controls
+   pc-sp     point-charge single points, 1 to 200 charges - the table everything is read off
+   pc-opt    point-charge geometry optimisations, reported apart
+   QM/MM     more than 200 charges: an MM environment, not a design
+
+   429 completed runs on this dianion were added by opening loose .xz outputs.
+   354 further outputs sit uncompressed as *.out outside any archive and are accepted by
+   cs6_audit.read(). They are COUNTED AND NOT CLASSIFIED. Whether a file that is not a committed
+   archive member belongs in this corpus is a separate decision and is not taken here.
+
+(b) THE DISGUISED CHARGED RUNS - the reading that decides whether the audit was too permissive
+
+   A run whose charges are Ne> centres reports no point-charge file, so cs6_audit.py counted it as a
+   CHARGE-FREE CONTROL and let it set the thresholds every charged run was judged against.
+
+   There are none. E4.6's concern does not arise in this corpus, and the charge-detection fix
+   changes nothing. That is a result, not an absence of one.
+
+(c) WHAT THE CONTROL MEDIANS MOVED TO
+
+   A control median that moves means every threshold anchored to it moved with it.
+
+      nb basis         stage      n   med cyc   med gap  med maxLw   med dip
+      88 HF-3c        1 (D6)     70      12.5     9.480      0.573      9.08
+      88 HF-3c             2     70      12.5     9.480      0.573      9.08
+      88 HF-3c             3     70      12.5     9.480      0.573      9.08
+     240 ?                 3      6      14.5     8.689      0.522      9.28
+     264 def2-SVP     1 (D6)     94      15.0     3.278      0.387      8.12
+     264 def2-SVP          2     92      15.0     3.260      0.387      8.12
+     264 def2-SVP          3    137      15.0     3.154      0.387      8.39
+     279 def2-SVP     1 (D6)      2      16.5     2.430      0.383      7.85
+     279 def2-SVP          2      2      16.5     2.430      0.383      7.85
+     279 def2-SVP          3      2      16.5     2.430      0.383      7.85
+     288 def2-SVP     1 (D6)      2      15.0     1.732      0.381      7.80
+     288 def2-SVP          2      2      15.0     1.732      0.381      7.80
+     288 def2-SVP          3      2      15.0     1.732      0.381      7.80
+     328 ma-def2-SVP  1 (D6)      6      14.5     3.262      0.486      8.77
+     328 ma-def2-SVP       2      6      14.5     3.262      0.486      8.77
+     328 ma-def2-SVP       3      6      14.5     3.262      0.486      8.77
+     358 B97-3c       1 (D6)     70      20.0     1.468      0.743      8.00
+     358 B97-3c            2     70      20.0     1.468      0.743      8.00
+     358 B97-3c            3     70      20.0     1.468      0.743      8.00
+     374 r2SCAN-3c    1 (D6)     70      12.0     1.777      0.659      8.18
+     374 r2SCAN-3c         2     70      12.0     1.777      0.659      8.18
+     374 r2SCAN-3c         3     70      12.0     1.777      0.659      8.18
+     402 def2-SVPD    1 (D6)     34      14.0     3.573      0.339     10.23
+     402 def2-SVPD         2     34      14.0     3.573      0.339     10.23
+     402 def2-SVPD         3     72      15.0     3.435      0.342     10.47
+     420 def2-SVPD    1 (D6)      2      16.5     2.659      0.318      8.39
+     420 def2-SVPD         2      2      16.5     2.659      0.318      8.39
+     420 def2-SVPD         3      2      16.5     2.659      0.318      8.39
+     429 def2-SVPD    1 (D6)      2      16.0     2.284      0.317      8.39
+     429 def2-SVPD         2      2      16.0     2.284      0.317      8.39
+     429 def2-SVPD         3      2      16.0     2.284      0.317      8.39
+     682 def2-TZVPD        3     30      17.0     2.665      0.704     14.55
+
+   SPECIFICITY CHECK at each stage - charge-free controls the classifier itself flags. Zero is the
+   only value that licenses the rest of the table, and it is reported whatever it is.
+
+   stage 1 (D6)     0 of 352
+   stage 2          0 of 350
+   stage 3         49 of 469
+
+(d) VERDICTS ON POINT-CHARGE SINGLE POINTS, BY BASIS, AT EACH STAGE
+
+      nb basis         stage    runs     clean polarised  strained   collapsed
+      88 HF-3c             1      70        70        0         0           0
+      88 HF-3c             2      70        70        0         0           0
+      88 HF-3c             3      70        70        0         0           0
+     240 ?                 3      96        96        0         0           0
+     264 def2-SVP          1     825       202      562         7          54
+     264 def2-SVP          2     825       202      562         7          54
+     264 def2-SVP          3     962       335      562        11          54
+     328 ma-def2-SVP       1      38        29        0         7           2
+     328 ma-def2-SVP       2      38        29        0         7           2
+     328 ma-def2-SVP       3      38        29        0         7           2
+     358 B97-3c            1      70        70        0         0           0
+     358 B97-3c            2      70        70        0         0           0
+     358 B97-3c            3      70        70        0         0           0
+     374 r2SCAN-3c         1      77        70        0         0           7
+     374 r2SCAN-3c         2      77        70        0         0           7
+     374 r2SCAN-3c         3      77        70        0         0           7
+     402 def2-SVPD         1     184       173        0         0          11
+     402 def2-SVPD         2     184       173        0         0          11
+     402 def2-SVPD         3     208       194        0         3          11
+
+(e) EVERY VERDICT THAT CHANGED, ON THE RUNS D6 ALREADY HAD
+
+   Restricted to runs present in stage 1, so that a changed verdict is a consequence of a corrected
+   threshold and not of a newly opened file.
+
+   None. The corrected controls and the corrected charge detection change no verdict that D6
+   printed. D6's classification of the runs it saw stands.
+
+(f) AT HOW MANY CHARGES DOES def2-SVP FIRST GO WRONG
+
+   def2-SVP (nb 264) is the basis every committed Stage 6 design was evaluated at. D6 read the onset
+   off an incomplete corpus; this is the same reading off the corrected one.
+
+    stage  charges    runs    med cyc    med gap   worst gap   strained  collapsed
+        1        1     124     16.000      2.879       1.995          0          0
+        1        2      14     13.000      3.793       1.589          0          0
+        1        3       2     16.000      1.818       1.508          0          0
+        1        4       4     13.500      4.438       4.406          0          0
+        1      5-9       2     16.500      1.480       1.205          0          0
+        1    10-13       2     38.000      0.917       0.854          2          0
+        1    14-29      58     16.000      2.428       0.578          5         14
+        1     >=30     619     14.000      3.982      -5.974          0         40
+        2        1     124     16.000      2.879       1.995          0          0
+        2        2      14     13.000      3.793       1.589          0          0
+        2        3       2     16.000      1.818       1.508          0          0
+        2        4       4     13.500      4.438       4.406          0          0
+        2      5-9       2     16.500      1.480       1.205          0          0
+        2    10-13       2     38.000      0.917       0.854          2          0
+        2    14-29      58     16.000      2.428       0.578          5         14
+        2     >=30     619     14.000      3.982      -5.974          0         40
+        3        1     215     16.000      3.145       1.194          0          0
+        3        2      16     14.000      3.634       1.589          0          0
+        3        3       8     23.500      1.866       1.282          4          0
+        3        4       4     13.500      4.438       4.406          0          0
+        3      5-9       4     16.000      1.761       1.205          0          0
+        3    10-13       2     38.000      0.917       0.854          2          0
+        3    14-29      94     15.000      2.769       0.578          5         14
+        3     >=30     619     14.000      3.982      -5.974          0         40
+
+   LOWEST CHARGE COUNT AT WHICH A def2-SVP SINGLE POINT IS STRAINED OR COLLAPSED, stage 3: 3
+
+(g) THE CHARGE VECTOR OF EVERY RUN WHOSE CHARGES ARE RECOVERABLE
+
+   Two sources, both committed, neither inferred: Ne> centres printed in the run's own coordinate
+   block, and a point-charge .pc file committed beside the output. ORCA does not echo a .pc file into
+   its output, so a run whose .pc file was not committed has no recoverable magnitudes and none is
+   guessed for it. This is the table section 6 of STAGE6_ASSESSMENT2_20261026.md needs, and it is the
+   first time it has had more than eight rows.
+
+   0 of 1521 point-charge single points have recoverable charges (0 from Ne> centres, 0 from a
+   committed .pc file); 1521 do not, and are excluded from reading (h) for that reason alone.
+
+
+(h) THE PRE-REGISTERED TEST OF THE PEAK-FIELD HYPOTHESIS
+
+   STAGE6_ERRATUM5_20261026.txt offers peak local field as the only scalar still standing after sum|q|,
+   max|q|, n and sum q^2 all failed to separate eight arrangements. D8.4(h) fixed the test and its
+   falsification criterion BEFORE this corpus was scanned:
+
+       healthy = CLEAN or POLARISED (D6.3 states in terms that POLARISED is not a fault)
+       sick    = STRAINED or COLLAPSED
+       the hypothesis SURVIVES only if max(peak |E| over healthy) < min(peak |E| over sick),
+       that is, only if a separating threshold exists. ANY overlap falsifies it.
+
+   The test is run per basis set, because a field threshold that needed a different value at each
+   basis would not be a property of the design.
+
+   THE TEST DID NOT RUN AT ANY BASIS. That is not a result about the hypothesis; it is a result
+   about the record. It means no basis set in this corpus has both a healthy and a sick run whose
+   charges are recoverable, so the committed outputs cannot decide the question either way.
+
+   A SIGNATURE CARRYING BOTH VERDICTS WOULD SETTLE MORE THAN THE PEAK FIELD. A signature here is the
+   exact charge vector and the exact final geometry to four decimals, matched by sha256 at one basis
+   - not a scalar summary of them. If two runs agree on all three and are classified differently then
+   NO function of the charges and the geometry can separate the verdicts, because any such function
+   returns one value for both runs. The difference would have to come from something that is not the
+   design: the SCF path, the initial guess, the ORCA build. That would mean the classifier is partly
+   reading run-to-run variation, and it would have to be settled before any threshold is fitted to it.
+
+   There are none: no signature in this corpus carries both verdicts. The question is left to the
+   per-basis test above.
+
+
+(i) THE GEOMETRY OPTIMISATIONS AND THE QM/MM RUNS, REPORTED APART
+
+   stage 2  charge-free optimisations       2   clean 2, polarised 0, strained 0, collapsed 0, no control 0
+   stage 2  point-charge optimisations      1   clean 0, polarised 1, strained 0, collapsed 0, no control 0
+   stage 2  QM/MM                          63   clean 63, polarised 0, strained 0, collapsed 0, no control 0
+   stage 3  charge-free optimisations       2   clean 2, polarised 0, strained 0, collapsed 0, no control 0
+   stage 3  point-charge optimisations     16   clean 11, polarised 4, strained 0, collapsed 1, no control 0
+   stage 3  QM/MM                          87   clean 85, polarised 0, strained 2, collapsed 0, no control 0
+
+WHAT THIS DOES NOT TEST
+
+   Nothing was computed. This cannot say what the correct barrier is for any run, only which numbers
+   should not be quoted. It inherits D6.0's disclosure in full: the four thresholds were chosen AFTER
+   the Stage 6 outputs had been inspected, so this is not a blind test either, and D8 deliberately
+   does not re-derive them - changing the corpus and the rule in one step would make the comparison
+   uninterpretable. Whether those two unanchored criteria should be replaced by SCF stability analysis
+   and FOD is the next question and is not this one.
+
+   A CLEAN verdict is necessary and not sufficient. Erratum 4 E4.6 records that B1 added a Pauli wall
+   and the gap recovered from 0.550 to 3.637 eV while b stayed 32.6 per cent from its target against a
+   10 per cent criterion, so a healthy wavefunction does not make a design right.
+
+   Reading (h) tests one scalar on one corpus at the bases that corpus happens to use. A scalar that
+   survives here is a candidate for a constraint, not a constraint: it would still have to be tested
+   on arrangements chosen to break it, which do not exist yet. Two electrostatic predictors have
+   already been proposed and failed in this project.
+
+   The charge magnitudes in (g) are recoverable only for runs that carry their charges as Ne> centres.
+   For point-charge-file runs the output does not echo the magnitudes and none is inferred.
+
