@@ -1,0 +1,192 @@
+STAGE 6 - DIAGNOSTIC 6 RESULT: a wavefunction-health audit of the whole committed charge-design record
+
+Measured by cs6_audit.py. NO NEW CALCULATION. Four fields are read out of every committed ORCA output
+on this dianion that Diagnostics 1 to 5 never read: the SCF cycle count, the HOMO-LUMO gap, the dipole
+magnitude and the largest Loewdin charge on a light atom. The rule is STAGE6_DIAGNOSTIC6_20261026.txt
+D6.3, applied unchanged.
+
+   1680 completed single points and optimisations on this dianion (118 electrons, 59 occupied)
+   352 carry no point charges and are the controls; 1264 are point-charge single points; 47 are
+   point-charge geometry optimisations, reported separately because a charge-free control is NOT
+   like-for-like once the geometry has moved. A further 63 runs carry more than 200 point charges and
+   are QM/MM calculations whose charges are an MM environment rather than a designed arrangement;
+   they are excluded from every table below.
+   16 outputs were skipped as not completed or not this system.
+
+FOUR WORDS, AND WHAT EACH MEANS
+
+   CLEAN      no indicator departs from the same-basis charge-free control.
+   POLARISED  the density has moved - Loewdin up at least 0.25 e over control, or the dipole at least
+              2.0 times it - but the SCF is healthy. THIS IS NOT A FAULT. It is what a strong
+              external field is supposed to do, and it is reported so that it is not mistaken for one.
+   STRAINED   the SCF is unwell - gap below 1.0 eV AND below 50 per cent of its own control's gap,
+              or at least 2 times the control's cycle count - without demonstrable relocation.
+              A near-degeneracy: single-reference closed-shell DFT is not reliable there.
+   COLLAPSED  both at once. The density has moved AND the SCF is unwell. This is the signature of
+              density being captured by a positive point charge that has no Pauli wall for electrons
+              (Finding 4), the effect Marefat Khah et al. JCTC 2020 doi:10.1021/acs.jctc.9b01162
+              describe as unphysical leaking of the electron density.
+
+THE CONTROLS EVERY THRESHOLD IS ANCHORED TO
+
+      nb  basis     n    med cyc   med gap med maxLw   med dip
+      88 HF-3c     70         12     9.480     0.573     9.08
+     264 def2-SVP    94         15     3.278     0.387     8.12
+     279 def2-SVP     2         16     2.430     0.383     7.85
+     288 def2-SVP     2         15     1.732     0.381     7.80
+     328 ma-def2-SVP     6         14     3.262     0.486     8.77
+     358 B97-3c    70         20     1.468     0.743     8.00
+     374 r2SCAN-3c    70         12     1.777     0.659     8.18
+     402 def2-SVPD    34         14     3.573     0.339    10.23
+     420 def2-SVPD     2         16     2.659     0.318     8.39
+     429 def2-SVPD     2         16     2.284     0.317     8.39
+
+   SPECIFICITY CHECK: of the 352 charge-free controls, 0 are classified anything but CLEAN.
+   A control that trips the classifier would mean the thresholds are too tight; none does.
+
+POINT-CHARGE SINGLE POINTS, BY BASIS SET
+
+      nb basis          runs  npc med   clean polarised strained collapsed
+      88 HF-3c            70        1      70         0        0         0
+     264 def2-SVP        825       64     202       562        7        54
+     328 ma-def2-SVP      38        1      29         0        7         2
+     358 B97-3c           70        1      70         0        0         0
+     374 r2SCAN-3c        77        1      70         0        0         7
+     402 def2-SVPD       184        1     173         0        0        11
+
+AT HOW MANY CHARGES DOES EACH BASIS COLLAPSE?
+
+   This is the reading that answers why the representation passed its own tests and then failed.
+
+      nb basis         collapsed number of point charges in them
+     264 def2-SVP             54          14 to 76, median 64
+     328 ma-def2-SVP           2          20 to 20, median 20
+     374 r2SCAN-3c             7          42 to 76, median 48
+     402 def2-SVPD            11            1 to 20, median 1
+      88 HF-3c                 0        none, over npc 1 to 1
+     358 B97-3c                0        none, over npc 1 to 1
+
+INDICATORS AGAINST THE NUMBER OF POINT CHARGES, def2-SVP ONLY (nb 264)
+
+   def2-SVP has no diffuse functions, so it is the basis every committed Stage 6 design was
+   evaluated at, and the one whose quiet failure matters most.
+
+        npc   runs    med cyc    med gap   worst gap    med maxLw  collapsed
+          1    124     16.000      2.879       1.995        0.396          0
+        2-4     20     14.000      3.804       1.508        0.407          0
+        5-9      2     16.500      1.480       1.205        0.427          0
+      10-13      2     38.000      0.917       0.854        0.447          0
+      14-29     58     16.000      2.428       0.578        0.520         14
+       >=30    619     14.000      3.982      -5.974        0.515         40
+
+EVERY COLLAPSED OR STRAINED SINGLE POINT
+
+   archive                                run                           npc   nb  cyc  verdict and why
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                        20  328   98  COLLAPSED: Loewdin +0.372 e over control; dipole 3.6x control; gap 0.527 eV; 98 SCF cycles, 6.8x control
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                        20  328   49  COLLAPSED: dipole 3.0x control; gap 0.495 eV; 49 SCF cycles, 3.4x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  402   33  COLLAPSED: Loewdin +0.440 e over control; gap 0.457 eV; 33 SCF cycles, 2.4x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  402   45  COLLAPSED: Loewdin +0.261 e over control; gap 0.492 eV; 45 SCF cycles, 3.2x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  402  103  COLLAPSED: Loewdin +0.916 e over control; dipole 3.0x control; 103 SCF cycles, 7.4x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  402   55  COLLAPSED: Loewdin +0.793 e over control; dipole 2.9x control; gap 0.519 eV; 55 SCF cycles, 3.9x control
+   qrefine/outputs/qrefine_outputs.tar.xz job.out                         1  402   36  COLLAPSED: Loewdin +0.461 e over control; gap 0.472 eV; 36 SCF cycles, 2.6x control
+   qrefine/outputs/qrefine_outputs.tar.xz job.out                         1  402   31  COLLAPSED: Loewdin +0.377 e over control; gap 0.629 eV; 31 SCF cycles, 2.2x control
+   ge6/qscan/outputs/qscan_outputs.tar.xz job.out                         1  402   31  COLLAPSED: Loewdin +1.133 e over control; dipole 2.3x control; gap 0.525 eV; 31 SCF cycles, 2.2x control
+   ge6/qscan/outputs/qscan_outputs.tar.xz job.out                         1  402   39  COLLAPSED: Loewdin +1.030 e over control; dipole 2.4x control; gap 0.595 eV; 39 SCF cycles, 2.8x control
+   timise_realism/hpc_text_outputs.tar.xz orca.out                       64  264   38  COLLAPSED: Loewdin +1.277 e over control; dipole 32.4x control; gap 0.942 eV; 38 SCF cycles, 2.5x control
+   timise_realism/hpc_text_outputs.tar.xz orca_last.out                  64  264   38  COLLAPSED: Loewdin +1.277 e over control; dipole 32.4x control; gap 0.942 eV; 38 SCF cycles, 2.5x control
+   timise_realism/hpc_text_outputs.tar.xz orca_last.out                  64  374   78  COLLAPSED: Loewdin +1.288 e over control; dipole 36.9x control; 78 SCF cycles, 6.5x control
+   timise_realism/hpc_text_outputs.tar.xz orca.out                       76  374   42  COLLAPSED: Loewdin +0.497 e over control; dipole 11.0x control; gap 0.745 eV; 42 SCF cycles, 3.5x control
+   timise_realism/hpc_text_outputs.tar.xz orca_last.out                  76  374   42  COLLAPSED: Loewdin +0.497 e over control; dipole 11.0x control; gap 0.745 eV; 42 SCF cycles, 3.5x control
+   timise_realism/hpc_text_outputs.tar.xz orca.out                       42  374   48  COLLAPSED: Loewdin +1.214 e over control; dipole 17.6x control; gap 0.005 eV; 48 SCF cycles, 4.0x control
+   timise_realism/hpc_text_outputs.tar.xz orca_last.out                  42  374   48  COLLAPSED: Loewdin +1.214 e over control; dipole 17.6x control; gap 0.005 eV; 48 SCF cycles, 4.0x control
+   timise_realism/hpc_text_outputs.tar.xz orca.out                       48  374   33  COLLAPSED: Loewdin +0.553 e over control; dipole 5.4x control; gap 0.177 eV; 33 SCF cycles, 2.8x control
+   timise_realism/hpc_text_outputs.tar.xz orca_last.out                  48  374   33  COLLAPSED: Loewdin +0.553 e over control; dipole 5.4x control; gap 0.177 eV; 33 SCF cycles, 2.8x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       76  264   35  COLLAPSED: Loewdin +0.624 e over control; dipole 10.4x control; 35 SCF cycles, 2.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  76  264   35  COLLAPSED: Loewdin +0.624 e over control; dipole 10.4x control; 35 SCF cycles, 2.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       76  264   31  COLLAPSED: Loewdin +0.271 e over control; dipole 9.7x control; 31 SCF cycles, 2.1x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  76  264   31  COLLAPSED: Loewdin +0.271 e over control; dipole 9.7x control; 31 SCF cycles, 2.1x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       64  264   49  COLLAPSED: Loewdin +1.508 e over control; dipole 40.0x control; 49 SCF cycles, 3.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  64  264   49  COLLAPSED: Loewdin +1.508 e over control; dipole 40.0x control; 49 SCF cycles, 3.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  64  264   55  COLLAPSED: Loewdin +1.309 e over control; dipole 70.4x control; gap -5.974 eV; 55 SCF cycles, 3.7x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       64  264   33  COLLAPSED: Loewdin +0.494 e over control; dipole 33.3x control; gap -2.325 eV; 33 SCF cycles, 2.2x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  64  264   33  COLLAPSED: Loewdin +0.494 e over control; dipole 33.3x control; gap -2.325 eV; 33 SCF cycles, 2.2x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  64  264   50  COLLAPSED: Loewdin +0.412 e over control; dipole 36.0x control; gap -4.709 eV; 50 SCF cycles, 3.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       76  264   60  COLLAPSED: Loewdin +0.559 e over control; dipole 34.2x control; 60 SCF cycles, 4.0x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  76  264   60  COLLAPSED: Loewdin +0.559 e over control; dipole 34.2x control; 60 SCF cycles, 4.0x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       52  264   94  COLLAPSED: Loewdin +0.460 e over control; dipole 4.2x control; 94 SCF cycles, 6.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  52  264   94  COLLAPSED: Loewdin +0.460 e over control; dipole 4.2x control; 94 SCF cycles, 6.3x control
+   er/hpc_text_outputs_relax_part1.tar.xz orca.out                       46  264   20  COLLAPSED: dipole 2.8x control; gap 0.841 eV
+   er/hpc_text_outputs_relax_part1.tar.xz orca_last.out                  46  264   20  COLLAPSED: dipole 2.8x control; gap 0.841 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca.out                       64  264   17  COLLAPSED: dipole 3.1x control; gap 0.813 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca_last.out                  64  264   17  COLLAPSED: dipole 3.1x control; gap 0.813 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca.out                       64  264   17  COLLAPSED: dipole 3.2x control; gap 0.872 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca_last.out                  64  264   17  COLLAPSED: dipole 3.2x control; gap 0.872 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca.out                       64  264   18  COLLAPSED: dipole 2.7x control; gap 0.779 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca_last.out                  64  264   18  COLLAPSED: dipole 2.7x control; gap 0.779 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca.out                       64  264   18  COLLAPSED: dipole 2.7x control; gap 0.779 eV
+   er/hpc_text_outputs_relax_part2.tar.xz orca_last.out                  64  264   18  COLLAPSED: dipole 2.7x control; gap 0.779 eV
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       76  264   99  COLLAPSED: Loewdin +0.425 e over control; dipole 13.2x control; gap 0.277 eV; 99 SCF cycles, 6.6x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  76  264   99  COLLAPSED: Loewdin +0.425 e over control; dipole 13.2x control; gap 0.277 eV; 99 SCF cycles, 6.6x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       76  264   37  COLLAPSED: Loewdin +0.619 e over control; dipole 14.3x control; 37 SCF cycles, 2.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  76  264   37  COLLAPSED: Loewdin +0.619 e over control; dipole 14.3x control; 37 SCF cycles, 2.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       76  264   37  COLLAPSED: Loewdin +0.623 e over control; dipole 14.4x control; 37 SCF cycles, 2.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  76  264   37  COLLAPSED: Loewdin +0.623 e over control; dipole 14.4x control; 37 SCF cycles, 2.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       76  264   39  COLLAPSED: Loewdin +0.412 e over control; dipole 12.1x control; gap 0.511 eV; 39 SCF cycles, 2.6x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  76  264   39  COLLAPSED: Loewdin +0.412 e over control; dipole 12.1x control; gap 0.511 eV; 39 SCF cycles, 2.6x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       64  264   53  COLLAPSED: Loewdin +1.384 e over control; dipole 41.7x control; gap 0.275 eV; 53 SCF cycles, 3.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  64  264   53  COLLAPSED: Loewdin +1.384 e over control; dipole 41.7x control; gap 0.275 eV; 53 SCF cycles, 3.5x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       64  264   40  COLLAPSED: Loewdin +1.126 e over control; dipole 68.2x control; gap -0.462 eV; 40 SCF cycles, 2.7x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  64  264   40  COLLAPSED: Loewdin +1.126 e over control; dipole 68.2x control; gap -0.462 eV; 40 SCF cycles, 2.7x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca.out                       64  264   55  COLLAPSED: Loewdin +1.280 e over control; dipole 52.9x control; 55 SCF cycles, 3.7x control
+   er/hpc_text_outputs_relax_part3.tar.xz orca_last.out                  64  264   55  COLLAPSED: Loewdin +1.280 e over control; dipole 52.9x control; 55 SCF cycles, 3.7x control
+   6b_inner_shell/hpc_text_outputs.tar.xz sp_reactant_inner_1.5_p.out     1  402   65  COLLAPSED: Loewdin +1.798 e over control; dipole 3.9x control; gap 0.489 eV; 65 SCF cycles, 4.6x control
+   6b_inner_shell/hpc_text_outputs.tar.xz sp_ts_inner_1.5_p.out           1  402   48  COLLAPSED: Loewdin +1.701 e over control; dipole 4.0x control; gap 0.864 eV; 48 SCF cycles, 3.4x control
+   6b_inner_shell/hpc_text_outputs.tar.xz sp_ts_inner_2.0_p.out           1  402   34  COLLAPSED: Loewdin +1.171 e over control; dipole 2.8x control; gap 0.719 eV; 34 SCF cycles, 2.4x control
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   18  COLLAPSED: dipole 3.4x control; gap 0.998 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   18  COLLAPSED: dipole 3.4x control; gap 0.998 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   34  COLLAPSED: dipole 3.3x control; 34 SCF cycles, 2.3x control
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   34  COLLAPSED: dipole 3.3x control; 34 SCF cycles, 2.3x control
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   20  COLLAPSED: Loewdin +0.610 e over control; gap 0.693 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   20  COLLAPSED: Loewdin +0.610 e over control; gap 0.693 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   27  COLLAPSED: dipole 3.4x control; gap 0.578 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   27  COLLAPSED: dipole 3.4x control; gap 0.578 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   27  COLLAPSED: Loewdin +0.612 e over control; dipole 4.4x control; gap 0.639 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   27  COLLAPSED: Loewdin +0.612 e over control; dipole 4.4x control; gap 0.639 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       16  264   24  COLLAPSED: dipole 2.8x control; gap 0.983 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  16  264   24  COLLAPSED: dipole 2.8x control; gap 0.983 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca.out                       14  264   19  COLLAPSED: dipole 3.3x control; gap 0.759 eV
+   sign/07_stage0/hpc_text_outputs.tar.xz orca_last.out                  14  264   19  COLLAPSED: dipole 3.3x control; gap 0.759 eV
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                         2  328   31  STRAINED: gap 0.489 eV; 31 SCF cycles, 2.1x control
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                         2  328   32  STRAINED: gap 0.542 eV; 32 SCF cycles, 2.2x control
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                         1  328   33  STRAINED: gap 0.477 eV; 33 SCF cycles, 2.3x control
+   e6/diffuse/outputs/diff_outputs.tar.xz job.out                         1  328   21  STRAINED: gap 0.805 eV
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  264   33  STRAINED: 33 SCF cycles, 2.2x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  264   42  STRAINED: gap 0.610 eV; 42 SCF cycles, 2.8x control
+   ge6/field/outputs/field_outputs.tar.xz job.out                        20  264   47  STRAINED: gap 0.924 eV; 47 SCF cycles, 3.1x control
+   2.2/cs_stage6/frozen/sp_outputs.tar.xz job.out                        10  264   36  STRAINED: gap 0.854 eV; 36 SCF cycles, 2.4x control
+   2.2/cs_stage6/frozen/sp_outputs.tar.xz job.out                        10  264   40  STRAINED: gap 0.980 eV; 40 SCF cycles, 2.7x control
+   2.2/cs_stage6/frozen/sp_outputs.tar.xz job.out                        20  264   42  STRAINED: gap 0.610 eV; 42 SCF cycles, 2.8x control
+   2.2/cs_stage6/frozen/sp_outputs.tar.xz job.out                        20  264   47  STRAINED: gap 0.924 eV; 47 SCF cycles, 3.1x control
+   ge6/qscan/outputs/qscan_outputs.tar.xz job.out                         1  328   33  STRAINED: gap 0.477 eV; 33 SCF cycles, 2.3x control
+   ge6/qscan/outputs/qscan_outputs.tar.xz job.out                         1  328   21  STRAINED: gap 0.805 eV
+   ge6/qscan/outputs/qscan_outputs.tar.xz job.out                         1  328   36  STRAINED: gap 0.506 eV; 36 SCF cycles, 2.5x control
+
+THE POINT-CHARGE GEOMETRY OPTIMISATIONS, REPORTED APART
+
+   A charge-free control is not like-for-like once the geometry has moved, so these verdicts carry
+   much less weight than the single points above and must not be quoted as collapses on their own.
+
+   CLEAN         46
+   POLARISED      1
+
+WHAT THIS DOES NOT TEST
+
+   Nothing was computed, so this cannot test any hypothesis the committed outputs do not already
+   contain. It cannot say what the correct barrier is for a run it calls COLLAPSED or STRAINED - only
+   that the number should not be quoted. It does not establish a usable charge model; a Pauli wall
+   for electrons is the fix and it is untested here. The four thresholds were chosen AFTER the Stage 6
+   outputs had been inspected, which is why they are anchored to in-corpus controls and why the
+   control table and the specificity check are printed: the classification is reproducible and
+   checkable, but it is not a blind test. A Loewdin charge is basis-dependent and is used here only
+   as a difference against a same-basis control, never as an absolute quantity.
+
