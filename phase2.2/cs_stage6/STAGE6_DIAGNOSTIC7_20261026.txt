@@ -1,0 +1,382 @@
+Stage 6 - DIAGNOSTIC 7: does the defensible domain transfer? A second design, scaled. Written 26 October 2026,
+after STAGE6_ERRATUM3_20261026.txt and DIAGNOSTIC6_RESULT.txt, and before Stage 7 is written.
+
+THIS IS A DIAGNOSTIC AND NOT A METHOD CHANGE. No criterion, threshold, tolerance, arrangement or reported number
+changes. STAGE6_CRITERIA.txt, STAGE5_CRITERIA.txt, PHASE22_PLAN.txt section 2.2, SP_PLAN.txt and every
+STAGE6_DIAGNOSTIC*, STAGE6_AMENDMENT* and STAGE6_ERRATUM* file are untouched and stand as committed.
+DIAGNOSTIC4_RESULT.txt and DIAGNOSTIC6_RESULT.txt in particular stand exactly as committed; this diagnostic adds
+a second design to the first and changes nothing in either. Decided by Jessica on 26 October 2026.
+
+
+D7.1  WHY, AND THE ONE SENTENCE IN THE RECORD THAT ASKS FOR IT
+
+STAGE6_ERRATUM3_20261026.txt E3.3 states the defensible result and then states its own limit:
+
+   "THIS WAS MEASURED ON ONE DESIGN, S6-20, at one frame, at fixed geometry. Whether the domain transfers to
+    another arrangement is untested, and Stage 7 must either test it or say on its face that it has not been
+    tested."
+
+This is that test. The domain in question is lambda <= 0.50 of S6-20, which is sum |q| <= 2.880 e, and E3.3
+rests it on TWO unrelated criteria that coincide:
+
+   (i)  inter-basis agreement - DIAGNOSTIC5_RESULT.txt D5.3(d), the two bases agree on ddE to within
+        1.0 kcal/mol up to lambda = 0.50, |Delta| = 0.9757 there;
+   (ii) wavefunction health - DIAGNOSTIC6_RESULT.txt, every field run at lambda = 0.25 and 0.50 is CLEAN at
+        BOTH bases.
+
+A domain resting on two criteria must be tested on both, so D7.3 tests both.
+
+WHAT HAPPENS ABOVE THE DOMAIN IS NOT THE SAME AT THE TWO BASES, AND THIS FILE STATES IT AS THE RESULT FILE DOES.
+At def2-SVPD all four runs at lambda = 0.75 and 1.00 are COLLAPSED. At def2-SVP only THREE of the four are
+flagged: DIAGNOSTIC6_RESULT.txt's "EVERY COLLAPSED OR STRAINED SINGLE POINT" table lists exactly three field
+runs at nb 264, at 33, 42 and 47 SCF cycles, and the lambda = 1.00 pair accounts for the 42 and 47 (E3.3 records
+that those are the same wavefunctions as the frozen S6-20 runs, which DIAGNOSTIC6_RESULT.txt lists at 42 and
+47). So ONE def2-SVP run at lambda = 0.75 is not flagged at all.
+
+   A CORRECTION TO THE RECORD, FLAGGED HERE AND DELIBERATELY NOT MADE HERE. E3.3 reads "the def2-SVP runs at
+   lambda = 0.75 and 1.00 as STRAINED", which implies all four; its own source file flags three. The def2-SVPD
+   clause of that same sentence is exact ("all four, both states"); the def2-SVP clause overstates.
+   HANDOVER_20261026.md section 5 carries the same reading. THIS CHANGES NOTHING ABOUT THE DOMAIN, whose
+   criterion is that everything at lambda <= 0.50 is CLEAN at both bases, and that holds - D6 flags nothing
+   below lambda = 0.75. What it changes is the sharpness of the contrast ABOVE the domain: sharp at def2-SVPD,
+   not sharp at def2-SVP. Pre-registrations and errata are never edited, so E3.3 stands exactly as committed
+   and this belongs in a dated erratum of its own, which this file does not write and must not be read as
+   writing. It is recorded here because D7.3 reading 1(ii) applies criterion (ii) to a second design, and it
+   must apply the criterion the result file supports rather than the prose that overstated it.
+
+WHAT D4 LEFT OPEN, IN ITS OWN WORDS. DIAGNOSTIC4_RESULT.txt "WHAT THIS DOES NOT TEST": "One design, so this is
+about S6-20's particular arrangement of twenty charges and not about total field in general." D4 removed the
+design/total-field confound in one direction, by holding the design fixed and varying lambda. The remaining
+direction is to hold the total field fixed and vary the design, which needs a second design at matched sum |q|.
+
+A SECOND BOUND IS IN PLAY AND THE SAME RUNS TEST IT. DIAGNOSTIC4_RESULT.txt reading 1 gives lambda_quad = 0.25,
+a total-field bound of sum |q| <= 1.440 e: the largest total field at which the quadratic model a q + b q^2 is
+within 10 per cent of the measured response at def2-SVPD. E3.3 re-read what that bound means - "lambda_quad
+marks where the REPRESENTATION fails, not where the chemistry saturates. It is a bound on the model." So the
+record holds two bounds of different kinds, both stated in sum |q|, and Stage 7 has to carry both:
+
+   sum |q| <= 1.440 e   the quadratic model a q + b q^2 describes the measured response to within 10 per cent
+                        (D4 reading 1, at def2-SVPD);
+   sum |q| <= 2.880 e   the two bases agree on ddE to within 1.0 kcal/mol AND every run is D6-CLEAN at both
+                        (E3.3, criteria (i) and (ii) above).
+
+Whether either is a property of the model or of S6-20's particular twenty charges is unknown, and these runs
+answer it for both. D7.3 reading 2 asks it for the first.
+
+WHAT THIS IS NOT, STATED BECAUSE IT WOULD BE EASY TO ASSERT AND IS FALSE. It is NOT a claim about the
+optimiser's objective. Decision 1 of OPTIMISER_DECISIONS_20261020.md settled that the MILP scores on the LINEAR
+term only - polarisation is "Not in the MILP score. The pool is re-scored with full def2-SVP single points,
+which contain b and the cross terms exactly" - so the quadratic model is a diagnostic prediction in this series
+and NOT the pipeline's scoring function. The pipeline's own disclosed error is a separate thing and is already
+handled: Decision 1 records frozen magnitudes as "10-31 % too small before re-scoring", never quoted as
+results, with "no direction as measured" on ranking across eight widely separated arrangements and near-ties
+re-ordering, which is why the pool is re-scored at all. Nothing here revisits that.
+
+THE EXPOSURE THAT IS REAL, AND WHICH READING 4 BEARS ON. Decision 1's re-scoring instrument is "full def2-SVP
+single points". DIAGNOSTIC6_RESULT.txt classifies def2-SVP single points as COLLAPSED at 14 to 76 charges, and
+E3.4 classifies the committed S6-10 and S6-20 as STRAINED at def2-SVP, gaps 0.610 to 0.980 eV at 2.4 to 3.1
+times the control's cycles. So the instrument Stage 7 would re-score with is itself inside the region
+DIAGNOSTIC 6 flags, for designs of the size Stage 7 will search. This diagnostic does not fix that. It is the
+reason reading 4 classifies every run here, and the reason the D6 gate Jessica fixed on 26 October has to apply
+at the re-scoring step and not only to what is finally quoted.
+
+NEITHER BOUND IS SHARP AND THIS FILE DOES NOT TREAT THEM AS SHARP. E3.3: lambda_quad "came out at 0.25 rather
+than 0.50 because def2-SVPD's S at lambda = 0.50 is 10.3 per cent against a pre-registered threshold of 10.0 ...
+The near miss is three tenths of a point and it moves the implied bound by a factor of two, so the bound must
+never be quoted as sharply determined." Every reading below is reported as lying between two grid points.
+
+
+D7.2  WHAT IS RUN
+
+ONE further design, scaled, exactly as D4 scaled S6-20. S6-10's ten sites and charges as
+relax/ARRANGEMENTS.txt records them, every charge multiplied by the same lambda.
+
+S6-10 is the choice because it is the only other committed design whose largest charge is 0.5500 e rather than
+1.0000 e (D4.1 records the split: S6-P, S6-2, S6-3 and S6-5 sit at 1.0000 e). The reason that matters is the
+per-site magnitude at the TOP of the grid, not at the bottom: scaling S6-10 reaches a largest charge of
+0.5500 e at lambda = 1, which sits below the +0.65 e that E3.1 records as the largest single magnitude CLEAN at
+def2-SVPD, whereas scaling any of the four 1.0000 e designs to lambda = 1 would end at 1.0000 e, well above the
++0.80 e E3.1 records as COLLAPSED. Scaling necessarily varies per-site magnitude and total field together - the
+table below shows the largest charge running 0.1375 to 0.5500 e - and this diagnostic does not pretend
+otherwise. What D4.2 required, and what is required here, is that EVERY lambda keep the per-site magnitude
+inside a range that has been measured, which S6-10 does and the 1.0000 e designs do not.
+
+READ FROM THE COMMITTED FILE, NOT TYPED (the generator reads them and stops if they do not reproduce):
+
+   sum a q    -18.03353 kcal/mol        sum q^2   2.02340 e^2        sum |q|   4.3800 e
+   sum L      -0.02158 kcal/mol         score     -18.05513 (committed)         largest |q|   0.5500 e
+
+   check: sum a q + sum L = -18.05511 against the committed score -18.05513, a difference of 1.7e-05, inside
+   the 1e-4 the D4 generator already required of S6-20.
+
+THE LAMBDA GRID. Six values. D4's four, so that the two scans are comparable point for point, plus two defined
+by MATCHING S6-20's committed total field at its lambda = 0.25 and lambda = 0.50:
+
+   lambda_m1 = 1.440 / 4.380 = 24/73 = 0.328767      S6-10 then carries sum |q| = 1.4400 e, S6-20's lambda 0.25
+   lambda_m2 = 2.880 / 4.380 = 48/73 = 0.657534      S6-10 then carries sum |q| = 2.8800 e, S6-20's lambda 0.50
+
+The two matched values are COMPUTED by the generator as 1.440/sum|q| and 2.880/sum|q| from the committed
+ARRANGEMENTS.txt, not typed, and printed to six decimals in the plan. They are exact: 4.380 x 24/73 = 1.44 and
+4.380 x 48/73 = 2.88 with no rounding.
+
+WHY THE TWO MATCHED POINTS ARE HERE AND NOT JUST D4'S FOUR. On D4's grid alone S6-10 reaches sum |q| of 1.095,
+2.190, 3.285 and 4.380 e and so lands on NEITHER of the two bounds being tested. A lambda-for-lambda comparison
+would test whether a FRACTION of a design transfers, which is not a quantity anything in the record is stated
+in. The matched points make the test "is a second design clean at the same total field where the first one is",
+which is what the domain claim is stated in and therefore what can be falsified.
+
+   THE ALTERNATIVE WAS REJECTED AND IS RECORDED HERE SO THE CHOICE IS VISIBLE. Matching S6-20's whole grid
+   would need lambda up to 5.760/4.380 = 1.315068, putting S6-10's largest charge at 0.7233 e. E3.1 records
+   +0.65 e as the largest single magnitude CLEAN at def2-SVPD at site 1690, and +0.80 e as COLLAPSED, with no
+   run between them. Going to 0.7233 e would put the per-site magnitude into that unmeasured 0.65-to-0.80 e
+   interval, which is the one thing D4.2 required every lambda to stay out of. It is not done.
+
+   lambda      sum |q| (e)   sum q^2 (e^2)   largest |q| (e)
+   0.250000       1.0950        0.12646          0.1375
+   0.328767       1.4400        0.21870          0.1808      <- S6-20's lambda 0.25, the quadratic-model bound
+   0.500000       2.1900        0.50585          0.2750
+   0.657534       2.8800        0.87482          0.3616      <- S6-20's lambda 0.50, the domain edge
+   0.750000       3.2850        1.13816          0.4125
+   1.000000       4.3800        2.02340          0.5500      <- the committed design
+
+THE PER-SITE MAGNITUDE AT EVERY LAMBDA IS INSIDE WHAT IS MEASURED CLEAN, AND THE WITHDRAWN CAP IS NOT USED.
+D4's generator checked each lambda against a per-site bound of 0.80 e. STAGE6_ERRATUM3_20261026.txt E3.1
+WITHDREW that figure: "THE PER-SITE CAP OF 0.80 e MUST NOT BE USED, in Stage 7 or anywhere else". The check
+here is instead that the largest single charge never exceeds 0.5500 e, which is the committed design's own
+maximum and sits below the +0.65 e that E3.1 records as the largest CLEAN single magnitude at def2-SVPD. Since
+lambda <= 1 throughout, this holds by construction; the generator checks it rather than assuming it.
+
+   THE DISTANCE CAVEAT, WHICH E3.1 REQUIRES BE STATED WITH ANY MAGNITUDE. E3.1: "Any future cap must be stated
+   as a magnitude AND a distance, never as a magnitude alone." The +0.65 e and +0.80 e figures were measured at
+   site 1690, 2.96 A from the nearest substrate atom. S6-10's closest sphere-to-substrate distance is 2.8486 A
+   at R and 2.9234 A at TS (relax/ARRANGEMENTS.txt), so its sites are at comparable but NOT identical distance,
+   and its ten sites sit at a spread of distances this diagnostic does not resolve. Nothing here measures a cap
+   as a function of distance. That remains open and Stage 7 cannot take it from this file.
+
+   BASES       def2-SVP and def2-SVPD, both in vacuo, exactly D4's two and for D4.2's reasons.
+               ma-def2-SVP is not used, for D4.2's reasons.
+               S6-10 HAS NO def2-SVPD RUN IN THE RECORD. The only committed S6-10 single points are
+               frozen/sp_outputs.tar.xz's R and TS pair, both at def2-SVP, which is what
+               DIAGNOSTIC6_RESULT.txt lists for it (npc 10, nb 264, 36 and 40 cycles). cs_stage6/diffuse/
+               holds no S6-10 either, though note that diffuse/ is Diagnostic 1's ma-def2-SVP scan
+               (DIFF-S6-C, DIFF-S6-P, DIFF-S6-2, DIFF-S6-20 at nb 328) and not a def2-SVPD set at all - the
+               def2-SVPD runs live in field/, qscan/C5/, qrefine/ and pauli/def2-SVPD/, and none of them is
+               S6-10. So criterion (i) cannot be evaluated for S6-10 from committed data, which is a second
+               and independent reason both bases are run here. The bundle re-establishes this absence from the
+               committed archives before it writes anything, rather than resting it on this paragraph.
+
+   GEOMETRIES  frame_42436's committed reactant and transition state, byte for byte, the same two files D4
+               used and the same sha256 relax/ARRANGEMENTS.txt records.
+
+   CHARGES     as BARE POINT CHARGES, ten in one file, no Lennard-Jones, for D4.2's reason: Finding 4 measured
+               the LJ sphere and the bare charge at the same site to differ by exactly L with identical
+               electronic deviation, since the LJ term never enters the QM Hamiltonian. L is classical, is
+               already committed in L_f42436.tsv, and is added arithmetically where it is needed.
+
+   24 single points of a few minutes, one restartable job, 8 cores and 24 GB, as field.pbs is. The bare
+   references are NOT re-run: they come out of the committed qscan outputs archive, so the comparison is
+   against the same bare energies every earlier diagnostic used.
+
+THE CODE. A NEW script, phase2.2/cs6_transfer.py, committed with the inputs and before any job is submitted.
+
+cs6_field.py IS NOT MODIFIED. HANDOVER_20261026.md section 10 names it the committed generator of record for
+the D4 inputs, checked byte for byte by the D4 result bundle, with its known grammar defect deliberately
+unfixed; that note is in the handover's honesty record and nowhere else in the results repo, and it is NOT in
+STAGE6_ASSESSMENT_20261022.md, which predates the script.
+
+WHAT cs6_field.py ALREADY DOES RIGHT, STATED ACCURATELY BECAUSE THE NEW SCRIPT INHERITS IT. It does NOT type
+the design's sums or its sites: design() parses site, q, xyz, a and L out of ARRANGEMENTS.txt, line 214 computes
+sum a q and sum q^2 from them, and stop (c) cross-checks every coordinate against sites_f42436.tsv to 1e-6 A and
+every a against A_f42436.tsv to 5e-5. What it DOES hardcode is S6-20-specific: the design's name and its
+expected sphere count of 20 in its parsing regex, SCORE_REC = -19.65373, SUM_L = -0.13622, Diagnostic 1's two
+S6-20 values, QCAP = 0.80 and LAMBDAS = (0.25, 0.50, 0.75, 1.00).
+
+cs6_transfer.py therefore changes only those: it takes the design name and its sphere count as arguments, reads
+the committed score and sum L for that design out of ARRANGEMENTS.txt instead of carrying them as constants,
+takes its lambda grid and its per-site check from D7.2, and adds the D6 classification of D7.3 reading 4. Every
+other prepare and analyse stop is carried over unchanged in substance.
+
+
+D7.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+The prediction at each lambda, from quantities already committed and NOT refitted:
+
+   predicted(lambda) = lambda * sum a q  +  lambda^2 * b * sum q^2
+   with sum a q = -18.03353, sum q^2 = 2.02340 from the committed ARRANGEMENTS.txt and
+   b = -1.5320 kcal/mol per e^2 from DIAGNOSTIC2_AMENDMENT1_RESULT.txt, read out of its text and not typed.
+
+   lambda      0.250000   0.328767   0.500000   0.657534   0.750000   1.000000
+   predicted    -4.7021    -6.2639    -9.7917   -13.1979   -15.2688   -21.1334   kcal/mol
+
+   S(lambda) = | measured - predicted | / | predicted |, as Diagnostic 2 and D4 define it.
+
+ONE b IS USED FOR ALL TEN SITES AND THAT IS AN APPROXIMATION, STATED AS ONE, exactly as D4.3 stated it: b was
+measured at site 1690 only, at 2.96 A from the nearest substrate atom, and S6-10's ten sites sit at various
+distances. If a residual is large, a site-dependent b is one of the explanations, and D7.4 says so.
+
+A CONSISTENCY STOP THAT TIES THIS SCAN TO THE COMMITTED MEASUREMENT, before any reading is taken. The committed
+frozen ddE for S6-10 at def2-SVP is -21.816364, with sum L -0.021580, both read from cs_stage6/frozen/frozen.tsv
+(the full-precision source; STAGE6_FINDINGS_20261022.md Finding 1 prints the same number rounded to -21.816, and
+D4.3's analogous stop used its 4-decimal figure). It is a QM/MM number and includes that sum L. This scan uses
+bare charges, so its def2-SVP lambda = 1 point must equal
+
+   -21.816364 - (-0.021580) = -21.794784 kcal/mol
+
+which is what Finding 4 requires, since the bare charge and the LJ sphere differ by exactly L and nothing else.
+analyse STOPS unless they agree within 0.05 kcal/mol, D4.3's own tolerance. If they do not agree, this scan is
+not measuring the committed design and NOTHING ELSE IN IT MAY BE READ.
+
+   READING 1. DOES THE DEFENSIBLE DOMAIN TRANSFER?
+   Evaluated at the lambda whose sum |q| <= 2.880 e, i.e. lambda = 0.250000, 0.328767, 0.500000 and 0.657534.
+   Both of E3.3's criteria, separately:
+      (i)  INTER-BASIS AGREEMENT. |Delta| <= 1.0 kcal/mol at each, where
+           Delta = ddE(def2-SVPD) - ddE(def2-SVP). The 1.0 kcal/mol is E3.3's own figure for S6-20 and is not
+           moved.
+      (ii) WAVEFUNCTION HEALTH. Every run at those four lambda classified CLEAN at BOTH bases by D6.3's rule,
+           unchanged, against the median of the charge-free controls of the same basis-set size.
+   TRANSFERS            BOTH criteria hold at all four lambda.
+   PARTIAL              EXACTLY ONE of the two criteria holds at all four; the other fails at one or more.
+                        Reported with WHICH. The domain then rests on one criterion for S6-10 where it rested
+                        on two for S6-20, and that must be stated wherever it is quoted: the coincidence of two
+                        unrelated criteria is what E3.3 rested the claim on, and half of it is a weaker claim,
+                        not the same one.
+   DOES NOT TRANSFER    BOTH criteria fail, each at one or more of the four. The domain is then a property of
+                        S6-20's particular arrangement and not of total field, and Stage 7 must say so on its
+                        face.
+   These three are disjoint and exhaustive over the four lambda - both criteria hold everywhere, or exactly one
+   does, or neither does - so the reading returns exactly one verdict whatever the runs give.
+
+   READING 2. DOES THE QUADRATIC-MODEL BOUND TRANSFER? (lambda_quad)
+   lambda_quad(S6-10) = the largest lambda on this grid with S(lambda) <= 10 per cent at def2-SVPD, the 10 per
+   cent being Diagnostic 2's convention, unchanged. THE GRID IS DISCRETE, SO WHAT IS REPORTED IS NEVER A VALUE
+   BUT THE INTERVAL THE BOUND FALLS IN: [sum |q| at lambda_quad, sum |q| at the next lambda up). That is E3.3's
+   requirement that the bound never be quoted as sharply determined, applied in the form of the answer itself.
+   S6-20's own bound, read the same way off DIAGNOSTIC4_RESULT.txt, is the interval [1.440, 2.880) e.
+   AGREES         S6-10's interval OVERLAPS [1.440, 2.880) e.
+   TIGHTER        S6-10's interval lies entirely BELOW 1.440 e.
+   LOOSER         S6-10's interval lies entirely at or ABOVE 2.880 e.
+   NOT MONOTONE   S crosses 10 per cent more than once across the six lambda. No bound is stated for S6-10 at
+                  all, the crossings are reported as measured, and this reading returns no verdict. The case is
+                  named rather than assumed away because DIAGNOSTIC5_RESULT.txt D5.3(b) measures how far each
+                  basis departs from a quadratic and records that four lambda leave one degree of freedom and
+                  cannot localise an outlier, so a non-monotone S is a live possibility here.
+   These four are disjoint and exhaustive. If TIGHTER or LOOSER, the 1.440 e figure is a property of S6-20's
+   arrangement and not of the model, and Stage 7 cannot carry it as a general statement about where the
+   quadratic model holds without saying that.
+
+   AN INCIDENTAL GAIN, STATED SO IT IS NOT OVERCLAIMED. Six lambda against a quadratic leave three degrees of
+   freedom where D4's four left one. That is a better position than D4.3 had, and it goes some way towards
+   D5.3(b)'s recorded limitation. It does NOT close it: D5.3(b) names lambda = 0.875 as the natural fifth
+   point and this grid does not contain it, so the open item stands.
+
+   READING 3. IS Delta A FUNCTION OF TOTAL FIELD ALONE?
+   D4 reading 2 found Delta NOT linear in lambda at fixed design (r = +0.9195, intercept -10.2249) and
+   concluded the assessment's sum |q| correlation "describes those four designs and is not a scaling law".
+   This adds the test D4 could not do, at the two matched points, where the two designs carry the same total
+   field and differ only in arrangement:
+      at sum |q| = 1.4400 e   S6-20 measured Delta = -0.4633   (DIAGNOSTIC4_RESULT.txt)
+      at sum |q| = 2.8800 e   S6-20 measured Delta = -0.9757   (DIAGNOSTIC4_RESULT.txt)
+   MATCHED       |Delta(S6-10) - Delta(S6-20)| <= 0.3 kcal/mol at BOTH matched points.
+                 WHERE THE 0.3 kcal/mol COMES FROM, STATED EXACTLY. It is carried over from D4.3, where it is
+                 the tolerance on the INTERCEPT of a linearity fit at fixed design ("an intercept within
+                 0.3 kcal/mol of zero"). Here it is applied to the DIFFERENCE between two designs' Delta at
+                 matched total field, which is a different quantity. The figure is therefore carried over by
+                 choice, not inherited, and that choice is disclosed rather than presented as authority: the
+                 reason for it is that it is the only tolerance on a Delta anywhere in the record, and
+                 inventing a new one here would be worse.
+   NOT MATCHED   otherwise. Delta then depends on the arrangement and not only on the total field, which
+                 settles D4.4's remaining confound in the direction D4 could not reach, and means no bound
+                 stated in sum |q| alone transfers between designs.
+
+   READING 4. THE D6 TABLE FOR ALL 24 RUNS. Every run classified by D6.3's rule - CLEAN, POLARISED, STRAINED or
+   COLLAPSED - printed with its SCF cycle count, HOMO-LUMO gap, dipole magnitude and largest Loewdin charge on
+   a light atom, each beside the median of the charge-free controls of the same basis-set size. THIS IS A
+   PRE-REGISTERED READING AND NOT AN AFTERTHOUGHT. D6.0 records why: "Diagnostics 1 to 5 read energies. Not one
+   of them read the SCF cycle count or the HOMO-LUMO gap." Those fields sat unread in committed outputs for
+   weeks. No energy from this scan may be quoted without its verdict in the same sentence, which is E3.4's rule
+   applied to these runs in advance of their existing.
+   D6.3's thresholds are NOT re-chosen here. They are post-hoc with respect to the Stage 6 corpus, as D6.0
+   discloses; with respect to THESE 24 runs they are pre-registered, because this file fixes them before the
+   runs exist. That is an improvement in the thresholds' standing and it is stated rather than claimed as more
+   than it is: the same thresholds, applied to data that did not inform them.
+
+
+D7.4  WHAT THIS DOES NOT TEST
+
+Two designs, so a result either way is about S6-10 and S6-20 and not about arrangements in general; a third
+arrangement at the same total field could behave differently again. One frame, one geometry pair, fixed
+geometry throughout, so nothing here is about Loss or about a relaxed stationary point. Whether b varies
+between sites, which is the first explanation to reach for if a residual is large and which needs the
+charge-magnitude scan repeated at two or three further distances (D4.4). NO CAP AS A FUNCTION OF DISTANCE: the
+per-site magnitude is bounded here but never varied against distance, so Stage 7's requirement that a cap be
+stated as a magnitude AND a distance is NOT met by this file and is not claimed to be. Negative total field -
+both designs scaled here carry a net charge of one sign each and the question of a negative total field is
+untouched. Nothing about the designs at 1.0000 e per site, which are four of the six committed designs.
+Nothing about ma-def2-SVP. And no charge model with a Pauli wall for electrons is tested or offered: E3.2,
+Finding 4, DIAGNOSTIC5_RESULT.txt D5.3(c) and D6.5 leave that open and this diagnostic does not touch it.
+
+
+DIRECTION
+
+NOT NONE. It is declared per outcome below, because one of the four is towards a lower barrier and saying
+"none" would be the exact failure the project's rule against shaping anything towards a lower barrier exists to
+prevent. The runs supply the one thing E3.3 says Stage 7 needs and does not have, test whether D4's
+quadratic-model bound is a property of the model or of one design, and settle D4.4's remaining confound. Every
+reading is fixed above before the runs go in.
+
+   Reading 1 TRANSFERS          NEUTRAL. The defensible region stays exactly where it is, at sum |q| <= 2.880 e
+                                and ddE of about -10.7 kcal/mol. Nothing is gained and nothing is permitted.
+   Reading 1 PARTIAL, or
+   DOES NOT TRANSFER            AGAINST a lower barrier. The defensible region shrinks towards one design and
+                                Stage 7 is more constrained, not less.
+   Reading 2 AGREES, TIGHTER
+   or NOT MONOTONE              NEUTRAL or against. A tighter or unstatable bound constrains Stage 7 further.
+   Reading 2 LOOSER             TOWARDS A LOWER BARRIER. THIS IS THE ONE TO WATCH, AND IT IS NAMED NOW RATHER
+                                THAN FOUND LATER. DIAGNOSTIC4_RESULT.txt reading 1 does not merely describe the
+                                1.440 e bound - it says "Stage 7 imposes that". So a LOOSER result is evidence
+                                for admitting larger total fields into Stage 7's search than the record now
+                                admits, and a larger total field is towards a lower frozen barrier.
+   Reading 3, either way        NEUTRAL. It establishes whether a bound stated in sum |q| alone can transfer
+                                between designs at all. NOT MATCHED is the more constraining answer.
+   Reading 4                    AGAINST or neutral by construction. It can only add verdicts that restrict what
+                                may be quoted; it cannot license anything.
+
+WHAT NO OUTCOME HERE RELAXES. This diagnostic produces evidence; it changes no pre-registration. The 1.440 e
+constraint D4 reading 1 placed on Stage 7 stays in force whatever reading 2 returns, and only Stage 7 itself - a
+pre-registration written before its own runs, and disclosing on its face that it was written after this result -
+can alter it. Reading 1's two criteria likewise stay in force. No outcome of this diagnostic makes any design's
+barrier lower than it is now measured to be, and none changes what may be quoted from the existing record.
+
+
+SHA256 OF EVERY INPUT AND OF THE CODE
+
+The geometries, as relax/ARRANGEMENTS.txt records them and as D4 used them:
+  frame_42436/reactant_qm.xyz          6e8f41c7da3bcf4ed9f5c650dc9fcf12c2a36e5af7a900e164892c276497aa88
+  frame_42436/transition_state_qm.xyz  2babeb9000ca5220a908a70eaec80ec4a64358c8f5677e9a16cb104e0dffc5bf
+  frame_42436/transform.txt            a57991bd6c5827cf7eab7c0b932b136d94a065953278b53d6b6cd0d63df2ea4c
+
+The design, the sites, A and L, as committed:
+  cs_stage6/sites_f42436.tsv           d2a750077d79e34dfecf448c30c2899ae0cea98f1edc5de3d10361b7c357cfc7
+  cs_stage6/L_f42436.tsv               ee6d57622619f0c3dccb105a36004c733c781fd67b565660b8bec2663f16ec2a
+  cs_stage6/A_f42436.tsv               a7faa6c5cacc2f2ee0956f80a1a6645eed1e04cc126830d5f5803d9762eae553
+  cs_stage6/relax/ARRANGEMENTS.txt     651e7e228e1409f052bb024b42d125ab59bc86ebee789f3dd60ad1eb5f9c6038
+                                       (the same digest frozen/FROZEN_REPORT.txt line 3 already records)
+  cs_stage6/frozen/frozen.tsv          ab48d52267a5e8c8de813a79acec0f8dceee0fde2e0aa32acb45ccbc465b7b5a
+                                       (the consistency stop's two figures are read from this file)
+  cs_stage6/STAGE6_CRITERIA.txt        010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+
+The bare references, from the committed qscan outputs archive, checked against its manifest sha256 before use,
+as cs6_field.py analyse stop (h) requires; its C1 bare energies must reproduce A_REPORT.txt to below 1e-6 Eh.
+
+The code (chorismate-thesis-code, tier1-realism, phase2.2/):
+  cs6_transfer.py                      TO BE RECORDED WHEN IT IS COMMITTED, WITH THE INPUTS, BEFORE ANY RUN
+                                       (it does not exist yet; this is the only outstanding digest)
+  cs6_audit.py                         19f63857536fb66645d8f31d286c21404159d672a4fa73a94c7b2ac8e90cfa7b
+                                       (D6's classifier, used unchanged for reading 4)
+  cs6_field.py                         7695ec2e17e23833975a54b51ddd8e013fcc443f22b277bfb2a8d49687e2ebeb
+                                       NOT USED AND NOT MODIFIED. Its digest is recorded so that its exclusion
+                                       is checkable and so that a later reader can confirm it was untouched.
+
+Every digest above was computed from the committed file at the path given. The bundle that applies this
+pre-registration recomputes all of them and stops if any differs, and records cs6_transfer.py's own digest when
+it commits it.
