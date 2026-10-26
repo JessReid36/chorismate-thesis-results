@@ -1,0 +1,192 @@
+STAGE 6 - DIAGNOSTIC 8, PRE-REGISTERED 2026-10-26
+The wavefunction-health audit re-run over the corpus it should have had
+
+This file is pre-registered. It is never edited. Changes go into a dated amendment or erratum.
+
+STAGE6_DIAGNOSTIC6_20261026.txt is NOT amended by this document and DIAGNOSTIC6_RESULT.txt is NOT
+edited by this diagnostic. D6 stands as written and as run. This is a separate diagnostic with a
+separate result file, and it is committed before it is run.
+
+
+D8.0  WHY, AND THE TWO DISCLOSURES THAT BELONG FIRST
+
+STAGE6_ERRATUM4_20261026.txt names four defects in cs6_audit.py. Two of them change which runs the
+audit saw, and two change what it compared them against:
+
+  E4.4(i)   The control pool was built as every charge-free run of a given basis, geometry
+            optimisations included. D6.1 itself says a charge-free control is NOT like-for-like once
+            the geometry has moved, and the code does not implement that for the controls. Every
+            threshold in D6.3 is anchored to those medians.
+  E4.4(ii)  The four run categories are not disjoint. A run carrying more than 200 point charges and
+            more than zero optimisation cycles satisfies both the QM/MM test and the
+            point-charge-optimisation test and is counted in both, so the printed census does not sum
+            to the number of runs kept.
+  E4.5      The corpus walker opens *.tar.xz only. 415 completed runs committed as loose .xz files
+            were never read at all - roughly a fifth of the record, and among them four Stage 4c runs
+            at three point charges.
+  E4.6      A run whose charges are carried as Ne> centres in its own coordinate block reports no
+            point-charge file. cs6_audit.py therefore reads npc = 0 and files it as a CHARGE-FREE
+            CONTROL, where it helps set the thresholds every charged run is judged against.
+
+E4.6 CONSTRAINS THE ORDER OF THE FIX AND THIS DIAGNOSTIC OBEYS IT. The walker and the charge
+detection must be corrected in the same change. The walker alone adds runs, most of which carry
+their charges as Ne> centres; without the charge fix those runs enter as controls and the audit
+becomes MORE PERMISSIVE rather than more complete. They are therefore one stage here, never two.
+
+FIRST DISCLOSURE. D8 inherits D6.0's disclosure in full and does not repair it. The four thresholds
+were chosen AFTER the Stage 6 outputs had been inspected. This is not a blind test either. D8
+deliberately does NOT re-derive them: changing the corpus and the rule in one step would make the
+comparison uninterpretable, and whether those two unanchored criteria should be replaced by SCF
+stability analysis and FOD is the next question and is not this one.
+
+SECOND DISCLOSURE. D8 is written by the same process that wrote the defective walker. The protection
+against that is not care; it is D8.3's gate, which refuses to report anything at all unless this
+script can first reproduce the committed DIAGNOSTIC6_RESULT.txt byte for byte.
+
+
+D8.1  WHAT IS READ, AND FROM WHERE
+
+NO CALCULATION IS PERFORMED AND NO NETWORK IS USED. Nothing is submitted to a queue. The script is
+pure standard library and is safe on the hpc1 login node.
+
+cs6_audit.read() is IMPORTED from cs6_audit.py and used unchanged, and so are all six of its
+constants - D_LW, R_DIP, GAP_ABS, R_GAP, R_CYC and MM_NPC. No threshold and no parsed field is
+retyped. The only function reproduced rather than imported is verdict(), which cannot be imported
+because it is a closure inside cs6_audit.main(); it is copied line for line against the imported
+constants, and D8.3's gate is what establishes that the copy is faithful.
+
+Three things are read that D6 did not read, all of them printed by ORCA itself:
+
+  (i)   Ne> point-charge centres: their charge and their position, from the run's own coordinate
+        block. A centre of charge exactly zero is a ghost centre and is not counted. This pattern is
+        the one Erratum 4 E4.6 used when it quoted L0_E5_R's centres; the three positions matched
+        L1_E5_R/combined.xyz to eight decimals, which is the evidence that it reads this corpus.
+  (ii)  A point-charge .pc file committed beside the output, when one is. ORCA does not echo a .pc
+        file into its output, so for most point-charge runs the magnitudes cannot be recovered at
+        all, and NONE IS GUESSED. A .pc file is attributed to an output only on an unambiguous match:
+        the same stem, or a directory holding exactly one output and exactly one .pc file. A charge
+        vector attributed to the wrong run would be worse than no charge vector.
+  (iii) The real-atom coordinates of the final geometry, which with (i) or (ii) give the field.
+
+The corpus is walked in two ways. Every *.tar.xz is opened as D6 opened it. Every loose *.xz that is
+not a tarball is decompressed and read as a single output. Outputs sitting uncompressed as *.out
+outside any archive are COUNTED AND NOT CLASSIFIED: whether a file that is not a committed archive
+member belongs in this corpus is a separate decision and is not taken here.
+
+A run is kept on exactly D6.1's conditions, because read() is the same function.
+
+
+D8.2  WHAT IS NOT DONE
+
+No calculation is submitted. No criterion, threshold, tolerance, method, arrangement or reported
+number changes. STAGE6_CRITERIA.txt, STAGE5_CRITERIA.txt, STAGE4C_CRITERIA.txt and PHASE22_PLAN.txt
+section 2.2 are untouched. STAGE6_DIAGNOSTIC6_20261026.txt is not amended. DIAGNOSTIC6_RESULT.txt is
+not edited, not regenerated and not superseded; it remains the record of what D6 found in the corpus
+D6 could see. cs6_audit.py is not modified.
+
+This diagnostic does not say what the correct barrier is for any run. It says only which committed
+numbers should not be quoted, and over how much of the record that judgment can now be made.
+
+
+D8.3  THE GATE, WHICH RUNS BEFORE ANY READING IS COMPUTED
+
+Stage 1 of this script is D6 as published: D6's walker, D6's charge detection, D6's control filter
+and D6's categories. From stage 1 the script rebuilds the ENTIRE TEXT of DIAGNOSTIC6_RESULT.txt and
+compares it with the committed file BYTE FOR BYTE.
+
+If it matches, then every number D6 printed has come back out of this script's corpus reader, its
+control medians and its copy of D6.3, and the stages below differ from D6 only where a named defect
+has been corrected.
+
+IF IT DOES NOT MATCH, THAT IS THE FINDING. The script prints the first differing line and stops. No
+result file is written, because no later reading would be interpretable: either the committed corpus
+is no longer the corpus D6 was run against, or this script's reproduction of D6.3 is not faithful,
+and the two cannot be told apart from a report that assumes one of them.
+
+
+D8.4  THE STAGES AND THE READINGS
+
+The rule never changes. D6.3 is applied unchanged at every stage. The variable is the corpus.
+
+  stage 1  D6 as published. The gate, not a reading.
+  stage 2  + controls restricted to charge-free SINGLE POINTS, and the run categories made disjoint
+           into five classes: charge-free single points, charge-free optimisations, point-charge
+           single points, point-charge optimisations, QM/MM.                      (E4.4 i and ii)
+  stage 3  + loose .xz outputs opened, and point charges detected from Ne> centres as well as from a
+           point-charge file. These two are one change.                           (E4.5 and E4.6)
+
+The stages are reported NESTED and never netted, because the two fixes in stage 3 pull opposite
+ways: the charge fix is stricter and removes runs from the control pool, the walker is broader and
+adds runs to it.
+
+  (a) THE CORPUS AT EACH STAGE, by category, with the arithmetic of D6's overlap shown.
+
+  (b) THE DISGUISED CHARGED RUNS. Every run reporting no point-charge file but carrying Ne> charges,
+      named, with its charge count and its sum and maximum |q|, and whether D6 had it in its control
+      pool. If there are none, E4.6's concern does not arise in this corpus and the charge-detection
+      fix changes nothing: that is a result and is reported as one.
+
+  (c) WHAT THE CONTROL MEDIANS MOVED TO, per basis, at each stage, in all four indicators, with the
+      specificity check at each stage.
+
+  (d) VERDICTS ON POINT-CHARGE SINGLE POINTS, by basis, at each stage.
+
+  (e) EVERY VERDICT THAT CHANGED on a run D6 already had, split into point-charge single points -
+      the table every Stage 6 number is read off - and everything else, so that the first group
+      cannot be inflated by the second.
+
+  (f) AT HOW MANY CHARGES def2-SVP FIRST GOES WRONG, banded, at each stage, with the single-charge
+      bands 1, 2, 3 and 4 separated because E4.5 puts the onset at three and D6 read it at ten.
+
+  (g) THE CHARGE VECTOR OF EVERY RUN WHOSE CHARGES ARE RECOVERABLE, one row per distinct signature,
+      nothing truncated. A signature is the exact charge vector and the exact final geometry to four
+      decimals, matched by sha256, at one basis - not a scalar summary of them.
+
+  (h) THE TEST OF THE PEAK-FIELD HYPOTHESIS. STAGE6_ERRATUM5_20261026.txt offers peak local field at
+      the substrate as the only scalar still standing after sum|q|, max|q|, n and sum q^2 all failed
+      to separate eight arrangements, and offers it explicitly as a hypothesis rather than a
+      predictor. THE TEST AND ITS FALSIFICATION CRITERION ARE FIXED HERE, BEFORE THE CORPUS IS
+      SCANNED:
+
+          healthy = CLEAN or POLARISED, since D6.3 states that POLARISED is not a fault
+          sick    = STRAINED or COLLAPSED
+          peak |E| = the largest |E| at any real atom, E = 14.39965 q / r^2 in V/Angstrom, summed
+                     over that run's own charges at that run's own final coordinates
+          THE HYPOTHESIS SURVIVES ONLY IF max(peak |E| over healthy) < min(peak |E| over sick).
+          ANY overlap falsifies it. The test is run per basis set, because a threshold needing a
+          different value at each basis would not be a property of the design.
+
+      A signature carrying BOTH verdicts falsifies more than the peak field: no function of the
+      charges and the geometry can separate verdicts that agree on both, so the difference would
+      have to come from the SCF path, the initial guess or the build, and the classifier would be
+      partly reading run-to-run variation. Such signatures are listed if any exist.
+
+      If no basis has both a healthy and a sick run with recoverable charges, THE TEST DOES NOT RUN,
+      and that is reported as a fact about the record and not as support for the hypothesis.
+
+  (i) THE GEOMETRY OPTIMISATIONS AND THE QM/MM RUNS, reported apart from the single points, as D6.1
+      requires and for D6.1's reason.
+
+
+D8.5  WHAT THIS CANNOT TEST
+
+Nothing is computed, so no hypothesis the committed outputs do not already contain can be tested.
+It cannot say what the right answer is for any run it flags, only which numbers should not be quoted.
+
+The thresholds are post-hoc, as D8.0 states and as D6.0 stated before it. A corrected corpus does not
+make a post-hoc threshold blind.
+
+A CLEAN verdict is necessary and not sufficient. Erratum 4 E4.6 records that B1 added a Pauli wall,
+the gap recovered from 0.550 to 3.637 eV, and b still stood 32.6 per cent from its target against a
+10 per cent criterion. A healthy wavefunction does not make a design right.
+
+Reading (h) tests one scalar on one corpus at whatever bases that corpus happens to use. A scalar
+that survives here is a candidate for a constraint and not a constraint: it would still have to be
+tested on arrangements chosen to break it, and those do not exist yet. Two electrostatic predictors
+have already been proposed and failed in this project, which is why (h) is written to be falsifiable
+rather than to be confirmed.
+
+The charge magnitudes in (g) and (h) exist only for runs that carry their charges as Ne> centres or
+whose .pc file was committed beside the output. For every other point-charge run the record does not
+contain the magnitudes, and the proportion of the corpus that is therefore untestable is itself one
+of this diagnostic's findings.
