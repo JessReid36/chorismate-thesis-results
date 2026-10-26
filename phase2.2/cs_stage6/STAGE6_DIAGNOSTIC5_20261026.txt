@@ -1,0 +1,195 @@
+STAGE 6 - DIAGNOSTIC 5, PRE-REGISTERED 2026-10-26
+Where Diagnostic 4's divergence lives: a decomposition of the sixteen points already on disk
+
+This file is pre-registered. It is never edited. Changes go into a dated amendment or erratum.
+
+
+D5.0  WHY
+
+Diagnostic 4 measured ddE = (E_TS - E_TS,bare) - (E_R - E_R,bare) for S6-20 scaled by lambda at two bases, and
+reported this:
+
+      lambda   S|q|    largest |q|   predicted    def2-SVP     S      def2-SVPD    S       Delta
+       0.25   1.440     0.1375       -5.0754    -5.0969    0.4%    -5.5601    9.5%   -0.4633
+       0.50   2.880     0.2750      -10.5430   -10.6573    1.1%   -11.6329   10.3%   -0.9757
+       0.75   4.320     0.4125      -16.4026   -17.0581    4.0%   -10.2346   37.6%   +6.8235
+       1.00   5.760     0.5500      -22.6544   -24.6898    9.0%    -6.1422   72.9%  +18.5477
+
+Two things in that table need stating plainly before anything is built on it.
+
+First, def2-SVP is an almost exact quadratic in lambda. A free quadratic fit leaves a maximum residual of 0.0586
+kcal/mol across the four points, and the lambda = 1 point reproduces the committed frozen S6-20 value minus its
+classical sum L to 0.0001 kcal/mol. Nothing about the def2-SVP series is anomalous.
+
+Second, def2-SVPD is NOT monotone. Its ddE runs -5.5601, -11.6329, -10.2346, -6.1422: it reaches its largest
+magnitude near lambda = 0.5 and then returns towards zero, so that beyond half field adding charge makes the
+catalysis worse, continuously. Delta changes sign near lambda = 0.53 and then grows roughly as lambda^3.5. A
+free quadratic fit to def2-SVPD has a POSITIVE curvature coefficient, +40.7, the opposite sign from
+polarisation, and a residual of 0.72 kcal/mol, twelve times def2-SVP's.
+
+Diagnostic 4 could not say whether that turnover lives in the reactant, in the transition state, or in both,
+because ddE is a difference and D4 reported only the difference. The sixteen single points already contain the
+two state energies separately, and ORCA printed orbital energies, a dipole and Loewdin charges into the same
+files. All of it is committed, sha256-manifested, in field/outputs/field_outputs.tar.xz. This diagnostic reads
+it back. NO NEW CALCULATION IS PERFORMED.
+
+The question matters because two explanations fit the table and they lead opposite ways.
+
+  (i) REAL DIFFERENTIAL SATURATION. The dianion's response to the field genuinely saturates, and the reactant
+      and transition state saturate by different amounts, so their difference turns over. Then Diagnostic 4's
+      lambda_quad is chemistry, Stage 7 caps the total field, and the achievable barrier reduction for this
+      substrate is bounded near 10 to 12 kcal/mol.
+
+  (ii) ELECTRON SPILL-OUT. Finding 4 established that our charge sites have a wall for nuclei and NONE for
+      electrons. Marefat Khah et al., JCTC 2020, doi:10.1021/acs.jctc.9b01162, report that this causes
+      "unphysical leaking of the electron density", "in particular, when diffuse basis functions are required",
+      and that smearing does not fix it because "these methods do not capture the effects of the Pauli exchange
+      repulsion on the electronic wavefunction". def2-SVPD supplies exactly the diffuse flexibility that lets
+      density pile up toward a positive site; def2-SVP does not have it. Then the def2-SVPD high-field points
+      are not physical barriers at all, the bound is a bound on the model, and what has to change is the charge
+      model - not the basis and not the budget.
+
+Neither is assumed. DIAGNOSTIC3_NOTE1 N3.2 measured def2-SVP to be about fifteen times less sensitive than
+def2-SVPD to empty basis functions at a design site, which says the diffuse basis is the one with the extra
+freedom, and it does not say which way that freedom is used here. DIAGNOSTIC3's finding that a real Na+ ion with
+its own Pauli wall saturated about as much as a bare point charge was measured at ONE charge at ONE site, in
+the low-field regime where the two bases agree in this very table - so it does not extend to lambda > 0.5 and
+its reassurance does not cover this. That limitation of D3 is recorded here rather than left implicit.
+
+
+D5.1  WHAT IS READ, AND FROM WHERE
+
+Every number comes out of two committed archives, each member checked against that archive's own sha256
+manifest before it is parsed:
+
+  field/outputs/field_outputs.tar.xz     the sixteen runs, ./<basis>/lam<NNN>_<state>/job.out
+  qscan/outputs/qscan_outputs.tar.xz     the four bare references, ./C1/bare_<state>/job.out and ./C5/...
+
+Per run: the final single point energy, the basis-function count, the full orbital-energy block, the dipole
+magnitude and the Loewdin atomic charges. Every field is required; none is defaulted. A run is refused unless
+ORCA terminated normally, the SCF converged, the electron count is 118, there is exactly one final energy, ORCA
+confirmed reading exactly 20 point charges, and there are 59 occupied orbitals. A bare reference is refused if
+it carries a point-charge file at all.
+
+THE TIE TO THE PUBLISHED RESULT IS A STOP, NOT A REMARK. The eight ddE values this script reconstructs from the
+decomposition must reproduce the committed DIAGNOSTIC4_RESULT.txt table to better than 1e-3 kcal/mol. If they
+do not, the decomposition does not belong to the published result and nothing below it is readable.
+
+Definitions used throughout:
+
+  dE_R(basis, lambda)  = E(R  + charges) - E(R  bare)
+  dE_TS(basis, lambda) = E(TS + charges) - E(TS bare)
+  delta dE_R           = dE_R(def2-SVPD) - dE_R(def2-SVP)        and likewise for the TS
+  Delta                = delta dE_TS - delta dE_R, identically Diagnostic 4's Delta
+
+
+D5.2  WHAT IS NOT DONE
+
+No calculation is submitted. No criterion, threshold, tolerance, method, arrangement or reported number
+changes. STAGE6_CRITERIA.txt, STAGE5_CRITERIA.txt and PHASE22_PLAN.txt section 2.2 are untouched.
+DIAGNOSTIC4_RESULT.txt stands exactly as committed, including lambda_quad = 0.25.
+
+On that number, one fact belongs in the record because omitting it would overstate its precision: lambda_quad
+came out at 0.25 rather than 0.50 because def2-SVPD's S at lambda = 0.50 is 10.3 per cent against a
+pre-registered threshold of 10.0 per cent. It is a near miss by 0.3 percentage points, and the bound it implies
+therefore differs by a factor of two - sum |q| <= 1.440 e rather than 2.880 e - on three tenths of a point. The
+threshold was fixed before the runs and IS NOT MOVED. The near miss is stated so that the bound is quoted with
+its real precision rather than as though 1.440 e were sharply determined.
+
+
+D5.3  THE FOUR READINGS, FIXED BEFORE ANY OF THIS WAS READ
+
+  (a) WHERE THE DIVERGENCE LIVES. Report delta dE_R and delta dE_TS at every lambda. Because their difference
+      is identically Delta, they are not independent, and the well-posed question is how large the common shift
+      is beside Delta. Let lo = min(|delta dE_R|, |delta dE_TS|) at lambda = 1.
+        - lo >= 3 * |Delta|: CANCELLATION-DOMINATED. Both states move far more than their difference does, so
+          ddE at def2-SVPD is a small difference of large numbers and is numerically fragile. Neither basis can
+          be quoted at that field, and the charge model rather than the basis is what has to change.
+        - otherwise: NOT A CANCELLATION. The turnover is a real differential response, and the state carrying
+          the larger shift is named as where to look.
+
+  (b) HOW NON-QUADRATIC EACH BASIS IS. Fit a quadratic in lambda to each of the four series - two bases by two
+      states - and report the maximum residual. Let svpq and svpdq be the larger residual over the two states
+      at each basis.
+        - svpq <= 0.3 and svpdq > 0.3 kcal/mol: the diffuse basis introduces a higher-order response the small
+          basis does not have at all, reproducing N3.2's single-site result at twenty sites.
+        - both <= 0.3: neither basis carries a higher-order response, so the turnover lives wholly in the
+          difference and this decomposition does not explain it.
+        - otherwise: the higher-order response is not specific to the diffuse functions, and the basis is not
+          on its own the explanation.
+
+      THIS READING DOES NOT CLAIM TO LOCALISE AN OUTLIER AND IS NOT WRITTEN TO. Four equally spaced lambda
+      values against a three-parameter quadratic leave one degree of freedom. Holding each lambda out in turn
+      and predicting it from the other three gives errors locked in a ratio of about 3 to 1 between the
+      endpoints and the interior, fixed by the spacing alone, and a single bad point perturbs all four in that
+      same ratio - so the pattern cannot distinguish one outlier from a smooth non-quadratic response. The
+      leave-one-out errors are printed AS DATA, not as a test. Localising an outlier needs a fifth lambda;
+      0.875 is the natural one, and that is recorded as an open item below rather than asserted here.
+
+  (c) SPILL-OUT SIGNATURES. Report, for all sixteen runs, the HOMO energy, the HOMO-LUMO gap, the dipole
+      magnitude and the largest Loewdin charge shift between the two bases. Spill-out is SUPPORTED if any of:
+        - the COMMON inter-basis shift, (delta dE_R + delta dE_TS)/2, grows faster than lambda^2.5. Delta's own
+          shape is already known from Diagnostic 4, so the common part is the new information; ordinary
+          polarisation is second order in the field, so an exponent near 2 is expected and a steeper one is
+          response the small basis cannot represent at all.
+        - any HOMO-LUMO gap at def2-SVPD falls below 1.0 eV.
+        - a dipole grows more than 1.5 times as fast with lambda at def2-SVPD as at def2-SVP.
+        - a HOMO departs from its def2-SVP counterpart by more than 0.5 eV at lambda = 1 and by more than twice
+          its departure at lambda = 0.25.
+      A RISING HOMO IS DELIBERATELY NOT ONE OF THESE. This dianion's HOMO is already POSITIVE in vacuo at every
+      basis tested - +2.278 eV at def2-SVP, +1.227 at ma-def2-SVP, +1.231 at def2-SVPD for the bare reactant -
+      which is DFT self-interaction and is why Finding 8 was withdrawn, the VDE of +0.5123 eV at two diffuse
+      bases being the test that settled it. The design's mostly positive charges push orbital energies DOWN, so
+      a rise would not be expected even if density were leaking, and a test for one would have been vacuous.
+      If spill-out is supported, the def2-SVPD high-field points are not usable as physical barriers and a
+      charge model with a Pauli wall for electrons is needed before any high-field number means anything. If it
+      is not supported, real differential saturation becomes the leading explanation and Diagnostic 4's bound
+      should be read as chemistry.
+
+  (d) THE RANGE IN WHICH THE TWO BASES AGREE. Report the largest lambda at which |ddE(def2-SVPD) -
+      ddE(def2-SVP)| <= 1.0 kcal/mol, and the corresponding sum |q|. That is the honest domain of validity of
+      the committed def2-SVP numbers, and it holds whichever of the two explanations is right. If no lambda
+      qualifies, there is no field range in which the committed def2-SVP numbers are basis-converged, and that
+      must be said of all of them.
+
+
+D5.4  WHAT THIS CANNOT TEST
+
+Nothing new is computed, so this cannot test any hypothesis the sixteen existing points do not already contain.
+It cannot localise an outlier in lambda, for the reason given in D5.3(b). It does not test a charge model with
+a Pauli wall for electrons, which is the fix if spill-out is supported. It does not test def2-TZVPD, so it
+cannot say the def2-SVPD numbers are themselves converged. One design, one frame, fixed geometry. Nothing about
+Loss. It says nothing about whether b varies between sites, which remains the first explanation to reach for if
+the residuals are large - b was measured at site 1690 only.
+
+
+D5.5  WHAT IS TRUE REGARDLESS OF THE OUTCOME
+
+Recorded here so that it is not read as a consequence of whichever way D5.3 falls.
+
+Every committed Stage 6 design barrier was computed at def2-SVP. At the design point the two bases disagree by
+75 per cent. Whether that is saturation or spill-out, NO COMMITTED STAGE 6 DESIGN BARRIER CAN BE QUOTED AS
+BASIS-CONVERGED. What D5 decides is which basis, or which charge model, the frozen half of Stage 6 has to be
+rebuilt against - not whether it has to be rebuilt.
+
+The per-site cap is not the binding constraint. S6-20's largest single charge is 0.55 e, comfortably inside the
+0.80 e the amendment measured, and its barrier moved anyway. Whatever bounds this system, it is not a per-site
+magnitude.
+
+Diagnostic 4's reading 2 came back NOT CONFIRMED, r = +0.9195 with an intercept of -10.22 kcal/mol. The
+assessment's r = +0.9955 across four designs was therefore a property of those four designs and is not a
+scaling law in sum |q|. Section 4 of STAGE6_ASSESSMENT_20261022.md must be read that way. For the record, the
+prediction offered before the runs - that an intermediate lambda_quad would come with a NOT CONFIRMED reading -
+did land, but the reason given for it was incomplete: it argued Delta would have to be superlinear, whereas the
+measured Delta changes sign. The prediction was right for a reason that was not the stated one.
+
+
+D5.6  OPEN ITEMS THIS ADDS
+
+  - a fifth lambda, 0.875, at def2-SVPD, to localise whether any single point is an outlier (D5.3(b))
+  - whether b varies between sites; b is from site 1690 only and is used for all twenty
+  - def2-TZVPD at lambda = 0.50 and 1.00, to test whether def2-SVPD is itself converged
+  - the Marefat Khah ECP route, still blocked on the Ne table's lmax/block inconsistency
+  - negative total field, untested at any lambda
+  - D1's per-design CPCM check, promised and never run
+  - the Phase 2.2 / Phase 1 comparability break: all canonical Phase 1 barriers are marked CPCM(eps=4)
