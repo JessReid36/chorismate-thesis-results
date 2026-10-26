@@ -1,0 +1,180 @@
+STAGE 6 - y03: FIELD CALIBRATION OF THE COMMITTED ARRANGEMENTS
+
+Re-derived by y03_field_calibration.py from committed files only. NO NEW
+CALCULATION. Nothing here is a barrier and nothing here is quoted as a result.
+
+1. INPUTS AND CHECKSUMS
+
+   ARRANGEMENTS.txt      sha256 651e7e228e1409f052bb024b42d125ab59bc86ebee789f3dd60ad1eb5f9c6038
+   reactant_qm.xyz          sha256 6e8f41c7da3bcf4ed9f5c650dc9fcf12c2a36e5af7a900e164892c276497aa88   MATCHES ARRANGEMENTS
+   transition_state_qm.xyz  sha256 2babeb9000ca5220a908a70eaec80ec4a64358c8f5677e9a16cb104e0dffc5bf   MATCHES ARRANGEMENTS
+
+   substrate: 24 atoms at R, 24 at TS
+
+2. ARE THE CHARGES EVEN, SATURATED, OR PROPORTIONAL TO -a ?
+
+   decision 3 of OPTIMISER_DECISIONS_20261020.md predicts that under an L2
+   budget with a linear objective and no bound active, q_i = -a_i*sqrt(B/sum a^2)
+   and sum a q = -sqrt(B * sum a^2). Tested here against each committed design.
+
+   design    n   sum|q|   max|q|   sum q^2  recorded    #|q|      gap
+   S6-C      0        -        -         -         -       -        -
+   S6-P      1   1.0000   1.0000   1.00000         -       1        -
+   S6-2      2   2.0000   1.0000   2.00000   2.00000       1  0.00000
+   S6-3      3   2.4125   1.0000   2.00391   2.00391       3  0.00000
+   S6-5      5   3.0000   1.0000   2.01000   2.01000       3  0.00000
+   S6-10    10   4.3800   0.5500   2.02340   2.02340       5  0.00000
+   S6-20    20   5.7600   0.5500   2.04760   2.04760       7  0.55864
+
+   '#|q|' is the number of DISTINCT charge magnitudes in the design. A value
+   of 1 would mean the charge is split evenly; a value equal to n with every
+   |q| at a bound would mean saturation.
+
+   proportionality test, q_i / (-a_i) per design:
+
+   design        mean        min        max   spread% pred sum a q       actual
+   S6-P        0.1497     0.1497     0.1497       0.0      -6.6778      -6.6778
+   S6-2        0.1718     0.1497     0.1939      12.9     -11.9314     -11.8340
+   S6-3        0.1477     0.1454     0.1497       1.2     -13.5151     -13.5142
+   S6-5        0.1156     0.0987     0.1538      17.6     -16.2371     -15.9522
+   S6-10       0.1118     0.0999     0.1245       6.8     -18.0649     -18.0335
+   S6-20       0.1062     0.0905     0.1413      10.3     -19.5611     -19.5175
+
+   A near-constant ratio means the charges ARE the analytic interior optimum
+   of the L2 budget, i.e. proportional to each site's own -a. Outliers are
+   sites sitting at an admitted bound.
+
+3. WHAT THE TOP-RANKED SINGLE SITES ADMIT
+
+   20 sites in the ranking block; 18 of them admit a SINGLE charge value
+   (lower bound equal to upper bound), so the charge there is not a
+   decision variable at all.
+
+      admits [1.00, 1.00]   18 site(s)
+      admits [0.75, 1.00]   1 site(s)
+      admits [0.25, 1.00]   1 site(s)
+
+   which designs use a top-ranked site:
+      S6-P    [1690]
+      S6-2    [1690]
+      S6-3    [1690]
+      S6-5    [1694]
+      S6-10   none
+      S6-20   none
+
+   CONSEQUENCE: a per-site charge cap below the degenerate value makes
+   those sites infeasible, i.e. it deletes them from the grid rather than
+   restraining them. And the Stage 5 floors are monotone in q, so changing
+   the cap also moves the layer. A per-site cap is a STAGE 5 input.
+
+4. THE REACTING BONDS
+
+   identified by: R->TS change
+   breaking C-O : O8-C9  1.495 A at R  2.195 A at TS
+   forming  C-C : C1-C13  3.225 A at R  2.616 A at TS
+
+   Cross-check these against STAGE6_FINDINGS_20261022.md Finding 7, which
+   records the forming C1-C6 at 3.225 A and the breaking O3-C4 at 1.495 A at R.
+
+5. THE FIELD THE DESIGNS APPLY
+
+   E = 14.39965 * q / r^2  V/A, in vacuo, no screening. Computed at every
+   substrate atom, and projected onto each reacting bond at its midpoint.
+   1 V/A = 100 MV/cm.
+
+   design    sum|q|   mean|E|    max|E|    E//(C-O)    E//(C-C)
+   S6-P      1.0000     0.614     1.644       0.694       0.195
+   S6-2      2.0000     0.815     1.748       0.821       0.447
+   S6-3      2.4125     0.971     1.835       1.020       0.688
+   S6-5      3.0000     1.244     2.199       1.214       0.721
+   S6-10     4.3800     1.459     2.315       1.174       1.001
+   S6-20     5.7600     1.633     2.523       1.152       1.013
+
+   single charge at the top-ranked site, for the qrefine series:
+      site 1690, closest substrate atom at 2.9596 A
+         q = 0.25 e  ->   0.411 V/A  =   41 MV/cm
+         q = 0.50 e  ->   0.822 V/A  =   82 MV/cm
+         q = 0.65 e  ->   1.069 V/A  =  107 MV/cm
+         q = 0.80 e  ->   1.315 V/A  =  132 MV/cm
+         q = 1.00 e  ->   1.644 V/A  =  164 MV/cm
+
+6. CHARGE SEPARATION AND THE DIANION'S ELECTRONIC STABILITY
+
+   two carboxylate groups found: C5(O6,O7) and C22(O23,O24)
+   O-pair centroid separation R = 6.144 A
+
+   empirical relation for linear dicarboxylate dianions:
+      EB  = 3.21 - 16.7/R  ->  +0.492 eV
+      RCB =        16.8/R  ->  2.73 eV
+
+   *** THE FIT COEFFICIENTS ARE A SECONDARY SOURCE. They were read from a
+   figure caption via a summary, not from the paper. Verify against Verlet,
+   Horke & Chatterley, PCCP 2014, 16, 15043, doi:10.1039/c4cp01667j before
+   this estimate is quoted anywhere. The relation is also fitted to LINEAR
+   alkyl dicarboxylates, and chorismate is neither linear nor alkyl. ***
+
+7. EXTERNAL COMPARATORS (printed for comparison; nothing above derives from them)
+
+   WT BsCM field along the breaking C-O, no solvent     -0.20 V/A           
+      Siddiqui & Dubey, PCCP 2022, 24, 1974. doi:10.1039/d1cp03978d
+   WT BsCM field along the breaking C-O, with solvent   -0.53 V/A           
+      same
+   R90A variant                                         -0.133 V/A          
+      same
+   R90G variant                                         -0.095 V/A          
+      same
+   KSI, field on the bound steroid C=O (vibrational Stark) 1.44 V/A            
+      Fried, Bagchi & Boxer, Science 2014, 346, 1510. doi:10.1126/science.1259802
+   B3LYP critical field, heterolysis of Me3C-Cl         1.54 V/A            
+      Shaik et al., Chem Soc Rev 2018, 47, 5125, ESI. doi:10.1039/C8CS00354H
+   B3LYP critical field, heterolysis of I2              2.57 V/A            
+      same
+   glutarate dianion, experimental electron binding energy 0.550 +/- 0.090 eV  
+      Ding, Wang & Wang, JPCA 1998, 102, 8633, via NIST WebBook
+
+8. THE STAGE 4c ARRANGEMENTS ON THE SAME AXIS
+
+   Erratum 4 E4.5 records that cs6_audit.py opens only tarballs, so 415 completed
+   runs in loose .xz files were never classified, and that four Stage 4c runs at
+   three point charges are STRAINED at def2-SVP - putting the def2-SVP onset at
+   THREE charges, not the ten the published table shows. Those arrangements are
+   read here and placed beside the Stage 6 designs.
+
+   E5      could not be read: L1 has 3 spheres but L0 prints 7 Ne> centres
+   E7      could not be read: L1 has 3 spheres but L0 prints 7 Ne> centres
+   label      n   sum|q|   max|q|   sum q^2   mean|E|    max|E|
+   S6-P       1    1.000     1.00     1.000     0.614     1.644
+   S6-2       2    2.000     1.00     2.000     0.815     1.748
+   S6-3       3    2.413     1.00     2.004     0.971     1.835
+   S6-5       5    3.000     1.00     2.010     1.244     2.199
+   S6-10     10    4.380     0.55     2.023     1.459     2.315
+   S6-20     20    5.760     0.55     2.048     1.633     2.523
+
+   V/A. NOTE the Stage 6 designs are frame 42436 and the Stage 4c
+   arrangements are a different frame, so frame is confounded with
+   arrangement in any comparison across the two blocks.
+
+   WHICH SCALAR, IF ANY, ORDERS THE VERDICTS is left to the reader and to a
+   corpus-wide test once cs6_audit.py is fixed. This file supplies the
+   quantities and states the verdicts it was given; it fits nothing and
+   asserts no threshold. Verdicts, from DIAGNOSTIC6_RESULT.txt and from
+   Erratum 4 E4.5, at def2-SVP:
+      CLEAN     S6-C S6-P S6-2 S6-3 S6-5
+      STRAINED  S6-10 S6-20, and the four Stage 4c npc=3 runs E5/E7 at R and TS
+
+WHAT THIS DOES NOT TEST
+
+   Nothing was computed with ORCA, so this cannot test any hypothesis the
+   committed files do not already contain. The field is computed in vacuo with
+   no screening, from point charges at the committed sphere centres, at the
+   REACTANT geometry; ddE is a TS-minus-R differential, so the two are not
+   like for like. Field at a bond midpoint is not the whole of the differential
+   stabilisation of a pericyclic reaction, in which charge redistributes over
+   the entire substrate. Two frames, one basis, a handful of arrangements, and
+   the Stage 4c block is the only one that breaks the Stage 6 designs' shared
+   budget, so it carries the whole weight of any cross-block comparison.
+   NOTHING HERE IS A PREDICTOR. Two electrostatic predictors have already been
+   proposed and tested and failed in this project (ERRATUM3 E3.5, and sum q.V_R
+   against the D6 table). A third must be tested against the whole corpus, after
+   cs6_audit.py's walker and charge detection are fixed together, before it is
+   believed.

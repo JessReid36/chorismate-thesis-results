@@ -1,0 +1,254 @@
+STAGE 6 - ERRATUM 5, 2026-10-26
+Five corrections to the record, found while calibrating the charge budget
+
+Pre-registrations and criteria are never edited. This erratum does not alter STAGE6_CRITERIA.txt,
+STAGE5_CRITERIA.txt, STAGE4C_CRITERIA.txt, PHASE22_PLAN.txt, OPTIMISER_DECISIONS_20261020.md or any
+pre-registration, and it does not alter any committed result file. DIAGNOSTIC2_RESULT.txt,
+DIAGNOSTIC4_RESULT.txt, DIAGNOSTIC5_RESULT.txt, DIAGNOSTIC6_RESULT.txt, STAGE6_ERRATUM3_20261026.txt and
+STAGE6_ERRATUM4_20261026.txt all stand exactly as committed. E5.1 withdraws one attribution inside
+Erratum 3; nothing else is withdrawn.
+
+It follows ERRATUM 4 of the same date and does not repeat it. Four items that had been drafted for this
+erratum were dropped on reading Erratum 4: one was wrong (see the closing note), one is already covered by
+E4.3, and two concern cs6_audit.py defects E4.4 to E4.6 state better. What remains is five items Erratum 4
+does not reach.
+
+HOW THESE WERE ESTABLISHED. By re-reading committed files, and by one read-only script,
+phase2.2/y03_field_calibration.py, committed with this erratum and run before it. No new calculation, no
+ORCA, nothing written into either repo by the script. Its output is
+phase2.2/cs_stage6/Y03_FIELD_CALIBRATION_RESULT.txt and it can be re-run at any time.
+
+A NOTE ON DIRECTION. E5.1 and E5.4 are neutral bookkeeping. E5.2 removes a constraint from Stage 7's
+scope, which is neither flattering nor otherwise - it relocates it. E5.3 and E5.5 run AGAINST the plan:
+both say a bound the project was preparing to rely on is less well founded than it looked.
+
+
+E5.1  THE 11 PER CENT AND 19-25 PER CENT UNCERTAINTIES ARE NOT RECORDED WHERE ERRATUM 3 SAYS THEY ARE
+
+STAGE6_ERRATUM3_20261026.txt E3.4 states that the CLEAN designs are
+
+   "quotable, subject to the basis (11 per cent) and environment (19 to 25 per cent) uncertainties
+    already recorded in STAGE6_ASSESSMENT_20261022.md"
+
+THEY ARE NOT RECORDED THERE. The full text of STAGE6_ASSESSMENT_20261022.md contains no 11 per cent figure
+and no 19 to 25 per cent figure, and neither does STAGE6_FINDINGS_20261022.md. The percentages those two
+files do contain are, in the assessment, 1.1 / 3 / 12.9 / 19.9 / 20 / 23.2 / 29 / 118 / 134 / 136 / 165 /
+169, and in the findings 3.1 / 6.1 / 10 / 15 / 16 / 21 / 26. The nearest thing to an "11" in the
+assessment is "-11 kcal/mol per unit of total absolute charge", which is a rate and not a percentage.
+
+The figures themselves are sound. They are DERIVATIONS from the a_est table of
+qscan/DIAGNOSTIC2_RESULT.txt, which prints, at site 1690:
+
+   C1  def2-SVP      in vacuo        a_est = -6.6760
+   C2  def2-SVP      CPCM eps=4.0    a_est = -7.9408
+   C3  ma-def2-SVP   in vacuo        a_est = -7.1956
+   C4  ma-def2-SVP   CPCM eps=4.0    a_est = -9.0086
+   C5  def2-SVPD     in vacuo        a_est = -7.4233
+
+   basis, in vacuo,            C1 -> C5   (7.4233 - 6.6760)/6.6760 = 11.19 per cent
+   environment at def2-SVP,    C1 -> C2   (7.9408 - 6.6760)/6.6760 = 18.95 per cent
+   environment at ma-def2-SVP, C3 -> C4   (9.0086 - 7.1956)/7.1956 = 25.20 per cent
+
+CITE THEM AS DERIVED FROM qscan/DIAGNOSTIC2_RESULT.txt, never as recorded in the assessment. The clause
+"already recorded in STAGE6_ASSESSMENT_20261022.md" is withdrawn.
+
+Three things must travel with them.
+
+   (a) D2.3's own printed comparison is 7.8 per cent (C1 against C3), and the QUALIFIED verdict rests on
+       7.8 against decision O6's 15 per cent. The 11.19 per cent figure is a wider comparison that D2 does
+       not print. Both clear 15 per cent so no verdict moves, but a document quoting 11 per cent as "the
+       basis uncertainty" is not quoting the figure the verdict used.
+
+   (b) The environment range is measured at def2-SVP and ma-def2-SVP only. There is no def2-SVPD plus CPCM
+       condition in the C1-C5 set, so basis and environment cannot be separated at C5 - the basis whose
+       VDE says the dianion is bound. The basis spread UNDER a continuum, C2 -> C4, is 13.45 per cent,
+       wider than the 11.19 quoted.
+
+   (c) claude/HANDOVER_20261026.md section 6 states both figures with no source at all. That is an
+       omission rather than a misattribution and is corrected here too.
+
+
+E5.2  A PER-SITE CHARGE CAP CANNOT BE SET INDEPENDENTLY OF THE GRID, SO IT IS A STAGE 5 QUANTITY
+
+This item sits ALONGSIDE Erratum 4 E4.3 and does not contradict it. E4.3 withdraws DIAGNOSTIC 4's argument
+that a per-site cap "would not bind on a Stage 7 design at all", and concludes the cap may be needed after
+all. Nothing here disputes that. What is added is WHERE such a cap can be set.
+
+relax/ARRANGEMENTS.txt lists the twenty best single sites with the charges each admits. EIGHTEEN OF THE
+TWENTY ADMIT "[1.00, 1.00]" - lower bound equal to upper bound. One admits [0.75, 1.00] and one
+[0.25, 1.00]. At those eighteen the charge is not a decision variable; the optimiser cannot choose it.
+This is the ranking-block form of the fact E4.3 already cites from OPTIMISER_CODE_README.md, that "1064
+sites admit only |q| = 1".
+
+Two consequences.
+
+   (a) A per-site cap below 1.00 e makes those eighteen sites INFEASIBLE. It does not restrain them, it
+       removes the twenty best sites from the grid.
+
+   (b) STAGE5_GRID_DEV records the floors as a function of q, made monotone in q. Changing the admitted
+       charge therefore moves the layer the sites sit on. The cap and the grid are not independent.
+
+So a per-site cap is an input to the grid, not a constraint that can be bolted onto a design stage built
+on that grid. If Stage 7 is to carry one, Stage 5 has to be amended first and the grid rebuilt under it.
+Which value, and whether one is needed at all, is E4.3's question and is not answered here.
+
+ONE FURTHER OBSERVATION, which is why E3.1's requirement is not sufficient. E3.1 requires any cap to be
+stated as a magnitude AND a distance. The committed data additionally require a CHARGE COUNT: at def2-SVPD
+a single charge is CLEAN at 0.65 e (qp0650_R) while twenty charges are COLLAPSED at a largest magnitude of
+0.4125 e (the lambda = 0.75 field runs). A per-site number alone cannot express that.
+
+
+E5.3  NO GLOBAL SCALAR ON THE CHARGES ORDERS THE def2-SVP VERDICTS ONCE ERRATUM 4 E4.5's RUNS ARE INCLUDED
+
+Erratum 4 E4.5 establishes that four Stage 4c runs at three point charges are STRAINED at def2-SVP, and
+that the def2-SVP onset is therefore three charges and not ten. STAGE4C_CRITERIA.txt defines those
+arrangements: "E5 three sites by |a|, charges opposing a, x1" and "E7 E5 reversed". So each carries three
+charges of unit magnitude.
+
+The charges are confirmed without a new measurement. The three sphere positions in
+cs_stage4c/L1_E5_R/combined.xyz agree to all eight decimals with the Ne> centres Erratum 4 E4.6 quotes
+verbatim from cs_stage4c/L0_E5_R/job.out.xz, which carry q = +1.000000, -1.000000, +1.000000. E7 is the
+same three sites reversed, so its magnitudes are identical.
+
+Placing those beside the Stage 6 designs, with the def2-SVP verdicts as DIAGNOSTIC6_RESULT.txt and E4.5
+give them:
+
+   design     n   sum|q|   max|q|   sum q^2   verdict
+   S6-P       1    1.000     1.00     1.000   CLEAN
+   S6-2       2    2.000     1.00     2.000   CLEAN
+   S6-3       3    2.413     1.00     2.004   CLEAN
+   S6-5       5    3.000     1.00     2.010   CLEAN
+   E5         3    3.000     1.00     3.000   STRAINED
+   E7         3    3.000     1.00     3.000   STRAINED
+   S6-10     10    4.380     0.55     2.023   STRAINED
+   S6-20     20    5.760     0.55     2.048   STRAINED
+
+   sum|q|   DOES NOT SEPARATE. CLEAN reaches 3.000 and STRAINED starts at 3.000.
+   max|q|   RUNS BACKWARDS. Every CLEAN design carries a +1.00 e charge; the two STRAINED Stage 6
+            designs top out at 0.55 e.
+   n        DOES NOT SEPARATE. E5 is STRAINED at three charges, S6-5 is CLEAN at five.
+   sum q^2  separates only in a window of 0.013 e^2, from 2.010 to 2.023. All six Stage 6 designs were
+            built to saturate B = 2.0 e^2 and therefore cluster there by construction; a difference of six
+            tenths of one per cent in sum q^2 cannot flip a wavefunction verdict. That separation is the
+            budget showing through, not the physics.
+
+S6-5 AND E5 CARRY THE SAME TOTAL CHARGE AND THE SAME LARGEST SINGLE CHARGE, ON THE SAME BASIS, AND GET
+OPPOSITE VERDICTS. They differ in how the charge is arranged, not how much of it there is.
+
+CONSEQUENCE FOR STAGE 7. A budget expressed as a bound on sum|q|, on max|q|, on n or on sum q^2 cannot be
+justified from this evidence. Any such bound in Stage 7 must either be derived from something other than
+the D6 verdicts, or be stated on its face as unsupported by them. This is recorded as a negative result,
+and it joins the two electrostatic predictors already proposed, tested and failed in this project
+(ERRATUM3 E3.5, and the sum q.V_R proposal tested against the D6 table).
+
+WHAT IS NOT ESTABLISHED AND IS NOT ASSERTED. The Stage 6 designs are frame 42436 and the Stage 4c
+arrangements are frame 41786, so frame is confounded with arrangement in the one comparison that carries
+the weight. Whether any quantity orders the verdicts is left open, and must be settled against the whole
+corpus after cs6_audit.py's walker and charge detection are fixed together, which is Erratum 4's open
+item 1. Y03_FIELD_CALIBRATION_RESULT.txt section 8 supplies the quantities and fits nothing.
+
+
+E5.4  "b" HAS AT LEAST FOUR INCOMPATIBLE DEFINITIONS IN CIRCULATION
+
+All of the following are called b and are quoted in kcal/mol per e^2:
+
+   -1.5320   DIAGNOSTIC2 at C5 (def2-SVPD, in vacuo), site 1690, 2.96 A, extracted at q = +-0.50.
+             This is the value E3.1 keeps and D4.3 uses.
+   -0.7367   the SAME condition and site, extracted at q = 1.00.
+   -0.521    STAGE6_ASSESSMENT_20261022.md section 2, def2-SVPD WITH CPCM eps=4, on the parent ray at
+             3.0 A, extracted at q = 1.00.
+   -1.115    the same assessment table at 2.5 A.
+   and the per-condition values D2 prints at q = 1.00: C1 -1.0108, C2 -1.3670, C3 +0.9715, C4 -2.1789.
+
+Any statement carrying a b must state the condition, the site, the distance AND the q it was extracted at.
+C3 CHANGES SIGN at q = 1.00.
+
+This does not impugn E3.1's choice; it strengthens it. E3.1 justifies keeping -1.532 on the ground that
+the two q = +-0.50 runs are CLEAN. The stronger justification is that b is flat below q = 1.00 in every
+condition. Computing even/q^2 from D2's own table:
+
+   condition              q=0.05   q=0.25   q=0.50   q=1.00
+   C1 def2-SVP   vacuo    -1.000   -1.013   -1.014   -1.011
+   C2 def2-SVP   CPCM     -1.440   -1.379   -1.374   -1.367
+   C3 ma-def2SVP vacuo    -1.480   -1.490   -1.480   +0.972
+   C4 ma-def2SVP CPCM     -2.280   -2.274   -2.302   -2.179
+   C5 def2-SVPD  vacuo    -1.520   -1.470   -1.532   -0.737
+
+b is constant to within a few per cent across q = 0.05, 0.25 and 0.50 in all five conditions and breaks
+only at q = 1.00. It also resolves an apparent inconsistency: -1.532 against the assessment's -0.521 is
+not a contradiction, it is a different condition on a different ray.
+
+
+E5.5  DIAGNOSTIC 4's PREDICTION MIXES TWO CONDITIONS, AND TWO TOTAL-FIELD BOUNDS ARE IN CIRCULATION A
+      FACTOR OF TWO APART
+
+DIAGNOSTIC4_RESULT.txt reading 1 states "lambda_quad = 0.25, so the total-field bound is sum |q| <= 1.440
+e. Stage 7 imposes that in addition to the per-site cap of 0.80 e." The 0.80 e cap is withdrawn by E3.1.
+The 1.440 e bound is NOT withdrawn: E3.3 re-reads what lambda_quad MEANS but leaves reading 1's
+instruction standing. Against it, E3.3 and D5.3(d) give a defensible domain of lambda <= 0.50, i.e.
+sum |q| = 2.880 e. Stage 7 cannot carry both.
+
+Before either is imposed, one thing must be checked. D4.3's predicted column is
+
+   predicted(lambda) = lambda * sum a q + lambda^2 * b * sum q^2
+
+with sum a q from ARRANGEMENTS.txt, which is the def2-SVP A matrix, and b = -1.5320 from C5, which is
+def2-SVPD. The one prediction is then scored against both bases. Scaling sum a q by the measured C5/C1
+ratio at site 1690 (7.4233/6.6760 = 1.1119) and keeping D4's own definition of S as
+|measured - predicted| / |predicted| gives, for def2-SVPD:
+
+   lambda   S as committed    S like-for-like
+   0.25          9.5%              1.1%
+   0.50         10.3%              0.0%
+   0.75         37.6%             43.3%
+   1.00         72.9%             75.3%
+
+E3.3 records that lambda_quad came out 0.25 rather than 0.50 "because def2-SVPD's S at lambda = 0.50 is
+10.3 per cent against a pre-registered threshold of 10.0", a near miss of three tenths of a point that
+"moves the implied bound by a factor of two". On a like-for-like prediction that near miss disappears.
+
+THIS IS AN ESTIMATE, NOT A RESULT. It scales a twenty-site sum by a one-site ratio. Settling it needs the
+def2-SVPD A column for those twenty sites, which does not exist. D4.3 is not at fault: it followed its own
+pre-registration, which chose a def2-SVP a. NOTHING IN D4 IS WITHDRAWN. But lambda_quad = 0.25 must not be
+imposed as a bound until this is resolved, and the collision with 2.880 e must be settled explicitly.
+
+D4 reading 3, "S6-20 DOES NOT SURVIVE", is unaffected: it compares two measured numbers and involves no
+prediction. D5.3(d) is likewise unaffected.
+
+
+WHAT THIS ERRATUM DOES NOT DO
+
+It changes no pre-registration, no criteria file, no result file and no code. It adds to Erratum 4's open
+list rather than replacing it; that list stands, and its item 1 - fixing cs6_audit.py's walker and charge
+detection in the SAME change - remains the first thing, because E5.3's negative result cannot be turned
+into a positive one against an incomplete corpus.
+
+One item is added to that list: the collision between D4.3 reading 1's 1.440 e and E3.3's 2.880 e, and the
+condition mixing in E5.5 behind it.
+
+
+CORRECTIONS TO MY OWN STATEMENTS MADE EARLIER IN THIS SESSION
+
+Recorded because they were stated and were wrong.
+
+   I recommended a budget of sum|q| <= 3.0 e, on the ground that sum|q| ordered the def2-SVP verdicts.
+   E5.3 withdraws that recommendation. The ordering was an artefact of looking only at six designs that
+   all saturate the same budget, against a D6 table that Erratum 4 E4.5 shows omits 20 per cent of the
+   record in the direction that matters.
+
+   I drafted an item asserting that sum q^2 <= 2.00 is inert once a per-site cap is in force, computing
+   that the most concentrated admissible design under a 0.65 e cap reaches only sum q^2 = 1.768. That
+   calculation assumed charges may be chosen freely down to zero on the admitted sites. Erratum 4 E4.3
+   records from OPTIMISER_CODE_README.md that 1228 of the 2769 development sites cannot carry zero charge
+   and 1064 admit only |q| = 1, so a sphere costs the budget at least its floor squared. The item is wrong
+   and is not in this erratum.
+
+   I described sum q^2 <= 2.00 as simply uncalibrated. Erratum 4 E4.3 states it correctly:
+   STAGE6_CRITERIA.txt does fix B = 2.0 e^2, for the S6-2 and S6-3 arrangements, while calling it a
+   code-test value in the same breath.
+
+   I wrote that a Pauli wall for electrons is the untested fix. Erratum 4 E4.6 establishes that it is not
+   untested: STAGE4B_CRITERIA.txt pre-registered criterion B1, and B1 FAILED. The wall recovers 3.09 eV of
+   gap at identical coordinates and takes the SCF from 26 cycles to 14, so the mechanism claim is right
+   and measured, but b remained 32.6 per cent apart between bases against a 10 per cent criterion. A CLEAN
+   verdict is necessary and not sufficient.
