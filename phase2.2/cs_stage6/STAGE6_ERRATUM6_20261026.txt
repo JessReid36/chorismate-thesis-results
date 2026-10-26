@@ -1,0 +1,94 @@
+STAGE 6 - ERRATUM 6, 26 October 2026
+
+Follows STAGE6_ERRATUM5_20261026.txt. Pre-registrations and committed results are never edited;
+this records a confound in Erratum 5's central negative result and a defect in the indicator D6.3
+reads for one class of run. Both were found by reading the committed ORCA outputs directly while
+diagnosing Diagnostic 8.
+
+
+E6.1  ERRATUM 5 E5.3 COMPARED TWO DIFFERENT PHYSICAL MODELS
+
+E5.3 sets the Stage 4c arrangements E5 and E7 beside the Stage 6 design S6-5 and observes that all
+three carry sum|q| = 3.000 at max|q| = 1.00, that E5 and E7 are STRAINED and S6-5 is CLEAN, and
+therefore that no global scalar on the charge vector orders the def2-SVP verdicts. It states that
+"E5 and S6-5 differ in arrangement, not amount."
+
+THAT STATEMENT IS WRONG, AND THE ERROR IS NOT SMALL.
+
+Read from the committed input of phase2.2/cs_stage4c/L0_E5_R, which also appears in full in that
+run's own output echo, E5's three charges are placed as:
+
+   Ne>  1.000000  47.48070500  24.05965300  54.92320200  NewECP
+     N_core 10 ... lmax f ...
+
+These are not point charges. ORCA's own words for them, printed in the same output, are
+
+   > coreless ECP center with (optional) point charge
+     Group 1, Type Ne ECP (replacing 10 core electrons, lmax=3)
+
+The ECP's projectors supply short-range repulsion at the charge: A PAULI WALL. Every Stage 6 design,
+by contrast, places its charges through %pointcharges "<file>.pc" - bare charges with no wall.
+
+So E5 and E7 differ from S6-5 in the one variable Finding 4 identifies as the defect, and the one
+Erratum 4 E4.6 records B1 adding. The comparison in E5.3 varies the Pauli wall and the arrangement
+together. It is not a controlled comparison and it cannot carry the weight E5.3 puts on it.
+
+WHAT THIS DOES AND DOES NOT CHANGE. The charge magnitudes in E5.3 are correct: +1, -1, +1 for E5 and
+-1, +1, -1 for E7, now confirmed from the primary input rather than inferred, and E5's peak field of
+2.920 V/A at a closest approach of 2.581 A is reproduced to three decimals by cs9_audit.py on a
+different code path from y03's. What is withdrawn is the inference. E5.3's conclusion - that no
+global scalar orders the verdicts - is NOT restored to doubt in the direction of rescuing sum|q|:
+Diagnostic 9 tests peak local field within one model class, on 225 runs rather than eight, and
+falsifies it. The correction is that E5.3 reached a right-shaped conclusion from a comparison that
+was not entitled to deliver it.
+
+E5.3's withdrawal of the recommendation sum|q| <= 3.0 e stands, on D9's evidence rather than on
+E5.3's.
+
+
+E6.2  FOR ONE CLASS OF RUN, D6.3's LOEWDIN CRITERION READS THE DESIGN'S OWN CHARGE BACK
+
+ORCA lists a coordinate-block charge centre in its LOEWDIN ATOMIC CHARGES table under the element
+label Q, and prints the centre's CHARGE on that line. From L0_E5_R:
+
+   23 O :   -0.263337
+   24 Q :    1.000000
+   25 Q :   -1.000000
+   26 Q :    1.000000
+
+cs6_audit.read() matches that label like any other element, and Q is not in its METALS exclusion
+list. So for any run whose charges are coordinate-block centres, "the largest Loewdin charge on a
+light atom" is the largest magnitude of the design's own charges. D6.3's MOVED test then fires on
+any design carrying |q| >= about 0.64 e, with no reference to the electron density whatever.
+
+The same runs' dipoles are contaminated for the same reason: the ECP centres are part of the QM
+system, so their charges enter ORCA's printed dipole. L0_E5_R reports 57.93 D against a charge-free
+control median of 8.16 D, and R_DIP fires on that too.
+
+SCOPE, MEASURED RATHER THAN ASSUMED. This affects ONLY runs whose charges sit in the coordinate
+block: 101 runs, all in cs_stage4b and cs_stage4c. Runs that place charges through a .pc file are
+NOT affected - ORCA does not list those in the Loewdin table at all, confirmed over every
+point-charge-file single point in the corpus: 24 Loewdin entries each, none of them Q. EVERY STAGE 6
+DESIGN USES A .pc FILE. D6's verdicts on the Stage 6 designs, and Finding 4 with them, are untouched
+by this erratum.
+
+WHAT IT CHANGES WHERE IT APPLIES. D9 reports both readings side by side and changes no rule: D6.3 as
+written, and D6.3 with the Q centres taken out of the Loewdin table and the dipole test suspended
+for those runs. Taking them out is what D6.3's own phrase "on a light atom" says - a Q centre is not
+an atom - and suspending the dipole comparison is the only honest option when the quantity printed
+is not the electron density's dipole. 49 of the 63 affected runs change verdict. Every COLLAPSED
+among them becomes STRAINED: with a Pauli wall and the charge centres excluded, the density does not
+move, and what is left is an unwell SCF. On this record no ECP-shielded charge collapses.
+
+The healthy/sick split is invariant under the correction, since it moves runs only between CLEAN and
+POLARISED and between STRAINED and COLLAPSED, so Diagnostic 9's field test is unaffected either way.
+
+
+E6.3  WHAT THE CORPUS TURNS OUT TO CONTAIN THAT NOTHING HAS READ
+
+cs_stage4b and cs_stage4c hold a matched series that isolates the Pauli wall: the Z_* and *_q0 runs
+place the same ECP centres with every charge EXACTLY zero. The wall is present and there is no
+charge. Set against the charge-free controls at the same basis, those runs are reported in
+DIAGNOSTIC9_RESULT.txt reading (h), and on this record the wall alone is inert in all four
+indicators. That is an observation on runs that already exist and not a designed experiment, and it
+is qualified as such there.

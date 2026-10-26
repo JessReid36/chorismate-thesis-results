@@ -1,0 +1,148 @@
+STAGE 6 - DIAGNOSTIC 9, PRE-REGISTERED 2026-10-26
+The wavefunction-health audit with the charges actually detected
+
+This file is pre-registered. It is never edited. Changes go into a dated amendment or erratum.
+
+STAGE6_DIAGNOSTIC6_20261026.txt and STAGE6_DIAGNOSTIC8_20261026.txt are NOT amended by this
+document, and neither DIAGNOSTIC6_RESULT.txt nor DIAGNOSTIC8_RESULT.txt is edited. D6 stands as the
+record of what the audit found in the corpus it could see. D8 stands as corrected by
+STAGE6_DIAGNOSTIC8_ERRATUM1_20261026.txt.
+
+
+D9.0  THE DISCLOSURE THAT HAS TO COME FIRST, AND IT IS STRONGER THAN D6.0's
+
+D6.0 disclosed that its four thresholds were chosen after the Stage 6 outputs had been inspected.
+D9 inherits that unchanged and adds a second disclosure which is larger:
+
+   D9 IS NOT A BLIND TEST AND IT IS NOT A PRIOR PREDICTION. Its charge detector, its model classes
+   and its readings were all developed by reading this corpus directly, in the same session that
+   wrote this file. The ECP centres, the Q label in the Loewdin table and the zero-charge wall-only
+   series were all found before this document existed. D9 IS A CORRECTED MEASUREMENT, NOT A TEST.
+
+Calling it a pre-registration therefore buys one thing only, and the claim is limited to that one
+thing: the procedure is fixed in writing before the result is generated, so the result is
+reproducible and the procedure is checkable against it. It buys nothing about priority, and no
+reading in D9 may be quoted as a prediction that was confirmed.
+
+Two readings are exceptions in the other direction and are weaker still, not stronger: reading (i)
+applies a criterion that D8.4(h) fixed BEFORE any of this was known, and reading (h) was not
+designed at all - the series it reads was run by this project long before any of these diagnostics
+and is simply read as it stands.
+
+
+D9.1  WHY IT EXISTS
+
+STAGE6_DIAGNOSTIC8_ERRATUM1_20261026.txt withdraws D8's stage 3 and its readings (b), (g) and (h):
+D8's charge detector matched nothing in this corpus, 101 charged runs entered its control pool, and
+its own specificity check caught that at 49 of 469 against D6.4(a)'s requirement of zero. D9 is the
+same audit with the charges read from what ORCA actually prints.
+
+
+D9.2  WHAT IS READ, AND FROM WHERE
+
+NO CALCULATION IS PERFORMED AND NO NETWORK IS USED. Pure standard library; safe on a login node.
+
+cs6_audit.read() and all six of its thresholds are IMPORTED from cs6_audit.py and used unchanged.
+D6.3's rule is applied unchanged. verdict() is reproduced rather than imported, being a closure, and
+the gates in D9.3 are what establish the reproduction is faithful.
+
+Charges are taken from two committed sources and NEVER inferred:
+
+  (i)  THE RUN'S OWN INPUT ECHO. ORCA echoes the whole input back, one line per '|  N> ' prefix, so
+       this works for an archived run exactly as for a loose one, with no external file. A centre
+       written 'Ne>  q  x  y  z' carries charge q. The coordinate block prints the same centre with
+       its position only, which is why a reader looking there finds no charge.
+  (ii) A COMMITTED .pc FILE, attributed only on an unambiguous match: the exact path the run's own
+       %pointcharges directive names, relative to that run's directory. A weaker tier - a basename
+       unique across the repository - is recorded separately and excluded from reading (i).
+       A charge vector attributed to the wrong run is worse than no charge vector.
+
+Where both the echo and the coordinate block list the centres, their positions must agree to 1e-3 A
+or no field is computed for that run and the disagreement is reported instead.
+
+WHETHER A CENTRE CARRIES A PAULI WALL IS TAKEN FROM WHAT ORCA DID, NOT FROM THE INPUT SYNTAX. ORCA
+prints, per centre, 'Atom  NNNe>  ECP group =>  N', and names the group 'Ne ECP (replacing 10 core
+electrons, lmax=3)'. An audit that parsed the input instead would call a %basis-declared ECP run
+bare, because the same ECP can be declared inline after the centre or in a %basis block; ten runs in
+cs_stage4b do it the second way.
+
+QM/MM runs are identified by their own directive, '! QMMM' or '%qmmm'. D6.1 excludes them by the
+proxy "more than 200 point charges"; detecting the directive is what that sentence means, and it
+moves 120 runs out of the design table that the proxy left in.
+
+The Loewdin indicator is read twice, for the reason E6.2 gives: once exactly as cs6_audit.read()
+reads it, and once with the point-charge centres ORCA labels Q removed, which is what D6.3's phrase
+"on a light atom" says. Where the two differ, BOTH are printed. Neither is suppressed.
+
+
+D9.3  THE TWO GATES, WHICH RUN BEFORE ANY READING
+
+  GATE 1. Stage 1 is D6 as published. The entire text of DIAGNOSTIC6_RESULT.txt is rebuilt from it
+  and compared with the committed file BYTE FOR BYTE.
+
+  GATE 2. Stage 2 is D8's stage 2. Its rows in D8 tables (a) and (d), and stage 1's, must appear
+  LINE FOR LINE in the committed DIAGNOSTIC8_RESULT.txt - that is, exactly the part of D8 that
+  STAGE6_DIAGNOSTIC8_ERRATUM1_20261026.txt leaves standing.
+
+Either gate failing stops the script with the offending line printed and no result written. Passing
+both means D9 agrees with everything D6 and D8 are still entitled to say, and differs from them only
+where the erratum withdrew something.
+
+
+D9.4  THE STAGES AND THE READINGS
+
+  stage 1  D6 as published.                                                              gate 1
+  stage 2  D8 stage 2.                                                                   gate 2
+  stage 3  corrected: the full corpus, charges detected as D9.2 describes, QM/MM by directive, and
+           ECP-shielded charges kept apart from bare ones everywhere.
+
+  Model classes, never pooled:
+     nothing      no charges and nothing added.
+     wall only    ECP centres with every charge EXACTLY zero. The wall and no charge.
+     wall+charge  ECP centres carrying charge.
+     bare charge  charge with no wall: a .pc file, or an Ne> centre ORCA assigns no ECP.
+     QM/MM        an MM environment, not a design.
+
+  (a) the corpus at each stage, and how its charges are carried.
+  (b) every run D6 and D8 filed as a control that carries charges, named, with its charges.
+  (c) the control medians at each stage AND THE SPECIFICITY CHECK. D6.4(a) governs: zero is the
+      only value that licenses the rest of the table, and if stage 3 is not zero it is said on the
+      face of the result that stage 3 must not be quoted.
+  (d) verdicts on charged single points by basis and model class, on both Loewdin readings.
+  (e) every verdict that changed against D8 stage 2.
+  (f) where the charge vectors come from, by tier.
+  (g) the charge vectors, one row per distinct signature - the exact vector and the exact final
+      geometry to four decimals, matched by sha256, at one basis and in one class.
+  (h) WHAT THE PAULI WALL ALONE DOES. The wall-only series against the charge-free controls at the
+      same basis, in all four indicators, with the charged rows beside them. Observational.
+  (i) THE PEAK-FIELD HYPOTHESIS, on D8.4(h)'s criterion unchanged - healthy is CLEAN or POLARISED,
+      sick is STRAINED or COLLAPSED, and it survives only if max(healthy) < min(sick) - with one
+      restriction D8 did not have: THE TEST IS RUN WITHIN ONE MODEL CLASS, because comparing a bare
+      charge with a shielded one varies the wall and the field together, which is the confound
+      STAGE6_ERRATUM6_20261026.txt records in Erratum 5 E5.3. Run per basis, because a threshold
+      needing a different value at each basis would not be a property of the design. Surviving at
+      some bases and failing at others IS failure and is to be reported as failure.
+  (j) the optimisations and the QM/MM runs, apart.
+
+
+D9.5  WHAT THIS CANNOT TEST
+
+Nothing is computed. D6.0's post-hoc disclosure is inherited and D9.0 adds a larger one. The
+thresholds are NOT re-derived here: changing the corpus and the rule in one step would make the
+comparison uninterpretable, and SCF stability analysis and FOD remain the next question.
+
+A CLEAN verdict is necessary and not sufficient. Erratum 4 E4.6 records B1 recovering the gap from
+0.550 to 3.637 eV with a Pauli wall while b still stood 32.6 per cent from target against a 10 per
+cent criterion.
+
+Reading (h) is observational. The wall-only and charged series were run at different times for
+different purposes and are matched only in basis and geometry. It can show that the wall coincides
+with no change in the indicators; it cannot show that the wall is therefore free in a design.
+
+Charge magnitudes exist only where the record carries them. For the runs whose .pc file was never
+committed there is no vector and none is inferred, and the size of that group is reported, because
+an untestable majority is itself a finding about the record.
+
+A falsified scalar is not a licence to adopt the next one. If reading (i) fails, what follows is not
+a sixth candidate but the question of whether the validity domain can be written as a constraint on
+the design at all.
