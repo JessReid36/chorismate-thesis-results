@@ -1,0 +1,270 @@
+STAGE 6 - DIAGNOSTIC 12, PRE-REGISTERED                                       27 October 2026
+
+WHAT PREDICTS THE OVERPOLARISATION ARTEFACT, AND CAN THE GRID BE SCREENED ON IT?
+
+Written and committed before the runs. STAGE6_CRITERIA.txt is not edited. No continuum anywhere,
+per STAGE6_AMENDMENT2_20261027.
+
+
+D12.1  WHY, AND WHY NOT THE DIAGNOSTIC THAT WAS FIRST PROPOSED
+
+Diagnostic 11 measured r_safe = 3.50 A along ONE axis, from ONE atom, through ONE committed site.
+The grid rebuild needs more than that: it needs a rule that decides, for each of 2626 candidate
+sites, whether a bare point charge there is a faithful model of a catalytic group.
+
+The diagnostic first proposed was a floor TABLE in the shape of phase2.2/cs_stage5/floors.tsv -
+one row per atom, one column per charge level - of which D11's 3.50 A would be a single cell.
+That object was abandoned before anything was written, because three measurements show it cannot
+be filled. All three are computed from committed files at the committed reactant geometry, over
+the 2463 grid sites that admit q = +1:
+
+   (a) C4, C8 and C9 are NEVER the nearest atom to any admissible site. C5 and C7 are nearest to
+       fewer than ten each. No charge position on the grid is owned by those atoms, so no
+       measurement could ever fill their rows.
+
+   (b) Nearest-atom distance does not determine the environment. Holding it inside a 0.2 A band,
+       the whole-molecule term sum_j 1/d_j^2 still varies by 57 to 88 per cent of its median.
+       Two sites at the same nearest-atom distance can sit in environments differing by nearly
+       a factor of two.
+
+   (c) The owning atom is not stable along the reaction coordinate. For 199 sites (8.1 per cent)
+       the nearest atom differs between R and TS - H3->O3, H1->O3, O1->O2, H5->O6, O5->H4 among
+       them. A charge would change rows mid-reaction.
+
+The CLASSICAL floors are unaffected by any of this, because a Lennard-Jones floor is a PAIRWISE
+criterion enforced against all 24 atoms simultaneously; it never asserts that a charge belongs to
+one atom. That was audited here and holds: every one of the 2626 committed sites clears every
+atom's floor at the charge level it is admitted for, zero violations. The column 'on_atom' was
+found to mean "the atom whose floor binds", not "the nearest atom" - site 1690 is labelled H3
+while O3 lies 0.25 A nearer, because the site clears O3's floor (2.960 against 2.745) and sits
+exactly on H3's (3.211). The audit is recorded in the work log, not re-derived here.
+
+Overpolarisation is a response of the whole electron density and has no pairwise decomposition,
+so it cannot be hung on a per-atom row. What follows measures the same physical question in a
+form that can be answered: the artefact is measured at REAL grid sites, and the question is which
+geometric property of a site, if any, predicts it.
+
+This keeps the per-atom intuition as the hypothesis under test rather than discarding it. If
+nearest-atom distance alone predicts the artefact, then a single distance floor IS a valid screen
+and D11's 3.50 A generalises beyond its axis. The measurement decides.
+
+
+D12.2  WHAT IS RUN
+
+282 single points. No geometry moves. All on Diagnostic 1's committed R and TS, both carried
+unchanged from phase2.2/cs_stage6/frame_42436.
+
+THE SAMPLE. 36 sites, taken from the committed phase2.2/cs_stage6/sites_f42436.tsv. The selection
+procedure, run once and then FROZEN - the list below is the pre-registration, and the harness
+carries the same literal list and refuses to re-derive it:
+
+   Candidates are the 2463 sites with q_min_pos != none, i.e. every site the grid admits a +1
+   charge at. The plane (d_nearest, sum 1/d^2) at the R geometry is divided into 5 x 4 bins; 17
+   are populated. One site is taken from each populated bin, the lowest site index. Site 1690 is
+   forced in. The remainder are added, and then exchanged, by a deterministic rule that minimises
+   the absolute correlation between the two descriptors, subject to every populated bin keeping
+   at least one site. Site 1690 is never exchanged out.
+
+   The purpose of the exchange is the one thing this diagnostic cannot do without: across the
+   grid as a whole the two descriptors are correlated at r = -0.710, and a sample inheriting that
+   could not tell them apart. In the frozen sample r = +0.0000.
+
+   All 36 admit q = +1, so the charge is CONSTANT across the sample and cannot confound the
+   descriptors. Ten are anion-layer sites that also admit q = -1; those ten carry the sign arm.
+
+   Site 1690 is in the sample and is three gates at once: it is Diagnostic 10's S6-P, it is
+   Diagnostic 11's dref rung, and it is a site whose answer is already known - D11 measured
+   d_shield = +3.9642 kcal/mol there against a tolerance of 0.386, a FAIL. The sample therefore
+   contains at least one site of each class before anything is run, which the separation test
+   in D12.3 requires.
+
+   site   layer    near(R)  d_near(R)  d_O(R)   S1/d2(R)  S_O1/d2(R)   near(TS)  d_near(TS)
+   2009   cation   O6        2.588     2.588     0.905      0.274      O6         2.592
+   2051   cation   O6        2.588     2.588     0.886      0.296      O6         2.678
+   1988   cation   O5        2.610     2.610     0.747      0.269      O5         2.807
+   1975   cation   O5        2.610     2.610     0.745      0.269      O5         2.768
+   1959   cation   O5        2.610     2.610     0.752      0.268      O5         2.729
+   1991   cation   O5        2.610     2.610     0.749      0.263      O5         2.818
+   1981   cation   O5        2.610     2.610     0.740      0.263      O5         2.787
+   1967   cation   O5        2.610     2.610     0.746      0.261      O5         2.758
+   1463   cation   H2        2.627     3.066     1.205      0.306      C3         2.976
+   2271   cation   O2        2.703     2.703     0.905      0.301      O2         2.748
+   1766   cation   H5        2.789     3.826     1.260      0.250      C7         3.006
+   1469   cation   H2        2.794     3.893     1.060      0.239      C2         3.345
+   1464   cation   H2        2.826     3.424     1.168      0.289      C2         3.077
+   1494   cation   H1        2.827     4.739     0.887      0.175      H1         3.108
+   1690   cation   O3        2.960     2.960     1.024      0.260      O3         2.847   <- S6-P / D11 dref
+   2363   cation   H6        2.964     3.689     0.902      0.194      H6         2.813
+   2308   cation   O3        3.045     3.045     0.970      0.259      O3         2.891
+   1732   cation   O5        3.053     3.053     0.963      0.243      O5         2.995
+   1710   cation   H4        3.054     4.137     0.904      0.192      H4         3.139
+   1715   cation   H4        3.054     4.304     0.908      0.184      H4         3.063
+   1698   cation   H4        3.070     3.551     1.024      0.217      H4         3.129
+   2090   cation   H4        3.071     4.558     0.888      0.178      H4         3.054
+   2373   cation   H6        3.072     3.611     0.870      0.187      H6         2.913
+   1679   cation   O3        3.207     3.207     1.128      0.299      O3         3.171
+   55     anion    H1        3.283     5.488     0.700      0.146      H1         3.492
+   96     anion    H2        3.283     3.573     0.802      0.213      O1         3.648
+   77     anion    H1        3.283     3.817     0.965      0.209      H1         3.343
+   2328   cation   O4        3.379     3.379     1.063      0.238      O4         3.515
+   0      anion    H2        3.451     3.979     0.826      0.211      C3         3.848
+   2330   cation   C6        3.453     3.639     1.128      0.249      C5         3.375
+   158    anion    O1        3.485     3.485     0.661      0.222      O1         3.625
+   326    anion    O2        3.485     3.485     0.932      0.251      H7         3.515
+   396    anion    O4        3.676     3.676     1.019      0.229      O4         3.791
+   1043   anion    O2        3.720     3.720     0.646      0.203      O2         3.716
+   397    anion    C6        3.732     4.016     0.991      0.222      C7         3.918
+   4      anion    C1        3.732     4.213     0.828      0.209      C2         3.808
+
+THE RUNS.
+
+   main          36 sites x {bare, wall} x {R, TS}, q = +1, ma-def2-SVP          144
+   wall0         36 sites x {R, TS}, ECP centre carrying no charge                72
+   sign          10 anion-layer sites x {bare, wall} x {R, TS}, q = -1            40
+   basis          4 sites x {bare, wall} x {R, TS}, q = +1, def2-SVP              16
+   far field      2 positions x {bare, wall} x {R, TS}, q = +1                     8
+   control       no charge at all, ma-def2-SVP, {R, TS}                            2
+                                                                                 ---
+                                                                                 282
+
+   At the 1.45 min per run measured from Diagnostic 11's committed outputs (52 runs, 75.5 min
+   total; bare 1.58, wall 1.31, wall0 1.40), this is about 6.8 hours - one overnight job.
+
+   The four basis-arm sites are sample indices 0, 12, 24 and 35 of the frozen ordering: 2009,
+   1464, 55 and 4. D11 found at its dref rung that def2-SVP reports d_shield = -0.067 where
+   ma-def2-SVP reports +3.964, a ratio of 0.017, and concluded the compact basis conceals the
+   artefact. This arm asks whether that is a property of the basis or of that one axis. Reported,
+   not scored.
+
+   The two far-field positions. ff1 is Diagnostic 11's d1500 exactly - 15.00 A from atom O3 along
+   the O3 -> site 1690 vector - so its bare arm must reproduce D11's committed -0.2860 kcal/mol.
+   ff2 is 15.00 A from the substrate centroid along the centroid -> site 0 vector, a second
+   direction so the control is not a single line.
+
+THE TWO MODELS. Unchanged from Diagnostic 11, and for the same reasons. "bare" places the charge
+with %pointcharges, as every Stage 6 design does. "wall" places it as a coreless ECP centre in the
+coordinate block, copied byte for byte from the committed, already-run
+phase2.2/cs_stage4c/L0_E5_R/job.inp. STAGE6_ERRATUM7 records that these are Marefat Khah's
+published Ne parameters used OUTSIDE the octet assumption they were published under. That caveat
+is carried here, not resolved; the walled arm is a contrast, not truth.
+
+
+D12.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+GATE 0. Every input file must match the committed MANIFEST.sha256 byte for byte.
+
+GATE 1. The ma-def2-SVP control must reproduce Diagnostic 1's committed -836.227913439 and
+-836.199397816 Eh to 1e-6.
+
+GATE 2. Site 1690 must reproduce what is already committed for that position, to 0.01 kcal/mol:
+ddE bare -3.8579 (Diagnostic 10's S6-P, -3.857852, and Diagnostic 11's dref) and ddE wall
+-7.8221 (Diagnostic 11's dref wall). If either fails, the harness has drifted and nothing below
+is read.
+
+GATE 3. phase2.2/cs_stage6/sites_f42436.tsv must have sha256
+d2a750077d79e34dfecf448c30c2899ae0cea98f1edc5de3d10361b7c357cfc7, the value
+phase2.2/cs_stage6/relax/ARRANGEMENTS.txt records for it. The site coordinates are the input to
+this diagnostic and are checked against an independent committed record, not trusted.
+
+C-A12.1, THE WALL MUST BE INERT AT EACH SITE. An ECP centre carrying no charge must give
+|ddE| <= 0.30 kcal/mol at that site. Diagnostic 11 found the wall NOT inert at its d250 rung
+(+1.311) and voided that rung, so this is known to fire and is checked per site, not once. A site
+that fails has its WALLED result voided and is reported as voided; it contributes to no fit and
+is not reinterpreted.
+
+THE OBSERVABLE. For each site s,
+
+   ddE(arm, s) = [ (E_TS(arm,s) - E_R(arm,s)) - (E_TS(ctl) - E_R(ctl)) ] x 627.5094740631
+
+   d_shield(s) = ddE(bare, s) - ddE(wall, s)
+
+   PASS(s)  iff  |d_shield(s)| <= max( 0.10 x |ddE(bare,s)| , 0.05 kcal/mol )
+
+The tolerance is Diagnostic 11's, unchanged and for its stated reason: it is RELATIVE, because an
+absolute tolerance passes automatically wherever the quantities are small and would certify almost
+any site. The 0.05 term is a numerical floor, not the test.
+
+THE DESCRIPTORS. Exactly these five, computed at the R geometry from committed coordinates. No
+sixth is added after the numbers are seen.
+
+   X1  d_nearest        distance to the nearest substrate atom
+   X2  sum 1/d^2        over all 24 atoms
+   X3  sum_O 1/d^2      over the six oxygens only
+   X4  d_O              distance to the nearest oxygen
+   X5  |ddE classical|  the same charge acting on the control's frozen Loewdin density
+
+ADEQUACY, STATED BEFORE THE RUNS. A descriptor X is ADEQUATE iff BOTH:
+
+   (i)  |Spearman rho( X , |d_shield| )| >= 0.80 over the non-voided sites, AND
+   (ii) some threshold on X separates the PASS sites from the FAIL sites with ZERO
+        misclassifications.
+
+   (ii) is the operative test. (i) alone would let a descriptor that correlates well in the bulk
+   but misorders sites near the boundary license a screen that admits artefact-ridden sites, which
+   is exactly the failure this diagnostic exists to prevent.
+
+   All five are reported whether adequate or not. If more than one is adequate the screen uses X1,
+   because it is what the grid already applies and the simplest to carry; failing X1, the adequate
+   descriptor built from the fewest atoms. This tie-break is fixed here so that no descriptor is
+   chosen by looking at which fitted best.
+
+THE READINGS.
+
+   X1 ADEQUATE                  A single distance floor is a valid screen. The per-atom table was
+                                unnecessary, D11's r_safe generalises beyond its axis, and the
+                                rebuild applies the threshold this measures to all 2626 sites.
+
+   X1 NOT adequate, another is  Nearest-atom distance is abandoned as the admission criterion.
+                                The rebuild screens on the adequate descriptor. Every a
+                                coefficient computed at a site that the new screen rejects is
+                                withdrawn.
+
+   NO descriptor adequate       Geometry does not predict the artefact. No screen can be built,
+                                every candidate site would need its own QM check, and the
+                                grid-and-budget formulation cannot be rescued by moving the
+                                surface. The charge model itself must change - not the spacing.
+
+   ALL 36 PASS                  Would contradict D11's measurement at site 1690, which is in the
+                                sample. GATE 2 fires first and nothing is read.
+
+   ALL 36 FAIL                  No admitted site is a faithful position for a bare +1 charge.
+                                Same conclusion as "no descriptor adequate", reached sooner.
+
+FAR-FIELD CONTROL. At both far-field positions |d_shield| must be <= 0.05 kcal/mol, and ff1's bare
+arm must reproduce D11's committed -0.2860 to 0.01. This control is on d_shield - bare against
+walled - and NOT on agreement with the classical estimate. STAGE6_DIAGNOSTIC11_ERRATUM1 E11.1
+records that D11's A3.4 was mis-specified precisely because it required measured ~ classical while
+the classical reference uses the frozen density and omits a polarisation enhancement present at
+every distance. That failure mode cannot recur here, because the classical reference does not
+enter this control.
+
+C-A12.2, THE SIGN ARM. Dreuw & Cederbaum (cr0104227) warn that a monoanion-plus-point-charge at
+short range is a resonance "that can in principle not be correctly computed with bound state
+methods", and D11's C-A1.4 found its artefact specific to POSITIVE charges. The ten anion-layer
+sites are run at q = -1 as well as +1, same positions, so the comparison is within-site. Reported,
+not scored: ten sites in one layer cannot separate sign from position.
+
+
+D12.4  WHAT THIS CANNOT SETTLE
+
+Additivity. Every run here carries ONE charge; a design carries several, and nothing here says the
+artefact adds. That is the next diagnostic, not this one.
+
+The Ne ECP parameters remain used outside their published octet assumption (ERRATUM7). The walled
+arm is a contrast against which the bare arm is read, not a truth the bare arm is scored against.
+
+The environment. These are in vacuo. STAGE6_PROBE1 and the explicit-water cost measurement bear on
+that separately, and Probe 3 established that all four committed designs are electronically bound
+at the reactant geometry, so the resonance hazard is not what is being measured here.
+
+The product geometry. The grid's clearances are minima over R, TS and P - that was established
+here and is why the descriptors are recomputed per geometry rather than read from the d_ columns -
+but only R and TS are run, because ddE is defined on those two.
+
+Charge magnitudes other than +1 and -1. The grid admits +0.25, +0.50 and +0.75 at some sites and
+the floors shrink as |q| grows; whether the artefact does the same is not tested. The screen this
+produces is therefore a screen AT |q| = 1, the worst case the grid admits, and is applied to
+smaller charges only as an upper bound.
+
+Whether any site that passes is catalytic. A faithful charge model is a precondition for reading a
+design, not a design.
