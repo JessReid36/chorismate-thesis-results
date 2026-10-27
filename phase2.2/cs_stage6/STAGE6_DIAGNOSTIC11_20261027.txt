@@ -1,0 +1,138 @@
+STAGE 6 - DIAGNOSTIC 11, PRE-REGISTERED                                       27 October 2026
+
+HOW FAR MUST A DESIGNED CHARGE STAND OFF BEFORE A BARE POINT CHARGE IS A FAITHFUL MODEL OF IT?
+
+Written and committed before the runs. STAGE6_CRITERIA.txt is not edited. No continuum anywhere,
+per STAGE6_AMENDMENT2_20261027.
+
+
+D11.1  WHY
+
+Everything downstream of the charge model assumes a point charge at about 2.9 A is a valid stand-in
+for a catalytic group: the a coefficients, the grid's admitted sites, the budget, the search. Senn
+& Thiel (anie.200802019, held) state the hazard in terms Stage 6's designs meet on both axes at
+once:
+
+   "While this artifact is always present to some extent when a point charge interacts with a
+    polarizable charge distribution, it becomes more severe the closer the point charge approaches
+    the QM density and the more spatially flexible the density is."
+
+   "Larger basis sets, which include polarization and possibly diffuse functions, are more flexible
+    and hence more prone to overpolarization."
+
+Stage 6's closest sphere sits at 2.85 to 2.96 A and the diagnostics run in ma-def2-SVP. Five further
+held sources corroborate the phenomenon (1.1462041 Laio; ct050123f Laino; acs.jctc.9b01162 Marefat
+Khah; ct4c01698 Li & Chan; bs.mie.2016.05.014 Ryde). The Lennard-Jones walls do not shield anything:
+Finding 4 is that the LJ term never enters the QM Hamiltonian, so to the electrons every sphere is
+a bare point charge.
+
+Diagnostic 10 found, in the continuum-free arm, that the substrate's response OPPOSES the designed
+field and grows with the number of charges - +0.37, +8.19 and +20.71 kcal/mol against classical
+estimates of -4.23, -9.21 and -16.00 for S6-P, S6-2 and S6-20. Whether that response is physics or
+overpolarisation is the question here, and nothing downstream is interpretable until it is settled.
+
+
+D11.2  WHAT IS RUN
+
+One charge, walked outward along one axis, in two charge models. 52 single points, no geometry
+moves, all on Diagnostic 1's committed R and TS.
+
+THE AXIS, derived from committed files alone. The substrate atom nearest to site 1690 at R (atom 7,
+an O, at 2.9596 A), and the unit vector from it to site 1690. Rungs:
+
+   d250   2.50 A      inside the committed arrangements
+   dref   2.9596 A    site 1690's committed coordinates EXACTLY - this rung is S6-P
+   d350   3.50 A
+   d450   4.50 A
+   d600   6.00 A
+   d1500  15.00 A     the far-field zero control
+
+The same positions are used at R and at TS, because a designed charge does not move with the
+substrate.
+
+THE TWO MODELS.  "bare" places the charge with %pointcharges, as every Stage 6 design does.
+"wall" places it as a coreless ECP centre in the coordinate block, copied byte for byte from the
+committed, already-run phase2.2/cs_stage4c/L0_E5_R/job.inp - ORCA's own description is "coreless
+ECP center with (optional) point charge", and the ECP's projectors supply the short-range repulsion
+a real catalytic group would have. STAGE6_ERRATUM7 records that these are Marefat Khah's published
+Ne parameters used OUTSIDE the octet assumption they were published under. That caveat is carried
+here, not resolved; it is a reason to treat the walled arm as a contrast, not as truth.
+
+  main ladder     5 rungs x {bare, wall} x {R, TS}, q = +1, ma-def2-SVP        20 runs
+  C-A1.1          5 rungs x {R, TS}, ECP centre carrying q = 0                 10 runs
+  C-A1.4          dref and d450 x {bare, wall} x {R, TS}, q = -1                8 runs
+  C-A1.5          dref and d450 x {bare, wall} x {R, TS}, q = +1, def2-SVP      8 runs
+  A3.4            d1500 bare, q = +1, {R, TS}                                   2 runs
+  controls        no charge, {R, TS}, at ma-def2-SVP and at def2-SVP            4 runs
+
+
+D11.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+GATE 0.  Every input file must match the committed MANIFEST.sha256 byte for byte.
+
+GATE 1.  The ma-def2-SVP control must reproduce Diagnostic 1's committed -836.227913439 and
+-836.199397816 Eh to 1e-6.
+
+GATE 2.  The dref bare rung is byte-identical to Diagnostic 10's S6-P_R_vac and S6-P_TS_vac inputs -
+same substrate.xyz, same pc.pc, same job.inp - so it must reproduce D10's ddE of -3.857852 kcal/mol
+to 0.01. If it does not, the harness has drifted and nothing below is read.
+
+C-A1.1, THE WALL MUST BE INERT ON ITS OWN. An ECP centre carrying no charge must give
+|ddE| <= 0.30 kcal/mol at every rung. Diagnostic 9 found the wall inert in general (all thirteen
+wall-only runs CLEAN); this re-establishes it on this axis. A rung that fails has its walled result
+VOIDED and reported as such, not reinterpreted.
+
+THE READING.  Let d_shield(d) = ddE(bare, d) - ddE(wall, d).
+
+   r_safe is the SMALLEST rung at which BOTH hold, AT THAT RUNG AND AT THE NEXT ONE OUTWARD:
+     (i)   |d_shield| <= max( 0.10 x |ddE(bare)| , 0.05 kcal/mol )
+     (ii)  |d_shield| is non-increasing outward
+
+   (i) is RELATIVE by design. An absolute tolerance would be met automatically at large separation,
+   where every quantity is small, and would certify almost any distance as safe. The 0.05 kcal/mol
+   term is a numerical floor, not the test. Requiring two successive rungs stops a single crossing
+   from counting.
+
+   A THIRD CONDITION WAS CONSIDERED AND DEMOTED, before any of these runs existed. The ratio
+   ddE(bare)/ddE(classical) - "classical" being the same charge acting on the control's frozen
+   Loewdin density - was going to be required to plateau to within 10 % between the two rungs. It
+   is instead REPORTED AS A QUALIFIER. The reason is that it measures whether the physics has
+   settled with distance, which is a different question from whether the charge model is faithful;
+   AND-ing it would let a poor classical reference at short range void a genuine r_safe, and the
+   rehearsal showed that failure mode is easy to reach. Shielding is what r_safe is named for and
+   what it is decided by. The qualifier is printed with r_safe, and if the ratio has not plateaued
+   the result says so and says the magnitude at r_safe is not to be treated as converged.
+
+   The guard the third condition was meant to supply - bare and walled agreeing while both are
+   wrong - is carried by C-A1.1 (the wall must be inert on its own), by the two-successive-rung
+   requirement, and by A3.4 (the oracle must return the classical answer at 15 A).
+
+   r_safe <= 2.9596 A    The committed arrangements sit at or beyond it. Overpolarisation is not
+                         the explanation for Stage 6's behaviour and the surrogate's failure is
+                         physics. The grid stands.
+   r_safe > 2.9596 A     The grid must be rebuilt at that stand-off and every a recomputed. No
+                         design measured inside r_safe is interpretable.
+   r_safe not reached    Bare point charges are not a usable model at any separation tested, and
+                         the charge model - not the grid spacing - is what has to change.
+
+C-A1.4, THE SIGN CONTROL. Dreuw & Cederbaum (cr0104227) warn that at short range "the monoanion-
+point charge system represents a resonance state that can in principle not be correctly computed
+with bound state methods". Chorismate is a dianion and S6-2 and S6-20 carry negative charges. If the
+pathology is that, it appears on the q = -1 arm and not on q = +1. Reported, not scored - three
+designs cannot separate it from the sphere count.
+
+C-A1.5, THE BASIS CONTROL. Senn & Thiel predict d_shield SHRINKS with a compact basis. If it does,
+def2-SVP conceals the artefact rather than being free of it, and the surrogate's apparent success
+in that one condition is explained. Reported, not scored.
+
+A3.4, THE FAR-FIELD ZERO. A charge at 15 A must agree with its classical estimate to 0.1 kcal/mol.
+This is the control that catches an oracle which fails to return nothing when nothing is there.
+
+
+D11.4  WHAT THIS CANNOT SETTLE
+
+The environment. These runs are in vacuo and the control's density is unbound, HOMO +1.2269 eV;
+STAGE6_PROBE1_20261027.txt begins on that separately. Additivity, which needs more than one charge.
+Anything about whether a design is catalytic - one charge at one site is not a design, and the dref
+rung reproduces an arrangement already measured rather than proposing a new one. And the Ne ECP
+parameters remain used outside their published assumption.

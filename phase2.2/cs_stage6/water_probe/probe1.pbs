@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N cm_p1_water
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=10:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/water_probe/probe1.pbs.out
+
+set -uo pipefail
+BASE="/home/18660916/system_development/phase2.2/cs_stage6/water_probe"
+cd "$BASE" || exit 1
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+echo "host=$(hostname) start=$(date)"
+
+fail=0
+for d in $(ls -d */ 2>/dev/null | sed 's#/##' | sort); do
+  [ -f "$d/job.inp" ] || continue
+  echo "--- $d  $(date +%H:%M:%S)"
+  ( cd "$d" && /home/apps2/ORCA/6.0.1/orca job.inp > job.out 2>&1 </dev/null )
+  rc=$?
+  grep -q 'ORCA TERMINATED NORMALLY' "$d/job.out" || { echo "    FAILED rc=$rc"; fail=1; }
+  rm -f "$d"/job.gbw "$d"/job*.tmp "$d"/job.densities 2>/dev/null
+done
+echo "all runs done $(date)  fail=$fail"

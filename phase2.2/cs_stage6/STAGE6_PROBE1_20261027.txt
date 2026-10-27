@@ -1,0 +1,71 @@
+STAGE 6 - PROBE 1, PRE-REGISTERED                                             27 October 2026
+
+WHAT DOES AN EXPLICIT WATER SHELL COST, AND DOES IT BIND THE DIANION?
+
+A probe, not a diagnostic. It has no verdict rule because it decides nothing on its own.
+
+
+P1.1  WHY
+
+STAGE6_AMENDMENT2_20261027 removes CPCM. The reason CPCM was retained on 29 September - that it
+binds a dianion whose HOMO is +1.2269 eV in vacuo - has lost its remedy, not its force. Before
+committing to an expensive environment, two planning questions are worth a few hours:
+
+   1. Does a small explicit first shell bind the density at all?
+   2. What does a ma-def2-SVP single point cost at 24, 42, 60 and 84 QM atoms?
+
+Question 1 is the one that matters. Question 2 sizes Phase A's environment step.
+
+
+P1.2  WHAT IS RUN
+
+The BARE SUBSTRATE ONLY. No designed charges, no arrangements, no ddE. There is deliberately nothing
+here that could be read as a result about a design.
+
+   w00_R    24 atoms    the in-vacuo control
+   w06_R    42 atoms
+   w12_R    60 atoms
+   w20_R    84 atoms
+   w06_TS   42 atoms    the same R-frame waters at the TS geometry
+
+THE SHELL, by rule. The solvated frame is read from the committed archive
+05_qmmm/24_sp_barriers/f42436_r8_a1/hpc_text_outputs_2_r_irc.tar.xz, member .../r_irc/final.xyz,
+55680 atoms. The substrate is located inside it by exact coordinate match against
+frame_42436/reactant_qm.xyz - BUILD_RECORD.txt records that the two agree to 0.0e+00 A and the code
+re-checks it rather than trusting the record. A water is an oxygen outside the substrate carrying
+exactly two hydrogens within 1.2 A. Waters are ranked by the shortest oxygen-to-substrate distance
+and the first N taken.
+
+N = 6 is not a free choice: ranks 1 to 6 lie between 2.592 and 2.949 A and rank 7 is at 4.192 A, a
+gap of 1.243 A. Six is the hydrogen-bonded first shell as the distance distribution defines it.
+12 and 20 test convergence beyond it.
+
+The SAME water positions are used at R and at TS. A designed charge does not move with the
+substrate and neither does this shell, which keeps the environment preorganised rather than
+reorganising. The substrate moves 0.225 A on average and 0.615 A at most between R and TS, so the
+R-frame shell is geometrically sound at the TS; the generator refuses if any water comes within
+1.5 A of a substrate atom.
+
+
+P1.3  WHAT THIS IS NOT
+
+The real first shell around the substrate in the enzyme is mostly PROTEIN. Within 3.5 A of the
+substrate at frame 42436 there are 63 non-water atoms and 17 water atoms. Substrate-plus-waters in
+vacuo is therefore a DEVICE FOR BINDING THE ELECTRON DENSITY, not a model of the active site. It is
+consistent with SOLVATION_DECISION_NOTE.md section 4 item 2, where the designed charges replace the
+protein's MM charges and the waters are retained - but on its own, without charges, it models
+nothing and no energy from it should be quoted as a barrier.
+
+
+P1.4  WHAT IS REPORTED, AND WHAT IS NOT
+
+Reported: wall time, SCF cycle count, and the HOMO of each run.
+
+NOT reported: any ddE, any barrier, any comparison between arrangements. The measure step does not
+compute them.
+
+The reading, such as it is: in vacuo the bare dianion's HOMO is +1.2269 eV (Diagnostic 10's
+control). A shell that brings it below zero binds the density by a physical mechanism. If the three
+shell sizes disagree with each other, the shell is not converged and the environment question goes
+to Phase 1's full QM/MM - which is a decision for the supervisor and not something this probe can
+or should settle.
