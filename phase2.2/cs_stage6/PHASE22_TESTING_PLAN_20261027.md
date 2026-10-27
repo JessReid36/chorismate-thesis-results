@@ -37,7 +37,11 @@ No trustworthy oracle. Five defects:
 1. **Overpolarisation** — bare charges at 2.8-3.0 A with diffuse functions. Senn & Thiel, five
    corroborating sources. Hypothesis for this system; Diagnostic 11 tests it.
 2. **CPCM is the wrong instrument** — settled, `STAGE6_AMENDMENT2_20261027.txt`.
-3. **Unbound dianion**, control HOMO +1.2269 eV. Established, unresolved; Probe 1 begins on it.
+3. **Unbound dianion** — **WITHDRAWN 27 October**, see `STAGE6_PROBE1_ERRATUM1_20261027.txt`. The
+   HOMO sign is not the test. Diagnostic 2 committed the VDE on 22 October: -0.3167 eV at def2-SVP
+   (metastable) but **+0.5123 eV at ma-def2-SVP (BOUND)** and +0.5013 at def2-SVPD. At the basis
+   Stage 6 runs in, the bare dianion is bound and there was never a binding problem to solve. The
+   condition the surrogate was FITTED in, def2-SVP, is the metastable one.
 4. **Resonance hazard** from negative charges near a dianion (Dreuw & Cederbaum). Suggestive;
    monotone with sum of negative charge across three designs, but confounded with n.
 5. **Additivity** — the surrogate is linear; D2's even(q) reaches 15-24 % at q = 1 and D10 implies
@@ -46,7 +50,10 @@ No trustworthy oracle. Five defects:
 ## 2. Sequence
 
       A1  charge model and minimum stand-off      Diagnostic 11      blocks everything
-      A2  environment and binding                 Probe 1, then a decision for the supervisor
+      A2  environment                              NO LONGER BLOCKING - see defect 3. Explicit water
+                                                  is affordable (Probe 1: 84 atoms in 7m 24s) and
+                                                  wanted on Shaik's screening argument, but a
+                                                  gas-phase reference is defensible meanwhile.
       A3  positive control: Arg90                 mostly already satisfied; A3.4 is in D11
       A4  null distribution under the final oracle   decision O10 plus four amendments
       B1  additivity                              needs A1 and A2
