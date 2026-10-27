@@ -1,0 +1,71 @@
+STAGE 6 - DIAGNOSTIC 10 RESULT: does ddE come back when the dianion is bound?
+
+Measured by cs10_cpcm.py from sixteen single points on the committed Diagnostic 1 geometries.
+NO GEOMETRY MOVED. The verdict rule is STAGE6_DIAGNOSTIC10_20261026.txt D10.3, fixed before
+the runs went in and applied here unchanged. STAGE6_CRITERIA.txt is untouched.
+
+GATE 0: THE SIXTEEN RUNS MUST BE THE SIXTEEN COMMITTED INPUTS
+
+   Every job.inp, substrate.xyz and pc.pc in the run directory is checked, byte for byte,
+   against cpcm/MANIFEST.sha256, which was committed before anything ran. What was measured
+   is therefore what was pre-registered, and not something edited on the cluster.
+
+   44 files checked, all match.
+
+   GATE 0 PASSED
+
+GATE 1: THE CONTROL MUST REPRODUCE DIAGNOSTIC 1'S OWN ENERGIES
+
+   S6-C carries no spheres, so its %pointcharges job is the same calculation D1 ran. Any
+   difference means the two are not the same calculation and nothing below is interpretable.
+
+   R    measured -836.227913439   D1 -836.227913439   diff +2.28e-10 Eh   OK
+   TS   measured -836.199397816   D1 -836.199397816   diff +4.69e-10 Eh   OK
+
+   GATE 1 PASSED
+
+GATE 2: THE VACUUM ARM MUST DIFFER FROM D1 BY EXACTLY sum L
+
+   Finding 4: at fixed geometry a bare point charge and an LJ sphere differ by exactly L.
+   So ddE(pointcharge) must equal D1's ddE(QMMM) minus sum L, to 0.05 kcal/mol.
+   sum L counts only spheres that carry a Lennard-Jones wall in the committed
+   site.ORCAFF.prms. A bare charge has no wall and pays nothing - see ERRATUM1.
+
+   design  walls    ddE vac    D1 ddE(ma)   sum L      expected   diff      
+   S6-P      0/1    -3.8579     -3.8579  +0.00000    -3.8579   +0.0000  OK
+   S6-2      2/2    -1.0250     -0.4094  +0.61564    -1.0250   -0.0000  OK
+   S6-20   20/20     4.7108      4.5746  -0.13622     4.7108   +0.0000  OK
+
+   GATE 2 PASSED
+
+THE READING: ddE WITH THE DENSITY BOUND, AGAINST THE COMMITTED def2-SVP VALUES
+
+   design   ddE cpcm   ddE vac    D1 ddE(svp)   move vs svp   sign vs svp
+   S6-P     -11.3337    -3.8579       -7.6757        47.7%   same
+   S6-2      -4.4460    -1.0250      -12.3835        64.1%   same
+   S6-20     20.6967     4.7108      -24.8261       183.4%   REVERSED
+
+   HOMO, which says whether the continuum did its job
+
+   design   HOMO(R) vac eV   HOMO(R) cpcm eV   bound at cpcm?
+   S6-C           +1.2269            -4.3036   yes
+   S6-P           -2.3674            -7.2274   yes
+   S6-2           -0.6098            -5.9492   yes
+   S6-20          -0.5199            -6.0981   yes
+
+VERDICT PER D10.3: NOT RECOVERED
+
+   A sign still reverses against the committed def2-SVP value. Binding the density does
+   not restore the design numbers, so the def2-SVP frozen barriers are not recoverable by
+   a continuum and the frozen half must be rebuilt, as D1.3 already required.
+
+WHAT THIS DOES NOT TEST
+
+   The geometries. These are single points on D1's committed R and TS, which are stationary
+   points of a different Hamiltonian; nothing here relaxes. It does not test whether a
+   continuum is the right environment - SOLVATION_DECISION_NOTE.md section 3 argues a
+   continuum cannot represent the solvent screening that matters, and that argument is
+   untouched by this result. It does not revisit any wavefunction-health verdict. And a
+   RECOVERED verdict would license the frozen numbers only in the condition tested here,
+   not in vacuo, which is the condition Stage 6 actually used.
+

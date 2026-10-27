@@ -1,0 +1,121 @@
+STAGE 6 - DIAGNOSTIC 10, ERRATUM 1                                            27 October 2026
+
+This corrects an arithmetic error in Diagnostic 10's GATE 2 and in the pre-registration that
+specified it. It changes no measured quantity. The sixteen runs stand exactly as they came off
+the cluster; nothing was re-run, no geometry moved, and no input was edited.
+
+STAGE6_DIAGNOSTIC10_20261026.txt is NOT edited.  sha256 01d92a81c979ffd0a4e9672f17c058d4dd0c009d37c9f2378ecd58784bddc3f0
+STAGE6_CRITERIA.txt is NOT edited.               sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+D10.3, the verdict rule, is NOT edited and is applied unchanged.
+
+
+E10.1  WHAT WAS WRONG
+
+The job array finished at 07:06 on 27 October. Gate 1 passed to 5e-10 Eh. Gate 2 reported:
+
+   design   ddE vac    D1 ddE(ma)   sum L      expected   diff
+   S6-P      -3.8579     -3.8579  +0.56294    -4.4208   +0.5629  FAIL
+   S6-2      -1.0250     -0.4094  +0.61564    -1.0250   -0.0000  OK
+   S6-20      4.7108      4.5746  -0.13622     4.7108   +0.0000  OK
+
+and stopped the reading, as D10.2 requires. That stop was correct behaviour on a wrong number.
+
+sum L for S6-P is not +0.56294. It is ZERO. S6-P deploys no Lennard-Jones wall, so there is no
+wall energy for a bare-point-charge run to differ from. The first cs10_cpcm.py summed the L
+column of ARRANGEMENTS.txt for every design without asking whether the design deploys a wall:
+
+    L = sum(r[6] for r in A[arr])
+
+L is a property of a SITE, not of a design. Site 1690 carries L = +0.56294 and appears in S6-2
+and S6-3, which do wall it, and in S6-P, which does not. The L listed under S6-P records what
+that site would cost if walled. The gate subtracted a term that was never in the calculation.
+
+
+E10.2  THE EVIDENCE, ALL OF IT COMMITTED BEFORE THE RUNS
+
+Three independent records, none of which depends on the outcome:
+
+1.  relax/ARRANGEMENTS.txt   sha256 651e7e228e1409f052bb024b42d125ab59bc86ebee789f3dd60ad1eb5f9c6038
+    Its header line for this design reads, in full:
+
+        S6-P   1 sphere(s), BARE point charge, no LJ wall
+
+    The file states the fact in its own words. The first script matched only the sphere count
+    out of that line and discarded the rest of it.
+
+2.  diffuse/DIFF-S6-P/R_sp/site.ORCAFF.prms  and  .../TS_sp/site.ORCAFF.prms
+    both sha256 598738d7ef8922654d48106fb23bfddcc040ab62e3c90ab45ca356c3db001470
+    The sphere is atom 25 of the $atoms block:
+
+        25   N      1.000000     0.000000     0.000000     0.000000     0.000000
+
+    Charge +1, and epsilon and sigma zero in both pairs. The corresponding rows for S6-2 and
+    S6-20 read -0.170000  3.648000. The force field that ran is unambiguous.
+
+3.  STAGE6_DIAGNOSTIC10_20261026.txt, section D10.1, line 43, describing the same design:
+
+        S6-P    one bare +1 at Arg90's position, the only arrangement D1 found still strongly
+                catalytic
+
+    The pre-registration contradicts itself. D10.1 calls S6-P bare and then, fifteen lines
+    later, assigns it a wall offset of +0.56294 kcal/mol. The defect was in the document before
+    it was in the code, and it was not caught by three passes of rehearsal because the rehearsal
+    checked that the script computed the stated number, not whether the stated number was right.
+
+
+E10.3  WHY THIS IS A CORRECTION AND NOT A CONVENIENCE
+
+A gate that fails and is then adjusted until it passes is the exact shape of a result being
+shaped, and it deserves the suspicion. Four things distinguish this from that:
+
+a.  The correction is read off committed files, not chosen. The new code takes sum L from the
+    force field that actually ran, and refuses - in BOTH directions - if ARRANGEMENTS.txt and
+    site.ORCAFF.prms disagree about whether a sphere is walled. It cannot be satisfied by
+    preferring whichever record gives a better answer.
+
+b.  The error left a signature. The reported discrepancy for S6-P was +0.5629 kcal/mol, equal
+    to four decimal places to the quantity wrongly subtracted, while the two walled designs
+    agreed to within 1e-4 kcal/mol. A genuine failure of Finding 4 would not land on that
+    number for one design and vanish for the other two.
+
+c.  It was reproduced before it was fixed. The superseded script, run against synthetic outputs
+    carrying D1's control energies and the three measured ddE values, reproduces the 27 October
+    gate-2 table line for line, including the +0.5629.
+
+d.  The change tightens the instrument. A new GATE 0 was added, checking all forty-four
+    committed input files byte for byte against cpcm/MANIFEST.sha256 before anything is read.
+    Gate 0 can only withhold a verdict; it can never produce one.
+
+With sum L corrected, all three designs satisfy Finding 4 to <= 1e-4 kcal/mol, forty times
+inside gate 2's 0.05 tolerance. The identity on which this whole diagnostic rests is therefore
+not assumed but measured, on three designs, which is what gate 2 existed to do.
+
+
+E10.4  WHAT CHANGED IN THE CODE
+
+phase2.2/cs10_cpcm.py
+    superseded  sha256 8d2a22bc750595eea1c9c7877e9210d11d1ca08623b5e1a41775a4bd02afecee
+    current     sha256 25e0e7f79141cd97ef314875aaedfe74fdcbe21541ad9f50807e6a4d929499e1
+
+  - read_arrangements() now keeps the "no LJ wall" clause from each header line instead of
+    discarding it.
+  - deployed_L() computes sum L from site.ORCAFF.prms: a sphere with four zero Lennard-Jones
+    parameters contributes nothing, a walled sphere contributes its site's L. It stops if
+    ARRANGEMENTS.txt's bare flag and the force field disagree either way round, and it stops if
+    a design's R and TS force fields deploy different parameters.
+  - GATE 0 added, as above, and reported in the result file.
+  - The out-dir guard refused any path under the results repo, which fired wrongly on the
+    cluster, where the run directory shares that root. It now refuses only writing into the
+    directory being read. Writing into the repository is what the new `stage` step is for, and
+    is deliberate when it happens.
+  - `stage` copies the sixteen job.out files and the result into the repository and writes
+    OUTPUTS.sha256. It copies no inputs, because gate 0 has already proved the committed ones
+    are what ran, and none of ORCA's scratch.
+
+
+E10.5  THE STANDING LESSON
+
+A per-site quantity in a table is not a per-design quantity, and a design that lists a site does
+not necessarily deploy everything that site carries. Where a derived number can be read either
+from a summary table or from the file that was actually fed to the program, the program's own
+input is the authority, and the two should be cross-checked rather than one of them trusted.
