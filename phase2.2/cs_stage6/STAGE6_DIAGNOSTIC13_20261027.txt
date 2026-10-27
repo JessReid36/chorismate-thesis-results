@@ -1,0 +1,170 @@
+STAGE 6 - DIAGNOSTIC 13, PRE-REGISTERED                                       27 October 2026
+
+DOES THE OVERPOLARISATION ARTEFACT DEPEND ON THE CHARGE MAGNITUDE?
+
+Written and committed before the runs. STAGE6_CRITERIA.txt is not edited. No continuum anywhere,
+per STAGE6_AMENDMENT2_20261027. Diagnostic 12 is not amended by this document.
+
+
+D13.1  WHY
+
+Diagnostic 11 measured r_safe = 3.50 A and Diagnostic 12 is measuring which site property predicts
+the artefact. BOTH RUN AT |q| = 1. Diagnostic 12 says so itself, in D12.4: "any screen issued here
+is a screen AT |q| = 1, the worst case the grid admits, and applies to smaller charges only as an
+upper bound."
+
+Diagnostic 2 has already measured, at site 1690 and in exactly this condition, that the artefact
+may not be present at smaller charges at all. Its committed C3 table (ma-def2-SVP, in vacuo), read
+as the linear coefficient odd/q:
+
+   q        0.05      0.25      0.50      1.00
+   odd/q   -7.1956   -7.2017   -7.2160   -4.8293
+
+The coefficient is flat to 0.28 per cent from q = 0.05 to q = 0.50 and then collapses by 33 per
+cent at q = 1.00. def2-SVPD (C5) shows the same shape, smaller: flat to 0.64 per cent, then
+-9.3 per cent. def2-SVP (C1, C2) is flat throughout, which is the basis D11's C-A1.5 showed
+conceals the artefact. Site 1690 sits at 2.96 A, INSIDE r_safe.
+
+If that behaviour is general, r_safe is not a distance - it is a distance AT A CHARGE, and the
+grid's admissible region is a (distance, |q|) region rather than a floor. That matters now because
+the project's own calibration (STAGE6_ASSESSMENT_20261022.md section 5) points at designs of many
+weak charges rather than few strong ones, and the per-site cap D2 measured for the linear surrogate
+is q* = 0.25 e in three of its five conditions.
+
+This diagnostic asks whether D2's single-site observation holds across distance.
+
+
+D13.2  WHAT IS RUN
+
+114 single points. No geometry moves. All on Diagnostic 1's committed R and TS from
+phase2.2/cs_stage6/frame_42436.
+
+THE SITES. Eight of Diagnostic 12's thirty-six, chosen deterministically to span its full
+nearest-atom range at R (2.588 to 3.732 A, the same span as D12's whole sample) with site 1690
+forced in. The list is FROZEN here and the harness carries it literally:
+
+   site   layer    near(R)  d_near(R)  sum 1/d^2(R)
+   2009   cation   O6         2.588      0.905
+   1981   cation   O5         2.610      0.740
+   1464   cation   H2         2.826      1.168
+   1690   cation   O3         2.960      1.024     <- D2, D10 and D11's site
+   1710   cation   H4         3.054      0.904
+   1679   cation   O3         3.207      1.128
+   2330   cation   C6         3.453      1.128
+   4      anion    C1         3.732      0.828
+
+THESE ARE PROBES, NOT CANDIDATE DESIGNS. Seven of the eight have q_min_pos = 1.00, meaning the
+grid does not ADMIT a +0.25 charge there. That rule governs where a resting sphere may sit; it is
+a statement about forces, and nothing here moves. Diagnostic 2 scanned q = 0.05 to 1.00 at site
+1690 under the same reasoning. No arrangement in this diagnostic is a design and none may be read
+as one.
+
+THE RUNS.
+
+   main      8 sites x q in {0.25, 0.50, 1.00} x {bare, wall} x {R, TS}      96
+   wall0     8 sites x {R, TS}, ECP centre carrying no charge                16
+   control   no charge at all, ma-def2-SVP, {R, TS}                           2
+                                                                            ---
+                                                                            114
+
+   At the 1.45 min per run measured from Diagnostic 11's committed outputs, about 2.8 hours.
+
+   The q = 1.00 arm is run at all eight sites, not only at the gate site, for two reasons: it
+   gives three points per site, which is what a scaling exponent needs, and it is an independent
+   reproduction of Diagnostic 12 at those eight sites from a separately generated input set.
+
+THE TWO MODELS. Unchanged from Diagnostics 11 and 12. "bare" places the charge with
+%pointcharges. "wall" places it as a coreless ECP centre in the coordinate block, copied byte for
+byte from the committed, already-run phase2.2/cs_stage4c/L0_E5_R/job.inp. STAGE6_ERRATUM7 records
+that these are Marefat Khah's published Ne parameters used outside their octet assumption; the
+caveat is carried, not resolved, and the walled arm is a contrast, not truth.
+
+
+D13.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+GATE 0. Every input file must match the committed MANIFEST.sha256 byte for byte.
+
+GATE 1. The ma-def2-SVP control must reproduce Diagnostic 1's committed -836.227913439 and
+-836.199397816 Eh to 1e-6.
+
+GATE 2. Site 1690's bare arm must reproduce Diagnostic 2's committed C3 values at THREE charge
+magnitudes, to 0.01 kcal/mol:
+
+   q = 0.25   ddE  -1.8935
+   q = 0.50   ddE  -3.9781
+   q = 1.00   ddE  -3.8579     which is also Diagnostic 10's S6-P (-3.857852)
+
+and its walled arm at q = 1.00 must reproduce Diagnostic 11's dref wall, -7.8221. Four committed
+numbers from three separate diagnostics. If any fails, the harness has drifted and nothing below
+is read.
+
+HOW EXACT GATE 2 IS, STATED PLAINLY. The q = 1.00 bare input is BYTE-IDENTICAL to Diagnostic
+10's committed S6-P_R_vac - same pc.pc, same job.inp - so that arm is an exact reproduction.
+The q = 0.25 and q = 0.50 arms are NOT byte-identical to Diagnostic 2's: D2 wrote %scf MaxIter 300
+where this harness writes 250, and formats the point-charge line to more decimals (the position
+is the same number). Those two are therefore a NUMERICAL reproduction of D2 to 0.01 kcal/mol, not
+a byte-for-byte one, and are read as such. MaxIter 250 is kept rather than matched to D2's 300
+because it preserves the byte-identity with D10, and because the largest SCF cycle count anywhere
+in D2's C3 runs is 33 - measured from the committed outputs, not assumed.
+
+GATE 3. phase2.2/cs_stage6/sites_f42436.tsv must have the sha256 that
+phase2.2/cs_stage6/relax/ARRANGEMENTS.txt records for it.
+
+C-A13.1, THE WALL MUST BE INERT AT EACH SITE. An ECP centre carrying no charge must give
+|ddE| <= 0.30 kcal/mol. Diagnostic 11 found the wall NOT inert at its closest rung, so this is
+checked per site. A site that fails has its WALLED results voided at every charge and is reported
+as voided; it enters no fit.
+
+THE OBSERVABLE. For each site s and charge q,
+
+   ddE(arm, s, q) = [ (E_TS - E_R)(arm,s,q) - (E_TS - E_R)(ctl) ] x 627.5094740631
+   d_shield(s, q) = ddE(bare, s, q) - ddE(wall, s, q)
+   PASS(s, q)  iff  |d_shield(s,q)| <= max( 0.10 x |ddE(bare,s,q)| , 0.05 kcal/mol )
+
+Diagnostic 11's tolerance, unchanged, and relative for its stated reason.
+
+THE SCALING EXPONENT. For each site, fit log|d_shield| against log q by least squares over the
+three magnitudes and report the exponent p, with the two-point exponents 0.25->0.50 and
+0.50->1.00 beside it so that a pure power law can be told from a switch-on. A site whose
+|d_shield| is below 0.02 kcal/mol at two or more magnitudes is reported as BELOW NOISE and
+contributes no exponent: a log fit through numerical noise is not a measurement.
+
+THE READINGS.
+
+   p ~ 1, every site            The artefact is linear in charge. Reducing the per-site cap from
+                                1.00 to 0.25 reduces it fourfold and no more. r_safe moves only
+                                a little and D11's floor stands nearly as it is.
+
+   p ~ 2, every site            Quadratic. A 0.25 cap reduces the artefact sixteenfold, and the
+                                admissible region is much larger than D11's floor implies.
+
+   SWITCH-ON (two-point         What D2 saw at site 1690: flat to 0.50, then a jump. The artefact
+   exponents strongly           is a large-|q| phenomenon, r_safe at |q| <= 0.50 is substantially
+   unequal, p not meaningful)   smaller than 3.50 A, and the screen must be a (distance, |q|)
+                                region. The implied floor at 0.25 e is reported.
+
+   NO PATTERN across sites      The magnitude dependence is site-specific and no single cap can
+                                be stated. The screen must then be per-site, which the grid
+                                cannot carry, and the charge model must change instead.
+
+THE DIRECT QUESTION, reported alongside. Of the eight sites, how many PASS at q = 1.00, at 0.50
+and at 0.25? If every site that fails at 1.00 passes at 0.25, that is the result, whatever the
+exponent does.
+
+
+D13.4  WHAT THIS CANNOT SETTLE
+
+Additivity, and it is the limitation that matters most here. Every run carries ONE charge. A
+design of twenty-six charges at 0.25 e is not twenty-six independent probes, and nothing in this
+diagnostic says the artefact of such a design is the sum of theirs. STAGE6_FINDINGS_20261022.md
+Finding 2 measured ddE additivity at def2-SVP and found it holds to 3.1 per cent at n = 2 and
+6.1 per cent at n = 3; the ARTEFACT's additivity has never been measured at any n, and this does
+not measure it either. Any statement that weak charges are safe in a many-charge design is
+therefore not supported by this diagnostic alone.
+
+Eight sites, not the grid. The sites span D12's distance range but are a sample of a sample.
+
+The Ne ECP parameters remain used outside their published octet assumption (ERRATUM7).
+
+The environment: in vacuo. The product geometry. And whether any of these positions is catalytic -
+they are probes, and seven of the eight are positions the grid would refuse to a 0.25 charge.
