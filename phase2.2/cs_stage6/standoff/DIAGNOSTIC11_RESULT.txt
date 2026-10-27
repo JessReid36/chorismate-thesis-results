@@ -1,0 +1,105 @@
+STAGE 6 - DIAGNOSTIC 11 RESULT: how far must a designed charge stand off?
+
+Measured by cs11_standoff.py. NO GEOMETRY MOVED; single points on Diagnostic 1's
+committed R and TS. No continuum anywhere (STAGE6_AMENDMENT2_20261027). The rule is
+STAGE6_DIAGNOSTIC11_20261027.txt D11.3, fixed before the runs and applied unchanged.
+STAGE6_CRITERIA.txt is untouched.
+
+GATE 0: THE RUNS MUST BE THE COMMITTED INPUTS
+
+   124 files checked against MANIFEST.sha256, all match.
+
+   GATE 0 PASSED
+
+GATE 1: THE ma-def2-SVP CONTROL MUST REPRODUCE DIAGNOSTIC 1'S OWN ENERGIES
+
+   R    measured -836.227913439   D1 -836.227913439   diff +2.26e-10 Eh   OK
+   TS   measured -836.199397816   D1 -836.199397816   diff +4.75e-10 Eh   OK
+
+   GATE 1 PASSED
+
+GATE 2: THE COMMITTED POSITION MUST REPRODUCE DIAGNOSTIC 10
+
+   dref is site 1690 exactly - S6-P - which D10 measured at -3.857852 kcal/mol.
+
+   measured -3.857852   D10 -3.857852   diff +0.0000 kcal/mol   OK
+
+   GATE 2 PASSED
+
+C-A1.1  A WALL CARRYING NO CHARGE MUST DO NOTHING
+
+   Diagnostic 9 found the wall inert in general. This re-establishes it on this axis.
+   Tolerance 0.30 kcal/mol; a distance that fails has its walled result voided.
+
+   d / A    ddE(wall, q=0)   verdict
+     d250         +1.3105    NOT INERT
+     dref         +0.2817    inert
+     d350         +0.0407    inert
+     d450         -0.0013    inert
+     d600         -0.0001    inert
+
+THE LADDER: BARE POINT CHARGE AGAINST THE SAME CHARGE BEHIND A PAULI WALL
+
+   q = +1, ma-def2-SVP, in vacuo. 'classical' is the same charge acting on the
+   control's frozen Loewdin density - it omits real polarisation, so the ratio is not
+   expected to reach 1; what matters is whether it plateaus.
+
+   d / A   ddE bare   ddE wall   d_shield   bar      classical  ratio   wall
+     d250    -6.5936    -9.2019    +2.6083   0.6594    -5.5992   1.178  VOID
+     dref    -3.8579    -7.8221    +3.9642   0.3858    -4.2260   0.913  ok
+     d350    -5.5938    -5.9932    +0.3994   0.5594    -3.1579   1.771  ok
+     d450    -3.5878    -3.6073    +0.0195   0.3588    -2.0022   1.792  ok
+     d600    -1.9664    -1.9667    +0.0002   0.1966    -1.1614   1.693  ok
+
+D11.3  THE PRE-REGISTERED READING
+
+   r_safe is the smallest d at which BOTH hold, AT THAT d AND THE NEXT d OUT:
+     (i)   |d_shield| <= max(10% of |ddE(bare)|, 0.05 kcal/mol)
+     (ii)  |d_shield| is non-increasing outward
+
+   The classical-ratio plateau is a QUALIFIER, reported below, not a third gate. It
+   measures whether the physics has settled, not whether the charge model is faithful,
+   and AND-ing it would let a poor classical reference at short range void a genuine
+   r_safe. Shielding is what r_safe is named for and what it is decided by.
+
+   r_safe = 3.50 A
+
+   r_safe is OUTSIDE the committed arrangements, whose closest sphere sits at
+   2.85-2.96 A. On D11.3 the grid must be rebuilt with this stand-off and every
+   a coefficient recomputed. No design measured inside r_safe is interpretable.
+
+   QUALIFIER: the classical ratio HAS plateaued between d350 (1.771) and d450 (1.792).
+
+C-A1.4  SIGN CONTROL: THE SAME LADDER WITH q = -1
+
+   Dreuw & Cederbaum (cr0104227) warn that a negative charge near an anion can drive the
+   system into a resonance that bound-state methods cannot describe. If the pathology is
+   that, it appears here and not on the q = +1 arm.
+
+   d / A   ddE bare   ddE wall   d_shield   HOMO(R) bare / eV
+     dref     5.8008     5.8934    -0.0926   +3.9687
+     d450     3.0113     3.0110    +0.0002   +3.3946
+
+C-A1.5  BASIS CONTROL: THE SAME POINTS AT def2-SVP
+
+   Senn & Thiel predict the bare-minus-walled gap SHRINKS with a compact basis. If it
+   does, def2-SVP conceals the artefact rather than being free of it.
+
+   d / A   d_shield ma   d_shield svp   ratio svp/ma
+     dref        3.9642        -0.0669        -0.017
+     d450        0.0195         0.0000         0.001
+
+A3.4  FAR-FIELD ZERO CONTROL
+
+   A charge at 15 A must do almost nothing, and must agree with the classical estimate.
+
+   ddE measured -0.2860   classical -0.1848   diff -0.1012 kcal/mol   FAIL
+
+WHAT THIS DOES NOT TEST
+
+   The environment. These are in vacuo and the control's density is unbound (D10 gave
+   HOMO +1.2269 eV); that is the separate question STAGE6_PROBE1 begins on.
+   It does not test additivity, which needs more than one charge. It does not revisit
+   any Diagnostic 1 or Diagnostic 10 number. And the Ne ECP parameters are used outside
+   the octet assumption they were published under, as STAGE6_ERRATUM7 records.
+
