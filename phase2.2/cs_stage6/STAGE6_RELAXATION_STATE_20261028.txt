@@ -1,0 +1,95 @@
+STAGE 6 - THE STATE OF THE FOURTEEN RELAXATIONS                          28 October 2026
+
+Recorded because three places in the record say these were never run, and that is not what the
+files show. This note changes no pre-registration, no criterion and no verdict. It records what
+exists on hpc1, where, and why it stopped. STAGE6_CRITERIA.txt and every STAGE6_DIAGNOSTIC*,
+STAGE6_AMENDMENT* and STAGE6_ERRATUM* file are untouched.
+
+The outputs described here are NOT committed. Jessica's decision, 28 October 2026: a job that
+failed is not committed; the note is.
+
+
+R1  WHAT EXISTS
+
+On hpc1, under ~/system_development/phase2.2/cs_stage6/relax/ :
+
+  S6-C/R_opt/job.out    ran 21 October 2026.  95 geometry optimisation cycles.
+                        "THE OPTIMIZATION HAS CONVERGED".
+                        FINAL SINGLE POINT ENERGY  -836.193685389471 Eh
+  S6-C/TS_opt/job.out   ran 21 October 2026.  Zero cycles. No SCF. ORCA refused the input.
+
+  *_opt/job.inp exist for S6-2, S6-3, S6-5, S6-10 and S6-20 at both R and TS. None was submitted.
+
+The directory also holds the eleven arrangements' frozen single points (R_sp, TS_sp), 22 outputs,
+all terminated normally; those are already committed as cs_stage6/frozen/sp_outputs.tar.xz.
+24 outputs in total, 23 terminating normally.
+
+
+R2  WHY THE TRANSITION-STATE RELAXATION STOPPED
+
+Verbatim from S6-C/TS_opt/job.out:
+
+    WARNING: You cannot use transition state optimization for a Cartesian optimization!!!
+             Please choose optimization with redundant coordinates (!OPT)
+      ===>   Skipping actual calculation
+
+    [file orca_main/main_input_check.cpp, line 8049]: Error (ORCA_MAIN): ... aborting the run
+
+This is an input incompatibility, caught by ORCA before any calculation began. It is NOT a
+convergence failure, a walltime overrun or a resource problem. Nothing was computed.
+
+It is the conflict already on record as an open item: HANDOVER_20261026.md section 8, item 10,
+"OptTS / coordsys cartesian conflict - still no erratum". What was not on record is that this
+conflict is what stopped the relaxations.
+
+
+R3  WHAT THIS CORRECTS
+
+Three statements in the record read that the fourteen relaxations were never run. The accurate
+statement is:
+
+    one converged (S6-C reactant), one was refused by ORCA at input parsing (S6-C transition
+    state), and twelve were never submitted.
+
+STAGE6_ASSESSMENT_20261022.md section 10 lists the relaxations first under "what should not happen
+next". That judgement is not disturbed here: its reasons were the ~750 core-hours and the 118 per
+cent movement in ddE(frozen), and both stand on their own. Only the factual claim that nothing was
+run is corrected.
+
+
+R4  WHAT IT MEANS FOR Loss, G0 AND kappa
+
+Loss = ddE(frozen) - ddE(relaxed), so every design's Loss is measured against the control's
+relaxed reactant and transition state. The reactant exists. The transition state does not, and
+cannot be produced by the protocol as written, because OptTS requires redundant internal
+coordinates and the protocol specifies Cartesian.
+
+Cartesian coordinates are how the frozen surroundings are held, so moving to redundant internals
+is a change to the protocol and not a correction to it. Until that is decided, Loss, G0 and kappa
+are not merely unmeasured - they are unmeasurable, and no amount of queue time changes that.
+
+Deciding it requires a dated amendment, as HANDOVER_20261026.md section 8 item 10 already says.
+This note does not propose one and does not decide it.
+
+
+R5  WHAT IS NOT COMMITTED, AND WHERE IT IS
+
+Nine Stage 6 directories hold outputs that are not in this repository. Measured on hpc1,
+28 October 2026:
+
+  directory     outputs   terminated normally   size    result committed
+  cpcm   (D10)       16                    16   5.1 MB  yes
+  standoff (D11)     52                    52   6.2 MB  yes
+  water_probe (P1)    5                     5   848 kB  yes
+  vde_probe  (P2)     8                     8   1.1 MB  yes
+  vde_designs (P3)    4                     4   606 kB  yes
+  transfer   (D7)    24                    24    93 MB  no
+  sitescan  (D12)   282                   282    34 MB  no
+  qscale    (D13)   114                   114    14 MB  no
+  relax              24                    23    33 MB  -
+
+529 outputs, about 188 MB. Five of those directories have their conclusions committed without the
+outputs those conclusions were measured from, which is what the rule of 18 October 2026 was made
+to prevent ("every output downloaded and committed, not only reported").
+
+Collection is outstanding and is not done by this note.
