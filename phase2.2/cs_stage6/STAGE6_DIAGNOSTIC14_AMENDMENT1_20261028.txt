@@ -1,0 +1,141 @@
+Stage 6, DIAGNOSTIC 14 - Amendment 1 (28 October 2026).
+Committed after DIAGNOSTIC14_RESULT.txt (results 7092731) and before any input of A1.4 exists.
+
+STAGE6_DIAGNOSTIC14_20261028.txt is not edited. Its reading stands as committed: NO VERDICT.
+
+
+A1.1  WHAT WAS FOUND, AND HOW IT WAS VERIFIED
+
+Every POLARISED verdict in DIAGNOSTIC 14 fell on a walled run, every one on the dipole, none on
+the Loewdin charge, the gap or the cycle count. No bare run was POLARISED. Every zero-charge wall
+run was CLEAN.
+
+ORCA's printed nuclear dipole contribution is identical for the charge-free control, the
+zero-charge wall and the bare point charges, and differs only for the walled arm (def2-SVPD,
+reactant, atomic units):
+
+   ctl_R            -3.465273  -2.192771   0.557956
+   n6neg_wall0_R    -3.465273  -2.192771   0.557956
+   n6neg_bare_A_R   -3.465273  -2.192771   0.557956
+   n6neg_wall_A_R   -6.000796  -2.861954  14.639237
+
+External charges given through %pointcharges do not enter the printed dipole. Charges carried on
+inline Ne> ECP centres do, because those centres are part of the molecular specification. The
+difference is exactly the classical dipole of those charges about the substrate's centre of mass:
+
+   nuclear(wall) - nuclear(ctl)   -2.535522  -0.669183  14.081281
+   sum_i q_i (r_i - R_com) / a0   -2.535522  -0.669183  14.081281
+   residual                        0          0          0
+
+R_com is the mass-weighted centroid of the 24 substrate atoms of the committed frame_42436
+geometry for that state, with no contribution from the Ne> centres. The origin is not arbitrary:
+the six negatives carry a net -1.34 e at arm A, so the sum depends on it, and only the centre of
+mass reproduces ORCA's number.
+
+Removing that term from all 54 of DIAGNOSTIC 14's walled runs: 22 trip D6.3's dipole rule as
+printed, and NONE does after. Every corrected magnitude lies between 6.6 and 9.4 Debye, against
+the committed control medians of 10.23 (nb 402) and 8.12 (nb 264). The corrected walled dipole of
+n6neg at arm A is 8.520 Debye against the bare arm's 8.522 Debye.
+
+
+A1.2  THE CORRECTION, FROM NOW ON
+
+Where a run carries charge on an inline ECP centre, D6.3's dipole test is applied to the printed
+total dipole with sum_i q_i (r_i - R_com) subtracted, R_com as above. No tolerance changes: R_DIP
+stays 2.0 and every other D6.3 threshold stays as cs6_audit.py has it. This removes a term that is
+exactly computable and is not a property of the density; it does not introduce a new observable.
+
+A run whose charges are external point charges is unaffected, and so is every run with no charge.
+
+
+A1.3  WHAT THIS DOES AND DOES NOT CHANGE
+
+It does not change DIAGNOSTIC 14's verdict, and DIAGNOSTIC 14 is not re-read.
+
+Under the corrected rule the n6neg control would have been CLEAN at both bases. At def2-SVP, where
+d_shield is -0.0017 kcal/mol, the control would then have passed. At def2-SVPD it would still have
+failed, on |d_shield| of 0.2255 (arm A) and 0.2794 (arm B) against a tolerance of 0.05 - an energy
+difference, which the dipole does not enter. D14.3 requires the control to hold at BOTH bases, so
+the diagnostic stops either way. The correction is recorded here because it is true, not because
+it changes the outcome; it changes nothing, which is why it can be adopted without reopening a
+reading that has already reported.
+
+Nothing committed before today is overturned. DIAGNOSTIC 14 is the first diagnostic to apply D6.3's
+classification to runs carrying charge on inline ECP centres. DIAGNOSTIC 11 and DIAGNOSTIC 13 carry
+no CLEAN / POLARISED / STRAINED verdicts at all. In DIAGNOSTIC 6, all 68 verdicts that cite the
+dipole also cite the Loewdin charge, the gap or the cycle count, so none rests on the dipole alone,
+and its audited sources do not include the Stage 4b or Stage 4c walled runs.
+
+Separately, POLARISED never made a run unreadable: D14.3 withholds a ratio point only when a run is
+STRAINED or COLLAPSED. The artefact's only effect was on the n6neg control, which requires CLEAN.
+
+
+A1.4  WHAT IS MEASURED NEXT, AND WHY
+
+The open question is not additivity. It is why the six negative charges are inert behind the wall
+at def2-SVP and not at def2-SVPD. The effect appears only with diffuse functions, it is 4.5 to 5.6
+times D11.3's tolerance, and DIAGNOSTIC 14 ran no negative singles - D14.4 records that - so there
+is nothing committed that says whether it comes from one site or from six.
+
+The six negative sites of S6-10, each measured alone, at arm B (lambda 0.657534, the larger of the
+two effects), bare and behind the wall, at both bases:
+
+   sites      400, 592, 605, 650, 652, 756      the six negatives of the committed ARRANGEMENTS.txt
+   arms       bare / Ne-ECP walled / wall-at-zero
+   bases      def2-SVPD and def2-SVP
+   states     R and TS, Diagnostic 1's committed geometries, nothing moved, in vacuo
+
+   6 sites x 3 arms x 2 states x 2 bases = 72, plus 2 controls per basis = 76 runs.
+
+def2-SVP is carried here, unlike in D14 where it was a control only, because the contrast between
+the two bases IS the question. The positive singles are not re-run: DIAGNOSTIC 14 measured them and
+they are committed. n6neg is not re-run for the same reason.
+
+GATE. The two controls per basis must reproduce DIAGNOSTIC 14's committed control energies to
+1e-6 Eh. If they do not, the harness has drifted and nothing below is read.
+
+
+A1.5  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE THEY RUN
+
+d_shield and the zero-charge correction are as D14.3 defines them, unchanged. Classification is
+D6.3 with A1.2's correction. A run that is STRAINED or COLLAPSED makes its site unreadable.
+
+   Dsum = sum over the six of | d_shield({i}) |      each measured alone
+   Dset = | d_shield(n6neg) |                        from DIAGNOSTIC 14, committed
+   tol  = max( 0.10 x Dsum, 0.05 kcal/mol )          D11.3's tolerance, unchanged
+
+READING 1, per basis - where does it come from?
+
+   ONE SITE   a single site's | d_shield | is within tol of Dset. That site carries the effect.
+   SPREAD     no single site is, and Dsum is within tol of Dset or above it.
+   NEITHER    Dsum + tol < Dset. The six together do more than the six apart, and the negative
+              set is cooperative. This is reported as measured and is not explained here.
+
+READING 2, per basis - does the per-site sum bound the negative set?
+
+   This is D14.3's own rule, unchanged, applied to n6neg against its six singles: BOUNDED if
+   Dset <= Dsum + tol, NOT BOUNDED otherwise, NOT READABLE if any of the seven is STRAINED or
+   COLLAPSED. DIAGNOSTIC 14 could not reach its Reading 1; this reaches the same question on the
+   negative set only, and it does not stand in for the positive one.
+
+READING 3, across the bases - is the basis difference per-site or collective?
+
+   PER-SITE     at least one site's | d_shield | differs between the bases by more than tol.
+   COLLECTIVE   no site does, yet Dset differs between the bases by more than tol.
+   NEITHER      neither differs by more than tol, which would contradict DIAGNOSTIC 14's own
+                n6neg numbers and would mean this harness disagrees with that one.
+
+Each site's nearest-atom distance d_near at the reactant geometry is REPORTED beside its
+d_shield, and no criterion is placed on it. ERRATUM3 E3.1 records that distance and magnitude are
+not yet separated, and this amendment does not separate them.
+
+
+A1.6  WHAT THIS DOES NOT TEST
+
+One arrangement, one frame, one geometry pair, fixed geometry, one scaling. Nothing about the
+positives, which DIAGNOSTIC 14 measured and which are not re-run here. Nothing about mixed-sign
+subsets. Nothing about why a basis-set difference should appear at all - this locates the effect,
+it does not explain it. The Ne ECP parameters remain used outside their published octet assumption
+(ERRATUM7), so the walled arm is a contrast and not a truth. In vacuo, no continuum
+(STAGE6_AMENDMENT2_20261027). Nothing about Loss, G0 or kappa, which remain unmeasurable until the
+OptTS / coordsys cartesian conflict of STAGE6_RELAXATION_STATE_20261028.txt is decided.
