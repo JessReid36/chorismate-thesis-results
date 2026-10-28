@@ -1,0 +1,117 @@
+#!/bin/bash
+#PBS -N cm_d14d
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/additivity/def2-SVPD/run.pbs.out
+# Stage 6 DIAGNOSTIC 14 (cs6_additivity.py): 92 single points at def2-SVPD. Restartable.
+# No -q is given: the allocation is automatic, and walltime 24:00:00 routes through workq to day.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/additivity/def2-SVPD
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run n10_wall0_R
+run n10_bare_A_R
+run n10_wall_A_R
+run n10_bare_B_R
+run n10_wall_B_R
+run n10_wall0_TS
+run n10_bare_A_TS
+run n10_wall_A_TS
+run n10_bare_B_TS
+run n10_wall_B_TS
+run n2_wall0_R
+run n2_bare_A_R
+run n2_wall_A_R
+run n2_bare_B_R
+run n2_wall_B_R
+run n2_wall0_TS
+run n2_bare_A_TS
+run n2_wall_A_TS
+run n2_bare_B_TS
+run n2_wall_B_TS
+run n3_wall0_R
+run n3_bare_A_R
+run n3_wall_A_R
+run n3_bare_B_R
+run n3_wall_B_R
+run n3_wall0_TS
+run n3_bare_A_TS
+run n3_wall_A_TS
+run n3_bare_B_TS
+run n3_wall_B_TS
+run n4_wall0_R
+run n4_bare_A_R
+run n4_wall_A_R
+run n4_bare_B_R
+run n4_wall_B_R
+run n4_wall0_TS
+run n4_bare_A_TS
+run n4_wall_A_TS
+run n4_bare_B_TS
+run n4_wall_B_TS
+run n6neg_wall0_R
+run n6neg_bare_A_R
+run n6neg_wall_A_R
+run n6neg_bare_B_R
+run n6neg_wall_B_R
+run n6neg_wall0_TS
+run n6neg_bare_A_TS
+run n6neg_wall_A_TS
+run n6neg_bare_B_TS
+run n6neg_wall_B_TS
+run s1089_wall0_R
+run s1089_bare_A_R
+run s1089_wall_A_R
+run s1089_bare_B_R
+run s1089_wall_B_R
+run s1089_wall0_TS
+run s1089_bare_A_TS
+run s1089_wall_A_TS
+run s1089_bare_B_TS
+run s1089_wall_B_TS
+run s1234_wall0_R
+run s1234_bare_A_R
+run s1234_wall_A_R
+run s1234_bare_B_R
+run s1234_wall_B_R
+run s1234_wall0_TS
+run s1234_bare_A_TS
+run s1234_wall_A_TS
+run s1234_bare_B_TS
+run s1234_wall_B_TS
+run s1695_wall0_R
+run s1695_bare_A_R
+run s1695_wall_A_R
+run s1695_bare_B_R
+run s1695_wall_B_R
+run s1695_wall0_TS
+run s1695_bare_A_TS
+run s1695_wall_A_TS
+run s1695_bare_B_TS
+run s1695_wall_B_TS
+run s2152_wall0_R
+run s2152_bare_A_R
+run s2152_wall_A_R
+run s2152_bare_B_R
+run s2152_wall_B_R
+run s2152_wall0_TS
+run s2152_bare_A_TS
+run s2152_wall_A_TS
+run s2152_bare_B_TS
+run s2152_wall_B_TS
+run ctl_R
+run ctl_TS
+echo "end=$(date)"
