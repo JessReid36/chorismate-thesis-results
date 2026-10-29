@@ -1,0 +1,142 @@
+Stage 6, DIAGNOSTIC 16 (29 October 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+
+D16.1  THE QUESTION
+
+Does the overpolarisation artefact grow with the NUMBER of charges, at a fixed total field?
+
+DIAGNOSTIC 15 measured the artefact of one design: S6-10, ten charges, sum |q| 2.1900 e, def2-SVPD.
+Its d_shield is 0.4140 kcal/mol, 3.88% of that design's own ddE, and it is NOT BOUNDED by the sum
+of its sites - 1.656 times the signed sum of the ten measured alone. D15.4 records what that does
+not settle: whether 0.41 is typical, and whether it grows with n.
+
+It matters because the optimiser is intended to run from n = 3 up to about 20. If the artefact
+grows with n, the designs the optimiser prefers are the ones where the representation is worst,
+and the per-design correction D15 leaves as the way forward gets larger exactly where it is least
+affordable to be wrong.
+
+
+D16.2  WHAT IS MEASURED
+
+The committed arrangements of relax/ARRANGEMENTS.txt span n = 2, 3, 5, 10 and 20 at essentially
+one budget (sum q^2 between 2.00000 and 2.04760). They are compared at a MATCHED TOTAL FIELD, so
+that n is what differs and not the field.
+
+   PRIMARY, sum |q| = 1.3000 e, def2-SVPD
+
+      design   n    lambda     max |q|
+      S6-2     2    0.650000   0.6500
+      S6-3     3    0.538860   0.5389
+      S6-5     5    0.433333   0.4333
+      S6-10    10   0.296804   0.1632
+      S6-20    20   0.225694   0.1241
+
+      1.3000 e is not chosen. It is the LARGEST matched field at which every design keeps its
+      largest charge within the 0.65 e that ERRATUM3 E3.1 records as CLEAN at def2-SVPD, and
+      S6-2 is what binds it: two charges carrying the whole field need 0.65 e each. At D15's own
+      field of 2.19 e the small designs would need 0.73 to 1.10 e per charge and are inadmissible.
+
+   SECONDARY, sum |q| = 2.1900 e, def2-SVPD
+
+      S6-20 at lambda 0.380208 (largest |q| 0.2091), against S6-10's committed 0.4140 at the same
+      field. This asks whether whatever Reading 1 finds also holds where the artefact is known to
+      be measurable.
+
+   TERTIARY, the cooperativity at n = 20
+
+      S6-20's twenty sites, each alone, at lambda 0.380208 - the 2.19 e condition, so that the
+      comparison is with DIAGNOSTIC 15's n = 10 cooperativity at the same field.
+
+      None of S6-10's singles can be reused. Four sites are shared (1089, 1234, 1695, 2152) but
+      their singles were run at lambda 0.500000, a different charge; and site 2152 carries +0.5100
+      in S6-20 against +0.5500 in S6-10, so it is a different site even at equal lambda. All twenty
+      are run. The zero-charge wall arm does not depend on lambda, so the ten sites that already
+      have one keep it and sixteen are new.
+
+   RUNS, all def2-SVPD
+
+      five designs at 1.3000 e, bare / walled / wall-at-zero at R and TS          30
+      S6-20 at 2.1900 e, bare and walled only (its wall-at-zero is shared)         4
+      S6-20's twenty singles at lambda 0.380208, bare and walled, R and TS        80
+      sixteen new zero-charge wall runs for those sites, R and TS                 32
+      two controls                                                                 2
+                                                                            TOTAL 148
+
+GATE. The controls must reproduce DIAGNOSTIC 14's committed control energies to 1e-6 Eh. There is
+no prior value for any design measured here, so no reproduction check is available beyond that,
+and this is stated rather than worked around.
+
+
+D16.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS COMPUTED
+
+d_shield, the zero-charge correction, AMENDMENT 1 A1.2's dipole correction and D6.3's
+classification are all as committed. No tolerance is new. Where a tolerance is needed it is
+DIAGNOSTIC 11.3's two constants, 0.10 and 0.05 kcal/mol, applied to the quantity being compared -
+as DIAGNOSTIC 14.3 applied them to Dsum:
+
+   tol = max( 0.10 x (the largest Dset among the readable designs), 0.05 kcal/mol )
+
+A design is READABLE when its six runs are CLEAN or POLARISED by D6.3 with A1.2's correction.
+
+READING 1, the primary condition:
+
+   NO EFFECT TO COMPARE   every readable Dset <= tol. There is no artefact at this field for n to
+                          act on, and no verdict is given. AMENDMENT 2's lesson, applied in advance.
+   GROWS WITH n           Dset rises with n over the readable designs without exception, and the
+                          largest exceeds the smallest by more than tol.
+   FALLS WITH n           falls without exception, by more than tol.
+   FLAT                   largest minus smallest <= tol.
+   NOT MONOTONIC          neither rises nor falls without exception, and the spread exceeds tol.
+   NOT READABLE           fewer than three designs readable.
+
+   Dset is reported for every readable design whatever the verdict, with n and its lambda.
+
+READING 2, the secondary condition:
+
+   CONSISTENT       S6-20's Dset at 2.19 e stands in the same relation to S6-10's committed 0.4140
+                    as Reading 1 found at 1.30 e.
+   INCONSISTENT     it stands in the opposite relation, by more than tol.
+   WITHIN TOLERANCE the two differ by <= tol, so the field does not decide it.
+   NOT READABLE     either is STRAINED or COLLAPSED.
+
+READING 3, the cooperativity at n = 20 against n = 10:
+
+   excess(n) = Dset - | signed sum of that design's singles |, both at sum |q| 2.19 e.
+   DIAGNOSTIC 15's committed numbers give excess(10) = 0.4140 - 0.2500 = 0.1640 kcal/mol.
+
+   COOPERATIVITY GROWS   excess(20) > excess(10) + tol
+   FLAT                  | excess(20) - excess(10) | <= tol
+   COOPERATIVITY FALLS   excess(20) < excess(10) - tol
+   NOT READABLE          any of S6-20's twenty singles, or the design itself, is unreadable
+
+   Dsum, Dset, the signed sum, the excess and the ratio Dset / |signed sum| are all reported for
+   n = 20 beside DIAGNOSTIC 15's for n = 10. DIAGNOSTIC 14.3's BOUNDED rule is also applied to
+   S6-20 unchanged and reported, so the two designs can be compared on it directly.
+
+
+D16.4  WHAT THIS DOES NOT TEST
+
+THE LARGEST LIMITATION, STATED FIRST. The five designs are not one arrangement with charges added.
+They are the optimiser's best arrangement at each n, on different sites. So n and the arrangement
+vary together, and a difference in Dset across them cannot be attributed to n alone. This
+diagnostic measures whether the artefact is larger for the designs this project would actually
+choose at larger n. It does not isolate n as a variable, and no nested mixed-sign series exists
+that would.
+
+One frame, one geometry pair, fixed geometry, in vacuo, no continuum (STAGE6_AMENDMENT2_20261027).
+Two fields, both below the budget: nothing at lambda = 1. Nothing at def2-SVP, where DIAGNOSTIC 15
+already found no artefact to measure for a whole design. Nothing about WHY the artefact is
+cooperative, or why it is basis-dependent; A1.4 located that and did not explain it. The Ne ECP
+parameters remain used outside their published octet assumption (ERRATUM7), so the walled arm is a
+contrast and not a truth. Nothing about Loss, G0 or kappa, which remain unmeasurable until the
+OptTS / coordsys cartesian conflict of STAGE6_RELAXATION_STATE_20261028.txt is decided.
+
+
+D16.5  DIRECTION
+
+DIAGNOSTIC 15 left the per-design correction as the route forward: the artefact cannot be
+predicted from a design's sites, but it can be measured for the design itself in six runs. That
+route is affordable only if the correction stays small as n grows. This diagnostic measures
+whether it does, over the range of n the optimiser is intended to search, and D16.3 fixes which
+answer means which before anything is computed.
