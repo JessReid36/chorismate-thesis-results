@@ -1,0 +1,194 @@
+Stage 6, DIAGNOSTIC 18 (30 October 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+This diagnostic implements experiment E3 of ROUTE_ASSESSMENT_20261028.
+
+
+D18.1  THE QUESTION
+
+Does a Pauli wall open the HOMO-LUMO gap of S6-20 at full strength at def2-SVP?
+
+DIAGNOSTIC 17 could not read S6-10 or S6-20 at def2-SVPD. Their bare arms were COLLAPSED and
+their walled arms STRAINED on gap, and two of its three readings returned NOT READABLE. Three
+candidate mechanisms were carried forward for that failure. They have different consequences
+and only one of them is fixable by changing the representation:
+
+   (a) density spilling out onto the bare point charges        fixable by the representation
+   (c) a genuine field-driven near-degeneracy                  not fixable by the representation
+   (d) double-counted polarisation                             undetermined
+
+The committed `field` tree already bears on this. It is S6-20's own 20 charges, bare, scaled
+from lambda 0.25 to 1.00, at def2-SVP and at def2-SVPD, on the same geometry everything else
+uses. At def2-SVP:
+
+   lambda   sum|q| e   gap R eV   gap TS eV   cyc R   cyc TS   maxlw R   dip R
+   0.25     1.4400     2.7258     2.0341      16      16       0.3978    7.115
+   0.50     2.8800     1.8545     1.3725      14      16       0.4179    6.543
+   0.75     4.3200     1.0510     1.0188      14      33       0.4374    7.037
+   1.00     5.7600     0.6099     0.9236      42      47       0.4554    9.155
+
+   [measured, field/outputs/field_outputs.tar.xz, read with cs6_audit.read() at code 365e6c5]
+
+The committed def2-SVP control row is nb=264, n=94: cyc 15, gap 3.2780 eV, maxlw 0.3870, dip
+8.12. So at lambda 1.00 the gap has fallen to 0.19 of the control's and the SCF takes 2.8 times
+the control's cycles, while the largest Loewdin deviation sits 0.0684 e above the control
+median against D6.3's D_LW of 0.25, and the dipole is 1.127 times the control median against
+R_DIP of 2.0. This basis carries no diffuse functions and this arm carries no ECP.
+
+The gap closes where there is little sign that the density has moved. That is the case for (c)
+over (a), and it has one hole. Loewdin populations are computed on basis functions centred on
+the substrate atoms. A compact basis has no functions at the point-charge sites at all, so
+density accumulating there is not something a Loewdin analysis on this basis is able to report.
+The dipole is the better witness and it does move, by 12.7% at R and 46.1% at TS.
+
+A Pauli wall settles it. If 20 walls at the charge sites leave the gap closed, then nothing
+about how the charges are represented is responsible for closing it.
+
+The wall is known to be active at this basis. The committed standoff tree carries a bare and a
+walled arm at def2-SVP for a single +1 e charge:
+
+   point   ddE bare   ddE wall   d_shield
+   dref    -7.6757    -7.6088    -0.0669
+   d450    -3.2955    -3.2956     0.0000
+
+   [derived from committed files, kcal/mol. UNCORRECTED: no wall-at-zero arm exists at
+    def2-SVP in that tree, so the zero-charge wall term is not removed from these.]
+
+At the reference site the wall changes the barrier by 0.0669 kcal/mol, above DIAGNOSTIC 11.3's
+0.05 floor and 6.3% of its 1.067 budget. At 4.50 A it changes nothing. So a null result in
+READING 1 cannot be read as a wall that is inert at this basis.
+
+
+D18.2  WHAT IS MEASURED
+
+One condition: S6-20 at def2-SVP, lambda = 1.00.
+
+   arm             runs   source
+   control           2    NEW, and the gate
+   wall-at-zero      2    NEW
+   walled            2    NEW
+   bare              0    REUSED, field/def2-SVP/lam100_R and _TS
+                     6
+
+   THE BARE ARM IS NOT RE-RUN. Its geometry file is byte-identical to the one these runs use
+   (sha256 6e8f41c7da3bcf4e) and its method line differs in no respect from theirs:
+
+      ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF
+      %maxcore 3000
+      %pal nprocs 8 end
+      %scf MaxIter 300 end
+
+   This is stated here so that a discrepancy found later is a stop and not an adjustment.
+
+   No wall-at-zero arm exists for S6-20's twenty positions at def2-SVP, so two are run. The
+   wall-at-zero arm does not depend on lambda and these two serve any later lambda at this
+   basis.
+
+   THE CHARGE SET, the committed one at lambda = 1.00:
+
+      n = 20     sum|q| = 5.7600 e     max|q| = 0.5500 e     sum q^2 = 2.0476 e^2
+
+   SUM q^2 EXCEEDS THE COMMITTED 2.0 e^2 BUDGET BY 2.4%. This is declared, not overlooked.
+   lambda = 1.00 is chosen because it is the one value at which a committed bare arm already
+   exists at this basis, and the bare-against-walled contrast is the entire content of this
+   diagnostic; running inside the budget at 0.979746 would leave that contrast unpaired and
+   cost the diagnostic its point. This is a diagnostic measurement of an arrangement the
+   optimiser produced. It is not a proposed design, and nothing here licenses a design at this
+   sum q^2. max|q| = 0.5500 e is inside ERRATUM 3 E3.1's QCLEAN of 0.65, and sits 0.0111 e
+   above DIAGNOSTIC 17's matched 0.538860 e.
+
+GATE. The two controls must reproduce the committed def2-SVP control energies to 1e-6 Eh:
+
+      additivity/def2-SVP/ctl_R     -836.139795518709 Eh
+      additivity/def2-SVP/ctl_TS    -836.110376019855 Eh
+
+
+D18.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS COMPUTED
+
+d_shield, the zero-charge correction, AMENDMENT 1 A1.2's dipole correction and D6.3's
+classification are all as committed. No tolerance is new.
+
+READING 1, does the wall open the gap?
+
+   The walled arm's HOMO-LUMO gap at R and at TS, against D6.3's committed GAP_ABS of 1.0 eV.
+   The gap is read as cs6_audit reads it at code 365e6c5, which prefers TRAH's converged gap
+   over the orbital table where TRAH has run (DIAGNOSTIC 6 NOTE 1, defect b).
+
+   WALL DOES NOT OPEN THE GAP   the walled gap is below 1.0 eV in at least one state.
+   WALL OPENS THE GAP           the walled gap is at or above 1.0 eV in both states.
+
+   The bare gaps, 0.6099 eV at R and 0.9236 eV at TS, and the full D6.3 class of both arms, are
+   reported whatever the verdict.
+
+READING 2, d_shield for a whole design at full strength at def2-SVP.
+
+   Dset = ddE(bare) - ddE(wall), the walled arm corrected by the wall-at-zero arm.
+
+      tol = max( 0.10 x |Dset| , 0.05 kcal/mol ) = 0.05 kcal/mol, DIAGNOSTIC 11.3's floor.
+
+   NO ARTEFACT TO MEASURE   |Dset| <= 0.05 kcal/mol.
+   MEASURABLE               |Dset| > 0.05 kcal/mol, reported in kcal/mol and as a percentage of
+                            DIAGNOSTIC 11.3's 1.067 budget.
+
+   DIAGNOSTIC 15 found no artefact to measure for a whole design at def2-SVP, at reduced
+   lambda. This is that quantity at lambda = 1.00.
+
+   READABILITY IS REPORTED WITH IT AND DOES NOT CHANGE IT. If either arm is STRAINED or
+   COLLAPSED by D6.3, Dset is reported and is NOT readable under A1.3, and no claim rests on
+   it. The bare arm's post-hoc class at this lambda is already STRAINED, so this outcome is
+   likely and is named here rather than discovered later.
+
+READING 3, does the density move at def2-SVP?
+
+   The largest Loewdin deviation above the control median, and the dipole ratio to it, for both
+   arms, with A1.2's correction applied to the walled arm as DIAGNOSTICS 14 to 17 apply it.
+
+   NEITHER ARM MOVES     both arms below D_LW = 0.25 and below R_DIP = 2.0.
+   THE WALL REMOVES IT   the bare arm trips one and the walled arm does not.
+   THE WALL ADDS IT      the walled arm trips one and the bare arm does not.
+
+   The bare arm's values are already measured and are quoted in D18.1. They are re-read from
+   the same files in the result so that the comparison is made at one reading.
+
+
+D18.4  WHAT THIS DOES NOT TEST
+
+THE LARGEST LIMITATION, STATED FIRST. If the gap stays closed with the wall, this diagnostic
+does not establish that the near-degeneracy is physical. It establishes only that it is not
+produced by how the charges are represented. A gap of 0.6 eV is itself a warning that
+single-reference B3LYP is outside the range it can be trusted in, and the quantity this project
+would then be quoting for this design - ddE(bare) = -24.6898 kcal/mol at this lambda, derived
+from committed files, 23 times DIAGNOSTIC 11.3's budget - is a number the method is not
+entitled to report. The follow-up to that outcome is a multireference diagnostic, not another
+representation.
+
+One design, one frame, one geometry pair, fixed geometry, in vacuo, no continuum
+(STAGE6_AMENDMENT2_20261027). One basis, and the one at which the failure is mildest. Nothing
+about def2-SVPD, where gap closure and density displacement occur together and where this
+diagnostic therefore cannot say which drives which. Nothing about S6-10 or any other
+arrangement. Nothing about whether the arrangement is sound; only about whether it can be read.
+
+The Ne ECP parameters remain used outside their published octet assumption (ERRATUM7), so the
+walled arm is a contrast and not a truth. A wall that fails to open the gap could in principle
+be a wall that is not repulsive enough. The standoff evidence quoted in D18.1 is the committed
+argument against that reading, it is for a single +1 e charge and not for twenty, and it is
+uncorrected for the zero-charge wall term.
+
+Nothing about Loss, G0 or kappa, which remain unmeasurable until the OptTS / coordsys cartesian
+conflict of STAGE6_RELAXATION_STATE_20261028 is decided.
+
+
+D18.5  DIRECTION
+
+If READING 1 returns WALL DOES NOT OPEN THE GAP, then the representation route is closed for
+the designs the optimiser actually produces, and no stronger charge representation reaches the
+problem. The thesis's claim then has to be made inside a characterised readable window rather
+than at the strength the optimiser produces, and the honest contribution is a method with a
+stated domain of validity. E2's real-ion calibration and E4's separation of total field from
+local field remain worth running; work on the representation does not.
+
+If it returns WALL OPENS THE GAP, then the def2-SVP closure was a representation artefact after
+all, the def2-SVPD failure is plausibly the same thing amplified by diffuse functions, and
+strengthening the representation becomes the right next step rather than a detour.
+
+D18.3 fixes which answer means which before anything is computed.
