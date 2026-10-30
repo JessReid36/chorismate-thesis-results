@@ -1,0 +1,74 @@
+Stage 6, DIAGNOSTIC 6, NOTE 1 (2026-10-30).
+
+Two defects in how cs6_audit.read() read every committed output, and what fixing them changes.
+Measured by cs6_audit_diff.py, committed alongside, against the repository at this commit. No
+pre-registration, criterion or threshold is altered. D6.3's five rules and their constants are
+untouched.
+
+
+N1.1  THE TWO DEFECTS
+
+(a) The Loewdin test could read a design's own input charge back out.
+
+    ORCA prints an inline ECP centre (Ne>) inside LOEWDIN ATOMIC CHARGES under the symbol Q,
+    carrying the charge ASSIGNED to it, not a Loewdin population. cs6_audit.read() filtered only
+    METALS = {Na, K, Mg, Ca, Li, Zn, Fe, Cl, Br, I}, which does not contain Q, and did not
+    truncate the list. Those rows therefore entered max|Loewdin|.
+
+    A walled run whose largest charge exceeds its control median by D_LW = 0.25 e then fires
+    D6.3's MOVED test on its own input, with nothing having happened to the density. At
+    def2-SVPD the control median is 0.339 e, so the trip point is 0.589 e.
+
+(b) The gap printed for a TRAH-SCF run was the level-shifted one.
+
+    With CNVShift on, the ORBITAL ENERGIES table prints shifted orbital energies, so LUMO - HOMO
+    reads as the shift floor of 0.1 Eh (2.7211 eV) rather than the converged gap. TRAH reports
+    the gap itself, and it is far smaller - under 0.5 eV in the affected Stage 6 runs.
+
+
+N1.2  WHAT FIXING THEM CHANGES
+
+    outputs classified                     2605
+    of which walled, A1.2 correction used  520
+    verdicts changed                       140
+    moved toward COLLAPSED                 0
+
+    Every change is POLARISED -> CLEAN. A1.3 makes both readable, so no reading is withheld or
+    granted that was not before, and no Dset, no d_shield and no diagnostic verdict changes.
+
+    The walled runs are scored here with AMENDMENT 1 A1.2's dipole correction applied, because
+    that is what DIAGNOSTICS 14 to 17 do. It matters: on the printed dipole the 2x rule fires on
+    most walled runs and masks the Loewdin defect, and the diff then reports a far smaller
+    number than the diagnostics themselves would see. A re-run that reports single digits has
+    been run without the correction and is answering a different question.
+
+    MOVED TOWARD COLLAPSED is the only count that decides whether this is a note or an erratum.
+    D6.3 is MOVED and SICK -> COLLAPSED, SICK -> STRAINED, MOVED -> POLARISED. The fix only ever
+    removes a MOVED flag, and the diagnostics' thresholds are fixed text parsed from the
+    committed DIAGNOSTIC6_RESULT.txt, so they cannot shift underneath it. A run can therefore
+    only move POLARISED -> CLEAN or COLLAPSED -> STRAINED. The second would change a published
+    class; it does not occur, because no walled run in any committed diagnostic is COLLAPSED.
+
+
+N1.3  WHY THIS WAS WORTH FIXING ANYWAY
+
+    Defect (a) is one charge-scale step from mislabelling a design. The def2-SVPD trip point is
+    0.589 e. DIAGNOSTIC 17's walled runs carry 0.538860 e - a margin of 0.0501 e - and four of
+    them are already SICK on gap and cycles. At the 0.65 e that ERRATUM 3 E3.1 admits, the
+    excess is 0.311 e, MOVED fires automatically, and all four read COLLAPSED on the strength of
+    their own input charge. COLLAPSED is documented as density captured by a bare positive
+    charge, which is precisely backwards for a walled run.
+
+    Defect (b) hides evidence. The record shows the project's strongest-field runs at 2.7211 eV
+    when their converged gaps are below 0.5 eV. Those gaps bear directly on whether the
+    high-field failure is a property of the representation or of the system.
+
+
+N1.4  WHAT IS NOT CLAIMED
+
+    That the audit is now correct in every respect - only that these two readings were wrong and
+    are now right. The corpus was read twice and compared; nothing else was re-derived.
+
+    cs11_standoff, cs12_sites, cs13_qscale and cs_crosscheck already truncate their Loewdin list
+    with lw[:24] and never had defect (a). cs6_transfer and cs6_additivity inherit cs6_audit's
+    reading through AUD.read() and are fixed by this change.
