@@ -1,0 +1,39 @@
+#!/bin/bash
+#PBS -N cm_d19
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d19/run.pbs.out
+# Stage 6 DIAGNOSTIC 19 (cs6_d19.py): 14 single points: 10 FOD (TPSS/def2-TZVP, 5000 K) and 4 stability (def2-SVP). Restartable.
+# No -q is given: the allocation is automatic, and walltime 24:00:00 routes through workq to day.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d19
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run "fod_lam000_R"
+run "fod_lam000_TS"
+run "fod_lam025_R"
+run "fod_lam025_TS"
+run "fod_lam050_R"
+run "fod_lam050_TS"
+run "fod_lam075_R"
+run "fod_lam075_TS"
+run "fod_lam100_R"
+run "fod_lam100_TS"
+run "stab_lam000_R"
+run "stab_lam000_TS"
+run "stab_lam100_R"
+run "stab_lam100_TS"
+echo "end=$(date)"
