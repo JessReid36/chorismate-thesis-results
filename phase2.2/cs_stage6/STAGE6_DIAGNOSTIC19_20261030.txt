@@ -1,0 +1,174 @@
+Stage 6, DIAGNOSTIC 19 (30 October 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+This diagnostic answers the question DIAGNOSTIC 8 and DIAGNOSTIC 9 both deferred, in the same
+words, on 26 October 2026: "whether those two unanchored criteria should be replaced by SCF
+stability analysis and FOD is the next question and is not this one." It is also the follow-up
+DIAGNOSTIC 18.4 named in advance for the outcome D18 returned.
+
+
+D19.1  THE QUESTION
+
+At full field the substrate's HOMO-LUMO gap closes to 0.60 eV and the SCF takes 2.8 times the
+control's cycles. Is that near-degeneracy multireference in character, or is it a small gap that
+single-reference B3LYP can still be trusted with?
+
+DIAGNOSTIC 18 settled what it is NOT. Twenty Pauli walls at the charge sites moved the gap by
+-0.92% at R and +0.06% at TS while doing 0.0789 kcal/mol of measurable energetic work, and
+neither arm showed any density displacement (Loewdin excess 0.068 against D_LW 0.25, dipole
+1.13x against R_DIP 2.0). The gap closure is not produced by density falling onto the bare
+charges and is not removed by representing Pauli repulsion. D18.4 stated, before that result
+was known, that this establishes only that the near-degeneracy is not a representation
+artefact, and that the follow-up is a multireference diagnostic rather than another
+representation.
+
+It matters because of one number. At lambda = 1.00 the design's barrier change is
+ddE(bare) = -24.6898 kcal/mol, 23 times DIAGNOSTIC 11.3's budget of 1.067. If the wavefunction
+there is multireference, that number is not one this method may report, and no amount of work
+on the charge representation changes it. If it is not, then D6.3's STRAINED flag is
+over-conservative at this basis and readability at full strength has to be revisited.
+
+   NO FOD OR STABILITY DATA EXISTS. Every committed archive was scanned for a fractional
+   occupation or stability calculation on this system and none was found. This is new work.
+
+
+D19.2  WHAT IS MEASURED
+
+Two independent indicators on the BARE arm of S6-20, on the committed lambda ladder at the
+geometry everything else uses. The walled arm is not run: D18 measured that the wall changes
+neither the gap nor the density here.
+
+   A.  FOD, the fractional occupation number weighted density.
+
+       ORCA's `!FOD`, which is TPSS / def2-TZVP at an electronic temperature of 5000 K. This is
+       DELIBERATELY NOT THE PRODUCTION METHOD. The question is whether B3LYP/def2-SVP is out of
+       its depth, and a method cannot be asked to certify itself.
+
+          lambda   sum|q|     runs
+          0.00     0.0000     R, TS      the control, and the anchor of the ladder
+          0.25     1.4400     R, TS
+          0.50     2.8800     R, TS
+          0.75     4.3200     R, TS
+          1.00     5.7600     R, TS
+                              10
+
+   B.  SCF stability analysis, at the production method.
+
+       B3LYP / def2-SVP with `%scf STABPerform true end`, which tests the restricted solution
+       for an instability toward an unrestricted one. This is the reading that speaks about the
+       production method itself rather than about the system.
+
+          lambda 0.00   R, TS      the control
+          lambda 1.00   R, TS
+                        4
+
+                                             TOTAL 14
+
+   The charge sets are the committed ones, taken from the design and not retyped. Every
+   lambda's charges must reproduce field/def2-SVP/lam<n> byte for byte, both states (GATE 2),
+   so that this ladder is the same ladder the gap was measured on.
+
+   N_FOD is not size-consistent. Every system here carries the same 118 electrons, because a
+   point charge adds none, so the ladder is internally comparable without normalisation. This
+   is stated so that a later comparison against a system of a different size is a stop and not
+   an adjustment.
+
+GATE 1. The lambda = 0.00 stability runs must report a STABLE restricted solution. A charge-free
+        closed-shell substrate at this geometry that reported an instability would mean the
+        indicator is not measuring what it is meant to, and nothing below would be readable.
+GATE 2. Every lambda's charges reproduce the committed field tree byte for byte, both states.
+GATE 3. Every run at lambda > 0 must report ORCA reading exactly 20 point charges. The FOD
+        tutorial does not document point charges; if ORCA silently ignores them the ladder
+        would be flat for the wrong reason, and this gate is what catches that.
+
+
+D19.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS COMPUTED
+
+   THE THRESHOLDS BELOW ARE CONVENTIONS FIXED HERE, NOT VALUES TAKEN FROM THE LITERATURE.
+   All 77 papers in chorismate-refs/ were searched in full text; 76 are machine-readable
+   (ja9621760.pdf is a scanned image and yielded no text) and NONE of them mentions FOD,
+   fractional occupation, N_FOD or finite-temperature DFT. The project's own rule is that a
+   methodological standard needs three or more independent sources, and it has none, so no
+   published N_FOD threshold is used and none is implied. Every criterion below is internal:
+   the system compared against itself at zero field. The full ladder is reported whatever the
+   verdict, so that any threshold obtained later can be applied to it without re-running.
+
+READING 1, does FOD rise with the field?
+
+   R_FOD = N_FOD(lambda = 1.00) / N_FOD(lambda = 0.00), computed per state.
+
+   RISES WITH FIELD    R_FOD >= 2.0 in both states.
+   FLAT                R_FOD <= 1.25 in both states.
+   WEAK OR SPLIT       anything else, including the two states disagreeing. Both are reported
+                       and no verdict on the mechanism is drawn.
+
+   The five-point ladder and whether it is monotonic in lambda are reported in every case.
+
+READING 2, is the production wavefunction stable at full field?
+
+   UNSTABLE AT FULL FIELD   at least one lambda = 1.00 run reports an instability of the
+                            restricted solution.
+   STABLE AT FULL FIELD     neither does.
+
+   GATE 1 must have passed. If ORCA's automatic restart fires on any run, that run's energy is
+   not the production energy, is not compared with one, and is used for nothing but this
+   verdict.
+
+READING 3, do the two indicators agree?
+
+   AGREE, MULTIREFERENCE        Reading 1 RISES and Reading 2 UNSTABLE.
+   AGREE, SINGLE REFERENCE      Reading 1 FLAT and Reading 2 STABLE.
+   DISAGREE                     anything else. Both are reported, neither is preferred, and the
+                                question stays open.
+
+   DISAGREE is named here so that it cannot be resolved afterwards by choosing whichever
+   indicator gave the more convenient answer.
+
+
+D19.4  WHAT THIS DOES NOT TEST
+
+THE LARGEST LIMITATION, AND IT IS THE INSTRUMENT'S OWN. ORCA's documentation states that FOD
+"is not a fully reliable diagnostic for multi-reference character" and recommends it as a first
+indication to be combined with more sophisticated diagnostics. This diagnostic therefore cannot
+establish multireference character. At most it can show that the field drives the system toward
+it, or fail to. A positive result here licenses a CASSCF or NEVPT2 calculation; it does not
+substitute for one.
+
+The two indicators are not independent of method. FOD is read at TPSS/def2-TZVP and the
+stability analysis at B3LYP/def2-SVP, deliberately, and they are therefore answering two
+different questions: whether the SYSTEM has multireference character, and whether the
+PRODUCTION calculation is sitting on an unstable solution. READING 3 treats their disagreement
+as a result rather than as something to be averaged.
+
+Nothing here tells us what the correct barrier is for any design. A wavefunction found to be
+unstable does not come with a better number attached.
+
+The FOD runs are at def2-TZVP, which is neither of the two production bases. No D6.3 class is
+assigned to them and none of their energies enters any Dset, d_shield or barrier. The three
+bases are not pooled and this is a fourth.
+
+One design, one frame, one geometry pair, fixed geometry, in vacuo, no continuum
+(STAGE6_AMENDMENT2_20261027). The bare arm only. Nothing about def2-SVPD, where density
+displacement and gap closure occur together. Nothing about Loss, G0 or kappa, which remain
+unmeasurable until the OptTS / coordsys cartesian conflict of STAGE6_RELAXATION_STATE_20261028
+is decided.
+
+
+D19.5  DIRECTION
+
+If READING 3 returns AGREE, MULTIREFERENCE, then the designs that deliver large barrier
+reductions drive the substrate into a regime single-reference DFT cannot evaluate. DFT
+evaluation at full strength is closed, the -24.6898 kcal/mol is withdrawn as unreportable, and
+the thesis's claim is a charge-design method with a characterised domain of validity and a
+mechanistically identified boundary. That is a result, not a failure, and it is reached without
+running E2 or E4.
+
+If it returns AGREE, SINGLE REFERENCE, then the small gap is not multireference character,
+D6.3's gap criterion is over-conservative at def2-SVP, and readability at lambda = 1.00 must be
+reopened - which would make the full-strength designs evaluable after all and change what the
+thesis can claim.
+
+If it returns DISAGREE, the question is not settled and the next step is the CASSCF or NEVPT2
+calculation that D19.4 says this diagnostic cannot replace.
+
+D19.3 fixes which answer means which before anything is computed.
