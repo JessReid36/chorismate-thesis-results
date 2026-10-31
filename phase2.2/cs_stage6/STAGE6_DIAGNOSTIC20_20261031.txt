@@ -1,0 +1,179 @@
+Stage 6, DIAGNOSTIC 20 (31 October 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+
+D20.1  THE QUESTION
+
+Where along the field does the production wavefunction stop being a minimum, and what does the
+stable solution do to the barriers this project has reported?
+
+DIAGNOSTIC 19 measured SCF stability at two points only: def2-SVP, bare, lambda = 0.00 and
+lambda = 1.00. At zero field both states are minima - every eigenvalue of the stability matrix
+positive. At full field BOTH states carry TWO NEGATIVE eigenvalues, so the restricted solution
+is a saddle point, and ORCA transformed the orbitals, reconverged and found a lower stable
+solution each time.
+
+   stab_lam000_R    STABLE     E(0..2) +0.05617271  +0.09119369  +0.09759674
+   stab_lam000_TS   STABLE     E(0..2) +0.01728066  +0.04008551  +0.05376300
+   stab_lam100_R    UNSTABLE   E(0..2) -0.01083954  -0.00844369  +0.00317256
+   stab_lam100_TS   UNSTABLE   E(0..2) -0.03473872  -0.01509792  +0.00240913
+
+   [measured, DIAGNOSTIC 19, as corrected by STAGE6_DIAGNOSTIC19_NOTE1_20261031.txt]
+
+D19 could not take this further and said so in advance. D19.3 states of the restart that the
+reconverged energy "is not the production energy, is not compared with one, and is used for
+nothing but this verdict". That sentence was written before the result existed and it is
+honoured: D19 draws no barrier from the stable solution and no claim rests on one.
+
+THIS DIAGNOSTIC IS WHAT LICENSES THAT COMPARISON, and it earns the licence with GATE 3 rather
+than asserting it. If adding STABPerform leaves the first converged energy identical to the
+committed production energy, then the first solution IS the production solution, and the
+difference between it and the stable one is the correction the production number is missing.
+
+Three things are unmeasured and this diagnostic measures them: where in lambda the instability
+begins, whether it also occurs at def2-SVPD, and whether the Pauli wall changes it.
+
+
+D20.2  WHAT IS MEASURED
+
+B3LYP with `%scf STABPerform true end` added to the committed production head and nothing else
+changed. The charge files are COPIED from the committed field tree, never regenerated.
+
+   arm                                   lambda                      runs   source
+   def2-SVP   bare                       0.25, 0.50, 0.75              6    NEW
+   def2-SVP   bare                       0.00, 1.00                    0    DIAGNOSTIC 19
+   def2-SVPD  bare                       0.00, 0.25, 0.50, 0.75, 1.00 10    NEW
+   def2-SVP   walled, 20 Ne> centres     1.00                          2    NEW
+   def2-SVP   wall-at-zero               -                             2    NEW
+                                                                      20
+
+   lambda = 0.00 is the charge-free control at that basis and carries no point-charge file.
+
+GATE 1. The def2-SVPD lambda = 0.00 runs must report a STABLE restricted solution, as D19's
+        def2-SVP controls did. A charge-free closed-shell substrate that reported an instability
+        would mean the indicator is not measuring what it is meant to at this basis, and nothing
+        below would be readable. The acceptance test runs on the control, never on the runs it
+        licenses.
+
+GATE 2. Every lambda's charges reproduce the committed field tree byte for byte, both states.
+
+GATE 3. THE GATE THIS DIAGNOSTIC RESTS ON. Each run's FIRST converged energy must reproduce the
+        committed production energy for the same arm, state and lambda to 1e-6 Eh. D19 found
+        agreement to 4e-10 Eh at def2-SVP lambda = 1.00, which is why the gate is set where it
+        is rather than looser. The targets, all measured from committed files:
+
+           def2-SVP   lam025_R   -836.126173661     lam025_TS  -836.104876539
+           def2-SVP   lam050_R   -836.120938885     lam050_TS  -836.108502797
+           def2-SVP   lam075_R   -836.124785698     lam075_TS  -836.122550043
+           def2-SVPD  lam025_R   -836.235775313     lam025_TS  -836.215421621
+           def2-SVPD  lam050_R   -836.233234395     lam050_TS  -836.222558303
+           def2-SVPD  lam075_R   -836.260454738     lam075_TS  -836.247550257
+           def2-SVPD  lam100_R   -836.346305931     lam100_TS  -836.326879768
+           def2-SVP   ctl_R      -836.139795518709  ctl_TS     -836.110376019855
+           def2-SVPD  ctl_R      -836.249865855128  ctl_TS     -836.220651545262
+           def2-SVP   wall_R     -835.801435357405  wall_TS    -835.811665184024
+           def2-SVP   wall0_R    -836.138274953040  wall0_TS   -836.109033316175
+
+        A run that fails this gate is not a correction to anything: it means STABPerform changed
+        the SCF, and the comparison READING 2 makes would be meaningless. The reading is
+        withheld for any arm whose gate fails, and that is a stop, not an adjustment.
+
+
+D20.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS COMPUTED
+
+The verdict of a run is the FIRST stability analysis, which by GATE 3 is the production
+solution. A second analysis, where ORCA reconverged, is reported with it.
+
+READING 1, where does the instability begin?
+
+   Per basis, over the bare arm, the lambda ladder 0.00 / 0.25 / 0.50 / 0.75 / 1.00.
+
+   STABLE THROUGHOUT     every lambda's first analysis is stable.
+   ONSET AT lambda*      stable below lambda*, unstable at lambda* and at every larger lambda.
+   UNSTABLE THROUGHOUT   unstable at the smallest non-zero lambda and above.
+   NOT MONOTONIC         stability returns at a larger lambda than one where it was lost. No
+                         onset is claimed; every lambda is reported.
+
+   The three lowest eigenvalues at every lambda are reported whatever the verdict, and the two
+   bases are reported separately and never pooled.
+
+READING 2, what does the stable solution do to the barrier?
+
+   For each basis and each lambda where an instability was found, with ddE computed against the
+   charge-free control of the same basis:
+
+      ddE(first)   from the first converged solution, which is the production solution
+      ddE(stable)  from the reconverged solution
+      correction = ddE(stable) - ddE(first)
+
+      tol = max( 0.10 x |largest correction entering this reading| , 0.05 kcal/mol ),
+      DIAGNOSTIC 11.3's tolerance, applied to the quantity being compared.
+
+   CORRECTION NEGLIGIBLE   every |correction| <= tol.
+   CORRECTION MATERIAL     any |correction| > tol. Each is reported in kcal/mol and as a
+                           percentage of D11.3's 1.067 budget.
+
+   THE CONSEQUENCE IS STATED NOW SO THAT IT CANNOT BE SOFTENED LATER. If any correction exceeds
+   1.067 kcal/mol, then every committed barrier, Dset and d_shield measured at or above that
+   lambda at that basis is provisional until recomputed on a stable solution, and must be
+   quoted as provisional or not quoted. That applies to DIAGNOSTIC 18's -24.6898 kcal/mol and to
+   every whole-design number at comparable field strength.
+
+READING 3, does the Pauli wall change stability?
+
+   def2-SVP, lambda = 1.00: the walled arm here against the bare arm from DIAGNOSTIC 19.
+
+   WALL DOES NOT CHANGE STABILITY   both unstable, or both stable.
+   WALL STABILISES                  bare unstable, walled stable.
+   WALL DESTABILISES                bare stable, walled unstable.
+
+   DIAGNOSTIC 18 measured that the wall moves the gap by under 1% and displaces no density
+   here. If it also leaves the stability unchanged, that is a third quantity on which the wall
+   makes no difference at this basis, and it is reported as such and not as a new finding about
+   the wall.
+
+
+D20.4  WHAT THIS DOES NOT TEST
+
+THE LARGEST LIMITATION, STATED FIRST. The reconverged solution is another RESTRICTED solution,
+reached by rotating orbitals. It is not a multireference treatment and it does not make the
+system single-reference. A stable RKS solution at a 0.6 eV gap is still a single-reference
+description of a near-degenerate system. DIAGNOSTIC 19's READING 3 returned DISAGREE and that
+stands: whether the near-degeneracy is multireference remains open, and the CASSCF or NEVPT2
+calculation D19.4 named is not replaced by anything here. This diagnostic asks only whether the
+production number is the lowest single-reference number, which is a narrower question and a
+prerequisite to the other one.
+
+ORCA's restart is a heuristic. It attempts a bounded number of reconvergences from transformed
+orbitals, so a solution it reports as stable is stable against the rotations it tried. Nothing
+here establishes that it is the global minimum of the SCF, and READING 2's correction is
+therefore a lower bound on the correction, not the correction.
+
+One design, S6-20, one frame, one geometry pair, fixed geometry, in vacuo, no continuum
+(STAGE6_AMENDMENT2_20261027). The corrections measured here are for this arrangement at these
+lambdas and DO NOT transfer to DIAGNOSTIC 16's or 17's designs without measuring them. Those are
+148 and 18 runs and are not in this diagnostic.
+
+The Ne ECP parameters remain used outside their published octet assumption (ERRATUM7), so the
+walled arm of READING 3 is a contrast and not a truth.
+
+Nothing about Loss, G0 or kappa, which remain unmeasurable until the OptTS / coordsys cartesian
+conflict of STAGE6_RELAXATION_STATE_20261028 is decided.
+
+
+D20.5  DIRECTION
+
+If READING 1 returns an onset and READING 2 returns CORRECTION MATERIAL, then this project has
+been quoting high-field barriers from saddle points, and the readable-window claim that
+DIAGNOSTIC 18 left as the honest contribution has to be restated on corrected numbers. The
+correction is cheap for the designs that matter and the work is bounded: it is a re-run with one
+extra keyword, not a change of method.
+
+If READING 2 returns CORRECTION NEGLIGIBLE, the instability is real but costs nothing
+quantitatively, and the committed barriers stand as reported with a recorded caveat.
+
+If READING 1 returns STABLE THROUGHOUT at def2-SVPD while def2-SVP has an onset, the
+instability is a property of the compact basis and not of the field, and that would be a finding
+about the basis rather than about the design.
+
+D20.3 fixes which answer means which before anything is computed.
