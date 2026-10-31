@@ -1,0 +1,175 @@
+Stage 6, DIAGNOSTIC 21 (31 October 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+
+D21.1  THE QUESTION
+
+Are the designs that carry every readable result in this project sitting on stable solutions?
+
+DIAGNOSTIC 20 found that the restricted solution the production runs converge to is a SADDLE
+POINT from sum |q| = 4.32 e upward, at both bases, and that the stable solution moves the barrier
+by up to 9.5558 kcal/mol - nine times DIAGNOSTIC 11.3's budget. It measured stability on ONE
+arrangement, S6-20's, along one ladder:
+
+   stable, measured      up to sum |q| = 2.88 e   (both bases, both states)
+   unstable, measured    from sum |q| = 4.32 e
+   unmeasured            2.88 to 4.32 e
+
+Every readable whole-design result this project holds sits at or below 2.19 e, which is inside
+that stable region. D20.4 states, however, that its findings "do not transfer to DIAGNOSTIC 16's
+or 17's designs without measuring them". So the claim that the readable results rest on genuine
+minima is at present an INFERENCE from one arrangement's onset, not a measurement on the designs
+that carry them. This diagnostic measures them.
+
+   LAMBDA IS NOT COMPARABLE ACROSS DESIGNS AND IS NOT USED HERE AS IF IT WERE. It scales each
+   design's own charge vector, so D16's lambda 0.65 (S6-2, two charges, 1.3 e) and the field
+   tree's lambda 0.65 (S6-20, twenty charges, 3.74 e) are different fields. Every statement in
+   this diagnostic is in sum |q|.
+
+It matters because the readable window is the thesis's contribution. If these designs are stable,
+the window claim is measured rather than inferred and every Dset inside it stands as reported. If
+any is not, the number that design carries is provisional and the window has to be restated.
+
+
+D21.2  WHAT IS MEASURED
+
+B3LYP / def2-SVPD with `%scf STABPerform true end` added to the committed production head and
+nothing else changed. Every charge file is COPIED from the committed run it pairs with.
+
+   name            design  sum |q|   source, the committed bare arm              runs
+   S6-2_D17        n=2     1.0777    d17/def2-SVPD/S6-2_bare_M                     2
+   S6-2_D16        n=2     1.3000    d16/def2-SVPD/S6-2_bare_F1                    2
+   S6-3_D16        n=3     1.3000    d16/def2-SVPD/S6-3_bare_F1                    2
+   S6-5_D16        n=5     1.3000    d16/def2-SVPD/S6-5_bare_F1                    2
+   S6-5_D17        n=5     1.6166    d17/def2-SVPD/S6-5_bare_M                     2
+   S6-10_D16       n=10    1.3000    d16/def2-SVPD/S6-10_bare_F1                   2
+   S6-10_D15       n=10    2.1900    transfer/def2-SVPD/lam050                     2
+   S6-20_D16F1     n=20    1.3000    d16/def2-SVPD/S6-20_bare_F1                   2
+   S6-20_D16F2     n=20    2.1900    d16/def2-SVPD/S6-20_bare_F2                   2
+                                                                             TOTAL 18
+
+   These nine are every readable WHOLE-DESIGN condition at def2-SVPD in the record. D16's S6-3
+   at 1.3000 e is DIAGNOSTIC 17's S6-3 as well - D17 reused it unchanged - so it appears once.
+
+   THE BARE ARM ONLY. The walled arm is a contrast and not a truth (ERRATUM7), and D20 measured
+   that the wall leaves S6-20's stability unchanged at 5.76 e. That does not establish the same
+   for these designs and no claim is made about their walled arms.
+
+   THE CONTROL IS NOT RE-RUN. DIAGNOSTIC 20 measured the def2-SVPD charge-free control with this
+   exact head and found it STABLE in both states:
+
+      ctl_R   E(0..2)  +0.05655489  +0.10173454  +0.10613962
+      ctl_TS  E(0..2)  +0.01882783  +0.04853304  +0.06442443
+
+GATE 1. Those two committed values must be present in DIAGNOSTIC 20's committed result and must
+        read STABLE. The acceptance test runs on the control, never on the runs it licenses; it
+        is reused rather than repeated because the head and the basis are identical.
+
+GATE 2. Each run's FIRST converged energy must reproduce the committed production energy for its
+        source arm to 1e-6 Eh. D20 found agreement to 4e-10 Eh across all twenty of its runs,
+        which is why the gate sits here. Targets, all measured from committed files:
+
+           S6-2_D17       R -836.258538470   TS -836.241335755
+           S6-2_D16       R -836.262982927   TS -836.248538981
+           S6-3_D16       R -836.215800869   TS -836.200566235
+           S6-5_D16       R -836.272747122   TS -836.256686962
+           S6-5_D17       R -836.281860904   TS -836.269391654
+           S6-10_D16      R -836.197018417   TS -836.177579450
+           S6-10_D15      R -836.168363751   TS -836.156155383
+           S6-20_D16F1    R -836.236651180   TS -836.215399314
+           S6-20_D16F2    R -836.232942143   TS -836.217532568
+
+        A run that fails this gate means STABPerform changed its SCF, so it is not the production
+        solution and READING 2 is withheld for that design. That is a stop, not an adjustment.
+
+GATE 3. Every input must reduce to its source's committed input, byte for byte, when the
+        stability head is swapped back for cs6_transfer.head(). The only difference between what
+        is run here and what was run then must be STABPerform.
+
+
+D21.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS COMPUTED
+
+The verdict of a run is its FIRST stability analysis, which by GATE 2 is the production solution.
+
+READING 1, are the readable designs stable?
+
+   ALL STABLE        all eighteen runs report a stable restricted solution.
+   SOME UNSTABLE     any run does not. Every one is named, with its three lowest eigenvalues and
+                     its sum |q|.
+
+   The three lowest eigenvalues of every run are reported whatever the verdict.
+
+READING 2, what does any instability cost?
+
+   For each design where either state is unstable, with ddE against the committed def2-SVPD
+   charge-free control:
+
+      ddE(first)   from the first converged solution, which is the production solution
+      ddE(stable)  from the reconverged solution
+      correction = ddE(stable) - ddE(first)
+
+      tol = max( 0.10 x |largest correction entering this reading| , 0.05 kcal/mol ),
+      DIAGNOSTIC 11.3's tolerance. ONE BASIS APPEARS HERE, so there is nothing to pool; this is
+      stated because DIAGNOSTIC 20 NOTE 1 records a reading that pooled two.
+
+   NOTHING TO CORRECT      no design is unstable.
+   CORRECTION NEGLIGIBLE   every |correction| <= tol.
+   CORRECTION MATERIAL     any |correction| > tol, each reported in kcal/mol and as a percentage
+                           of the 1.067 budget.
+
+   THE CONSEQUENCE IS STATED NOW. If any correction exceeds 1.067 kcal/mol, the Dset and the
+   barrier that design carries are PROVISIONAL until recomputed on a stable solution, and the
+   readable window cannot be claimed on that design's number. Which designs those would be is
+   named in the result, not left to be worked out later.
+
+READING 3, does DIAGNOSTIC 20's onset transfer across arrangements?
+
+   D20 measured one arrangement and found it stable to 2.88 e. Every design here is at or below
+   2.19 e, so the ladder predicts all of them stable.
+
+   ONSET TRANSFERS            READING 1 is ALL STABLE. One arrangement's onset field predicted
+                              nine others at four different charge counts, and the window claim
+                              becomes measured rather than inferred.
+   ONSET DOES NOT TRANSFER    any design below 2.88 e is unstable. The onset is a property of the
+                              arrangement and not of the field alone, D20's boundary cannot be
+                              read as a field threshold, and every design in the record needs its
+                              own measurement before its number is quoted.
+
+   ONSET DOES NOT TRANSFER is named here so that it cannot afterwards be presented as a detail.
+   It would be the more important of the two outcomes.
+
+
+D21.4  WHAT THIS DOES NOT TEST
+
+STABILITY IS NECESSARY AND NOT SUFFICIENT. A stable restricted solution is the lowest
+single-reference solution ORCA's rotations could find; it does not make the system
+single-reference. DIAGNOSTIC 19's READING 3 returned DISAGREE on whether the near-degeneracy is
+multireference and that remains open at every field, including these. The CASSCF or NEVPT2
+calculation D19.4 named is not replaced by anything here, and ALL STABLE would not license any
+claim about multireference character.
+
+ORCA's restart is a bounded heuristic. A solution reported stable is stable against the rotations
+it tried, so any correction in READING 2 is a LOWER BOUND.
+
+The bare arm only, def2-SVPD only, one frame, one geometry pair, fixed geometry, in vacuo, no
+continuum (STAGE6_AMENDMENT2_20261027). Nothing about the walled arms, nothing about d_shield
+itself - which is a difference of two arms, only one of which is measured here - and nothing
+about the single-site runs, of which the record holds many.
+
+Nothing about Loss, G0 or kappa, which remain unmeasurable until the OptTS / coordsys cartesian
+conflict of STAGE6_RELAXATION_STATE_20261028 is decided.
+
+
+D21.5  DIRECTION
+
+If READING 3 returns ONSET TRANSFERS, then the readable window rests on measured minima and the
+thesis's central claim is as strong as the record can make it: a charge-design method with a
+domain of validity bounded by two independent markers, readability at about 1.6 e and stability
+at 4.32 e, each measured and mutually consistent, with the failure beyond characterised.
+
+If it returns ONSET DOES NOT TRANSFER, the boundary D20 drew is not a field threshold and the
+write-up cannot use it as one. Every quoted design would then need its own stability measurement,
+which is bounded work but changes what may be said in the interim: nothing, about any design not
+yet measured.
+
+D21.3 fixes which answer means which before anything is computed.
