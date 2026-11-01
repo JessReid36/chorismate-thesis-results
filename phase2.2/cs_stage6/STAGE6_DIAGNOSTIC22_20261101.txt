@@ -1,0 +1,344 @@
+Stage 6, DIAGNOSTIC 22 (1 November 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+
+D22.1  THE QUESTION
+
+The quantity this thesis quotes is d_shield, and its reported form is Dset = |d_shield|. For
+the nine readable whole-design conditions it is formed exactly as cs6_d17.py and
+cs6_additivity.py form it: every energy referenced to the charge-free control at the same
+basis, and the WALLED ARM ONLY additionally corrected by its zero-charge wall term, which
+cs6_additivity.py labels "Stage 4c Amendment 1: ddE_corr = ddE - ddE(zero charge)".
+
+   z(st)      =  E(wall0, st)  -  E(ctl, st)
+   ddE(bare)  =  [ (E(bare,TS) - E(ctl,TS))         - (E(bare,R) - E(ctl,R))         ] x H
+   ddE(wall)  =  [ (E(wall,TS) - E(ctl,TS) - z(TS)) - (E(wall,R) - E(ctl,R) - z(R)) ] x H
+   d_shield   =  ddE(bare)  -  ddE(wall)
+
+That formula has been reproduced from raw committed energies against two independently
+committed Dset values before this document was written: S6-20 at n=20 gives 0.2919 and S6-10
+gives 0.4140, both matching DIAGNOSTIC 16's committed result to four decimals. [measured]
+
+d_shield therefore rests on FOUR distinct solutions per state, not three, because the
+wall-at-zero energy is INSIDE the number through z and is not merely a gate on it:
+
+   leg            status                      measured by
+   control        VERIFIED STABLE             DIAGNOSTIC 20, def2-SVPD ctl_R and ctl_TS
+   bare           VERIFIED STABLE             DIAGNOSTIC 21, nine conditions, 18 runs
+   walled         UNVERIFIED                  this diagnostic
+   wall-at-zero   UNVERIFIED                  this diagnostic
+
+Two of the four legs under the number the thesis quotes are sitting on solutions nobody has
+verified are minima.
+
+   A note on scope, because the project uses the zero-charge wall in two different ways and
+   they must not be confused. In cs11_standoff.py and cs12_sites.py the zero-charge arm is an
+   INERTNESS VETO: C-A1.1 requires |ddE(wall, q=0)| <= WALL0_KCAL and VOIDS the walled result
+   at any rung that fails. In cs6_d17.py and cs6_additivity.py, which are the modules that
+   produce the nine readable conditions and therefore the subject of this diagnostic, it is a
+   SUBTRACTED CORRECTION as written above. This diagnostic concerns the second use. Verifying
+   these arms does not revisit the first.
+
+DIAGNOSTIC 20 measured a wall once: def2-SVP, 20 Ne> centres, lambda = 1.00.
+
+   bare   UNSTABLE in both states (DIAGNOSTIC 19, not re-run there)
+   wall   R   UNSTABLE  E(0..2) -0.01146856  -0.00812353  +0.00251640
+   wall   TS  UNSTABLE  E(0..2) -0.03474872  -0.01510996  +0.00240551
+   wall0  R   STABLE    E(0..2) +0.05616994  +0.09122152  +0.09748894
+   wall0  TS  STABLE    E(0..2) +0.01728740  +0.04008073  +0.05371585
+   VERDICT: WALL DOES NOT CHANGE STABILITY
+
+   [measured, DIAGNOSTIC 20 READING 3, committed]
+
+That is one design at one basis at a field where the bare arm was already unstable, and D20.4
+says so in its own words: "The numbers here are for S6-20 at these lambdas and do not transfer
+to DIAGNOSTIC 16's or 17's designs without measuring them." THIS DIAGNOSTIC MEASURES THEM.
+
+The expectation going in is that every arm here is stable. Every one of these nine conditions
+sits at sum|q| <= 2.19 e, inside the measured stable region, their bare arms are stable, and
+where a wall was measured it did not change stability. An expectation is not a measurement.
+Nothing below assumes it, and D22.4 is written so that the opposite result is readable.
+
+One thing is worth stating because it bounds what the wall can be doing. In all thirty source
+runs the basis count is 402 and NEL is 118 - identical to the bare def2-SVPD control. The Ne>
+centres are coreless (N_core 10) and carry no basis set, so they contribute no electrons and no
+basis functions. The wall acts through the ECP projector alone. [measured, from the committed
+job.out of all thirty sources]
+
+
+D22.2  WHAT IS MEASURED
+
+Thirty single points. B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF: the committed production
+head with `%scf MaxIter 300 end` replaced by
+
+   %scf
+     MaxIter 300
+     STABPerform true
+   end
+
+and NOTHING else changed.
+
+CONSTRUCTION, AND A DELIBERATE DEPARTURE FROM DIAGNOSTIC 21. D21 rebuilt each input from
+cs6_transfer.head() plus a pc.pc copied from the committed run. That was safe because a bare
+input is four head lines, an `%pointcharges` line and an `* xyzfile` line. A walled input is
+not: it carries the 24 substrate coordinates and up to 20 Ne> blocks of literal ECP parameters
+inline. The thirty source inputs run from 54 lines at two centres to 270 at twenty, median 90.
+[measured] Rebuilding those from parts would insert a transcription risk between the committed
+run and the run measured here, and buy nothing.
+
+So D22 COPIES each committed job.inp verbatim and makes exactly one substitution in it. Two
+premises of that construction have been checked against the committed files before this
+document was written: the head of all thirty sources is byte-identical to
+cs6_transfer.head("def2-SVPD"), and the substituted line occurs exactly once in each.
+[both measured]
+
+TABLE A, the nine conditions and the arms they are built from:
+
+   condition       n  sum|q|  walled arm (committed)             wall-at-zero arm (committed)
+   S6-2_D17        2  1.0777  d17/def2-SVPD/S6-2_wall_M          d16/def2-SVPD/S6-2_wall0
+   S6-2_D16        2  1.3000  d16/def2-SVPD/S6-2_wall_F1         d16/def2-SVPD/S6-2_wall0
+   S6-3_D16        3  1.3000  d16/def2-SVPD/S6-3_wall_F1         d16/def2-SVPD/S6-3_wall0
+   S6-5_D16        5  1.3000  d16/def2-SVPD/S6-5_wall_F1         d16/def2-SVPD/S6-5_wall0
+   S6-5_D17        5  1.6166  d17/def2-SVPD/S6-5_wall_M          d16/def2-SVPD/S6-5_wall0
+   S6-10_D16      10  1.3000  d16/def2-SVPD/S6-10_wall_F1        d16/def2-SVPD/S6-10_wall0
+   S6-10_D15      10  2.1900  additivity/def2-SVPD/n10_wall_A    additivity/def2-SVPD/n10_wall0
+   S6-20_D16F1    20  1.3000  d16/def2-SVPD/S6-20_wall_F1        d16/def2-SVPD/S6-20_wall0
+   S6-20_D16F2    20  2.1900  d16/def2-SVPD/S6-20_wall_F2        d16/def2-SVPD/S6-20_wall0
+
+These pairings were established BY EXACT CHARGE VECTOR, not by directory name: magnitudes
+matched to 1e-6 e and positions to 1e-8 A against each condition's committed bare arm. Pairing
+a walled arm with the wrong bare arm is the error class that silently invalidates a d_shield,
+and directory names in this tree are not a reliable guide - D15's walled arm is not under
+`transfer/` with its bare ladder but under `additivity/def2-SVPD/n10_wall_A`. All eighteen
+walled arms resolved uniquely. [measured]
+
+WALL-AT-ZERO IS SHARED WHERE THE POSITION SET IS SHARED. A wall-at-zero arm depends only on
+where the centres are, not on what charge they carry, so conditions that share a position set
+share one arm. Six directories cover the nine conditions:
+
+   additivity/def2-SVPD/n10_wall0     serves S6-10_D15
+   d16/def2-SVPD/S6-10_wall0          serves S6-10_D16
+   d16/def2-SVPD/S6-20_wall0          serves S6-20_D16F1, S6-20_D16F2
+   d16/def2-SVPD/S6-2_wall0           serves S6-2_D17, S6-2_D16
+   d16/def2-SVPD/S6-3_wall0           serves S6-3_D16
+   d16/def2-SVPD/S6-5_wall0           serves S6-5_D16, S6-5_D17
+
+Two of those six hold THE SAME POSITION SET and byte-identical job.inp: n10_wall0 and
+S6-10_wall0. Both are run. That is not an oversight - it is a pre-registered replicate, read in
+READING 3. 18 walled + 12 wall-at-zero = 30 runs.
+
+GATE 1. THE CONTROL, REUSED AND NOT REPEATED. DIAGNOSTIC 20 measured the def2-SVPD charge-free
+control with this exact head:
+
+   def2-SVPD ctl_R   STABLE    E(0) +0.05655489
+   def2-SVPD ctl_TS  STABLE    E(0) +0.01882783
+
+GATE 1 verifies those two lines are present in the committed DIAGNOSTIC 20 result, report
+STABLE, and carry those E(0) values to 5e-8 Eh. If they are absent or changed, nothing below is
+readable and the run stops. The acceptance test runs on the control, never on the arms it
+licenses.
+
+   The wall-at-zero arms are NOT a gate. They are what this diagnostic measures, and they
+   license the walled arms' correction. They cannot also be the test of it.
+
+GATE 2. EACH RUN'S FIRST CONVERGED ENERGY MUST REPRODUCE ITS OWN SOURCE'S COMMITTED FINAL
+SINGLE POINT ENERGY TO 1e-6 Eh. This is what licenses any comparison between a production
+solution and a reconverged one, exactly as DIAGNOSTIC 20's GATE 3 did. Each run is gated
+against its own source, so the two replicate runs carry the same target by construction.
+
+   run directory (source, committed)          FINAL SINGLE POINT ENERGY
+   additivity/def2-SVPD/n10_wall0_R               -836.241243269
+   additivity/def2-SVPD/n10_wall0_TS              -836.213174266
+   additivity/def2-SVPD/n10_wall_A_R              -836.095139076
+   additivity/def2-SVPD/n10_wall_A_TS             -836.083416299
+   d16/def2-SVPD/S6-10_wall0_R                    -836.241243269
+   d16/def2-SVPD/S6-10_wall0_TS                   -836.213174266
+   d16/def2-SVPD/S6-10_wall_F1_R                  -836.165820348
+   d16/def2-SVPD/S6-10_wall_F1_TS                 -836.147139467
+   d16/def2-SVPD/S6-20_wall0_R                    -836.238159169
+   d16/def2-SVPD/S6-20_wall0_TS                   -836.209931251
+   d16/def2-SVPD/S6-20_wall_F1_R                  -836.207698852
+   d16/def2-SVPD/S6-20_wall_F1_TS                 -836.187162127
+   d16/def2-SVPD/S6-20_wall_F2_R                  -836.171935394
+   d16/def2-SVPD/S6-20_wall_F2_TS                 -836.157046998
+   d16/def2-SVPD/S6-2_wall0_R                     -836.247877118
+   d16/def2-SVPD/S6-2_wall0_TS                    -836.218666964
+   d16/def2-SVPD/S6-2_wall_F1_R                   -836.281479626
+   d16/def2-SVPD/S6-2_wall_F1_TS                  -836.266268010
+   d16/def2-SVPD/S6-3_wall0_R                     -836.247205444
+   d16/def2-SVPD/S6-3_wall0_TS                    -836.218280315
+   d16/def2-SVPD/S6-3_wall_F1_R                   -836.213409241
+   d16/def2-SVPD/S6-3_wall_F1_TS                  -836.197765944
+   d16/def2-SVPD/S6-5_wall0_R                     -836.242668794
+   d16/def2-SVPD/S6-5_wall0_TS                    -836.214156860
+   d16/def2-SVPD/S6-5_wall_F1_R                   -836.254917840
+   d16/def2-SVPD/S6-5_wall_F1_TS                  -836.238873106
+   d17/def2-SVPD/S6-2_wall_M_R                    -836.271028893
+   d17/def2-SVPD/S6-2_wall_M_TS                   -836.253277715
+   d17/def2-SVPD/S6-5_wall_M_R                    -836.258061280
+   d17/def2-SVPD/S6-5_wall_M_TS                   -836.245325259
+
+   [all thirty measured, read from the committed job.out of each source]
+
+WHY 1e-6 Eh AND NOT TIGHTER. This project now has two independent measurements of how closely
+these runs reproduce at all. DIAGNOSTIC 21's GATE 2 found |diff| <= 3.07e-12 Eh over eighteen
+runs. And the two replicate wall-at-zero runs above - byte-identical job.inp, same ORCA 6.0.1,
+same 8 MPI ranks, same 15 SCF cycles - differ by 7.958e-12 Eh at R and 2.194e-11 Eh at TS. That
+is 35 and 96 units in the last place of a float64 near 836, and it comes from parallel reduction
+ordering, not from physics. [both measured]
+
+That floor has since been measured across the whole committed record rather than inferred from
+two pairs. Of 937 committed single-solution production runs, 14 groups - 24 pairs - have a
+byte-identical COMPLETE input set, counting every file in the run directory that is not a known
+ORCA output, so that an unrecognised file makes two runs look different rather than falsely
+identical. Those 24 pairs span def2-SVP and def2-SVPD, controls and designs, and seven trees
+(additivity, transfer, d16, d17, d18, negatives, qscale/sitescan/standoff). Their energy
+differences run from exactly zero - 8 of the 24 are bit-identical - to a maximum of
+
+   2.194e-11 Eh  =  1.4e-08 kcal/mol  =  96 ULP          [measured, 24 pairs]
+
+Fingerprinting job.inp alone would have been wrong and the data said so: an input that
+references an external geometry is byte-identical across runs with different geometries, which
+produced apparent differences of 1e3 Eh before the fingerprint was corrected.
+
+So 2.2e-11 Eh is the tightest any energy gate in this project could legitimately be set.
+GATE_EH at 1e-6 Eh is 4.6e4 times looser than that, and D11.3's 1.067 kcal/mol budget is eight
+orders of magnitude above it, so neither is anywhere near the floor. No gate in this project has
+been set near it, and this one is not either.
+
+GATE 3. REDUCTION, MADE EXACT BY THE CONSTRUCTION. Three parts, all of which must hold for
+every one of the thirty runs, and any failure stops the run before anything is submitted.
+
+   GATE 3(a) REDUCTION. Reversing the one substitution must reproduce the committed source job.inp
+       BYTE FOR BYTE. Not equivalent, not agreeing in the head, not matching after whitespace
+       normalisation - identical bytes.
+
+   GATE 3(b) SELF-CONTAINMENT. The source input must contain no `xyzfile` and no `%pointcharges`, so
+       that job.inp alone is the complete input and copying it copies everything. A walled
+       input that silently referenced an external geometry would be run here against whatever
+       file happened to be beside it. All thirty have been checked and none references an
+       external file. [measured]
+
+   GATE 3(c) GEOMETRY. The 24 substrate atoms in the source's inline `* xyz -2 1` block must match
+       the committed frame_42436 geometry for that state, element by element, to 1e-8 A.
+       d_shield compares a bare and a walled arm AT THE SAME GEOMETRY; a walled arm standing on
+       a different geometry would make the quantity meaningless, and copying the input verbatim
+       would carry that error forward rather than catch it. All thirty have been checked and all
+       match. [measured]
+
+Resources: one restartable PBS job, `select=1:ncpus=8:mem=24gb`, `walltime=24:00:00`, no queue
+requested. The thirty committed sources ran in 2.1 min each at 8 ranks (min 1.7, max 2.7), so
+thirty production single points is 1.07 h; at a threefold allowance for the stability matrix and
+any reconvergence, about 3.2 h. [the run times are measured from all thirty committed job.out;
+the threefold allowance is an estimate]
+
+
+D22.3  WHAT IS READ
+
+READING 1. The verdict and the three lowest eigenvalues of the stability matrix, for all thirty
+runs, labelled by condition and arm.
+
+READING 2. THE d_shield ARM AUDIT. For each of the nine conditions, six arms:
+
+   bare R, bare TS        DIAGNOSTIC 21, committed, READ AND NOT RE-RUN
+   walled R, walled TS    this diagnostic
+   wall0 R, wall0 TS      this diagnostic
+
+A condition is ARMS VERIFIED when all six report STABLE. The control leg, which enters every
+term of the formula in D22.1, is verified separately and not re-run: it is GATE 1. So ARMS
+VERIFIED plus GATE 1 is the full set of solutions d_shield stands on.
+
+This is the reading the diagnostic exists for: it is the difference between "the bare leg is
+stable" and "the number we quote is stable in every leg".
+
+READING 3. THE REPLICATE. n10_wall0 and S6-10_wall0 have byte-identical inputs, so they are the
+same calculation submitted twice. Two questions, both pre-registered:
+
+   (a) do they return the same verdict?
+   (b) is |dE(0)| <= max(1e-5 x |E(0)|, 5e-8 Eh)?
+
+The tolerance is relative with an absolute floor, per the project's rule that tolerances are
+relative. The floor is the print resolution of E(0), which ORCA gives to eight decimals. It is
+NOT derived from the 1e-11 Eh energy floor above, and must not be read as a prediction:
+WHETHER A STABILITY EIGENVALUE REPRODUCES AS TIGHTLY AS A TOTAL ENERGY IS NOT KNOWN TO THIS
+PROJECT, and this reading is how it finds out. If the replicate disagrees, the finding is about
+the reproducibility of the eigenvalue - a property of the diagnostic - and not about the
+chemistry.
+
+READING 4. CONDITIONAL, and empty unless READING 1 finds an unstable arm. GATE 2 is what
+licenses this comparison. For each unstable arm, the correction to that arm's own energy
+
+   correction  =  E(reconverged stable)  -  E(first converged)
+
+is substituted into the slot of D22.1's formula that the arm occupies, and the resulting
+d_shield is reported beside the committed one. Which slot depends on the arm, and both routes
+are pre-registered here so neither is chosen after the fact:
+
+   an unstable WALLED arm        changes E(wall, st), so it moves ddE(wall) only
+   an unstable WALL-AT-ZERO arm  changes E(wall0, st), so it moves z(st), which moves
+                                 ddE(wall) only - and it moves EVERY condition that shares
+                                 that wall-at-zero arm, per D22.2's sharing table
+
+Each affected condition's change in d_shield is stated against the DIAGNOSTIC 11.3 budget of
+1.067 kcal/mol. The bare arm is not re-run here, so its committed energy is used unchanged;
+DIAGNOSTIC 21 verified it stable and that verdict is reused, not revisited. If every arm is
+stable, READING 4 says so and reports nothing else.
+
+
+D22.4  CRITERIA, FIXED BEFORE THE RUNS EXIST
+
+Every verdict this diagnostic can return is named here. The reader emits one verdict per
+reading and nothing else, and the line it prints is one of these words.
+
+READING 1 returns ALL STABLE or SOME UNSTABLE
+   ALL STABLE      every one of the thirty arms reports a stable restricted solution.
+   SOME UNSTABLE   at least one does not. The result names which, by arm and state.
+
+READING 2 returns ALL ARMS VERIFIED or ARMS NOT VERIFIED
+   ALL ARMS VERIFIED
+      All thirty stable, and all six arms of all nine conditions stable. Then every readable
+      d_shield in this project rests on verified-stable solutions in ALL FOUR LEGS - control,
+      bare, walled and wall-at-zero - and the quantity the thesis quotes is stability-verified
+      end to end.
+   ARMS NOT VERIFIED
+      At least one arm unstable. The result marks every affected condition NOT VERIFIED and
+      reports READING 4 for it. No d_shield of an affected condition may be quoted without
+      that correction attached.
+
+READING 3 returns REPLICATE AGREES or REPLICATE DISAGREES
+   By READING 3's test, reported either way. A disagreement is a finding about the
+   reproducibility of a stability eigenvalue, not about the chemistry.
+
+READING 4 returns NOTHING TO CORRECT, CORRECTION WITHIN BUDGET, or CORRECTION MATERIAL
+   NOTHING TO CORRECT        no arm is unstable, so the reading is empty.
+   CORRECTION WITHIN BUDGET  every affected condition's change in d_shield is at or under
+                             D11.3's 1.067 kcal/mol.
+   CORRECTION MATERIAL       at least one exceeds it. Those conditions' d_shield may not be
+                             quoted without the correction attached.
+
+Whatever is returned stands. If the walled arms prove unstable where the bare arms were not,
+that is a finding about the wall representation and it enters the record as it comes. This
+diagnostic is not permitted to prefer the outcome that keeps d_shield quotable.
+
+
+D22.5  WHAT THIS CANNOT SAY
+
+It is a restricted-to-restricted stability test. A STABLE verdict means the solution is a
+minimum with respect to the orbital rotations ORCA's stability analysis spans. It does NOT mean
+the system is single-reference. DIAGNOSTIC 19's READING 3 returned DISAGREE and that stands
+untouched by anything here.
+
+ORCA's restart is a bounded heuristic. Any correction in READING 4 is a LOWER BOUND on the
+correction, not the correction. (DIAGNOSTIC 20.4, carried forward.)
+
+It measures nine conditions at def2-SVPD and nothing else. It says nothing about other designs,
+other bases, or sum|q| above 2.19 e. The region from 2.88 e to 4.32 e remains unmeasured and
+everything from 4.32 e up remains unstable and provisional.
+
+It does not revisit the Ne parameter borrowing recorded in ERRATUM 7. The wall remains a
+contrast, not a truth, and verifying that its solutions are minima does not make its parameters
+appropriate.
+
+It cannot distinguish a wall that is physically wrong from a wall that is physically right.
+Every arm here could be stable and the wall could still be the wrong representation of Pauli
+repulsion. Stability is a necessary condition on the arithmetic, not evidence for the model.
