@@ -1,0 +1,280 @@
+Stage 6, DIAGNOSTIC 23 (2 November 2026).
+Committed before any of its runs exist. Nothing of this diagnostic has been computed.
+
+
+D23.1  THE QUESTION
+
+Does the choice of pseudopotential parameter set reach d_shield?
+
+Every walled arm in the Stage 6 record uses one parameter set: Marefat Khah et al.'s Ne ecp-all
+(acs.jctc.9b01162, SI Table S2). EXPERIMENT 0 (ECP_CONVENTION_20261102.md, committed 2 November)
+established that the operator ORCA was given is the authors' operator: the radial-power column is
+NWChem's column, so a 2 means r^0, and the published parameters reproduce their own stated fitting
+target to 7.670e-07 Eh under that reading and fail by 1.495e-01 Eh under the other. What EXPERIMENT 0
+did not and could not establish is how much a CHANGE of that operator would move the quantity the
+thesis reports.
+
+ECP_BRIEF_20261102.md assumed the movement was close to one for one. That is an upper bound, not a
+measurement. Writing the quantity as cs6_d17.py and cs6_additivity.py form it,
+
+   d_shield  =  ddE(bare)  -  ddE(wall, raw)  +  ddE(wall0)
+
+the parameters enter BOTH ddE(wall, raw) and ddE(wall0), and those two enter d_shield with opposite
+signs. If a parameter change moves them by the same amount, d_shield does not move at all. The
+propagation factor therefore lies between 0 and 1 and is undetermined.
+DSHIELD_DECOMPOSITION_ERRATUM1_20261102.md E1.3 withdrew a proposed experiment that would have run
+the zero-charge arms alone, because such a design measures the change in ddE(wall0) and then assumes
+the factor it is meant to measure.
+
+The record already contains both regimes. At def2-SVP the raw discrepancy and the chargeless term
+cancel to within 0.0152 kcal/mol in every collective arm, so d_shield is indistinguishable from zero
+there, which is what DIAGNOSTIC 14 AMENDMENT 1 and DIAGNOSTIC 15's def2-SVP reading report. At
+def2-SVPD they do not cancel, and that non-cancellation is the reported d_shield. Changing the basis
+is not changing the parameters, so this is an analogue and not the factor.
+
+This diagnostic runs BOTH arms at two alternative parameter sets and measures the factor directly.
+
+
+D23.2  WHAT IS MEASURED
+
+THE ALTERNATIVES. The reference library contains exactly one published parameterisation of this
+class of object - a centre contributing no electrons and no basis functions, placed near a QM region
+to supply Pauli repulsion - and it has three members: He, Ne and Ar ecp-all. ECP_ASSESSMENT_20261102.md
+section 3 records the sweep that establishes this and names the eight cited-but-absent papers where
+an independent alternative could be. The two alternatives run here are therefore NOT INDEPENDENT of
+Ne: one paper, one group, one fitting recipe. That is stated in advance and D23.5 says what it costs.
+
+THE BLOCKS, AS THEY WILL BE WRITTEN. SI Tables S1 and S3 print coefficient / power / exponent;
+ORCA's NewECP primitive line is index / exponent / coefficient / radial power.
+
+   He>  <q>  x y z  NewECP              Ar>  <q>  x y z  NewECP
+     N_core 2                             N_core 18
+     lmax d                               lmax f
+     s 1                                  s 1
+       1  0.50980    2.42000  2             1  1.64100  275.00000  2
+     p 1                                  p 1
+       1  0.49165   -0.43590  2             1  0.27330    1.90000  2
+     d 1                                  d 1
+       1  1.00000    0.00000  2             1  0.44000   -3.40000  2
+     end                                  f 1
+                                            1  1.00000    0.00000  2
+                                          end
+
+In each block the lmax channel is the local one and carries coefficient zero, exactly as the Ne block
+does. EXPERIMENT 0 validated the He block against its own published fitting target to 1.381e-06 Eh
+and could not validate the Ar block better than 3.067e-03 Eh on any of eight basis and target
+combinations; C23.5 states what follows from that.
+
+THE ELEMENT LABEL. ORCA's own output legend reads "> coreless ECP center with (optional) point
+charge", and the committed walled outputs confirm it: a run with three centres at 0.538860,
+-0.410881 and -0.350259 prints "Sum of atomic charges: -2.2222800" against a QM charge of -2, which
+is -2 plus exactly those three charges and nothing else. The centre therefore introduces no nuclear
+charge whatever element label and N_core it is given. Each set is nevertheless written on its own
+element label with its own N_core, so that each block is exactly what its authors published and no
+reliance is placed on how ORCA treats a mismatched N_core. GATE 3 checks the consequence rather than
+the reasoning.
+
+CONSTRUCTION. Each new input is the committed job.inp copied VERBATIM with only the ECP tail
+replaced - the element label, N_core, lmax and the channel lines. The head, charge, multiplicity,
+geometry, centre positions and centre charges are byte-identical to the committed input. This is
+DIAGNOSTIC 22's construction (copy and swap, with a gate that the swap reverses) and not
+DIAGNOSTIC 21's (rebuild from the generator), for the reason D22.2 gives.
+
+WALL-AT-ZERO IS SHARED WHERE THE POSITION SET IS SHARED. A wall-at-zero arm depends only on the
+positions, so the seven readable conditions need five such arms, not seven: S6-10 at 1.3000 e and
+S6-10 at 2.1900 e share a position set, and so do S6-20 at 1.3000 e and S6-20 at 2.1900 e. The five
+sets are n = 2, 3, 5, 10 and 20, and their committed arms are
+
+   d16/def2-SVPD/S6-2_wall0      d16/def2-SVPD/S6-3_wall0      d16/def2-SVPD/S6-5_wall0
+   d16/def2-SVPD/S6-10_wall0     d16/def2-SVPD/S6-20_wall0
+
+The S6-2 arm lives in the d16 tree although the condition it serves is DIAGNOSTIC 17's, because
+DIAGNOSTIC 17 changed the charge scale and not the positions.
+
+WHAT IS RUN, per parameter set:
+
+   wall-at-zero       5 position sets  x 2 states  =  10 single points
+   charged walled     7 conditions     x 2 states  =  14 single points
+                                                      --
+                                                      24 per set, 48 for He and Ar
+
+   plus one charge-free control pair, shared by both sets, run to gate the
+   allocation against the committed control                              2
+                                                                         --
+                                                      TOTAL             50 single points
+
+WHAT IS NOT RUN. The bare arms, the Ne walled arms and the Ne wall-at-zero arms are the committed
+ones and are not recomputed. d_shield(Ne) and ddE(wall0, Ne) in READING 2 are the committed values.
+Re-running them would mix a parameter difference with between-batch reproduction scatter.
+NUMERICAL_FLOOR_20261101.md measures that scatter as 2.194e-11 Eh, which is 1.4e-08 kcal/mol, and
+DIAGNOSTIC 22 READING 3 refines it as a between-batch and not a within-batch effect. It is negligible
+against anything read here; reusing the committed values removes it entirely rather than bounding it.
+
+LEVEL. B3LYP-D3BJ / def2-SVPD / def2-J / RIJCOSX / TightSCF, ORCA 6.0.1, IN VACUO, frozen single
+points on the committed reactant and transition-state geometries of frame 42436. No continuum, by
+STAGE6_AMENDMENT2_20261027.txt. Identical to every arm this diagnostic compares against.
+
+
+D23.3  THE GATES, WHICH RUN BEFORE ANY NUMBER IS READ
+
+GATE 0  PROVENANCE. Every committed input from which a new input is derived is byte-identical to
+        what hpc1 ran, checked against that tree's INPUT_CHECKSUMS.sha256. A mismatch stops the
+        reading and names the file.
+
+GATE 1  THE SWAP REVERSES. Each new input, with its ECP tail swapped back to the committed Ne block,
+        is byte-for-byte its committed source. A difference stops the reading and prints the byte
+        offset of the first differing byte. This is what licenses the claim that nothing but the
+        pseudopotential changed.
+
+GATE 2  THE CONTROL. The re-run charge-free control reproduces the committed
+        d16/def2-SVPD/ctl_R and ctl_TS FINAL SINGLE POINT ENERGY to GATE_EH = 1e-6 Eh, the figure
+        cs11_vde.py, cs6_d20.py and cs6_d21.py already use. This is what licenses comparing a new
+        run with a committed one.
+
+GATE 3  THE CENTRE IS STILL EMPTY. Every new walled output reports Number of basis functions = 402
+        and Number of Electrons NEL = 118, both equal to the control's, and lists its centres as
+        basis group "Type Q,> : contracted to pattern {}". For each charged arm, the printed Sum of
+        atomic charges equals -2 plus the sum of that arm's centre charges, to 1e-4 e. If any of
+        these fails, the centre is no longer the electron-free and basis-free object the record's
+        other 659 walled outputs describe, and no number from that run is read.
+
+GATE 4  TERMINATION. Every run contains ORCA TERMINATED NORMALLY. A run that does not is not
+        committed; a note about it is.
+
+
+D23.4  WHAT IS READ, IN THIS ORDER
+
+READING 1  CLASSIFICATION BEFORE ANY ENERGY. Every new run is classified by D6.3 with AMENDMENT 1
+           A1.2's dipole correction, whose own words are that where a run carries charge on an
+           inline ECP centre the dipole test is applied to the printed total dipole with
+           sum_i q_i (r_i - R_com) subtracted, and that a run with no charge is unaffected. So A1.2
+           applies to the fourteen charged walled arms per set and not to the ten wall-at-zero arms.
+           Thresholds exactly as cs6_audit.py has them and no others: D_LW 0.25 e, R_DIP 2.0,
+           GAP_ABS 1.0 eV, R_GAP 0.5, R_CYC 2.0. A condition with any arm that is STRAINED or
+           COLLAPSED is NOT READABLE for that parameter set, and no d_shield is reported for it.
+
+READING 2  THE TWO DIFFERENCES, per readable condition and per set X in {He, Ar}:
+
+              dz(X)  =  ddE(wall0, X)  -  ddE(wall0, Ne)
+              dd(X)  =  d_shield(X)    -  d_shield(Ne)
+
+           with the Ne terms the committed values, which for the seven conditions are
+
+              condition        ddE(wall0, Ne)   d_shield(Ne)
+              S6-2  (D17, M)        -0.0026        -0.3468
+              S6-3  (D16, F1)       -0.1815        -0.4379
+              S6-5  (D16, F1)       -0.4407        -0.4311
+              S6-10 (D16, F1)       -0.7187        -0.2430
+              S6-10 (D15, A)        -0.7187        -0.4140
+              S6-20 (D16, F1)       -0.6190        -0.1702
+              S6-20 (D16, F2)       -0.6190        -0.2919
+
+READING 3  THE PROPAGATION FACTOR, per readable condition:
+
+              f  =  dd / dz        reported with its sign
+
+           Reported, with no criterion attached. NOT reported where |dz| <= 0.001 kcal/mol: that is
+           five orders above the numerical floor and is the point below which the ratio of two small
+           differences stops carrying information. A large f at small dz is not evidence of
+           anything and is not read as such.
+
+READING 4  THE FOUR COMMITTED VERDICTS, RECOMPUTED. Each is recomputed with the X numbers and
+           printed beside the committed verdict. No tolerance is new; each rule is quoted from the
+           result file that set it.
+
+           D16 READING 1   Dset monotone over n = 3, 5, 10, 20 at the matched field 1.3000 e;
+                           tol = max(0.10 x largest Dset, 0.05) = 0.0500.
+                           Committed: FALLS WITH n. Thinnest step, n = 3 to n = 5: 0.0068.
+
+           D16 READING 2   Dset(S6-20 at F2) - Dset(S6-10 at A) = -0.1221 against tol 0.0500.
+                           Committed: CONSISTENT. Margin 0.0721.
+
+           D16 READING 3   excess(n = 20) - excess(n = 10) = -0.057022 from the raw energies
+                           against tol 0.0500, where excess = |Dset| - |signed sum of the
+                           single-site d_shield|.
+                           Committed: COOPERATIVITY FALLS. Margin 0.0070.
+
+           D15 READING 1   Dset 0.4140 - Dsum 0.3521 = +0.0619 against tol 0.0500.
+                           Committed: NOT BOUNDED. Margin 0.0119.
+
+           The three margins 0.0068, 0.0070 and 0.0119 kcal/mol are what makes this diagnostic
+           worth running: the term being subtracted to obtain those Dset values is 0.18 to 0.72
+           kcal/mol, and a position-dependent change of order 0.01 in any one arm would flip them.
+
+READING 5  REPORTED, NO CRITERION. Whether the He factors are consistent with the only measured
+           analogue in the record. Going from def2-SVP to def2-SVPD on arm B, the chargeless term
+           moved by -0.5988 (n10) and -0.7785 (n6neg) while d_shield moved by -0.3426 and -0.2777,
+           so the charged arm absorbed 43 and 64 per cent of the movement. That is a basis change
+           and not a parameter change, so agreement is suggestive and disagreement is not a fault.
+
+
+D23.5  CRITERIA, FIXED BEFORE THE RUNS EXIST
+
+The only tolerance used is SHIELD_ABS = 0.05 kcal/mol, the absolute floor cs11_standoff.py,
+cs12_sites.py and cs13_qscale.py already carry. No new number is introduced.
+
+C23.1   If max |dd| <= 0.05 over every readable condition and both sets:
+        PARAMETER CHOICE DOES NOT REACH d_shield at this project's absolute floor.
+
+C23.2   If 0.05 < max |dd| and no verdict of READING 4 changes:
+        VALUES PROVISIONAL ON THE PARAMETER SET, VERDICTS STAND. Every reported d_shield is then
+        quoted with the parameter set named.
+
+C23.3   If any verdict of READING 4 changes:
+        that verdict is A PROPERTY OF THIS PARAMETER SET and is reported as such in the write-up,
+        naming which set changes it and by how much.
+
+C23.4   A condition that is NOT READABLE for a set contributes to no maximum and to no recomputed
+        verdict for that set, and the verdict line names it. A set for which fewer than four of the
+        seven conditions are readable returns INSUFFICIENT READABLE CONDITIONS for that set and no
+        C23.1 to C23.3 verdict is formed from it.
+
+C23.5   HE AND AR ARE REPORTED SEPARATELY AND NEVER POOLED. EXPERIMENT 0 validated the He block
+        against its own published fitting target to 1.381e-06 Eh. It could not validate the Ar block
+        better than 3.067e-03 Eh on any of eight basis and target combinations, and excluded the
+        coarser quoted precision as the cause; SI Table S3 is also the only one of the three to
+        claim no precision at all. An Ar result is therefore a SENSITIVITY PROBE and not a
+        comparison of published operators. C23.1 to C23.3 are evaluated TWICE: once on He alone and
+        once on both sets. Where the two disagree, the He-only reading is the one quoted and the
+        difference is reported.
+
+
+D23.6  WHAT THIS CANNOT SAY
+
+- HE AND AR ARE NOT INDEPENDENT OF NE. One paper, one group, one fitting recipe, one ansatz. A flat
+  response to both bounds the sensitivity FROM BELOW; it does not measure it. It says nothing about
+  a parameter set from outside this lineage, and the library contains none (ECP_ASSESSMENT section 3,
+  count of independent alternatives of the same class: 0).
+
+- A RESPONSE TO AR ALONE is not demonstrably a response to the published Ar operator (C23.5).
+
+- THIS DOES NOT TEST WHETHER THE WALL IS RIGHT. d_shield has no third arm. It measures how much the
+  projector changes what the charge does; it cannot say whether the bare arm or the walled arm is
+  nearer the truth, because the truth for an object with no physical referent is not defined without
+  choosing one. The comparison the remedy literature uses - deviation from a reference containing the
+  environment's electrons explicitly - exists in this record for one site, one basis pair and one
+  integer charge (DIAGNOSTIC 3), without a walled arm. Building that third arm is a separate
+  diagnostic and exists only at integer charge, because no atom carries 0.12 to 0.65 e.
+
+- FROZEN GEOMETRY, ONE FRAME, ONE BASIS, IN VACUO. No barrier and no activation free energy follows
+  from this diagnostic.
+
+- THE FACTOR f IS A RATIO OF TWO DIFFERENCES, each of which may be small. READING 3 withholds it
+  below |dz| = 0.001 kcal/mol for that reason.
+
+- THIS DOES NOT REVISIT DIAGNOSTIC 19's multireference reading, which returned DISAGREE and still
+  does, nor DIAGNOSTIC 20's instability onset at 4.32 e.
+
+- NOTHING HERE LICENSES A CLAIM ABOUT THE PARAMETERS BEING CORRECT FOR A FRACTIONAL POINT CHARGE.
+  STAGE6_ERRATUM7_20261026.txt E7.8 records that the published set is used outside the domain its
+  authors validated; EXPERIMENT 0 narrowed that to a question of applicability rather than
+  transcription, and this diagnostic does not touch it.
+
+
+D23.7  SUBMISSION
+
+50 single points at def2-SVPD, 402 basis functions. The committed write_run machinery with the ECP
+tail replaced. Walltime <= 24:00:00, which routes to day; no queue is requested, the allocation is
+automatic. Every output file of the finished job is downloaded and kept: the PC archive outside git
+with a sha256 per file, the readable outputs committed to the results repository, and nothing removed
+from hpc1 until both are done.
