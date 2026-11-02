@@ -1,5 +1,18 @@
 # Results — the validity domain of the point-charge representation, and what a design achieves inside it
 
+> **CORRECTED 2 November 2026, same day as drafting.** Four statements in this draft were wrong and
+> are fixed in place below; `RESULTS_charge_representation_domain_DRAFT_ERRATUM1_20261102.md` lists
+> every change with its before and after, and git holds the original. The four: Table 4's
+> correlations with max\|q\| (−0.697 / +0.024 → **−0.775 / +0.338**); the sentence that the walled
+> margin shows no dependence on per-site charge (**withdrawn**); Section 6's claim that a parameter
+> error propagates into d_shield "close to one for one" (**withdrawn** — the factor is undetermined
+> between 0 and 1); and the two figure captions that depended on them. Cause: the max\|q\| column
+> of `claude/D22_RESULT_20261102.md` was populated from memory rather than from each bare arm's
+> committed `pc.pc`. Raised by an independent review of `ECP_BRIEF_20261102.md` in a separate
+> session. No barrier, ddE, Dset, stability margin or readability verdict changes, and that is
+> gated rather than asserted — every number below was re-derived from the raw committed energies
+> when this correction was written.
+
 `[DECISION REQUIRED — the section number. I referred to this as §6.3 in working notes, but no
 chapter outline in either repo defines a §6.3. WRITEUP_INDEX.md and WRITEUP_PROMPT.md both predate
 Stage 6 and number only the Phase 1 Methods (X.0–X.7) and Results A–D. This section needs a place
@@ -70,7 +83,8 @@ sampled region in per-site charge and in total charge respectively.
 the committed arrangement files and the Dset table, marking readable points filled and the two
 STRAINED points open, with the D17 per-site band 0.5389–0.6500 e shaded. Caption should state that
 n ties the two axes together, so the two cannot be varied independently, and that the two
-exclusions lie on the frontier.]`
+exclusions lie on the frontier. Take max|q| from each bare arm's committed pc.pc, not from any
+summary table.]`
 
 ---
 
@@ -100,20 +114,25 @@ the stability matrix at the reactant geometry, against the control's 0.05655489:
 |---|---|---|
 | range over the nine conditions | 0.00137315 – 0.05663975 | 0.04787002 – 0.05667827 |
 | span, maximum over minimum | **41.2** | **1.18** |
-| correlation with max\|q\| | **−0.697** | **+0.024** |
+| correlation with max\|q\| | **−0.775** | **+0.338** |
 
-**Table 4.** Stability margins, from `d21/DIAGNOSTIC21_RESULT.txt` and `d22/DIAGNOSTIC22_RESULT.txt`.
+**Table 4.** Stability margins, from `d21/DIAGNOSTIC21_RESULT.txt` and
+`d22/DIAGNOSTIC22_RESULT.txt`, with max\|q\| read from each bare arm's committed `pc.pc`.
 
 The bare representation's margin degrades with per-site charge and falls to 2 per cent of the
 control's value at S6-2 at 1.3000 e. The walled representation's margin lies within 15.4 per cent of
-the chargeless control for every condition and shows no dependence on per-site charge. The wall
+the chargeless control for every condition, and its residual dependence on per-site charge
+(+0.338 over nine points) is far weaker than the bare arm's (−0.775) and of the opposite sign.
+Both correlations are post hoc on nine points at one basis and one frame, so neither is
+quotable as a finding; the pre-registered test is a max\|q\| ladder at fixed Σ\|q\|. The wall
 restores the margin while retaining 94.8 and 94.2 per cent of the effect at the two conditions where
 the bare arm is worst, so the restoration is not achieved by screening the charge away.
 
 `[FIGURE 6.N — bare against walled stability margin. Scatter the nine conditions, x = max|q|,
 y = E(0) at the reactant, two series, with a horizontal line at the control's 0.05655489. Data from
-the two RESULT files. Caption should give both correlations and note the 41.2-fold against
-1.18-fold spread.]`
+the two RESULT files, with max|q| from the committed pc.pc files. Caption should give both
+correlations (−0.775 and +0.338), state that both are post hoc on nine points, and note the
+41.2-fold against 1.18-fold spread.]`
 
 ---
 
@@ -181,8 +200,18 @@ The correction is physically required, since the projector contributes a chargel
 differs between the two geometries, but its magnitude relative to the residual bears on the
 precision of the result and on the parameter dependence discussed below.
 
+A further caution on the chargeless term. It is not only position-dependent but strongly
+basis-dependent: measured on identical positions and the same frame 42436 geometry, it is 5 to
+19 times larger at def2-SVPD than at def2-SVP and changes sign at two of the six arrangements
+measured at both. At def2-SVP the uncorrected discrepancy and the chargeless term cancel to
+within 0.016 kcal/mol in every collective arm, so d_shield is indistinguishable from zero
+there, which is what D14 Amendment 1 and D15's def2-SVP reading report. The non-cancellation
+at def2-SVPD is the reported d_shield. Recorded in
+`phase2.2/cs_stage6/DSHIELD_DECOMPOSITION_ERRATUM1_20261102.md` E1.2.
+
 `[DECISION REQUIRED — whether d_shield is reported in the thesis as a primary observable or as a
-diagnostic. Table 6 shows it is a small residual at n ≥ 5. The alternative is to report the
+diagnostic. Table 6 shows it is a small residual at n ≥ 5, and the term subtracted to obtain it
+moves by 0.5 to 0.8 kcal/mol under a change of basis alone. The alternative is to report the
 uncorrected discrepancy and the chargeless term separately, which is more transparent but has no
 precedent in the committed pre-registrations.]`
 
@@ -206,10 +235,18 @@ therefore outside the domain on two independent measured grounds and I report no
   single-reference character. `DIAGNOSTIC19_RESULT.txt` returned DISAGREE on its multireference
   reading and that stands.
 - The Pauli wall uses a published pseudopotential outside the domain its authors validated, recorded
-  in `STAGE6_ERRATUM7_20261026.txt` E7.8. The chargeless wall term of Table 6 is that
-  pseudopotential acting with no charge and no basis functions, so a systematic error in its
-  parameters propagates into d_shield at n ≥ 5 close to one for one. The sensitivity has not been
-  measured.
+  in `STAGE6_ERRATUM7_20261026.txt` E7.8. A systematic error in its parameters enters both the
+  charged walled arm and the zero-charge arm, and those two carry opposite signs in d_shield,
+  so the fraction that reaches d_shield lies between nothing and all of it and has never been
+  measured. At def2-SVP the two terms cancel almost exactly; at def2-SVPD they do not, and that
+  non-cancellation is the reported d_shield. Measuring the fraction requires running the charged
+  walled arm as well as the zero-charge arm at an alternative parameter set; a zero-charge-only
+  sweep assumes the answer.
+- Three verdicts that compare arrangements rest on margins far smaller than the term subtracted
+  to obtain them: D16 READING 1's monotonicity on 0.0068 kcal/mol, D16 READING 3's cooperativity
+  on 0.0070, and D15 READING 1's bound on 0.0119, against a chargeless term of 0.18 to 0.72 that
+  moves by 0.5 to 0.8 under a change of basis. Until the parameter experiment above has been
+  run, those three should be reported as properties of this parameter set and this basis.
 - The region 2.88 to 4.32 e in Σ\|q\| is unmeasured for stability.
 
 ---
@@ -220,11 +257,17 @@ therefore outside the domain on two independent measured grounds and I report no
    decision block at the head of this file.
 2. **The enzyme comparator.** The 7.3 kcal/mol differential transition-state stabilisation must be
    read from `2011_paper.pdf` before it is used. Placeholdered in §3.
-3. **ECP parameter sensitivity.** Unmeasured, and required for §6's fourth limit to be quantified
-   rather than stated. A literature brief on alternative published parameter sets was issued on
-   2 November (`claude/ECP_BRIEF_20261102.md`).
+3. **ECP parameter sensitivity.** Still unmeasured. The literature question is now closed:
+   `claude/ECP_BRIEF_20261102.md` and the independent assessment of it establish that the
+   library contains exactly one published parameterisation of this class (Marefat Khah et al.
+   2020, with He, Ne and Ar of one lineage), that its digits match the published Table S2, and
+   that no independent alternative exists to compare against. What remains is the measurement:
+   the He and Ar sets run through **both** arms of the seven readable conditions, 56 single
+   points. Not yet pre-registered.
 4. **A figure of the accessible design region** needs the per-site charge vectors written to a data
-   file; they currently exist only inside `relax/ARRANGEMENTS.txt` and are read programmatically.
+   file; they currently exist only inside `relax/ARRANGEMENTS.txt` and are read
+   programmatically. Writing them out would also have prevented the max\|q\| error this draft
+   was corrected for.
 
 ## Inconsistencies found
 
@@ -239,6 +282,12 @@ therefore outside the domain on two independent measured grounds and I report no
 3. **`STAGE6_FINDINGS_20261022.md` reports a bare frozen barrier of 18.4610 kcal/mol** at def2-SVP.
    That is a fourth quantity, differing from Table 1 by basis. Both are correct for their own
    conditions; neither should be quoted without them.
+4. **"DIAGNOSTIC 11.3's budget of 1.067 kcal/mol"**, quoted from D17 onward, is not a
+   pre-registered absolute. D11.3 states a relative rule, and 1.067 is that rule's value at D12
+   sites 1988 and 1991 — the largest among D12's thirteen *voided* sites. Recorded in
+   `phase2.2/cs_stage6/STAGE6_RECORD_CORRECTIONS_20261102.md` C2. Where a fixed figure is wanted
+   it should be named as what it is, or replaced by the relative rule applied to the arm in
+   hand.
 
 ## Verification log
 
@@ -266,4 +315,12 @@ barrier range   7.6609 to 13.3357 kcal/mol; every barrier positive
 No disagreement was found between any re-derived barrier and a value asserted in a committed
 result file. The two Dset values that DIAGNOSTIC 16 reports independently, 0.2919 at n = 20 and
 0.4140 at n = 10, were reproduced to four decimals by the decomposition of Table 6.
+
+Corrected 2 November 2026. max|q| for all nine conditions re-read from each bare arm's
+committed pc.pc, not from any summary table:
+  S6-2_D16 0.6500   S6-2_D17 0.5389   S6-3_D16 0.5389   S6-5_D16 0.4333   S6-5_D17 0.5389
+  S6-10_D16 0.1632   S6-10_D15 0.2750   S6-20_D16F1 0.1241   S6-20_D16F2 0.2091
+Correlations of E(0) at R against max|q| over the nine: bare -0.775, walled +0.338.
+Every barrier, ddE and Dset in this draft was re-derived from the raw job.out energies by
+cs6_y48.py at the time of the correction and reproduces to four decimals.
 ```
