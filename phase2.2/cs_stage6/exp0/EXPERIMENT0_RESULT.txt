@@ -1,0 +1,125 @@
+==============================================================================
+EXPERIMENT 0  --  the pseudopotential convention
+Stage 6, 2 November 2026.  No HPC time.  pyscf 2.14.0
+==============================================================================
+
+Every number below is measured by this script. The ORCA manual values in
+READING 4 are quoted from the manual and marked as such.
+
+==============================================================================
+READING 1 and 3: does each published set reproduce its own fitting target?
+==============================================================================
+
+--- He  (SI target 2s2p3s3p, basis aug-cc-pV5Z, precision claimed: within 6 digits)
+    reference RHF  E = -2.861627173 Eh,  nao 105
+         level      HF reference        T + V_ECP        difference
+         s[0]        +0.021639502      +0.021640244     +7.414e-07
+         s[1]        +0.139303963      +0.139302583     -1.381e-06
+         p[0]        +0.095703926      +0.095703801     -1.251e-07
+         p[1]        +0.399194586      +0.399195293     +7.064e-07
+    max |deviation| under r^0 : 1.381e-06 Eh
+    max |deviation| under r^2 : 7.136e-02 Eh
+
+--- Ne  (SI target 3s3p3d4s4p4d, basis aug-cc-pwCV5Z, precision claimed: within 6 digits)
+    reference RHF  E = -128.546788705 Eh,  nao 217
+         level      HF reference        T + V_ECP        difference
+         s[0]        +0.050620645      +0.050620828     +1.839e-07
+         s[1]        +0.297303259      +0.297302911     -3.479e-07
+         p[0]        +0.050786389      +0.050786402     +1.298e-08
+         p[1]        +0.218529646      +0.218529647     +3.072e-10
+         d[0]        +0.246022728      +0.246021961     -7.670e-07
+         d[1]        +0.820031407      +0.820031129     -2.782e-07
+    max |deviation| under r^0 : 7.670e-07 Eh
+    max |deviation| under r^2 : 1.495e-01 Eh
+
+--- Ar  (SI target 4s4p4d5s5p5d, basis aug-cc-pV(5+d)Z, precision claimed: NONE STATED)
+    note: the SI names aug-cc-pV(6+d)Z, which basis-set-exchange does not carry; aug-cc-pV(5+d)Z is the nearest available and is a substitute
+    reference RHF  E = -526.817349344 Eh,  nao 172
+         level      HF reference        T + V_ECP        difference
+         s[0]        +0.030407316      +0.030434827     +2.751e-05
+         s[1]        +0.172335008      +0.173254917     +9.199e-04
+         p[0]        +0.033346870      +0.033321937     -2.493e-05
+         p[1]        +0.142162821      +0.141784079     -3.787e-04
+         d[0]        +0.111717369      +0.111902978     +1.856e-04
+         d[1]        +0.339242176      +0.336175275     -3.067e-03
+    max |deviation| under r^0 : 3.067e-03 Eh
+    max |deviation| under r^2 : 7.954e-01 Eh
+
+------------------------------------------------------------------------------
+   set  target       precision      r^0          r^2          verdict
+   He   2s2p3s3p     within 6 digits 1.381e-06    7.136e-02    VALIDATED
+   Ne   3s3p3d4s4p4d within 6 digits 7.670e-07    1.495e-01    VALIDATED
+   Ar   4s4p4d5s5p5d NONE STATED    3.067e-03    7.954e-01    NOT VALIDATED
+
+==============================================================================
+READING 2: is the Ne agreement specific to the basis the SI names?
+==============================================================================
+   aug level   nao  r^0          r^2         
+   aug        181  1.099e-01    3.434e-01
+   d-aug      217  7.670e-07    1.495e-01
+   t-aug      253  5.224e-05    1.969e-02
+
+   The SI names d-aug-cc-pwCV5Z. If the agreement is sharply best there, the
+   caption is meant as written and the even-tempered construction used here is
+   close to the authors'.
+
+==============================================================================
+READING 4: is ORCA's radial-power column the same column as NWChem's?
+==============================================================================
+   ORCA's own manual (6.0, section 7.5) illustrates NewECP with a published
+   potential, V with SD(10,MDF). Its s channel reads [quoted]:
+        1  14.4900000000  178.4479710000  2
+        2  6.5240000000  19.8313750000  2
+
+   basis-set-exchange carries those primitives in 3 set(s): Stuttgart RSC 1997, Stuttgart RSC 1997 ECP, Grimme vDZP
+   Taking Stuttgart RSC 1997, which lists the potential in NWChem format:
+        2  14.490000000  178.447971000
+        2  6.524000000  19.831375000
+
+   NWChem documents its radial form as
+        U_l(r) = r^(-2) * sum_k A_lk * r^(n_lk) * exp(-B_lk r^2)
+   and states the shift is 'in accordance with most of the ECP literature
+   and implementations', so n = 2 means r^0. [quoted, NWChem ECP manual]
+
+   Same potential, same exponents, same coefficients, and the power column
+   reads 2 in both listings. READING 4: ORCA's column is NWChem's column,
+   so the project's blocks are r^0 blocks.
+
+==============================================================================
+READING 5: can Ar be validated on any available basis, and is its coarser
+           quoted precision the explanation?
+==============================================================================
+   basis              aug      nao  d = 3d,4d    d = 4d,5d   
+   aug-cc-pV(5+d)Z    aug      136  1.096e-02    2.521e-01
+   aug-cc-pV(5+d)Z    d-aug    172  3.067e-03    6.215e-03
+   aug-cc-pV6Z        aug      193  5.404e-03    2.174e-01
+   aug-cc-pV6Z        d-aug    242  4.944e-03    1.450e-02
+   aug-cc-pV5Z        aug      131  1.096e-02    3.517e-01
+   aug-cc-pV5Z        d-aug    167  5.998e-03    2.111e-02
+   aug-cc-pwCV5Z      aug      217  1.398e-02    3.481e-01
+   aug-cc-pwCV5Z      d-aug    253  5.690e-03    2.741e-02
+
+   best cell: 3.067e-03 Eh at aug-cc-pV(5+d)Z d-aug, d=3d,4d
+   No available basis validates Ar. The SI names aug-cc-pV(6+d)Z, which
+   basis-set-exchange does not carry.
+
+   Is the coarser quoted precision the explanation? Ar's parameters carry 4-5
+   significant figures where Ne's carry 6. Moving each coefficient and exponent
+   within half a unit of its last quoted digit, 24 draws:
+      residual range 3.063e-03 .. 3.071e-03 Eh   (spread 7.3e-06)
+      The spread is 417 times too small to account for a residual of 3.063e-03,
+      so TRUNCATED PRECISION IS EXCLUDED as the cause.
+
+==============================================================================
+VERDICTS
+==============================================================================
+   CONVENTION CONFIRMED
+   He  VALIDATED       (max |deviation| 1.381e-06 Eh under r^0)
+   Ne  VALIDATED       (max |deviation| 7.670e-07 Eh under r^0)
+   Ar  NOT VALIDATED   (max |deviation| 3.067e-03 Eh under r^0)
+
+   The operator ORCA was given is the authors' operator. STAGE6_ERRATUM7
+   E7.8's concern is about domain of applicability, not transcription.
+   The Ar block cannot be validated against its own published target. Any
+   experiment using it reports a sensitivity probe, not the published Ar
+   operator. See ECP_CONVENTION_20261102.md section 3.
