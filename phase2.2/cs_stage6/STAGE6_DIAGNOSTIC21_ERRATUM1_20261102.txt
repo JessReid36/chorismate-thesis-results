@@ -1,0 +1,78 @@
+Stage 6, DIAGNOSTIC 21 ERRATUM 1 (2 November 2026).
+
+STAGE6_DIAGNOSTIC21_20261031.txt is not edited. This erratum records an error in how its set was
+DESCRIBED. No criterion, gate, threshold or verdict is changed, and no measured number is
+replaced.
+
+
+E21.1  WHAT IS WRONG
+
+D21.2 states, of its nine conditions:
+
+   "These nine are every readable WHOLE-DESIGN condition at def2-SVPD in the record."
+
+That is false for two of the nine. Their Dset is reported NOT READABLE by the diagnostics that
+produced them:
+
+   S6-2_D16    DIAGNOSTIC 16 READING 1 reports S6-2 at 1.3000 e as NOT READABLE
+               its bare arm S6-2_bare_F1_R is STRAINED under D6.3, gap 0.567 eV
+   S6-5_D17    DIAGNOSTIC 17 READING 2 reports S6-5 at 1.6166 e as NOT READABLE
+               its bare arm S6-5_bare_M_R  is STRAINED under D6.3, gap 0.880 eV
+
+   [both measured, read from the committed DIAGNOSTIC16_RESULT.txt and DIAGNOSTIC17_RESULT.txt]
+
+In both cases the unreadable arm is the BARE arm at R - the very arm D21 measured. D21.2's
+"THE BARE ARM ONLY" therefore does not rescue the description.
+
+This project holds SEVEN readable whole-design Dset values at def2-SVPD, not nine:
+
+   condition      sum|q|   Dset     source
+   S6-2_D17       1.0777   0.3468   DIAGNOSTIC 17
+   S6-3_D16       1.3000   0.4379   DIAGNOSTIC 16
+   S6-5_D16       1.3000   0.4311   DIAGNOSTIC 16
+   S6-10_D16      1.3000   0.2430   DIAGNOSTIC 16
+   S6-10_D15      2.1900   0.4140   DIAGNOSTIC 15 / 14 arm A
+   S6-20_D16F1    1.3000   0.1702   DIAGNOSTIC 16
+   S6-20_D16F2    2.1900   0.2919   DIAGNOSTIC 16
+
+
+E21.2  HOW IT HAPPENED
+
+The set was assembled from the designs that had committed def2-SVPD energies, and "readable" was
+taken to mean "has a committed result" rather than "has a Dset its own diagnostic reported". The
+runs' existence was checked; their results' readability was not. WORKING_RULES rail 2 requires
+the record to be checked before a diagnostic is designed, and this is a failure of that rail, not
+of the runs.
+
+
+E21.3  WHAT STANDS AND WHAT DOES NOT
+
+STANDS, unchanged:
+   - All eighteen stability measurements. They measured what they measured, on the arms named,
+     and GATE 1, GATE 2 and GATE 3 all passed as reported.
+   - READING 1's verdict ALL STABLE, over those eighteen runs.
+   - READING 2 (NOTHING TO CORRECT) and READING 3 (ONSET TRANSFERS) as reported.
+   - The measured stability region: stable to sum|q| = 2.88 e, unstable from 4.32 e, 2.88 to
+     4.32 e unmeasured.
+
+DOES NOT STAND:
+   - The description of the nine as "every readable WHOLE-DESIGN condition".
+   - D21.1's sentence "If these designs are stable, the window claim is measured rather than
+     inferred and every Dset inside it stands as reported." Two of the nine carry no Dset, so
+     that sentence is true of seven conditions and vacuous for two. The window claim itself is
+     unaffected: it rests on the seven, all of which are stable.
+
+NOT A CORRECTION, BUT WORTH RECORDING. D21's post-hoc reading found S6-2_D16 to have the
+thinnest stability margin of all eighteen runs, E(0) = +0.00137 Eh. It is also one of the two
+conditions whose bare arm is STRAINED, at a 0.567 eV gap. A near-zero stability eigenvalue and a
+collapsing HOMO-LUMO gap are the same electronic marginality seen through two different
+indicators, and they agree on which design is marginal. [measured, both from committed files]
+
+
+E21.4  WHAT THIS CHANGES DOWNSTREAM
+
+DIAGNOSTIC 22 inherited this set from D21 without re-deriving it and carries the same error. It
+is corrected by STAGE6_DIAGNOSTIC22_ERRATUM1_20261102.txt, which is committed before D22's
+result is read.
+
+Nothing else in the record depends on the count of nine.
