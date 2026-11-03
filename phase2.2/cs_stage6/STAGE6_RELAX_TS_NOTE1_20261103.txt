@@ -1,0 +1,158 @@
+Stage 6, the relaxation's TS side: NOTE 1. 3 November 2026.
+STAGE6_CRITERIA.txt is unchanged and is not edited, and neither is STAGE6_AMENDMENT3_20261103.txt.
+This note records that the committed TS_opt inputs DO NOT RUN, what ORCA refused, and what was
+added to implement the same measurement. It follows the precedent of relax/ADDITIVITY_RUNS.txt,
+which recorded the same kind of failure of a first generation of inputs to implement a measurement
+the criteria already list.
+
+WHAT HAPPENED
+
+Six jobs were submitted on 3 November 2026. Four are running or have run:
+   relax/S6-C/R_opt     relax/n10_A/R_opt     relax/n10_A/R_sp     relax/n10_A/TS_sp
+The two TS relaxations were REFUSED BY ORCA 6.0.1 in one second, exit code 25, having skipped the
+calculation:
+   423856  cm_s6_C_TS_opt      comp044
+   423860  cm_s6_n10_A_TS_opt  comp082
+
+Transcribed from each run's job.out on hpc1. Those two outputs are NOT committed, because this
+project does not commit failed jobs; this note is their record.
+
+   relax/S6-C/TS_opt, which carries no QM/MM block:
+
+      WARNING: You cannot use transition state optimization for a Cartesian optimization!!!
+               Please choose optimization with redundant coordinates (!OPT)
+        ===>   Skipping actual calculation
+      [file orca_main/main_input_check.cpp, line 8049]: Error (ORCA_MAIN): ... aborting the run
+
+   relax/n10_A/TS_opt, which carries one:
+
+      WARNING: Analytical Hybrid or Partial Hessian not available!
+        ===> : Calculating full Analytical Hessian for optimzation instead!
+      WARNING: Partial- and Hybrid-Hessian not yet available for Analytical Hessian
+        ===> : Skipping actual calculation
+      [file orca_main/main_input_check.cpp, line 7942]: Error (ORCA_MAIN): ... aborting the run
+
+Two distinct refusals of two features the criteria's TS specification requires together: a
+transition-state optimisation in Cartesian coordinates, and a frequency calculation on a system
+whose active atoms are a subset.
+
+WHY THE SPECIFICATION WAS NEVER TESTED
+
+STAGE6_CRITERIA.txt, THE RELAXATION, names its source: "WP4's protocol
+(phase2.2/wp4_s13_rerun/armb_anch/job.inp), which is committed and has run". That file's keyword
+line is
+
+   ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM Opt
+
+An Opt. WP4 relaxed a reactant and never optimised a transition state, so the criteria's TS side -
+"The TS side uses OptTS from ts/final.xyz followed by frequencies" - was written by extension from
+a protocol that had only ever done the reactant half, and its Cartesian coordinates were never
+tested against OptTS. The reactant side is unaffected and is running now, in Cartesians, exactly as
+WP4 did.
+
+WHAT REPLACES IT, AND WHERE IT COMES FROM
+
+Not invented here. This project has already optimised a transition state of THIS frame with QM/MM
+and ORCA 6.0.1, successfully, twice, and both are committed:
+
+   05_qmmm/24_sp_barriers/f42436_r8_a1/ts/core.inp - the run that produced the ts/final.xyz these
+   relaxations start from:
+
+      ! QMMM B3LYP D3BJ def2-SVP def2/J RIJCOSX OptTS TightOpt TightSCF
+      %geom
+        Calc_Hess true
+        Hybrid_Hess {the 24 QM atoms} end
+        MaxIter 500
+      end
+
+   05_qmmm/18c_reduced_region/ts_reduced.out, whose echoed input adds the frequencies and which
+   produced the 313.30 cm-1 imaginary mode of ts_frequencies_summary.txt:
+
+      ! QMMM B3LYP D3BJ def2-SVP def2/J RIJCOSX OptTS NumFreq TightSCF
+      %geom
+        Calc_Hess true
+        Hybrid_Hess {the 24 QM atoms} end
+      end
+
+THE THREE CHANGES, AND NOTHING ELSE
+
+Two directories are added: relax/S6-C/TS_opt2 and relax/n10_A/TS_opt2.
+
+
+   REFUSED, relax/<arm>/TS_opt/job.inp              ADDED, relax/<arm>/TS_opt2/job.inp
+   ... TightSCF QMMM OptTS Freq                     ... RIJCOSX OptTS NumFreq TightSCF QMMM
+   %geom                                            %geom
+     MaxIter 1000                                     MaxIter 1000
+     coordsys cartesian                               Calc_Hess true
+     ProjectTR false                                  Hybrid_Hess {0 .. 23} end
+   end                                              end
+
+1. coordsys cartesian and ProjectTR false are dropped, so the optimisation runs in redundant
+   internal coordinates. This is what ORCA's own message asks for and what both committed runs used.
+2. Calc_Hess true with Hybrid_Hess over the 24 substrate atoms supplies the Hessian a
+   transition-state search needs, in the hybrid form ORCA will compute, which is what the second
+   refusal was about.
+3. Freq becomes NumFreq, numerical frequencies, which is what works with a hybrid Hessian and what
+   the committed reduced-region run used.
+
+UNCHANGED, and checked rather than asserted by cs6_y58.py: combined.xyz and site.ORCAFF.prms are
+the committed TS_opt files BYTE FOR BYTE; the %qmmm block, its QMAtoms and its ActiveAtoms are
+identical; both arms get the same treatment, so the control and the design are still computed alike;
+MaxIter, maxcore, nprocs and the SCF settings are untouched; and the submission script differs only
+in its job name and its two paths.
+
+THE REFUSED INPUTS ARE LEFT EXACTLY AS COMMITTED. relax/S6-C/TS_opt and relax/n10_A/TS_opt are not
+edited and not removed. They are the record of what was specified and refused, and TS_opt2 is what
+runs. Any reader of the relaxation results must be able to see both.
+
+DIRECTION
+
+Redundant internals with a computed hybrid Hessian is the more permissive choice in the sense that
+it can converge where Cartesians cannot even start; it is also the only executable one. Nothing
+about the coordinate system or the Hessian provision favours a lower barrier: the TS energy is a
+property of the stationary point, not of the coordinates used to reach it, and the criteria's test
+on it - exactly one imaginary mode - is unchanged and is stricter under NumFreq than under no
+frequency calculation at all.
+
+COST, so that it is not a surprise
+
+Calc_Hess plus NumFreq over 24 atoms is of order two times 144 QM/MM gradients on top of the
+optimisation cycles. WP4's analogue ran 46 cycles in 5 h 58 m on these same 8 cores and 24 GB, so
+roughly eight minutes a gradient, which puts these two jobs at the order of forty hours each. Both
+sit on the week queue's 168 hours, and the 1000-cycle MaxIter is unchanged.
+
+ONE RESIDUAL RISK, STATED BEFORE IT IS RUN
+
+Hybrid_Hess is how ORCA expresses "exact over these atoms" when part of the system is molecular
+mechanics, and the control has no MM region at all: its ActiveAtoms are simply all 24 atoms it has.
+Listing all of them in Hybrid_Hess therefore asks for the full Hessian, which is what the control
+needs, and the two arms keep an identical %geom block so that they are computed alike - which is
+the whole reason the criteria insist on a control. If ORCA refuses Hybrid_Hess in a job with no
+QM/MM block, it will say so in a second, as it did today, and the fix is to delete that one line
+from the control's input only. That would make the two %geom blocks differ by a line that is a
+no-op for the control, and it would be recorded here as NOTE 1's own second entry rather than
+quietly applied.
+
+WHAT THIS NOTE CANNOT SETTLE
+
+1. Whether either TS search converges at all, and whether what it reaches is a first-order saddle.
+   The criteria's own test applies: a TS that does not return exactly one imaginary mode is reported
+   as such and is not used for a relaxed barrier.
+2. The imaginary-mode count may not be one. The committed reduced-region run of this system returned
+   TWO, at 313.30 and 18.65 cm-1, and WRITEUP_INDEX.md already flags the second as needing a decision.
+   If that recurs here it is reported, not resolved by this note.
+3. Nothing about the reactant side, which is running under the committed protocol.
+4. Nothing about the catalytic verdict, which remains SP_AMENDMENT2.txt A2.5's chain.
+
+THE NEW INPUTS
+
+relax/S6-C/TS_opt2/job.inp                      1b9174b865c0fd853341fa1fe9b4a14d29ee6c23412cf2c342b7612ce4e8ed9b
+relax/S6-C/TS_opt2/job.pbs                      9f8d6498bf0e7c5bb957296e4cc091ab73118941866e7b37010830754997dc63
+relax/S6-C/TS_opt2/combined.xyz                 11ee97819c0a67fd20ae74a9e691eda29a4ec142be0f6daee047890b32c7ef09
+relax/n10_A/TS_opt2/job.inp                     a000ac6c484e476d3490bc52231a89773b462b50a6c6f1342b72f3c2b6b9b564
+relax/n10_A/TS_opt2/job.pbs                     2bb9f3127b0618b97d40e334a83f0c08078c9545a8dbcb9b7899d7fcdfca11a7
+relax/n10_A/TS_opt2/combined.xyz                818eae6f6f5edcba1b86167edaa1e337971d8673ae3168203f40b223b29293df
+relax/n10_A/TS_opt2/site.ORCAFF.prms            69ae5e0c448b558258ae7abcedbfc7edd9f1ec1f99a089960e3afe659d63eaac
+
+Nothing committed is modified by adding them, so INPUT_CHECKSUMS.sha256 is not touched and these
+eight lines are this note's own record of what was added.
