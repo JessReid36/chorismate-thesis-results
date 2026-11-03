@@ -158,11 +158,28 @@ The designs lower the frozen barrier by **4.9965 to 10.6714 kcal/mol**, giving b
 to 13.3357 kcal/mol**. Every barrier is positive, so every condition remains physically meaningful
 at the frozen geometry.
 
-`[PLACEHOLDER — needs sourcing: the enzyme comparator. The differential transition-state
-stabilisation for BsCM is quoted as 7.3 kcal/mol in HANDOVER_20261014.md, attributed to the
-abstract of Claeyssens et al. (2011), which is in the Project as 2011_paper.pdf. I have not read
-that abstract directly and the figure must be verified against the PDF before it is placed beside
-Table 5. ERRATUM 7 records three comparator figures withdrawn for exactly this reason.]`
+**How this compares with the enzyme.** The quantity to compare against is how much an
+environment lowers this barrier, and for BsCM that has been computed twice by one group at the
+same QM/MM level. The enzyme stabilises the transition state relative to the substrate by
+4.2 kcal/mol in Claeyssens et al. (2005) and by 7.3 kcal/mol in Claeyssens et al. (2011), of
+which 4.7 and 9.9 respectively are electrostatic. The difference between the two studies sits
+entirely in their in vacuo arm, 16.2 against 19.2 kcal/mol, so it reflects the semiempirical
+method used to prepare their starting structures rather than the environment; their QM/MM
+barriers agree to 0.7. Independently, the kinetics of the Arg90-to-citrulline variant place the
+contribution of that one residue at up to 5.9 kcal/mol (Burschowsky et al. 2014), against a
+computed 6.0 for the same residue. **The designs in Table 5 lower a frozen vacuum barrier by
+4.9965 to 10.6714 kcal/mol, which brackets that published range.**
+
+Four mismatches travel with that comparison and are set out in
+`writeup/COMPARATOR_CLAEYSSENS_20261103.md`. Their figures are differences of interaction
+energies at geometries optimised with the environment present, while ours is a frozen barrier
+change — in this system the two agree to about 0.6 kcal/mol, which is what makes the comparison
+usable. Their catalytic effect of 6.1 kcal/mol is measured against water, whereas our control is
+vacuum. A point charge carries no exchange and no dispersion term, and their 7.3 is the sum of
++9.9 electrostatic and −2.6 from MM contributions, so the electrostatic part alone exceeds the
+total. Basis, QM region and geometry source differ throughout: 6-31G(d) and a 24-atom QM region
+at QM/MM-relaxed geometries against def2-SVPD on one frozen frame. The figure is single-lineage,
+so it is attributed wherever it appears and is not a community value.
 
 `[FIGURE 6.N — barrier against Σ|q| for the seven readable conditions, from Table 5, with the
 control at 18.3323 marked. Caption should state the conditions and that all points are frozen
@@ -278,8 +295,12 @@ therefore outside the domain on two independent measured grounds and I report no
 
 1. **The section number.** No chapter outline defines §6.3 or any Stage 6 Results section. See the
    decision block at the head of this file.
-2. **The enzyme comparator.** The 7.3 kcal/mol differential transition-state stabilisation must be
-   read from `2011_paper.pdf` before it is used. Placeholdered in §3.
+2. **The enzyme comparator — closed 3 November 2026.** The full paper was read rather than the
+   abstract: Claeyssens et al., *Org. Biomol. Chem.* 2011, 9, 1578, DOI 10.1039/c0ob00691b, now
+   committed as `chorismate-refs/c0ob00691b.pdf`. The 7.3 kcal/mol figure is a differential
+   transition-state stabilisation, not a barrier change, and the same group's 2005 precursor
+   reports 4.2 kcal/mol for the same quantity. Both are now in §3 with their mismatches; the
+   full reading is `writeup/COMPARATOR_CLAEYSSENS_20261103.md`.
 3. **ECP parameter sensitivity.** Still unmeasured. The literature question is now closed:
    `claude/ECP_BRIEF_20261102.md` and the independent assessment of it establish that the
    library contains exactly one published parameterisation of this class (Marefat Khah et al.
