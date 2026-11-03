@@ -138,7 +138,18 @@ Re-run `checks/verify_barrier_18c_18e_18f.sh` to reproduce every number above.
 
 ## Open provenance items raised 2026-11-03 (not yet resolved)
 
-**P1 — frame extraction differs between branches, and the old version fails silently.**
+**P1 — RESOLVED 2026-11-03. Frame extraction is correct; all 45 frames verified.**
+Every committed frame reproduces the forming-bond C6-C1 distance recorded in its selection
+manifest, to within 0.0005 A: 15 frames from `prod.nc` and **30 from `prod_ext.nc`**, zero
+mismatches. The two-trajectory router was therefore used for every extension frame. The frame
+boundary is **20000** (confirmed independently by `12_frame_selection/12b_nac_select.log`:
+"scanning every 5th of 20000 frames"). **Frame 820, the Phase-1 barrier frame, is at 820 — well
+inside `prod.nc` — so the Phase-1 barrier was never exposed to this risk at all.** Re-runnable as
+`checks/verify_frame_provenance.py`. Control: a second atom pair that matched frame 820 by
+coincidence failed on 12 of 13 other frames, confirming the test discriminates.
+The original concern, retained for the record:
+
+**P1 (original) — frame extraction differs between branches, and the old version fails silently.**
 `phase1_system_dev/step12b_extract.sh` is the QM/MM frame-extraction script; it selects which MD
 snapshot every downstream barrier is computed on. On `tier1-realism` it reads TWO trajectories
 (`04_amber_md/10c_production/prod.nc` plus `10d_production_extend/prod_ext.nc`) and routes a frame
@@ -148,8 +159,7 @@ beyond that file's length returns wrong coordinates rather than an error.
 **Consequence:** any barrier whose snapshot came from the extension segment is only correctly
 attributable on `tier1-realism`. ACTION: cross-check `selection_manifest.tsv` and the Phase-1 frame
 indices (frame 820 included) against the first trajectory's frame count, and record for each
-reported barrier which trajectory its frame came from. Until that is done, no frame index should be
-cited without stating which branch's extractor produced it.
+reported barrier which trajectory its frame came from. — DONE, see the resolution above.
 
 **P2 — 15.78 is RETRACTED; add to the do-not-quote list.**
 Commit `0db07f0` on rebuild-cleanroom claimed "capacitor (50 chg) gives 15.78 vs 17.47 bare (-1.69),
