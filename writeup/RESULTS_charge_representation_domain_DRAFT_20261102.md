@@ -5,8 +5,10 @@
 > every change with its before and after, and git holds the original. The four: Table 4's
 > correlations with max\|q\| (−0.697 / +0.024 → **−0.775 / +0.338**); the sentence that the walled
 > margin shows no dependence on per-site charge (**withdrawn**); Section 6's claim that a parameter
-> error propagates into d_shield "close to one for one" (**withdrawn** — the factor is undetermined
-> between 0 and 1); and the two figure captions that depended on them. Cause: the max\|q\| column
+> error propagates into d_shield "close to one for one" (**withdrawn**; and the replacement's
+> own bound of 0 to 1 was itself measured false by DIAGNOSTIC 23 — see
+> `RESULTS_charge_representation_domain_DRAFT_ERRATUM2_20261103.md`); and the two figure captions
+> that depended on them. Cause: the max\|q\| column
 > of `claude/D22_RESULT_20261102.md` was populated from memory rather than from each bare arm's
 > committed `pc.pc`. Raised by an independent review of `ECP_BRIEF_20261102.md` in a separate
 > session. No barrier, ddE, Dset, stability margin or readability verdict changes, and that is
@@ -188,8 +190,10 @@ attributable to the charge rather than to the projector. Decomposing it:
 | S6-20 at 2.1900 e | 20 | **+0.3270** | −0.6190 | −0.2919 |
 
 **Table 6.** d_shield decomposed into the uncorrected bare-minus-walled discrepancy and the
-chargeless wall term, in kcal/mol. Re-derived from the committed bare, walled and wall-at-zero arms
-listed in Tables 2 and 5.
+chargeless wall term, in kcal/mol, **for the Marefat Khah et al. Ne ecp-all parameter set**.
+Re-derived from the committed bare, walled and wall-at-zero arms listed in Tables 2 and 5.
+DIAGNOSTIC 23 measured the same quantities at the He and Ar sets of the same paper; every
+value in this table moves by 37 to 42 per cent under He.
 
 From five centres upward the uncorrected discrepancy carries the opposite sign to d_shield, and the
 sign of the reported quantity is set by the correction. At S6-5 the uncorrected discrepancy is
@@ -209,11 +213,24 @@ there, which is what D14 Amendment 1 and D15's def2-SVP reading report. The non-
 at def2-SVPD is the reported d_shield. Recorded in
 `phase2.2/cs_stage6/DSHIELD_DECOMPOSITION_ERRATUM1_20261102.md` E1.2.
 
-`[DECISION REQUIRED — whether d_shield is reported in the thesis as a primary observable or as a
-diagnostic. Table 6 shows it is a small residual at n ≥ 5, and the term subtracted to obtain it
-moves by 0.5 to 0.8 kcal/mol under a change of basis alone. The alternative is to report the
-uncorrected discrepancy and the chargeless term separately, which is more transparent but has no
-precedent in the committed pre-registrations.]`
+The same holds for the parameters, and it is now measured rather than feared. DIAGNOSTIC 23
+ran the He and Ar ecp-all sets of the same paper through both arms of all seven conditions.
+The chargeless term moves by −0.9608 to +0.4687 kcal/mol between sets, and every reported
+d_shield moves by 0.0646 to 0.1727 under He, which is 37 to 42 per cent of its own value.
+The charged arm does not track the chargeless one: the ratio of their responses runs from
+−1.28 to +10.31, so the fraction of a parameter error that reaches d_shield is neither
+bounded by one nor fixed in sign. Recorded in
+`phase2.2/cs_stage6/STAGE6_DIAGNOSTIC23_ERRATUM1_20261103.txt`.
+
+**DIAGNOSTIC 23 answers this, and the answer is that d_shield is a diagnostic of the
+representation and not a reportable property of a design.** It is a small residual at n ≥ 5;
+the term subtracted to obtain it moves by 0.5 to 0.8 kcal/mol under a change of basis and by
+up to 0.9608 under a change of published parameter set; and three of the four statements this
+project drew from comparing d_shield across arrangements reverse under an alternative
+published set (`phase2.2/cs_stage6/STAGE6_D15_D16_NOTE1_20261103.txt`). I therefore report
+the uncorrected discrepancy and the chargeless term separately, as Table 6 already
+separates them, name the parameter set wherever a corrected residual is quoted, and build no
+arrangement-comparing claim on that residual.
 
 ---
 
@@ -235,18 +252,24 @@ therefore outside the domain on two independent measured grounds and I report no
   single-reference character. `DIAGNOSTIC19_RESULT.txt` returned DISAGREE on its multireference
   reading and that stands.
 - The Pauli wall uses a published pseudopotential outside the domain its authors validated, recorded
-  in `STAGE6_ERRATUM7_20261026.txt` E7.8. A systematic error in its parameters enters both the
-  charged walled arm and the zero-charge arm, and those two carry opposite signs in d_shield,
-  so the fraction that reaches d_shield lies between nothing and all of it and has never been
-  measured. At def2-SVP the two terms cancel almost exactly; at def2-SVPD they do not, and that
-  non-cancellation is the reported d_shield. Measuring the fraction requires running the charged
-  walled arm as well as the zero-charge arm at an alternative parameter set; a zero-charge-only
-  sweep assumes the answer.
-- Three verdicts that compare arrangements rest on margins far smaller than the term subtracted
-  to obtain them: D16 READING 1's monotonicity on 0.0068 kcal/mol, D16 READING 3's cooperativity
-  on 0.0070, and D15 READING 1's bound on 0.0119, against a chargeless term of 0.18 to 0.72 that
-  moves by 0.5 to 0.8 under a change of basis. Until the parameter experiment above has been
-  run, those three should be reported as properties of this parameter set and this basis.
+  in `STAGE6_ERRATUM7_20261026.txt` E7.8. **DIAGNOSTIC 23 measured what that costs.** Across
+  the two alternative published sets, every reported d_shield moves by 0.0646 to 0.2805
+  kcal/mol, and the charged arm's response does not track the zero-charge arm's: their ratio
+  runs from −1.28 to +10.31, so the fraction of a parameter error reaching d_shield is neither
+  bounded by one nor fixed in sign. That is a physical statement — the projector's response to
+  its own parameters depends on the charge sitting on the centre, which is the assumption E7.8
+  flagged. At def2-SVP the two terms cancel almost exactly; at def2-SVPD they do not, and that
+  non-cancellation is the reported d_shield.
+- **Three verdicts that compare arrangements reverse under an alternative published parameter
+  set, and are therefore properties of the Ne set rather than of the designs.** They rested on
+  margins of 0.0068, 0.0070 and 0.0119 kcal/mol against a subtracted term of 0.18 to 0.72.
+  DIAGNOSTIC 23 ran the He set and D16 READING 1 goes FALLS WITH n → NOT MONOTONIC, D16
+  READING 3 goes COOPERATIVITY FALLS → FLAT, and D15 READING 1 goes NOT BOUNDED → BOUNDED.
+  D16 READING 2 survives, its margin falling from 0.0721 to 0.0126. Under He both of D16
+  READING 3's excesses go negative, so the cooperativity DIAGNOSTICS 12 and 14 reported is not
+  robust to the parameter set and no claim of cooperativity may rest on it. Recorded in
+  `phase2.2/cs_stage6/STAGE6_D15_D16_NOTE1_20261103.txt`. Every bare-arm quantity in this
+  section is unaffected: no bare arm was run in DIAGNOSTIC 23.
 - The region 2.88 to 4.32 e in Σ\|q\| is unmeasured for stability.
 
 ---
