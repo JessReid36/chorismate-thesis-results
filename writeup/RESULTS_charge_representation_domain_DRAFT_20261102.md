@@ -85,8 +85,10 @@ sampled region in per-site charge and in total charge respectively.
 the committed arrangement files and the Dset table, marking readable points filled and the two
 STRAINED points open, with the D17 per-site band 0.5389–0.6500 e shaded. Caption should state that
 n ties the two axes together, so the two cannot be varied independently, and that the two
-exclusions lie on the frontier. Take max|q| from each bare arm's committed pc.pc, not from any
-summary table.]`
+exclusions lie on the frontier. Take both axes from
+`phase2.2/cs_stage6/CHARGE_VECTORS_SUMMARY_20261103.tsv`, which is that reading of each bare
+arm's committed pc.pc, performed once and checked against this draft's own verification log;
+the readable_D6_3 column says which two points are drawn open.]`
 
 ---
 
@@ -308,10 +310,13 @@ therefore outside the domain on two independent measured grounds and I report no
    that no independent alternative exists to compare against. What remains is the measurement:
    the He and Ar sets run through **both** arms of the seven readable conditions, 56 single
    points. Not yet pre-registered.
-4. **A figure of the accessible design region** needs the per-site charge vectors written to a data
-   file; they currently exist only inside `relax/ARRANGEMENTS.txt` and are read
-   programmatically. Writing them out would also have prevented the max\|q\| error this draft
-   was corrected for.
+4. **A figure of the accessible design region — unblocked 3 November 2026.** The per-site
+   charge vectors are now `phase2.2/cs_stage6/CHARGE_VECTORS_20261103.tsv` (one row per point
+   charge) and `CHARGE_VECTORS_SUMMARY_20261103.tsv` (one row per condition), written from each
+   bare arm's committed `pc.pc` by `phase2.2/cs6_charges.py` in the code repository, with
+   `CHARGE_VECTORS_README_20261103.md` beside them. The nine max\|q\| values in the summary
+   re-derive to the nine this draft's verification log states, and each condition's Σ\|q\|
+   re-derives to the value in its own label. The figure needs no further data.
 
 ## Inconsistencies found
 
