@@ -102,7 +102,19 @@ Per `NAMING_CROSSWALK.md` "Superseded (NOT for final numbers)" + `TIER2_KNOWN_IS
   enzyme" headline, the frozen -10.888/-11.354, polarised -12.201/-14.009, the K-sweep).
 - **The mixed-region enzyme barrier 15.08** and the uncommitted **15.3** -- superseded by the
   freq-verified **+16.00** (`TIER2_KNOWN_ISSUES` B3 CLOSED). `notes/model_fidelity_validation_
-  framework.md` still carries 15.3 + a stale cross-check triplet in BOTH repos -- FIX before quoting.
+  framework.md` carried 15.3 + a stale cross-check triplet. **CORRECTED 2026-11-03:** the "BOTH repos"
+  claim in this line was already wrong when written -- the CODE repo copy was fixed on 2026-07-22 in
+  commit `cb5cb5e` and is byte-identical on all three code branches (blob `52dc260f`). Only the
+  RESULTS repo copy was stale, and it has now been synced to the canonical code-repo content. That
+  stale duplicate was the sole source of the 15.3 figure anywhere in either repo, and was what
+  `WRITEUP_INDEX.md` cited. See `CORRECTION_RECORD_20261103.md`.
+- **The capacitor barrier 15.78 and the claim that a uniform point-charge field CATALYSES the
+  relaxed Claisen barrier** -- RETRACTED. Commit `0db07f0` on `rebuild-cleanroom` reported
+  "capacitor (50 chg) gives 15.78 vs 17.47 bare (-1.69)"; commit `eacab5e` retracts it as a
+  DERAILED-SCAN artefact and records the negative result instead: external point-charge fields do
+  not catalyse the relaxed barrier, fixed-geometry OEEF (-10.6) does not survive relaxation, and
+  scans are unreliable here so NEB only. The post-correction values 29.77 / 46.37 (in 4c below)
+  are the ones to quote. Added to this list 2026-11-03; it had never been recorded here.
 - **The +15.771 "frozen" bare barrier** -- superseded by **+17.47** (L0, validated geometry).
 - **`shell_restricted_sweep.py`** and its conclusion -- retracted (misread the 1.7 A grid floor
   as an atom-centre distance; it is a vdW-surface distance).
@@ -128,7 +140,15 @@ Per `NAMING_CROSSWALK.md` "Superseded (NOT for final numbers)" + `TIER2_KNOWN_IS
 ### 4c. KEEP AS-IS (solid, correctly framed)
 - Enzyme QM/MM barrier **+16.00** [retained-final], now fully raw-output-verifiable
   (reactant/TS/product .out all committed).
-- Bare barrier **+17.47** (L0).
+- Bare barrier **+17.47** (L0) -- with two qualifications added 2026-11-03. (i) It is a
+  **CPCM eps=4** value, not a no-environment state: `phase2b_charge_design/02_singlepoints/
+  refstate_diagnostic.pbs` (tier1-realism only) directs that the CPCM barrier be reported as the
+  reference with the continuum contribution stated explicitly, "so that +17.47 is not mistaken for
+  a 'no environment' state". Avoid the bare word "bare" without that qualifier. (ii) L0
+  REPRODUCES 17.47, it does not originate it: `07_rebuild/L0_groundtruth/L0_groundtruth.py`
+  hardcodes `REF_BARRIER = 17.47` and passes on `abs(barrier - REF_BARRIER) < 1.0`, so it is an
+  independent reproduction within a 1.0 kcal/mol gate. The originating value predates `07_rebuild`
+  and sits in `phase2b_charge_design/05_optimise/` on `ad09dfe`. Cite it accordingly.
 - Route B: charge + geometric confinement ~6-7 (6.40/7.23) under held near-attack geometry,
   as a **potential-energy ranking metric** with the deferred-PMF free-energy framing.
 - Route B negative result: unrestrained fields raise the barrier (29.77 / 46.37).

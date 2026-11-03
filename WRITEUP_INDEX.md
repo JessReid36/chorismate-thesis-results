@@ -32,7 +32,7 @@ Theory level throughout the bare/charge work: ORCA 6.0.1, B3LYP-D3BJ/def2-SVP/de
 
 | Barrier (kcal/mol) | System / conditions | Continuum | Status | Source file |
 |---|---|---|---|---|
-| 17.47 | bare dianion, single-point on committed geoms | CPCM eps=4 | canonical bare | L0 (code repo 07_rebuild/L0_groundtruth) |
+| 17.47 | substrate dianion with NO external charges, single-point on committed geoms. **Not a no-environment state** — see P3 | CPCM eps=4 | canonical no-charge reference | originates in `phase2b_charge_design/05_optimise/` @ `ad09dfe`; independently REPRODUCED within a 1.0 kcal/mol gate by `07_rebuild/L0_groundtruth/` @ `acf133b` |
 | 16.00 | enzyme QM/MM, reduced-region OptTS, frame 820, one snapshot, 102-atom consistent region | QM/MM elec-embed | **retained-final**, freq-verified | phase1_system_dev/BARRIER_FINAL.md (code repo); 05_qmmm/18e_reactant_reduced/reactant_reduced.out + 05_qmmm/18c_reduced_region/ts_reduced.out |
 | 29.77 | capacitor (50 charges), UNRESTRAINED relaxed | CPCM eps=4 | negative result | route_b/ROUTE_B_GEOMETRY_CHARGE_RESULT.md; route_b/cap_f0p020_n5_barrier_energy_table.txt |
 | 46.37 | OEEF-020 (6 charges), UNRESTRAINED relaxed | CPCM eps=4 | negative result | route_b/ROUTE_B_GEOMETRY_CHARGE_RESULT.md; route_b/oeefs_..._barrier_energy_table.txt |
@@ -161,13 +161,24 @@ attributable on `tier1-realism`. ACTION: cross-check `selection_manifest.tsv` an
 indices (frame 820 included) against the first trajectory's frame count, and record for each
 reported barrier which trajectory its frame came from. — DONE, see the resolution above.
 
-**P2 — 15.78 is RETRACTED; add to the do-not-quote list.**
+**P2 — DONE 2026-11-03.** Added to the do-not-quote list at
+`OPTIMISER_FORK_AND_WRITEUP_SCOPE.md` section 4a, where it had never been recorded. Note: the
+"15.78" in `05_qmmm/23_c4_reactant/pilot_a2/PILOT_A2_RESULTS.txt` is a COINCIDENCE — it is
+`B3 = E_min(T1) - E_min(R2)` for frame 20000 in the C4 Amendment 2 pilot, unrelated to the
+capacitor. That file is correct and must not be "fixed". Original item:
+
+**P2 (original) — 15.78 is RETRACTED; add to the do-not-quote list.**
 Commit `0db07f0` on rebuild-cleanroom claimed "capacitor (50 chg) gives 15.78 vs 17.47 bare (-1.69),
 uniform point-charge field CATALYSES". Commit `eacab5e` retracts it: a DERAILED-SCAN artefact.
 Fixed-geometry OEEF (-10.6) does not survive relaxation; scans are unreliable here, NEB only. The
 29.77 and 46.37 negative results in the table above are the post-correction values and are correct.
 
-**P3 — 17.47 attribution needs two qualifications.**
+**P3 — LABEL FIXED 2026-11-03; one reporting decision remains.** The table row above is relabelled
+and both qualifications are recorded in `OPTIMISER_FORK_AND_WRITEUP_SCOPE.md` section 4c. STILL
+OPEN as a reporting decision: whether, and how, to decompose the continuum contribution explicitly
+wherever 17.47 is quoted, as `refstate_diagnostic.pbs` directs. Original item:
+
+**P3 (original) — 17.47 attribution needs two qualifications.**
 (i) `07_rebuild/L0_groundtruth` is where 17.47 is REPRODUCED, not where it originates. `L0_groundtruth.py`
 hardcodes `REF_BARRIER = 17.47` and passes on `abs(barrier - REF_BARRIER) < 1.0`. The originating value
 predates `07_rebuild` and sits in `phase2b_charge_design/05_optimise/` on `ad09dfe`. Cite L0 as
