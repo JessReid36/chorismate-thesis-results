@@ -1,0 +1,127 @@
+Stage 6, AMENDMENT 3. 3 November 2026.
+STAGE6_CRITERIA.txt is unchanged and is not edited. This amendment adds ONE arrangement to the list
+of designs that are relaxed, and changes nothing else: not the protocol, not the quantities, not the
+survival criteria, not the tolerance, not its floor, not the failure definitions, and not how G0 and
+kappa are fixed. Every one of those is used exactly as the criteria state them.
+
+WHY
+
+The criteria name S6-5, S6-10 and S6-20 - the committed optimiser's own best designs at those
+counts - as the designs Stage 6 relaxes, and their inputs were committed on 26 October in
+phase2.2/cs_stage6/relax/. Read out of those inputs' own site.ORCAFF.prms files, they carry
+
+   S6-5    5 spheres   sum|q| = 3.0000 e   max|q| = 1.0000
+   S6-10  10 spheres   sum|q| = 4.3800 e   max|q| = 0.5500
+   S6-20  20 spheres   sum|q| = 5.7600 e   max|q| = 0.5500
+
+Three diagnostics have since measured where those fields sit.
+
+   DIAGNOSTIC 20 ran a field ladder on S6-20 and its READING 1 verdict is "ONSET AT lambda 0.75",
+   with lambda 0.50 STABLE at both states. D20 prints lambda, not a charge. On S6-20's own
+   committed field of 5.7600 e those two rungs are sum|q| = 2.88 e and 4.32 e, DERIVED HERE by
+   multiplication and not quoted from D20. S6-10 at 4.3800 e and S6-20 at 5.7600 e are at or above
+   the onset; S6-5 at 3.0000 e is inside the unmeasured 2.88 to 4.32 e window.
+
+   DIAGNOSTIC 17 classified its own designs at full field NOT READABLE under D6.3 - CLEAN,
+   COLLAPSED, STRAINED at n = 10 (sum|q| = 4.2913 e) and at n = 20 (5.6433 e). Those are different
+   arrangements from the three above, with a different per-site profile, but of comparable total
+   field.
+
+   DIAGNOSTICS 15, 16 and 17 established the readable window, and every condition the Results draft
+   reports sits at sum|q| = 1.3000, 1.0777, 1.6166 or 2.1900 e. NONE of those has relaxation inputs.
+
+So the relaxation as committed would relax arrangements whose single points are outside the domain
+the project can read, and the arrangements inside that domain cannot be relaxed at all. This
+amendment adds one of the latter.
+
+THE SELECTION RULE, FIXED HERE AND APPLIED MECHANICALLY
+
+Among the conditions of CHARGE_VECTORS_SUMMARY_20261103.tsv, take those that are
+   (a) readable under D6.3 (readable_D6_3 = yes),
+   (b) at n > 5, and
+   (c) at sum|q| at or below 2.88 e, which is S6-20's committed field times DIAGNOSTIC 20's last
+       fully stable rung, lambda 0.50,
+and choose the one with the LARGEST sum|q|. TWO conditions tie there, both at 2.1900 e - S6-10 at
+2.1900 e and S6-20 at 2.1900 e - so the tie-break is fixed here as well: at equal total field, take
+the LARGER max|q|, as the stricter test of DIAGNOSTIC 17's per-site ceiling of 0.5389 to 0.6500 e.
+That selects S6-10 at 2.1900 e with max|q| 0.2750 e over S6-20 at 2.1900 e with max|q| 0.2091 e.
+
+cs6_y57.py re-derives the whole selection from the committed files and refuses to build if the rule
+does not pick the arrangement these inputs carry, or if the tie-break leaves two conditions level.
+No arrangement is chosen or rejected by an effect it produces: the rule uses n, the total field, the
+largest per-site charge and a readability verdict, and none of those is an effect. The tie was found
+by the gate, not anticipated by me, and the tie-break was fixed before the inputs were built.
+
+The rule selects S6-10 at sum|q| = 2.1900 e - the arrangement committed as n10_bare_A, DIAGNOSTIC
+15's arm A, at max|q| = 0.2750 e. Its inputs are added as relax/n10_A/.
+
+AND IT IS NOT A NEW DESIGN. It is the criteria's own S6-10 AT HALF FIELD: the same ten sites, the
+same Amber N spheres, the same two starting geometries, with every charge multiplied by exactly 0.5.
+That is checked rather than asserted - each of the ten new charges equals the template's charge times
+0.5 to within 1e-12 AND equals the charge in this arrangement's own committed pc.pc, and the ten
+sphere positions in the committed inputs are where that pc.pc puts them to within 1e-9 A. So
+combined.xyz and job.inp of all four jobs are the committed files BYTE FOR BYTE, and the only
+difference anywhere in the four inputs is ten numbers in one column of site.ORCAFF.prms.
+
+DIRECTION
+
+This is the LESS permissive choice, and it is the only direction worth stating here: the selected
+arrangement's committed frozen effect is smaller in magnitude than those of the three the criteria
+name, so the amendment moves the relaxation away from the largest effects and not towards them.
+Nothing here is chosen by the barrier any design reaches.
+
+WHAT IS RUN
+
+Four jobs for the added arrangement, byte-for-byte on the criteria's protocol:
+   relax/n10_A/R_sp    def2-SVP QM/MM EnGrad single point at the fixed reactant geometry
+   relax/n10_A/TS_sp   the same at the fixed transition state
+   relax/n10_A/R_opt   Opt, substrate active, spheres frozen, Cartesian, from the same start
+   relax/n10_A/TS_opt  OptTS from the same start, frequencies to follow
+and the two already committed and not yet run:
+   relax/S6-C/R_opt    relax/S6-C/TS_opt     the no-sphere control, from the same start
+The control's frozen single points are already among the 22 of frozen/FROZEN_REPORT.txt.
+
+ONE CLARIFICATION THE CRITERIA NEED FOR THIS ARRANGEMENT
+
+ddE(frozen) for the Loss comparison is the NEW R_sp and TS_sp pair, at def2-SVP with the spheres in
+the force field. It is not the -10.6714 kcal/mol the Results draft reports for this condition: that
+figure is at def2-SVPD with bare point charges and no Lennard-Jones term, which is a different level
+and a different representation. Loss is a difference within one representation, so both of its terms
+come from the same four new jobs. The draft's figure is unaffected and is not restated here.
+
+WHAT THIS AMENDMENT CANNOT SETTLE
+
+1. One frame, 42436, as the criteria already state.
+2. One arrangement. A single relaxed design cannot calibrate G0 and kappa; the criteria's fit needs
+   the arrangements that meet both survival criteria, and this adds one candidate to that set.
+3. This is not the catalytic verdict. The criteria say so and this amendment does not change it: the
+   verdict is SP_AMENDMENT2.txt A2.5's chain - an optimised transition state with one counted
+   imaginary mode, an IRC in both directions, the ends minimised, and B against the reference by the
+   same chain in the same medium. Nothing here is quoted as a barrier.
+4. The spheres are frozen, which the criteria already name as a limitation rather than a choice.
+
+THE NEW INPUTS
+
+Written by cs6_relaxA.py from the committed sources, and placed by cs6_y57.py only after it has
+checked that each new file's substrate block, job.inp and force-field parameters are the committed
+ones and that only the ten sphere charges and their coordinates differ:
+
+relax/n10_A/R_sp/job.inp                      f219294332eb705ba96253ad9f99b390e768ee17090c95b9f22e85d7828301d5
+relax/n10_A/R_sp/job.pbs                      cde73db9a29415d4b9a16a66afbbfa9be5e6bea79df3bd2dbd8b195aa49373e4
+relax/n10_A/R_sp/combined.xyz                 aefa76b5ff3fba2451f9edb8abf143d926ed50ca7fb8cfffa9cf2811ead558d4
+relax/n10_A/R_sp/site.ORCAFF.prms             69ae5e0c448b558258ae7abcedbfc7edd9f1ec1f99a089960e3afe659d63eaac
+relax/n10_A/TS_sp/job.inp                     f219294332eb705ba96253ad9f99b390e768ee17090c95b9f22e85d7828301d5
+relax/n10_A/TS_sp/job.pbs                     ca76aa06e97916525dfb2f2a28436cdcde54c83e1a8db19182e4f82f00bb5fd1
+relax/n10_A/TS_sp/combined.xyz                818eae6f6f5edcba1b86167edaa1e337971d8673ae3168203f40b223b29293df
+relax/n10_A/TS_sp/site.ORCAFF.prms            69ae5e0c448b558258ae7abcedbfc7edd9f1ec1f99a089960e3afe659d63eaac
+relax/n10_A/R_opt/job.inp                     3ad77478f80f4d3e3118d9450b234d4271fcf00054d9c2a5c465ba28225ae654
+relax/n10_A/R_opt/job.pbs                     60bf5d353be37561b9d74735d669b09a00fd508d4315c3d7d946e284284f0b45
+relax/n10_A/R_opt/combined.xyz                aefa76b5ff3fba2451f9edb8abf143d926ed50ca7fb8cfffa9cf2811ead558d4
+relax/n10_A/R_opt/site.ORCAFF.prms            69ae5e0c448b558258ae7abcedbfc7edd9f1ec1f99a089960e3afe659d63eaac
+relax/n10_A/TS_opt/job.inp                    ac8896c2f39a9631b923d3db4b8de7fd50c3e13c4ee94c2183859efa8d8f187c
+relax/n10_A/TS_opt/job.pbs                    ea84c7a2f365db125758ef2e3bf78528a1f3bc8993c4449b459ccbc693e0c156
+relax/n10_A/TS_opt/combined.xyz               818eae6f6f5edcba1b86167edaa1e337971d8673ae3168203f40b223b29293df
+relax/n10_A/TS_opt/site.ORCAFF.prms           69ae5e0c448b558258ae7abcedbfc7edd9f1ec1f99a089960e3afe659d63eaac
+
+Nothing committed is modified by adding them, so INPUT_CHECKSUMS.sha256 is not touched; these eight
+lines are this amendment's own record of what was added.
