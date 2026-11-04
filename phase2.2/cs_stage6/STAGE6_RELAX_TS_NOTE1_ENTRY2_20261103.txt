@@ -1,0 +1,191 @@
+Stage 6, the relaxation's TS side: NOTE 1, ENTRY 2. 3 November 2026.
+
+STAGE6_CRITERIA.txt is unchanged. STAGE6_RELAX_TS_NOTE1_20261103.txt IS NOT EDITED either: its own
+closing paragraph said a further entry "would be recorded here", but editing a committed record is
+not how this project corrects things, so the entry is this separate dated file and NOTE 1 stands as
+written. It is cited from here and nothing in it is rewritten.
+
+Four things are recorded: a duplicate submission that destroyed its own evidence, what actually
+killed the two TS_opt2 jobs, two wrong figures in NOTE 1, and the overwriting of an uncommitted
+October output. None of them changes a criterion, an arrangement or a verdict.
+
+
+E2.1  THE TS_opt2 PAIR WAS SUBMITTED TWICE
+
+The submission line was run twice in nine seconds. From qstat -fx, 3 November 2026:
+
+   job      name                 node      queued    started   last change   Exit_status
+   423866   cm_s6_C_TS_opt2      comp052   11:25:49  11:25:51  11:26:06      0
+   423868   cm_s6_C_TS_opt2      comp084   11:25:58  11:26:01  11:26:09      0
+   423867   cm_s6_n10_A_TS_opt2  comp044   11:25:49  11:25:51  11:26:04      0
+   423869   cm_s6_n10_A_TS_opt2  comp082   11:25:59  11:26:01  11:27:27      0
+
+Two jobs per directory, overlapping by 5 seconds in relax/S6-C/TS_opt2 and by 3 seconds in
+relax/n10_A/TS_opt2.
+
+The directory cannot hold two. job.pbs writes its scheduler output to a FIXED path,
+
+   #PBS -o /home/18660916/.../relax/<arm>/TS_opt2/job.pbs.out
+
+with no job id in it, and ORCA's output is redirected to a fixed job.out. So each directory has one
+pair of output files for two jobs. The surviving pair is the second job's in both cases, identified
+by the host its own job.pbs.out records: comp084 is 423868 and comp082 is 423869. The first
+submissions' outputs are gone.
+
+Each job.out holds exactly one ORCA banner, so neither file is an interleaving of two runs and both
+are readable. They are still not treated here as a clean record of anything, because two processes
+held each file open at once.
+
+
+E2.2  WHAT KILLED THEM: THE CLEANUP LINE, NOT THE INPUT
+
+job.pbs ends with
+
+   rm -f job.gbw job*.tmp 2>/dev/null || true
+
+which is harmless for one job and removes another job's working files when two share a directory.
+
+   THE CONTROL. 423866 finished at 11:26:06 and its cleanup deleted job.gbw. 423868 was still
+   running, and two seconds later its output says
+
+      ORCA finished by error termination in LEANSCF
+      Calling Command: mpirun -np 8  /home/apps2/ORCA/6.0.1/orca_leanscf_mpi job.gbw job
+      [file orca_main/main_driver_opt1.cpp, line 1805]: ORCA finished with an error in the energy
+      calculation
+
+   - the module was called with job.gbw as its argument and the file had just been removed.
+
+   THE DESIGN. 423867 finished at 11:26:04 and its cleanup deleted job*.tmp. 423869 ran on for
+   another 82 seconds, completed a full self-consistent field ("Finished LeanSCF after 64.8 sec"),
+   and then died at the end of the run on
+
+      !!!                        FATAL ERROR ENCOUNTERED               !!!
+      !!!                           CANNOT OPEN FILE                   !!!
+      !!!               Filename: job.citations.tmp                    !!!
+
+   a scratch file ORCA creates early and reopens at the end.
+
+THIS IS A DIAGNOSIS, NOT A PROOF. It is consistent with every timestamp above, with the cleanup
+line, and with which file each job complained about, and the clean re-runs are what would settle it.
+What it is NOT is an input problem, and that much IS established rather than inferred:
+
+   NEITHER output contains a main_input_check.cpp error. That is where both of this morning's
+   TS_opt jobs died, in one second, having skipped the calculation. Today's two got past input
+   parsing: the design set up its QM/MM region (job.QMRegion.xyz, job.activeRegion.xyz, job.pdb and
+   job_MM.gbw all written), converged an SCF, and failed afterwards on a missing scratch file.
+
+So AMENDMENT 4's three changes are accepted by ORCA 6.0.1. Whether they converge to a first-order
+saddle is a separate question and is not answered here.
+
+
+E2.3  Exit_status AND orca_exit ARE NOT EVIDENCE OF ANYTHING
+
+All four of the jobs above carry Exit_status = 0 from the scheduler, and all four failed. The
+control's own job.pbs.out reports
+
+   orca_exit=0 end=Tue Nov  3 11:26:08 SAST 2026
+
+in the same directory whose job.out says "ORCA finished by error termination in LEANSCF". The
+design's reports orca_exit=64, so the two failures do not even agree with each other.
+
+A number from this project is therefore never licensed by an exit code. cs6_relaxed.py requires the
+literal "****ORCA TERMINATED NORMALLY****" banner and, for a relaxation, "THE OPTIMIZATION HAS
+CONVERGED" and exactly one stationary-point evaluation; it reads the exit codes and prints them as
+an observation beside the run, and uses neither.
+
+
+E2.4  WHAT WAS KEPT, AND WHAT WAS RESUBMITTED
+
+The failed working files were moved aside before anything was rerun, to
+relax/_collision_20261103/ : 16 files from S6-C/TS_opt2 and 20 from n10_A/TS_opt2, 36 in all, with
+their sha256 in relax/_collision_20261103/COLLISION.sha256 on hpc1. NOT COMMITTED - this project
+does not commit failed jobs - and the count matches the two directory listings of E2.1 exactly.
+
+The seven committed inputs were then verified against the sha256 NOTE 1 records for them, all seven
+OK, and each directory was resubmitted ONCE, with a guard that refuses a directory still holding an
+output:
+
+   423870   cm_s6_C_TS_opt2       running
+   423871   cm_s6_n10_A_TS_opt2   running
+
+The committed job.pbs files are NOT changed by this entry. For a single submission the fixed output
+path and the cleanup line are both correct, and the fault was in submitting twice. The guard belongs
+to the submission procedure and is recorded here rather than built into a committed input.
+
+
+E2.5  TWO WRONG FIGURES IN NOTE 1
+
+   (i) NOTE 1's closing section says "these eight lines are this note's own record of what was
+   added" above a list of SEVEN sha256 lines - three for the control, four for the design. The
+   count of files is seven, as that same note's own commit check ("$N staged, expected 7") requires.
+   "Eight" is wrong.
+
+   (ii) NOTE 1's COST section says "which puts these two jobs at the order of forty hours each". It
+   reached that by applying WP4's per-OPTIMISATION-CYCLE time to numerical-Hessian DISPLACEMENTS,
+   and the project's own record contradicts it. The two anchors, both from committed files:
+
+      WP4's armb_anch                 46 cycles in 5 h 58 m on 8 cores  =  466.96 s per cycle
+      18c_reduced_region/ts_reduced    612 displacements inside a total of 4 h 09 m 35 s on 16
+                                       cores  =  at most 24.47 s per displacement, about 48.94 s
+                                       scaled to 8 cores
+
+   a factor of 9.5 between them. They are not the same quantity: an optimisation step moves far
+   enough that the self-consistent field is nearly restarted, while a Hessian displacement is a tiny
+   perturbation whose field converges in a few iterations from the one before it. Applying the first
+   rate to 288 displacements gives 37.36 h, which is where "forty hours" came from, and it is the
+   wrong rate for that term.
+
+   Decomposed instead - cycles at WP4's rate, the 288 displacements of two Hessians at
+   ts_reduced's -
+
+      50 cycles   10.40 h        100 cycles  16.89 h
+      195 cycles  29.21 h        400 cycles  55.80 h
+
+   all inside the week queue's 168 h. These are ESTIMATES from two measured anchors and are labelled
+   as such; the jobs themselves will say.
+
+   NOTED IN PASSING, AND NOT A CORRECTION TO ANYTHING: STAGE6_CRITERIA.txt's own COST section
+   estimates "of order 60-120 core-hours" for "about 16-20 jobs of that size" while naming armb_anch
+   as the size, and armb_anch is 47.73 core-hours by itself, so 16 to 20 of them is 764 to 955
+   core-hours - between 6.4 and 15.9 times the stated range. The pre-registration is not edited and
+   no verdict rests on this figure. It is recorded because the same mis-estimate was repeated in
+   NOTE 1 from the same source.
+
+
+E2.6  AN UNCOMMITTED OCTOBER OUTPUT HAS BEEN OVERWRITTEN
+
+relax/S6-C/R_opt already held a converged relaxation. STAGE6_RELAXATION_STATE_20261028.txt R1
+records it: "ran 21 October 2026. 95 geometry optimisation cycles. THE OPTIMIZATION HAS CONVERGED.
+FINAL SINGLE POINT ENERGY -836.193685389471 Eh". That output was never committed - R5 lists the
+relax directory's 24 outputs under "result committed: -" and says collection was outstanding.
+
+Job 423855, submitted on 3 November 2026 into the same directory, has truncated and is rewriting
+that job.out. The trajectory, the final geometry and the optimisation history of the October run are
+gone; the energy and the cycle count survive only because the 28 October note wrote them down.
+
+This is exactly the loss the rule of 18 October 2026 exists to prevent, and it is recorded rather
+than smoothed over. Two consequences:
+
+   1. 423855 is deterministic and starts from the same committed input, so letting it finish
+      restores a complete output set. Stopping it would leave neither.
+   2. When it converges, its FINAL SINGLE POINT ENERGY against the committed -836.193685389471 Eh
+      is a reproducibility check of the whole QM/MM setup across thirteen days and a different
+      compute node, at no cost. If the two agree it is worth reporting as such. IF THEY DISAGREE,
+      that matters more than the relaxation does, and it is reported before anything is built on
+      either number.
+
+
+E2.7  THE INVENTORY Loss NEEDS, as it stands
+
+   relax/S6-C/R_sp      ran 21 October 2026, terminated normally, COMMITTED in
+   relax/S6-C/TS_sp     frozen/sp_outputs.tar.xz, among the 22 of frozen/FROZEN_REPORT.txt
+   relax/n10_A/R_sp     ran 3 November 2026, terminated normally, ON hpc1, NOT YET DOWNLOADED
+   relax/n10_A/TS_sp    the same
+   relax/S6-C/R_opt     423855, running
+   relax/n10_A/R_opt    423859, running
+   relax/S6-C/TS_opt2   423870, running
+   relax/n10_A/TS_opt2  423871, running
+
+cs6_relaxed.py prints this inventory before it reads anything and refuses to report a partial Loss
+from fewer than all eight. The two n10_A single points are finished and are the next thing to come
+off hpc1.
