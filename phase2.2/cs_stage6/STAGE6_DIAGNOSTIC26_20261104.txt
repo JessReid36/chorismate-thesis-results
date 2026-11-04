@@ -1,0 +1,175 @@
+STAGE 6 - DIAGNOSTIC 26                                                        4 November 2026
+
+IS THE def2-SVP / def2-SVPD DISAGREEMENT ELECTRON-DENSITY SPILL-OUT ONTO UNWALLED POINT CHARGES, OR
+REAL BASIS-SET INCOMPLETENESS?
+
+PRE-REGISTERED BEFORE ITS READING EXISTS. No f_closed value appears anywhere in this document, and
+the reading it defines has deliberately not been computed. STAGE6_CRITERIA.txt is not edited;
+neither is any amendment, erratum or diagnostic. This diagnostic uses no HPC, runs no SCF and calls
+no orca_vpot: every number it will produce is arithmetic over files already committed.
+
+TWO GATES WERE RUN BEFORE THIS DOCUMENT WAS WRITTEN, AND BOTH PASS. They are recorded in D26.3 and
+their results are stated there rather than left implicit. Each establishes a fact about the files -
+a sign convention, and whether two committed files hold the same numbers - and neither can be shaped
+to favour an outcome. The reading is what this pre-registration protects.
+
+   STAGE6_CRITERIA.txt                         sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+   claude/CHARGE_REPRESENTATION_REPORT_20261104.md section 7 item 5 names this limitation
+   STAGE6_DIAGNOSTIC24_EXPLORATORY_20261103.txt is the source of the bare pair, and is EXPLORATORY
+
+
+D26.1  WHY, AND WHY NOW
+
+THE OPEN LIMITATION. DIAGNOSTIC 5 established that def2-SVP and def2-SVPD disagree, and D5.4
+recorded that without def2-TZVPD neither is shown converged. That is still open. D5.3(d)'s criterion
+is |ddE(def2-SVPD) - ddE(def2-SVP)| <= 1.0 kcal/mol, and the measured gap is 0.5183 kcal/mol at
+sum|q| = 1.3000 e, which passes, against 1.0847 at 2.8800 e, which fails. The boundary is not
+localised between them.
+
+TWO EXPLANATIONS, AND THE PROJECT HAS EVIDENCE FOR ONE AND HAS NOT EXCLUDED THE OTHER.
+
+   (a) SPILL-OUT. Diffuse functions let electron density drift toward a positive point charge that
+       presents no repulsion to electrons. Behrens' dissertation names exactly this mechanism on its
+       printed page 28: "With larger basis functions, electron density spilling can become a problem,
+       where the density is overpolarized due a strong interaction with the pure Coulomb charge with
+       no Pauli repulsion", citing Laino et al. 2005, and dismisses it for that work because
+       minimal-basis semi-empirical methods cannot exhibit it. This project's DFT can. If this is the
+       whole story, def2-SVP is the better production basis on physical grounds and def2-TZVPD is not
+       needed to say so.
+
+   (b) REAL INCOMPLETENESS. def2-SVP is simply too small, and part of what def2-SVPD adds is genuine
+       polarisation. DIAGNOSTIC 24's Reading 5 states the risk in its own words: "a basis too small to
+       respond to the embedding is exactly a basis that might also be too small to respond to real
+       polarisation."
+
+THE DISCRIMINATING OBSERVATION, which is what makes this diagnostic possible at all. This project's
+Lennard-Jones wall is CLASSICAL. It acts between a sphere and the substrate's nuclei and never
+enters the electronic Hamiltonian. It prevents geometric collapse and does nothing to prevent
+electronic spill-out. An ECP centre at the charge is a QUANTUM wall and does act on electrons, which
+is why Marefat Khah et al. proposed it and why DIAGNOSTICS 11, 18 and 23 carry Ne, He and Ar arms.
+
+So: if the gap is spill-out, a quantum wall on the charges should move the def2-SVPD answer TOWARD
+def2-SVP. If the gap is real incompleteness, the wall should not close it, and def2-TZVPD becomes
+mandatory before any barrier is quoted.
+
+WHY NOW. D26.3's GATE 2 establishes that the arms needed for this comparison are already committed,
+so the question can be asked for no HPC cost. It was not asked earlier because the identity of
+DIAGNOSTIC 23's and DIAGNOSTIC 24's charge vectors had not been checked.
+
+
+D26.2  WHAT IS READ
+
+Three quantities for one charge vector, at the frozen geometries of frame 42436, in vacuo, all
+already committed. The vector is DIAGNOSTIC 24's 1.3000e_n10: ten sites, sum|q| = 1.3000 e.
+
+      A   ddE at def2-SVP,  bare     STAGE6_DIAGNOSTIC24_NOTE1_20261103.txt, cell 1.3000e_n10 point
+      B   ddE at def2-SVPD, bare     the same cell
+      C   ddE at def2-SVPD, walled   B - d_shield, by the convention GATE 1 establishes
+
+and the reading is the fraction of the bare-basis gap that the quantum wall closes:
+
+      f_closed  =  ( |B - A|  -  |C - A| )  /  |B - A|
+
+C IS FORMED FOR THREE ECP SETS, not one. DIAGNOSTIC 23 established that d_shield is a property of
+the chosen pseudopotential parameter set and that the sets move it by 37 to 42 per cent, so a single
+set would carry an unreported sensitivity. The three are:
+
+      Ne   d_shield carried from DIAGNOSTIC 16, as DIAGNOSTIC 23's conditions table records it
+      Ar   d23/ar_d16_S6-10_wall_F1_{R,TS} with d23/ar_d16_S6-10_wall0_{R,TS} as its correction
+      He   d23/he_d16_S6-10_wall_F1_{R,TS} with d23/he_d16_S6-10_wall0_{R,TS} as its correction
+
+   inputs, all verified unchanged by sha256 before any figure is formed
+
+      STAGE6_DIAGNOSTIC24_NOTE1_20261103.txt  6353d354a5b2fbc08a8d244ac5f5949429ddf1998c75b60bf610bc3df9c7c495
+      STAGE6_DIAGNOSTIC23_20261102.txt        44d9afec5a52b960d45b2b59e41a4e1474c3c355c915d117c17f7fe0546d7cb8
+      d23/DIAGNOSTIC23_RESULT.txt             d954bf696ae557b5b367abacb5fb44f95e66b72aec2735f239e6f9886a898cb1
+      d24/pc_1.3000e_n10.pc                   daf4793d1ec9b3c328046c8f0e80d2697f7286216462bce11934af0c4f199e28
+
+NO NEW CALCULATION. The three D24 cells and the eight D23 arms exist. Nothing is submitted.
+
+
+D26.3  THE GATES, AND THE TWO THAT HAVE ALREADY RUN
+
+GATE 1, THE SIGN CONVENTION. RUN, AND IT PASSES. Getting this backwards inverts the entire reading,
+so it is gated rather than assumed. d_shield is ddE(bare) - ddE(wall), confirmed on eight rows from
+three independent committed places: DIAGNOSTIC 11's standoff ladder (five rows), its ma/svp
+comparison table (two rows), and DIAGNOSTIC 18 Reading 2's explicitly labelled row. The tolerance is
+1.05e-04 kcal/mol, which is the precision of a four-decimal print, since the difference of two such
+values carries up to 1e-04 of rounding. Therefore ddE(wall) = ddE(bare) - d_shield.
+
+GATE 2, VECTOR IDENTITY. RUN, AND IT PASSES. Both files were compared site by site rather than
+inferred from both being described as "S6-10 at 1.30 e". d24/pc_1.3000e_n10.pc and
+d23/ar_d16_S6-10_wall_F1_R/job.inp carry the identical ten-site vector - same charges, same
+coordinates, every site agreeing to better than 1e-06, and 0.00e+00 at the transition state. The He
+arms match likewise. Every walled arm declares def2-SVPD on its keyword line. The wall0 arms differ
+from the vector by exactly the largest charge magnitude in it, which is the expected signature of a
+zeroed-charge control and not a mismatch.
+
+GATE 3, CONTROL REPRODUCTION. NOT YET RUN. The def2-SVP and def2-SVPD charge-free controls must
+reproduce their committed values to 1e-06 Eh, as every Stage 6 diagnostic requires.
+
+GATE 4, READABILITY. NOT YET RUN. Every arm must be CLEAN or POLARISED under D6.3. A STRAINED or
+COLLAPSED arm makes its ddE unquotable; that condition is then dropped and its name recorded, per
+AMENDMENT 1's A1.3. DIAGNOSTIC 23 already reports two of its seven conditions as NOT READABLE for
+this reason, so this gate is not a formality.
+
+GATE 5, NO ANSWER IN THE QUESTION. The reader must refuse to proceed if this document contains any
+f_closed value, any of the four verdict words of D26.4 attached to a figure, or any arithmetic over
+A, B and C. A pre-registration that contains its own answer is not one.
+
+
+D26.4  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT IS COMPUTED
+
+The reading is formed per ECP set and the verdict is taken on the MEDIAN of the readable sets, with
+every set's value reported individually.
+
+   f_closed >= 0.70          SPILL-OUT. The gap is dominated by density drift onto unwalled charges.
+                             def2-SVP is supported as the production basis on physical grounds and
+                             not only by DIAGNOSTIC 24 Reading 5's robustness argument. def2-TZVPD
+                             remains desirable and stops being the blocking item.
+
+   0.30 <= f_closed < 0.70   MIXED. Both mechanisms contribute. def2-TZVPD is required to apportion
+                             them, and the domain statement must say that it is unapportioned.
+
+   0 <= f_closed < 0.30      NOT SPILL-OUT. The wall does not close the gap, so def2-SVP's internal
+                             consistency is not evidence that it is right. def2-TZVPD becomes
+                             MANDATORY before any barrier is quoted.
+
+   f_closed < 0              The wall moves def2-SVPD AWAY from def2-SVP. Reported as measured. It
+                             would falsify the spill-out reading outright, and it is the outcome
+                             that most needs to be reportable, so it is named here.
+
+IF THE THREE SETS STRADDLE A BOUNDARY, the verdict is SET-DEPENDENT and no single verdict above is
+formed. DIAGNOSTIC 23's finding that three committed verdicts reversed on a 0.0068 to 0.0119
+kcal/mol margin is the precedent for naming this outcome in advance rather than discovering it.
+
+PRE-REGISTERED EXPECTATION, recorded so that it can fail. MIXED, leaning spill-out. The basis for
+the expectation is that the committed d_shield magnitudes at def2-SVPD are 0.17 to 0.44 kcal/mol
+against a bare-basis gap of 0.5183 kcal/mol at this field strength - the same order, but not
+obviously larger. This is an expectation and not a result, and the arithmetic that would settle it
+has deliberately not been done.
+
+
+D26.5  WHAT THIS CANNOT SETTLE, WHATEVER IT RETURNS
+
+1. IT CANNOT ESTABLISH BASIS CONVERGENCE. Only a higher-zeta basis can. A high f_closed says the GAP
+   is explained; it does not say def2-SVP is converged. D5.4's requirement stands either way.
+2. THE ECP SETS ARE ONE LINEAGE. Ne, He and Ar come from one paper by one group fitted by one recipe,
+   as ECP_CONVENTION_20261102.md records. Three sets bound the sensitivity from below, not from
+   above, and this diagnostic inherits that bound exactly as DIAGNOSTIC 23 did.
+3. ONE FRAME, 42436, ONE CHARGE VECTOR, at sum|q| = 1.3000 e. That is the one field strength inside
+   D5.3(d)'s passing region, which makes it the cleanest place to ask the question and also the least
+   demanding. The 2.8800 e and 5.6433 e cells have no matching DIAGNOSTIC 23 arm, so extending the
+   test to them is not free and is not claimed here.
+4. FROZEN GEOMETRIES, IN VACUO, and the spheres do not move between the two states.
+5. THE MULTIREFERENCE QUESTION IS UNTOUCHED. DIAGNOSTIC 19's Reading 3 returned DISAGREE and still
+   does, and a basis-set reading says nothing about it.
+6. IT LICENSES NO BARRIER. The catalytic verdict remains SP_AMENDMENT2.txt A2.5's chain.
+7. ITS BARE PAIR COMES FROM AN EXPLORATORY DIAGNOSTIC. DIAGNOSTIC 24 was run before a
+   pre-registration existed and its own record states that nothing in it may be quoted as a Stage 6
+   result in its present form. This diagnostic therefore cannot be quoted in the thesis until
+   DIAGNOSTIC 24's cells are re-registered and re-run. It is run now because it is free and because
+   it tells the project whether the def2-TZVPD campaign is needed; it is not a substitute for that
+   re-registration.
+
+Pre-registered by Jessica, 4 November 2026. Retained-final.
