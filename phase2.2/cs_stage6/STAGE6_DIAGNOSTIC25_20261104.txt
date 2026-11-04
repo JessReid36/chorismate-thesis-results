@@ -1,0 +1,175 @@
+STAGE 6 - DIAGNOSTIC 25                                                        4 November 2026
+
+DOES THE PREDICTED BARRIER REDUCTION COME FROM STABILISING THE TRANSITION STATE, OR FROM RAISING
+THE REACTANT?
+
+PRE-REGISTERED BEFORE ANY OF ITS RUNS EXIST. No figure in this document is a result of it, and no
+design-specific number appears below. STAGE6_CRITERIA.txt is not edited; neither is any amendment,
+erratum or diagnostic. This diagnostic uses no HPC, runs no SCF and calls no orca_vpot: every number
+it will produce is a dot product over files already committed.
+
+   STAGE6_CRITERIA.txt                         sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+   phase2.2/OPTIMISER_REACTANT_TERM_FINDING_20261103.md, section 7, proposes this diagnostic
+   phase2.2/OPTIMISER_REACTANT_TERM_ERRATUM1_20261104.md corrects the source that section 6 named
+
+
+D25.1  WHY, AND WHY NOW
+
+THE ARGUMENT, which is the finding's section 3 and is not restated in full. The objective is
+d_f = sum_i a_if q_i + sum_i L_if z_i with a_if = V_TS,f(r_i) - V_R,f(r_i). a is a DIFFERENCE. A site
+reaches a large favourable a either because V_TS is strongly negative there, so a positive charge
+stabilises the transition state, or because V_R is strongly positive there, so a positive charge
+destabilises the reactant and the barrier falls by raising its foot. a is identical in the two cases.
+Only the difference is ever formed, so the information needed to tell them apart is discarded before
+the solver runs, and none of cs_opt_milp.py's four rules - cardinality, budget, spacing, distinctness
+- references the reactant term.
+
+WHAT MAKES IT URGENT RATHER THAN TIDY. Three things, none of them available when the finding was
+written on 3 November.
+
+   (a) The relaxation of AMENDMENT 3's arrangement, run 3-4 November, returned both survival criteria
+       failing, with its relaxed reactant having moved its centroid 8.8567 A - from 2.61 A to 10.25 A
+       from the centre of a sphere cage 15.90 A across - while its transition state moved 0.6536 A.
+       (Its rotation is not quoted here: the figure available for it comes from cs6_relaxed.py,
+       whose own erratum is outstanding, and unlike the centroid it has not been independently
+       re-derived.) The relaxed reactant and the relaxed transition state are therefore no
+       longer the same complex. A field that offers the reactant somewhere better to sit is exactly
+       what the blindness above permits, and this is the first time the question could be asked of a
+       measurement rather than of the code.
+
+   (b) V_R DOES NOT CHANGE SIGN ANYWHERE ON THE GRID. Measured from the committed
+       absolute_potentials/V_f42436.tsv and recorded in ERRATUM 1 E1.3: across all 2626 sites V_R
+       runs from -164.3739 to -71.6115 kcal/mol per e, while a spans only -6.8436 to +8.3853. So the
+       SIGN of the reactant term is governed by the design's net charge, placement modulating the
+       magnitude within about a factor of two, and the discarded term is roughly an order of
+       magnitude larger per unit charge than the term that is kept.
+
+   (c) cs_opt_milp.py ENFORCES NO CHARGE NEUTRALITY. Its rule set is the four above; net charge is
+       reported (its line 812) and never constrained. GOCAT does constrain it. Dittner & Hartke,
+       J. Chem. Theory Comput. 2018, Sec. 3.3, added the constraint "to erase this artificial
+       freedom" and to "eliminate the redundant total GOCAT charge"; Dittner & Hartke, J. Chem. Phys.
+       152, 114106 (2020), p. 114106-6, state that every model there "always enforced charge
+       neutrality of the total GOCAT, sum_i q_i = 0". Both read from the full papers in
+       chorismate-refs (acs.jctc.8b00151.pdf, 1.5142839.pdf). Taken with (b), net charge is precisely
+       the lever that moves the reactant, and this project has left it free where its source method
+       closed it.
+
+WHY IT MATTERS FOR THIS ENZYME IN PARTICULAR, which is the finding's section 5: Szefczyk, Mulholland,
+Ranaghan & Sokalski, J. Am. Chem. Soc. 2004, 126, 16148 (chorismate-refs/ja049376t.pdf) place
+chorismate mutase's catalysis in differential transition-state stabilisation relative to the bound
+substrate. A design reaching its barrier reduction by raising the reactant would be off-mechanism for
+the enzyme being mimicked, however good its d.
+
+
+D25.2  WHAT IS RUN
+
+NO CALCULATION. One reader, cs6_d25.py, over committed files.
+
+INPUTS, each verified by sha256 before anything is computed:
+   phase2.2/cs_stage6/absolute_potentials/V_f42436.tsv   7b24124a6bac673f57923ad3835535cfc76285af26277b2e64ee462919c49eaf
+   phase2.2/cs_stage6/A_f42436.tsv                       a7faa6c5cacc2f2ee0956f80a1a6645eed1e04cc126830d5f5803d9762eae553
+   phase2.2/cs_stage6/sites_f42436.tsv                   d2a750077d79e34dfecf448c30c2899ae0cea98f1edc5de3d10361b7c357cfc7
+   phase2.2/cs_stage6/relax/ARRANGEMENTS.txt             651e7e228e1409f052bb024b42d125ab59bc86ebee789f3dd60ad1eb5f9c6038
+   the committed site.ORCAFF.prms of each arrangement, for its charges as ORCA read them
+
+A_f42436.tsv's sha256 above is the one relax/ARRANGEMENTS.txt records as the matrix every design was
+chosen from, so the decomposition is of the same A the optimiser saw.
+
+THE DESIGNS COVERED: the seven of ARRANGEMENTS.txt (S6-C, S6-P, S6-2, S6-3, S6-5, S6-10, S6-20), the
+four ADD-* one-sphere runs, and n10_A of AMENDMENT 3. S6-C has no spheres, so its terms are
+identically zero and it serves as the reader's own null control.
+
+THE QUANTITIES, per design, all in kcal/mol:
+   dE_R    = sum_i V_R(r_i)  q_i        the first-order reactant-side term
+   dE_TS   = sum_i V_TS(r_i) q_i        the first-order transition-state-side term
+   d_elec  = dE_TS - dE_R               which must equal sum_i a_i q_i identically
+   q_net   = sum_i q_i                  the net charge, already reported by cs_opt_milp.py
+   sum|q|                               the field strength, for scale
+   f_R     = dE_R / d_elec              the signed share of the predicted effect carried by the
+                                        reactant side
+
+WHAT THE READER MUST CHECK, every one a stop:
+   (a) sum_i a_i q_i computed from A_f42436.tsv equals dE_TS - dE_R computed from V_f42436.tsv, to
+       1e-4 kcal/mol, for every design. This is the identity that licenses the decomposition; if it
+       fails, the two files are not describing the same sites and nothing below is read.
+   (b) (V_TS - V_R) reproduces A_f42436.tsv over all 2626 sites, to 1e-5 kcal/mol per e. ERRATUM 1
+       E1.2 reports 1.000e-06; the reader re-derives it rather than citing it.
+   (c) each design's site indices exist in sites_f42436.tsv and each charge matches that design's
+       committed site.ORCAFF.prms to 1e-9 e.
+   (d) S6-C yields dE_R = dE_TS = d_elec = 0 exactly.
+   (e) for the one BARE arrangement, S6-P, no LJ term is read, as ARRANGEMENTS.txt marks it.
+   (f) every input file's sha256 equals the value recorded in D25.2 above.
+
+WHAT IS REPORTED: a table of the quantities above for every design, the fraction of the pool with
+dE_R > 0 and with dE_R < 0, the Spearman rank correlation between q_net and dE_R with its confidence
+interval, and nothing else. No design is ranked, accepted or rejected by this diagnostic.
+
+
+D25.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT RUNS
+
+The project carries one fraction, fixed once and used in both places it is needed (decision O6, and
+STAGE6_CRITERIA.txt's tolerance): FIFTEEN PER CENT. It is used again here rather than a new number.
+
+   OUTCOME A - THE BLINDNESS NEVER BIT.
+   For every design, |dE_R| is below 15 % of |d_elec|. The predicted effects are predominantly
+   transition-state side, on-mechanism against Szefczyk 2004, and the only consequence is a sentence
+   in the write-up recording that the check was made and what it found. No constraint is added.
+
+   OUTCOME B - OFF-MECHANISM CATALYSIS.
+   One or more designs have dE_R > 0 contributing more than 15 % of |d_elec|. Because V_R is negative
+   everywhere (D25.1 b), dE_R > 0 means negative net charge raising the reactant's energy: the
+   barrier falls partly by lifting its foot. Those designs' barrier reductions do not mean what the
+   write-up says they mean, and that is reported per design and carried into the short list as a
+   stated limitation. It is NOT grounds for deleting a design: the number stands, its interpretation
+   changes.
+
+   OUTCOME C - THE RELOCATION RISK.
+   One or more designs have dE_R < 0 with |dE_R| exceeding |d_elec|. The field is lowering the
+   reactant's energy by more than it changes the barrier, so the reactant sits in a well the design
+   built for it and has an incentive to find the deepest part of it. This is the mechanism the
+   4 November relaxation exhibited, and if the arrangement that relocated is in this outcome, that is
+   a prediction retrodicted rather than a coincidence. It would make the relocation a property of the
+   objective and not of that one arrangement.
+
+   OUTCOMES B AND C CAN BOTH OCCUR, on different designs, and are reported separately.
+
+   THE REMEDY, AND WHICH ONE.
+   If the Spearman correlation between q_net and dE_R excludes zero and is strong, the reactant term
+   is governed by net charge and the remedy is the constraint GOCAT already uses, sum_i q_i = 0, which
+   is one linear row and costs the MILP nothing structurally. If the correlation does not exclude
+   zero, placement dominates net charge and the remedy is the explicit row sum_i V_R(r_i) q_i <= 0
+   proposed in the finding's section 7. In both cases the constraint is linear in q, so the certified
+   gap of zero is preserved.
+
+   ADDING EITHER CONSTRAINT IS NOT DONE BY THIS DIAGNOSTIC AND IS NOT AUTHORISED BY IT. It changes
+   what the optimiser optimises, which is a Stage 5 decision requiring its own dated amendment, a
+   re-solve, and a statement of which committed designs the amended optimiser would no longer
+   produce. This diagnostic only says which remedy the evidence points at.
+
+DIRECTION. Nothing here can favour a lower barrier: the diagnostic computes a decomposition of
+numbers already committed, adds no design, removes no design, and changes no barrier. Both remedies
+it may point at are RESTRICTIONS on the feasible set, so each can only raise the optimiser's
+achievable d, never lower it. If this diagnostic leads anywhere, it leads towards worse scores and
+more defensible ones.
+
+
+D25.4  WHAT THIS CANNOT SETTLE
+
+1. It is FIRST ORDER ONLY, built from the frozen densities of the bare substrate, exactly as a is.
+   It says nothing about polarisation, which decision O1 excludes from the objective and which the
+   pool's re-scoring with full single points carries. A design with dE_R <= 0 at first order could
+   still destabilise the reactant once polarised. The finding's own section 7 states this and it is
+   restated here rather than quietly dropped: the diagnostic bounds the problem, it does not close
+   it.
+2. ONE FRAME, 42436, as every Stage 5 and Stage 6 statement about this project is. V_R is committed
+   for 30 frames in the exploratory development set, but at a different grid (ERRATUM 1 E1.1 c), so
+   a multi-frame version of this diagnostic is not free and is not proposed here.
+3. It is NOT a measure of whether any design catalyses anything. The catalytic verdict remains
+   SP_AMENDMENT2.txt A2.5's chain, and no barrier is quoted by this diagnostic.
+4. It cannot explain the 4 November relocation on its own. A first-order term at the frozen geometry
+   and a relaxed reactant 8.8567 A away are different quantities; outcome C would make the first
+   consistent with the second, not equivalent to it.
+5. It says nothing about the Lennard-Jones term L, which is not a potential and is not decomposed
+   here.
+
+Pre-registered by Jessica, 4 November 2026. Retained-final.
