@@ -1,0 +1,195 @@
+Stage 6, DIAGNOSTIC 24 (3 November 2026).
+
+*** THIS IS NOT A PRE-REGISTERED DIAGNOSTIC. ***
+
+Every other numbered diagnostic in this directory carries the line "Committed before any of its
+runs exist." This one cannot. The runs were executed first, in a conversational exploration of
+whether a smeared-charge representation would retire the spill-out problem, and this record was
+written afterwards from the completed log. It is therefore EXPLORATORY and its status is a scoping
+measurement, not a result. If any number below is to be cited in the thesis, D24 must be
+re-registered and re-run under the convention the other diagnostics follow. Nothing here may be
+quoted as a Stage 6 result in its present form.
+
+The log is d24_smear.log (rows 1-10) and d24_smear_tail.log (rows 11-12), reproduced verbatim in
+D24.4. The driver is d24_smear.py. Both are external to the repository as committed and are
+attached alongside this record.
+
+
+D24.1  THE QUESTION
+
+Is the def2-SVP / def2-SVPD discrepancy that DIAGNOSTIC 5 identified a Coulomb-singularity artefact
+of representing the design sites as mathematical point charges?
+
+If it is, then replacing each point charge with a Gaussian-smeared charge density of finite width
+should reduce the inter-basis gap, because smearing lifts the 1/r singularity at the site centre and
+removes the unphysically deep well into which a diffuse basis function can collapse. If it is not,
+smearing will leave the gap where it is, and the leakage must be happening somewhere other than at
+the site centres.
+
+This question was NOT the fix D5 named. D5.3(c) states that if spill-out is supported "a charge
+model with a Pauli wall for electrons is needed before any high-field number means anything", and
+D5.4 states explicitly that D5 "does not test a charge model with a Pauli wall for electrons, which
+is the fix if spill-out is supported". D24 tests a NON-WALL alternative to that fix. It is a test of
+whether the cheaper option would have been sufficient.
+
+
+D24.2  WHAT WAS MEASURED
+
+ENGINE. pyscf 2.14.0, local, no HPC. B3LYP, density fitting, conv_tol 1e-8, max_cycle 200.
+External charges through pyscf.qmmm.itrf.mm_charge, whose `radii` argument replaces each point
+charge with a Gaussian of that width; radii=None gives point charges. This is a DIFFERENT CODE AND A
+DIFFERENT DISPERSION TREATMENT from the ORCA 6.0.1 B3LYP-D3BJ/def2-J/RIJCOSX pipeline that produced
+every committed Stage 6 number. See D24.5.
+
+GEOMETRIES. The committed 24-atom chorismate dianion at frame 42436, reactant and transition state,
+read from cs_stage6/frame_42436/reactant_qm.xyz and transition_state_qm.xyz. Charge -2, singlet.
+Fixed geometry throughout; nothing was relaxed.
+
+CHARGE VECTORS. Three committed vectors spanning and exceeding the measured domain:
+    1.3000e_n10   10 sites, sum|q| = 1.3000 e   inside the domain
+    2.8800e_n10   10 sites, sum|q| = 2.8800 e   at the edge, and the vector at which D7 Reading 3
+                                                matched S6-10 against S6-20 to 0.0116 kcal/mol
+    5.6433e_n20   20 sites, sum|q| = 5.6433 e   outside, and above the 4.32 e instability onset
+                                                reported by DIAGNOSTIC 20
+
+CHARGE MODELS. point (radii=None), and Gaussian at sigma = 0.25, 0.50, 1.00 Angstrom.
+
+BASES. def2-svp and def2-svpd. 52 SCF solutions in total.
+
+METRIC. ddE = [E(TS,q) - E(TS,0)] - [E(R,q) - E(R,0)], in kcal/mol, which is offset-invariant: any
+constant error common to the four energies cancels exactly. The reported quantity is
+|ddE(def2-SVPD) - ddE(def2-SVP)| against the <= 1.0 kcal/mol criterion of D5.3(d).
+
+
+D24.3  VALIDATION GATE
+
+The point-charge def2-SVPD ddE at 1.3000e_n10 is the one cell of this table that has a committed
+counterpart. S6-10 at 1.3000 e reports ddE = -6.1341 kcal/mol. This run gives -6.1348 kcal/mol.
+
+    agreement: 0.0007 kcal/mol
+
+The gate is passed and the pyscf construction is reproducing the committed ORCA metric for this
+cell. This licenses reading the REMAINING cells as measurements of the same quantity. It does not
+license reading them as Stage 6 results, for the reason in the header.
+
+UNRESOLVED. The bare absolute energies do not reconcile with the committed ones. This run gives
+-836.6340980671 Eh for the bare def2-SVPD reactant; d16/def2-SVPD/ctl_R carries
+-836.249865855127 Eh. The difference is 0.3842 Eh, far too large to be D3BJ plus RIJCOSX. The two
+most likely causes are that ctl_R carries MM context from the QMMM keyword, or that d16 runs on a
+geometry file other than cs_stage6/frame_42436/. THIS IS NOT DIAGNOSED. The ddE metric is
+offset-invariant so the comparisons above stand, but the discrepancy is recorded here as an open
+item and must be resolved before D24 is re-registered.
+
+
+D24.4  THE NUMBERS, VERBATIM FROM THE LOGS
+
+=== bare references (no external charges) ===
+  def2-svp   R   -836.5244941841 Eh  converged=True
+  def2-svp   TS  -836.4920524039 Eh  converged=True
+  def2-svpd  R   -836.6340980671 Eh  converged=True
+  def2-svpd  TS  -836.6018545626 Eh  converged=True
+
+=== ddE by charge vector, basis and charge model (kcal/mol) ===
+vector         model           ddE_SVP     ddE_SVPD  |inter-basis| conv
+1.3000e_n10    point           -5.6165      -6.1348         0.5184 True
+1.3000e_n10    gauss0.25       -5.6165      -6.1337         0.5172 True
+1.3000e_n10    gauss0.50       -5.6168      -6.1299         0.5131 True
+1.3000e_n10    gauss1.00       -5.6158      -6.0965         0.4807 True
+----------------------------------------------------------------------------
+2.8800e_n10    point          -13.1924     -14.2771         1.0847 True
+2.8800e_n10    gauss0.25      -13.1925     -14.2913         1.0989 True
+2.8800e_n10    gauss0.50      -13.1932     -14.3154         1.1222 True
+2.8800e_n10    gauss1.00      -13.1937     -14.2864         1.0927 True
+----------------------------------------------------------------------------
+5.6433e_n20    point          -24.0704     -10.5550        13.5154 True
+5.6433e_n20    gauss0.25      -24.0707     -10.7246        13.3461 True
+5.6433e_n20    gauss0.50      [PENDING - see D24.7]
+5.6433e_n20    gauss1.00      [PENDING - see D24.7]
+
+Every SCF reported above converged.
+
+
+D24.5  WHAT THIS CANNOT TEST
+
+It cannot say anything about the ORCA pipeline's absolute numbers. Different code, different
+dispersion treatment, and an unreconciled 0.3842 Eh offset on the bare energies.
+
+It does not test a Pauli wall. The ECP arms of DIAGNOSTIC 23 do that. D24 tests only whether
+smearing alone would have substituted for one.
+
+One frame, one design geometry, fixed nuclei, three charge vectors, three widths. It cannot
+localise the gap in sum|q| between 1.3000 e and 2.8800 e, where the D5.3(d) boundary now falls.
+
+It says nothing about def2-TZVPD, so it cannot say the def2-SVPD numbers are themselves converged -
+the same limitation D5.4 records.
+
+It says nothing about additivity, about Loss, or about whether b varies between sites.
+
+
+D24.6  READINGS
+
+READING 1. SMEARING DOES NOT CLOSE THE GAP. At 1.3000 e the gap falls from 0.5184 to 0.4807 as
+sigma goes from 0 to 1.00 Angstrom, a reduction of 7.3 per cent. At 2.8800 e it does not fall at
+all: 1.0847 at point, 1.0927 at sigma = 1.00, having risen to 1.1222 at sigma = 0.50. At 5.6433 e
+the reduction from point to sigma = 0.25 is 1.3 per cent against a gap of 13.5 kcal/mol. No width
+tested brings any failing cell to the D5.3(d) criterion.
+
+READING 2. THEREFORE THE LEAKAGE IS NOT AT THE SITE CENTRES. A Gaussian of width sigma is
+numerically indistinguishable from a point charge at distances beyond roughly 3 sigma. The design
+sites sit on the van der Waals union surface, further from the QM density than 3 Angstrom. The
+smeared potential therefore differs from the point potential only in a region the QM density barely
+occupies, and the measurement is consistent with that: the effect is small, and it is largest at the
+smallest sum|q| where the density is least distorted. The inter-basis discrepancy is not a
+singularity artefact. It is diffuse-tail over-polarisation in a region with no repulsive wall.
+
+This is what the authors of the pseudopotential method state in print. Marefat Khah, Reinholdt,
+Olsen, Kongsted and Hattig (acs.jctc.9b01162) list Gaussian-smeared charge densities among the
+approaches that "can cure" electrostatic singularities and charge penetration, and then rule the
+class out for this problem: "However, these methods do not capture the effects of the Pauli exchange
+repulsion on the electronic wavefunction." D24 is a measurement of that sentence on this system.
+
+READING 3. THE D5.3(d) BOUNDARY, STATED CORRECTLY. D5.3(d) asks for the largest point at which
+|ddE(def2-SVPD) - ddE(def2-SVP)| <= 1.0 kcal/mol. Of the three vectors run:
+
+    1.3000 e   0.5184   PASSES
+    2.8800 e   1.0847   FAILS  (marginally, by 0.0847)
+    5.6433 e  13.5154   FAILS  (by an order of magnitude)
+
+The boundary therefore lies BETWEEN 1.3000 e and 2.8800 e and has not been localised. It is NOT at
+or above 2.8800 e. Any statement that the committed def2-SVP numbers are basis-converged up to
+2.8800 e, or "to about 2.9 e", is wrong: 2.8800 e fails the criterion. Localising the boundary needs
+a scan between the two, which D24 did not run.
+
+Note what this costs. 2.8800 e is the vector at which D7 Reading 3 matched S6-10 against S6-20 to
+0.0116 kcal/mol - the total-field-only result that the design argument rests on. That match is a
+def2-SVP result and D7 Reading 3 is unaffected by anything here. But the def2-SVP number AT that
+vector is not basis-converged by D5.3(d), and the two facts must be reported together.
+
+READING 4. THE DOSE-RESPONSE IS MONOTONIC AND CORROBORATES D20. 0.52, 1.08, 13.52 kcal/mol at
+1.3000, 2.8800 and 5.6433 e. The collapse between the second and third is far steeper than linear
+and brackets the 4.32 e instability onset DIAGNOSTIC 20 reports from an independent measurement.
+Two instruments, two quantities, same boundary region.
+
+
+D24.7  OUTSTANDING
+
+Two cells of the twelve are not computed: 5.6433e_n20 at sigma = 0.50 and sigma = 1.00. The run that
+would have produced them was stopped at its execution time limit after completing ten. They sit at
+the vector that is already outside the domain of validity and already failing by an order of
+magnitude, and the two cells adjacent to them move the gap by 1.3 per cent, so they are not expected
+to change any reading above. THEY ARE NONETHELESS MISSING AND ARE NOT TO BE REPORTED AS COMPLETE.
+When they land they are to be appended here as D24 NOTE 1 with the log, not substituted into D24.4.
+
+Also outstanding: the 0.3842 Eh bare-energy discrepancy of D24.3, which must be diagnosed before
+re-registration.
+
+
+D24.8  WHAT FOLLOWS, AND WHAT DOES NOT
+
+What follows: smearing is not a route to retiring the def2-SVPD problem, and the cheaper substitute
+for a Pauli wall does not work on this system. The wall arms of DIAGNOSTIC 23 remain the only tested
+remedy in the record.
+
+What does not follow: nothing about whether the committed def2-SVP numbers are right. D24 measures
+the DISAGREEMENT between two bases. It does not establish which of them is closer to the truth, and
+D5.4's limitation stands - without def2-TZVPD neither basis is shown to be converged.

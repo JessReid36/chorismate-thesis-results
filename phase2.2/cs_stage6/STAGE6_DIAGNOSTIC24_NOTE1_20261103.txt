@@ -1,0 +1,131 @@
+Stage 6, DIAGNOSTIC 24, NOTE 1 (3 November 2026).
+
+Supplies the two cells recorded as outstanding in D24.7. Appends; does NOT substitute into D24.4,
+which keeps its [PENDING] markers so that the record shows what was known when it was written.
+
+D24 remains EXPLORATORY and remains not pre-registered. Nothing here changes that.
+
+The log is d24/d24_smear_tail.log. The driver is d24/d24_smear_tail.py, which is d24_smear.py with
+VECS and MODELS narrowed to the two missing cells and nothing else changed.
+
+
+N1.1  WHY A SECOND RUN
+
+The run that produced D24.4 was stopped at its execution time limit after ten of twelve cells. It had
+already been given the longest limit available, so it was not restarted; the two remaining cells were
+run as a separate, narrower job instead.
+
+
+N1.2  DETERMINISM CHECK, UNPLANNED BUT WORTH RECORDING
+
+The narrowed run recomputes all four bare references before its charge cells. They came back
+identical to the first run in every printed digit:
+
+                     first run              second run
+  def2-svp   R     -836.5244941841      -836.5244941841
+  def2-svp   TS    -836.4920524039      -836.4920524039
+  def2-svpd  R     -836.6340980671      -836.6340980671
+  def2-svpd  TS    -836.6018545626      -836.6018545626
+
+Bit-for-bit agreement to ten decimal places across two independent process invocations. This was not
+a planned test and is not a validation of anything beyond the driver's reproducibility, but it is
+recorded because it was free.
+
+The driver exited with a KeyError in its final summary block, which computes each smeared cell's
+reduction relative to the point cell of the same vector. The narrowed run contains no point cell, so
+the lookup failed. The failure is after all SCF work and all printing of results, and it affects no
+reported number. The reductions in N1.4 were computed separately from the two logs.
+
+
+N1.3  THE TWO CELLS
+
+vector         model           ddE_SVP     ddE_SVPD  |inter-basis| conv
+5.6433e_n20    gauss0.50      -24.0724     -10.2091        13.8632 True
+5.6433e_n20    gauss1.00      -24.0895     -13.1093        10.9802 True
+
+Both SCFs converged.
+
+
+N1.4  D24 COMPLETE, TWELVE CELLS, WITH D5.3(d) VERDICTS
+
+vector         model       ddE_SVP   ddE_SVPD      gap   D5.3(d)  gap vs point
+1.3000e_n10    point       -5.6165   -6.1348   0.5183   PASS        +0.0%
+1.3000e_n10    gauss0.25   -5.6165   -6.1337   0.5172   PASS        +0.2%
+1.3000e_n10    gauss0.50   -5.6168   -6.1299   0.5131   PASS        +1.0%
+1.3000e_n10    gauss1.00   -5.6158   -6.0965   0.4807   PASS        +7.3%
+2.8800e_n10    point      -13.1924  -14.2771   1.0847   FAIL        +0.0%
+2.8800e_n10    gauss0.25  -13.1925  -14.2913   1.0988   FAIL        -1.3%
+2.8800e_n10    gauss0.50  -13.1932  -14.3154   1.1222   FAIL        -3.5%
+2.8800e_n10    gauss1.00  -13.1937  -14.2864   1.0927   FAIL        -0.7%
+5.6433e_n20    point      -24.0704  -10.5550  13.5154   FAIL        +0.0%
+5.6433e_n20    gauss0.25  -24.0707  -10.7246  13.3461   FAIL        +1.3%
+5.6433e_n20    gauss0.50  -24.0724  -10.2091  13.8633   FAIL        -2.6%
+5.6433e_n20    gauss1.00  -24.0895  -13.1093  10.9802   FAIL       +18.8%
+
+A positive percentage is a reduction of the gap relative to the point charge at the same vector; a
+negative one means smearing made the gap WORSE.
+
+Readings 1 to 4 of D24.6 stand unchanged. Eight of twelve cells fail D5.3(d); the four that pass are
+all at 1.3000 e, and every cell at 2.8800 e and 5.6433 e fails under every charge model tested. The largest reduction anywhere is 18.8 per cent, at 5.6433 e and sigma = 1.00, which
+takes the gap from 13.5154 to 10.9802 kcal/mol - an order of magnitude above the criterion either
+way, at a vector already outside the domain and above the 4.32 e instability onset of DIAGNOSTIC 20.
+No width tested brings any failing cell to the criterion, which is what D24.6 Reading 1 says.
+
+Two things D24.6 could not say, now that the column is complete:
+
+  (a) THE RESPONSE TO WIDTH IS NOT MONOTONIC AT 5.6433 e. The gap runs 13.5154, 13.3461, 13.8633,
+      10.9802 as sigma goes 0, 0.25, 0.50, 1.00. It falls, rises above the point value, then falls
+      sharply. At the two in-domain vectors the response is monotonic and tiny. A non-monotonic
+      response to a smooth perturbation of the embedding is a further sign that the def2-SVPD numbers
+      at this vector are not well behaved, independently of their disagreement with def2-SVP.
+
+  (b) ddE_SVPD AT 5.6433 e SWINGS BY 2.9 kcal/mol ACROSS THE FOUR MODELS, FROM -10.2091 to -13.1093.
+      See N1.5, which is the one genuinely new reading in this note.
+
+
+N1.5  READING 5 (NEW). THE SENSITIVITY TO THE CHARGE MODEL LIVES ENTIRELY IN THE DIFFUSE BASIS.
+
+Spread of ddE across the four charge models (max minus min), per basis, per vector, in kcal/mol:
+
+  vector            def2-SVP    def2-SVPD      ratio
+  1.3000e_n10         0.0010       0.0383       38.3x
+  2.8800e_n10         0.0013       0.0383       29.5x
+  5.6433e_n20         0.0191       2.9002      151.8x
+
+All six figures are far above the numerical floor of 1.4e-08 kcal/mol
+(NUMERICAL_FLOOR_20261101.md), so all six are real.
+
+def2-SVP does not care whether a design site is a mathematical point or a Gaussian of width 1
+Angstrom. Over the whole in-domain range it answers the same to about one thousandth of a kcal/mol,
+and even at 5.6433 e to two hundredths. That is the expected behaviour of a density that does not
+reach the site: the two embeddings differ only where there is nothing to differ about.
+
+def2-SVPD does care, by one and a half to two orders of magnitude more, and out of domain it swings
+by 2.9 kcal/mol - larger than many of the barrier changes this project reports.
+
+THE ARGUMENT THIS SUPPLIES. D5 established that the two bases DISAGREE and left open which is closer
+to the truth; D5.4 records that without def2-TZVPD neither is shown to be converged, and that
+limitation still stands. Reading 5 does not close it, but it adds something D5 could not see: of the
+two bases, only one gives an answer that depends on how the embedding is drawn. A basis whose ddE
+moves by 2.9 kcal/mol according to whether a point charge is blurred over 1 Angstrom is reporting a
+property of the basis and not of the chemistry. That is an argument for def2-SVP as the production
+basis which does not depend on knowing which basis is right, and it is independent of, and consistent
+with, the spill-out reading of D24.6 Reading 2.
+
+WHAT READING 5 DOES NOT SAY. It does not say def2-SVP is correct. A representation-insensitive
+answer can still be a converged-to-the-wrong-thing answer, and a basis too small to respond to the
+embedding is exactly a basis that might also be too small to respond to real polarisation. The
+honest statement is narrower: def2-SVP's numbers are robust to the charge representation and
+def2-SVPD's are not, and robustness is a necessary but not sufficient condition for trusting them.
+Settling correctness still needs def2-TZVPD, or the walled arms of DIAGNOSTIC 23, or both.
+
+
+N1.6  WHAT IS STILL OUTSTANDING FROM D24
+
+The 0.3842 Eh discrepancy between this driver's bare def2-SVPD reactant (-836.6340980671 Eh,
+now reproduced twice) and the committed d16/def2-SVPD/ctl_R (-836.249865855127 Eh) is NOT diagnosed.
+The determinism check of N1.2 rules out run-to-run variation in this driver as the cause and leaves
+the two hypotheses of D24.3 standing: MM context in ctl_R, or a different geometry file under d16.
+This must be resolved before D24 is re-registered.
+
+All twelve cells of the D24 grid are now computed. Nothing else of D24 is outstanding.
