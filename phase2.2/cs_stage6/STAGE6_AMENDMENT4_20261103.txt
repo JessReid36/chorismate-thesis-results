@@ -1,0 +1,199 @@
+Stage 6, AMENDMENT 4. 3 November 2026.
+
+THE COORDINATE SYSTEM AND THE HESSIAN OF THE RELAXATION'S TRANSITION-STATE SIDE.
+
+STAGE6_CRITERIA.txt is NOT edited.   sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+STAGE6_AMENDMENT1.txt, STAGE6_AMENDMENT2_20261027.txt, STAGE6_AMENDMENT3_20261103.txt and
+STAGE6_ERRATUM1.txt all stand unchanged. No committed number is withdrawn by this amendment.
+
+
+A4.1  WHAT THIS DECIDES, AND WHY IT HAS TO BE AN AMENDMENT RATHER THAN A NOTE
+
+STAGE6_ERRATUM1.txt did not merely record the relaxation protocol's coordinates - it CHOSE them.
+Its section E6.1, "THE RUN THAT IS MEANT, AND THE PROTOCOL AS IT WILL BE", rejected armb_anch
+(which had anchored four ring carbons and optimised in ORCA's default redundant internals) and took
+phase2.2/wp4_s13_rerun/armb_freecart/job.inp instead, quoting it in full:
+
+      %geom
+        MaxIter 1000
+        coordsys cartesian
+        ProjectTR false
+      end
+
+So "Cartesian coordinates" in STAGE6_CRITERIA.txt line 83 is a deliberate choice backed by a
+converged run, not a slip. Changing it is therefore a change to the protocol.
+
+STAGE6_RELAXATION_STATE_20261028.txt says exactly that, in its section R4:
+
+      "Cartesian coordinates are how the frozen surroundings are held, so moving to redundant
+      internals is a change to the protocol and not a correction to it. Until that is decided,
+      Loss, G0 and kappa are not merely unmeasured - they are unmeasurable [...] Deciding it
+      requires a dated amendment, as HANDOVER_20261026.md section 8 item 10 already says. This
+      note does not propose one and does not decide it."
+
+STAGE6_RELAX_TS_NOTE1_20261103.txt then made the change and recorded it as a note. That was the
+wrong instrument: a note records, an amendment decides, and this is a decision. This amendment is
+that decision, taken on the same three changes NOTE 1 describes, with nothing new added to them.
+NOTE 1 is not edited; it stands as the record of the refusals.
+
+
+A4.2  WHY THE PROTOCOL AS PRE-REGISTERED CANNOT BE EXECUTED
+
+ORCA 6.0.1 refuses OptTS with coordsys cartesian at input parsing, before any calculation. Verbatim
+from relax/S6-C/TS_opt/job.out, job 423856, 3 November 2026:
+
+      WARNING: You cannot use transition state optimization for a Cartesian optimization!!!
+               Please choose optimization with redundant coordinates (!OPT)
+        ===>   Skipping actual calculation
+      [file orca_main/main_input_check.cpp, line 8049]: Error (ORCA_MAIN): ... aborting the run
+
+and from relax/n10_A/TS_opt/job.out, job 423860, the same day, at line 7942 of the same source
+file, the Hessian half of the same refusal. Neither output is committed; NOTE 1 is their record.
+
+This is not a convergence failure or a resource problem. The reactant side of the protocol runs
+exactly as pre-registered and is unaffected: S6-C/R_opt converged in 95 cycles on 21 October 2026
+in Cartesians, and both reactant relaxations are running in Cartesians now.
+
+
+A4.3  WHAT CHANGES, AND ONLY ON THE TRANSITION-STATE SIDE
+
+From this date, the relaxation's TS side is specified as:
+
+      ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF [QMMM] OptTS NumFreq
+      %geom
+        MaxIter 1000
+        Calc_Hess true
+        Hybrid_Hess {the 24 substrate atoms} end
+      end
+
+   1. NO coordsys cartesian and NO ProjectTR. The optimisation runs in ORCA's default redundant
+      internal coordinates.
+   2. Calc_Hess true with Hybrid_Hess over the 24 substrate atoms, which supplies the Hessian a
+      saddle-point search needs.
+   3. NumFreq, not Freq: numerical frequencies.
+
+THE REACTANT SIDE IS NOT TOUCHED. It keeps coordsys cartesian and ProjectTR false as ERRATUM 1
+E6.1 set them, so that it remains the protocol WP4's converged armb_freecart demonstrated.
+
+The two sides of the barrier therefore use different optimisation coordinates. That is stated here
+rather than left to be noticed, and A4.5 says why it does not affect what is measured.
+
+
+A4.4  WHERE THE REPLACEMENT COMES FROM, AND WHAT IT IS NOT
+
+Not invented here. All three features are read off runs of this project that converged, on this
+frame, with this ORCA, and both are committed:
+
+   05_qmmm/24_sp_barriers/f42436_r8_a1/ts/core.inp - the run that produced the ts/final.xyz every
+   one of these relaxations starts from - carries OptTS, Calc_Hess true and Hybrid_Hess over its 24
+   QM atoms, in default redundant internals. Note what this directory does and does not hold: its
+   core.gbw.xz is committed and its job.out is not, so what can be said from the directory itself
+   is that the job ran an SCF, not that it terminated normally.
+
+   05_qmmm/18c_reduced_region/ts_reduced.out IS committed in full, and it settles the Hessian
+   question outright. Its echoed input (its lines 212 to 218) is OptTS NumFreq with Calc_Hess true
+   and Hybrid_Hess; at its line 197 ORCA prints
+
+      WARNING: Analytical Hybrid or Partial Hessian not available!
+        ===> : Switching to Numerical Hessian!
+
+   - a WARNING, after which it builds the hybrid Hessian (its line 3722), completes 612
+   displacements twice, converges (line 93713) and terminates normally (line 148462) after 4 h 09 m
+   35 s. The same first line appeared in 423860 and was fatal there, because Freq had put that job
+   on the analytical path and there was nothing to switch to. NumFreq is the whole difference
+   between a refusal and a converged transition state in this project's own files.
+
+   Its CoordSys line (line 300) reads "Redundant Internals", so the run that is being copied is a
+   redundant-internals run.
+
+WHAT IS NOT CARRIED OVER: core.inp's TightOpt, which this amendment does not add. The convergence
+thresholds stay as the pre-registered protocol has them.
+
+
+A4.5  WHY THIS DOES NOT CHANGE WHAT IS MEASURED
+
+A stationary point is a property of the potential energy surface. The coordinates an optimiser
+walks in change the route and whether it arrives; they do not move the minimum or the saddle, and
+they do not change the energy at it. What is measured here is a difference of four converged
+energies, so it is coordinate-independent at convergence, and the reactant and TS sides using
+different coordinates does not make their energies incomparable.
+
+What holds the spheres still is NOT the coordinate system. STAGE6_CRITERIA.txt line 83 states it:
+"ActiveAtoms = the substrate only; the spheres fixed in the force field". Removing coordsys
+cartesian from the TS side leaves ActiveAtoms and the force field untouched, so the spheres stay
+exactly as frozen as before. R4's phrase "Cartesian coordinates are how the frozen surroundings are
+held" is corrected here: ActiveAtoms is how they are held.
+
+The criteria's test on the relaxed transition state is UNCHANGED and is not weakened: "a TS that
+does not return exactly one imaginary mode is reported as such and is not used for a relaxed
+barrier". Under NumFreq that test is actually applied, where under the refused input no frequency
+was computed at all.
+
+ONE THING THE PRE-REGISTERED CHOICE COSTS, measured rather than argued: on WP4's own three arms,
+the same systems from the same starting geometries, redundant internals converged in far fewer
+cycles than Cartesians (wp4_results.tsv) -
+
+      arma   30 cycles against 213, a factor of 7.10
+      armb   25 cycles against 195, a factor of 7.80
+      armc  130 cycles against 222, a factor of 1.71
+      totals 185 against 630, a factor of 3.41
+
+so the TS side's forced move to redundant internals is also the cheaper one. This is stated because
+it must not be mistaken for the reason: the reason is that the pre-registered form does not run.
+
+
+A4.6  DIRECTION
+
+Nothing in this amendment is chosen by the barrier any design reaches, and nothing in it favours a
+lower one. The coordinate system does not move the stationary point; the Hessian provision does not
+change the energy at it; and the only criterion this touches - the imaginary mode count - becomes
+testable where it previously was not. The geometries, the arrangement, the tolerance and its floor
+were all fixed before any relaxation ran and are untouched here.
+
+The one direction worth naming: redundant internals is the more PERMISSIVE choice in the sense that
+a search can converge where the pre-registered form cannot start. That permissiveness is about
+whether a number exists at all, not about which number it is.
+
+
+A4.7  THE RESIDUAL RISK ON THE CONTROL, STATED BEFORE IT IS RUN
+
+Hybrid_Hess is how ORCA names an exact-over-these-atoms Hessian when part of the system is
+molecular mechanics. The control S6-C has no MM region: its 24 atoms are the whole system, and
+18c_reduced_region/ts_reduced.out line 176, "Adapting HybridHessAtoms definition to QMMM optRegion",
+is a remapping that cannot happen without a QM/MM block. Listing all 24 atoms therefore asks for
+the full Hessian, which is what the control needs, and it keeps the two arms' %geom blocks
+identical.
+
+No committed run of this project uses Hybrid_Hess without a QM/MM block, so this one line of the
+control's input has no precedent here. If ORCA refuses it, the fix is to delete that line from the
+control's input ONLY. That is a no-op for the control, because the list names every atom it has and
+Calc_Hess true alone computes the same full Hessian. It would be recorded as NOTE 1's further
+entry, not applied quietly.
+
+
+A4.8  WHAT THIS AMENDMENT CANNOT SETTLE
+
+1. Whether either TS search converges, and whether what it reaches is a first-order saddle. The
+   criteria's own test decides that and this amendment does not pre-empt it.
+2. The imaginary mode count may not be one. 18c_reduced_region returned TWO on the Hessian computed
+   on the way in, at 313.30 and 18.65 cm-1, and ONE at the stationary point, at 313.07 - its line
+   3843 against its line 97306. Which block is read decides the answer; the reader takes the one
+   after the stationary point. If two appear there it is reported, not resolved.
+3. Nothing about the reactant side, which runs under the protocol as pre-registered.
+4. Nothing about Loss's sign. STAGE6_LOSS_SIGN_FINDING_20261103.txt records a separate and
+   unresolved problem in STAGE6_CRITERIA.txt lines 109 and 139, and this amendment does not touch
+   it. A relaxation that runs is not the same thing as a tolerance that can fail.
+5. Nothing about the catalytic verdict, which remains SP_AMENDMENT2.txt A2.5's chain: an optimised
+   transition state with one counted imaginary mode, an IRC in both directions, the ends minimised,
+   and B against the reference by the same chain in the same medium. No barrier is quoted here.
+
+
+A4.9  WHAT RUNS UNDER IT
+
+The two input sets STAGE6_RELAX_TS_NOTE1_20261103.txt added and records the sha256 of:
+
+   relax/S6-C/TS_opt2     the control, no QM/MM block
+   relax/n10_A/TS_opt2    the design, AMENDMENT 3's arrangement
+
+Both were submitted on 3 November 2026 and both are governed by this amendment. Decided by Jessica,
+3 November 2026.
