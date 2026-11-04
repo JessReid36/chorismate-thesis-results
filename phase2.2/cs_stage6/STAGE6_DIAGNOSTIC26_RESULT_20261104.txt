@@ -1,0 +1,152 @@
+STAGE 6 - DIAGNOSTIC 26, RESULT                                                4 November 2026
+
+THE QUANTUM WALL CLOSES BETWEEN 28 AND 73 PER CENT OF THE BASIS GAP DEPENDING ON WHICH NOBLE-GAS
+PSEUDOPOTENTIAL IS USED. THE THREE SETS STRADDLE BOTH DECISION BOUNDARIES, SO NO SINGLE VERDICT IS
+FORMED AND def2-TZVPD IS NOT AVOIDABLE.
+
+Pre-registered in STAGE6_DIAGNOSTIC26_20261104.txt, which is NOT edited and was committed before
+this reading existed (results 680e78cc, pushed 4 November). No calculation was run for this: every
+figure is arithmetic over committed ORCA outputs. STAGE6_CRITERIA.txt is unchanged. NOTHING IS
+DECIDED HERE.
+
+   reader   phase2.2/cs6_d26.py, committed with this document
+   outputs  phase2.2/cs_stage6/d26/D26_REPORT.txt and d26.tsv, committed first and on their own
+   inputs   the five files DIAGNOSTIC 26 records, all verified unchanged by sha256 before reading
+
+
+R26.1  WHAT IT RETURNED
+
+All in kcal/mol, at the frozen geometries of frame 42436, in vacuo, for the ten-site vector at
+sum|q| = 1.3000 e. f_closed is the fraction of the bare-basis gap that the quantum wall closes,
+exactly as D26.2 defines it.
+
+   A   ddE at def2-SVP,  bare        -5.6165     DIAGNOSTIC 24 Note 1, four decimal places
+   B   ddE at def2-SVPD, bare        -6.134121   d16/def2-SVPD, FULL precision
+       the bare-basis gap |B - A|     0.517621
+
+   set   ddE(wall) = C     d_shield        |C - A|     f_closed   D26.4 verdict
+   Ne      -5.891135      -0.242985       0.274635      0.4694    MIXED
+   Ar      -5.757698      -0.376423       0.141198      0.7272    SPILL-OUT
+   He      -5.989230      -0.144890       0.372730      0.2799    NOT SPILL-OUT
+
+   median f_closed 0.4694, which on its own reads MIXED
+   spread 0.2799 to 0.7272 across three sets of the same method
+
+THE VERDICT IS SET-DEPENDENT. D26.4 required that outcome to be declared if the sets straddle a
+boundary, and they straddle BOTH: Ar clears 0.70 and He falls below 0.30. One pseudopotential says
+the gap is spill-out, another says it is not, and the third says both mechanisms contribute. No
+single D26.4 verdict is formed.
+
+
+R26.2  WHAT THAT MEANS FOR def2-TZVPD, WHICH IS THE QUESTION THAT PROMPTED THIS
+
+def2-TZVPD IS NOT AVOIDABLE. The cheap test was run precisely to find out whether the expensive one
+is necessary, and the answer is that it cannot substitute for it. The reason is not that the wall
+fails to close the gap - on one parameter set it closes nearly three-quarters of it - but that the
+amount closed is not a property of the physics at the precision the decision needs.
+
+This is DIAGNOSTIC 23's finding arriving a second time, at a question it was not asked about. D23
+measured that d_shield moves 37 to 42 per cent between Ne and He and concluded that no fine-grained
+claim may rest on it. f_closed is a fine-grained claim built on d_shield, so it inherits exactly
+that sensitivity. The present result is the quantitative confirmation that the inheritance is fatal
+to this particular use.
+
+WHAT IS STILL WORTH HAVING FROM IT. The three sets agree that the wall closes a SUBSTANTIAL part of
+the gap - the smallest value is 28 per cent, not 3 per cent. So spill-out onto unwalled point
+charges is established as a real contributor to the def2-SVP / def2-SVPD disagreement, even though
+its size is not. That is a weaker claim than the diagnostic hoped for and a stronger one than
+nothing.
+
+
+R26.3  THE PRE-REGISTERED EXPECTATION, AND HOW IT FARED
+
+D26.4 recorded the expectation MIXED, leaning spill-out, with the reasoning that the committed
+d_shield magnitudes (0.17 to 0.44 kcal/mol) are the same order as the 0.5183 gap but not obviously
+larger.
+
+The median is 0.4694, which is MIXED. The expectation is therefore met on the statistic the
+pre-registration named. It is recorded here that the expectation did NOT anticipate the set spread
+being wide enough to straddle both boundaries; what anticipated that was D26.4's SET-DEPENDENT
+clause, which was written because DIAGNOSTIC 23 had already reversed three verdicts on margins of
+0.0068 to 0.0119 kcal/mol. The clause earned its place.
+
+
+R26.4  THE GATES, AND THE TWO THAT ARE WORTH THE SPACE
+
+Twenty gates pass. Two of them are checks the diagnostic could have failed and did not, and they
+are what licenses the arithmetic above.
+
+GATE 6, REPRODUCTION OF DIAGNOSTIC 23. The reader derives d_shield from raw ORCA energies by its own
+route and must reproduce D23's committed differences. It does:
+
+   dd(Ar)  computed -0.133437   D23 prints -0.1334
+   dd(He)  computed +0.098095   D23 prints +0.0981
+
+Two independent paths to the same quantity agreeing to 3.7e-05 and 5.0e-06. Had the sign convention
+or the arm pairing been wrong, this is where it would have shown.
+
+GATE 5, READABILITY THROUGH THE COMMITTED CLASSIFIER. All sixteen arms - control, bare, and wall and
+wall0 for three sets - are read by the COMMITTED phase2.2/cs6_audit.py, so the thresholds are that
+file's and not this one's. None is STRAINED or COLLAPSED. SCF cycles run 15 to 17 against a control
+of 16 to 17, nowhere near D6.3's factor-of-two rule.
+
+GATE 4, control reproduction: the def2-SVPD control barrier is 18.332256 kcal/mol against the
+committed record's 18.3323.
+
+
+R26.5  GATE 7 DID NOT PASS, AND WHAT IT FOUND IS A FINDING RATHER THAN A FAULT
+
+GATE 7 required B, computed at full precision from d16, to round to DIAGNOSTIC 24's printed
+-6.1348. It does not:
+
+   B computed          -6.134121
+   D24 prints          -6.1348
+   difference          +0.000679 kcal/mol  =  +1.083e-06 Eh
+
+THE INPUTS ARE IDENTICAL AND THIS WAS CHECKED, NOT ASSUMED. d16/def2-SVPD/S6-10_bare_F1_R/pc.pc and
+d24/pc_1.3000e_n10.pc are identical token for token. The substrate geometries are identical. Both
+runs declare the same keyword line, "! B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF". So the
+difference cannot be in the charge vector, the geometry or the method, and must lie in the reference
+each diagnostic subtracted. The control barrier implied by D24's figure is 18.332936 against d16's
+18.332256.
+
+ONE PART IN A MILLION HARTREE IS WHAT TWO INDEPENDENT RUNS OF THE SAME CONTROL COST. It is not
+diagnosable further from this repository, because DIAGNOSTIC 24's inputs and raw outputs were never
+committed - only its log. That is a third consequence of D24 being exploratory, after its
+inadmissibility and its four-decimal precision ceiling.
+
+IT DOES NOT CHANGE THE VERDICT. Recomputing f_closed with D24's B instead of d16's shifts every set
+by at most 0.0010:
+
+   Ne 0.4694 -> 0.4688      Ar 0.7272 -> 0.7263      He 0.2799 -> 0.2795
+
+and the set-dependence, the median's class and the conclusion about def2-TZVPD are all unchanged.
+
+A SMALLER DISCREPANCY INSIDE DIAGNOSTIC 24 ITSELF, found while reading it. Its log prints the 1.3000
+e gap as 0.5184 and its Note 1 table prints 0.5183. The arithmetic -5.6165 - (-6.1348) gives 0.5183
+exactly, so the table's column is the difference of two rounded prints while the log computed it
+before rounding. DIAGNOSTIC 26 quotes 0.5183, from Note 1. This result computes the gap from the
+full-precision B as 0.517621. None of the three figures changes any verdict here, and this paragraph
+is the record of the discrepancy rather than a correction to either document.
+
+
+R26.6  WHAT THIS DOES NOT SETTLE
+
+1. IT CANNOT ESTABLISH BASIS CONVERGENCE, and now it cannot bound the spill-out contribution either.
+   Only a higher-zeta basis can do the first. D5.4's requirement stands undiminished.
+2. THE THREE ECP SETS ARE ONE LINEAGE, from one paper by one group fitted by one recipe, as
+   ECP_CONVENTION_20261102.md records. The 0.2799 to 0.7272 spread therefore bounds the sensitivity
+   FROM BELOW. A set from another source could lie outside it.
+3. ONE FRAME, 42436, ONE CHARGE VECTOR at sum|q| = 1.3000 e, frozen geometries, in vacuo. That field
+   strength is the one inside D5.3(d)'s passing region, which makes it the least demanding place the
+   question could have been asked. The 2.8800 e and 5.6433 e cells have no matching DIAGNOSTIC 23 arm.
+4. A IS A FOUR-DECIMAL INPUT and no committed def2-SVP run of this vector exists, so f_closed cannot
+   be computed to better than about one part in a thousand whatever is done to the other terms.
+5. THE MULTIREFERENCE QUESTION IS UNTOUCHED. DIAGNOSTIC 19's Reading 3 returned DISAGREE and still
+   does.
+6. NO BARRIER IS QUOTED and no design is accepted or rejected. The catalytic verdict remains
+   SP_AMENDMENT2.txt A2.5's chain.
+7. THIS RESULT CANNOT ENTER THE THESIS UNTIL DIAGNOSTIC 24 IS RE-REGISTERED AND RE-RUN, as D26.5
+   item 7 stated in advance. Its A and its B both originate there. R26.5 has now added a reason of
+   its own: D24's figure for a quantity the committed record also holds cannot be reconciled with it,
+   and the inputs that would explain the difference are not in the repository.
