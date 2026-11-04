@@ -1,0 +1,239 @@
+STAGE 6  DIAGNOSTIC 27                                                      4 November 2026
+IS def2-SVPD CONVERGED? THE SAME THREE CHARGE VECTORS AT def2-SVP, def2-SVPD AND def2-TZVPD,
+ALL THREE IN ORCA, ALL THREE PRE-REGISTERED
+
+PRE-REGISTERED BEFORE ANY INPUT IS GENERATED AND BEFORE ANY JOB IS SUBMITTED.
+Nothing is read, computed or quoted in this document. It states what will be run, what the gates
+are, and what each possible outcome will be taken to mean. The reading is a separate document.
+
+Governing criteria: STAGE6_CRITERIA.txt
+  sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+This diagnostic does not edit STAGE6_CRITERIA.txt and does not edit DIAGNOSTIC 24 or DIAGNOSTIC 26.
+Where its result bears on either, that goes in a dated erratum to that document, not in this one.
+
+
+D27.1  WHY THIS IS RUN
+
+Three things in the committed record point at the same gap and none of them closes it.
+
+(a) DIAGNOSTIC 26's result (STAGE6_DIAGNOSTIC26_RESULT_20261104.txt, sha256
+    f97e9ec18f6ccd4620b9d9da4c8cb116b495660672cdf856de5c58a5a6ebfcfd) found the fraction of the
+    def2-SVP / def2-SVPD gap closed by a quantum wall to be SET-DEPENDENT - 0.2799 with He, 0.4694
+    with Ne, 0.7272 with Ar - straddling both of its own decision boundaries. Its verdict is that
+    def2-TZVPD is NOT avoidable. This diagnostic is that run.
+
+(b) DIAGNOSTIC 26's GATE 7 FAILED, committed as a failure. Its quantity B, from the committed
+    def2-SVPD run, is -6.134121 kcal/mol; DIAGNOSTIC 24's print of the same vector and the same
+    basis is -6.1348; the difference is +0.000679 kcal/mol, which is 1.083e-06 Eh. The cause is
+    identified here and is not a defect in either run: DIAGNOSTIC 24 was computed in PYSCF
+    (d24/d24_smear.py, "from pyscf import gto, dft", dft.RKS(m).density_fit(), xc = 'b3lyp',
+    conv_tol = 1e-8), and every production run of this project, d16 among them, is ORCA 6.0.1 with
+    B3LYP D3BJ def2/J RIJCOSX TightSCF. The two programs do not agree on the absolute energy of
+    this molecule and are not expected to: on byte-identical geometries they differ by -241.11
+    kcal/mol, which is a functional-variant and dispersion and integral-treatment difference, not
+    an error. What matters is how much of that survives subtraction, and the answer is stated here
+    because it is the reason DIAGNOSTIC 26's reading was not invalidated by the mixed engines:
+
+        absolute energy, reactant                 -241.11      kcal/mol apart
+        barrier, TS minus R                         +1.900848  kcal/mol apart
+        ddE, barrier minus control barrier          -0.000679  kcal/mol apart
+
+    The double difference at fixed geometry cancels the program change by about five and a half
+    orders of magnitude. The ratio is not quoted more precisely than that on purpose: its
+    denominator is DIAGNOSTIC 24's four-decimal print, so the third significant figure of any such
+    ratio is not real. The
+    D3BJ term cancels exactly, because the two arms share a geometry and because a point charge
+    carries no dispersion coefficient. DIAGNOSTIC 26's reading therefore stands as committed; the
+    mixed-engine comparison contributes 0.13 per cent of the 0.517621 kcal/mol gap it measures.
+    This diagnostic nonetheless re-runs the def2-SVP arm in ORCA, so that no quantity entering a
+    thesis figure is a comparison across two programs.
+
+(c) The third vector in DIAGNOSTIC 24's own log is the one that is not a small correction.
+    Quoted from d24/d24_smear.log (sha256
+    a79a9ccc18cbe6ba42482dd6a8354eb7d5d2b583a26cf3fb4e94c3bdff24cb8a), point-charge rows:
+
+        vector         ddE_SVP     ddE_SVPD   |inter-basis|
+        1.3000e_n10    -5.6165      -6.1348        0.5184
+        2.8800e_n10   -13.1924     -14.2771        1.0847
+        5.6433e_n20   -24.0704     -10.5550       13.5154
+
+    The first two scale together. The third does not: the two bases disagree by 13.5154 kcal/mol
+    and by a factor of 2.28, and they do not agree on the size of the effect at all. S6-20 carries
+    Sum|q| = 5.7600 e, which is that regime. Until one of -24.07 and -10.56 is shown to be the
+    artefact, no quantity at the top of the ladder can be quoted at either basis.
+    (The first row's gap is 0.5184 in the log and 0.5183 in STAGE6_DIAGNOSTIC24_NOTE1_20261103.txt.
+    Both are correct prints of the same run: the log subtracts before rounding and the note
+    subtracts two figures already rounded to four places. This diagnostic quotes the log, and the
+    discrepancy is one more reason the quantity wants recomputing at full precision in ORCA.) DIAGNOSTIC 24 is
+    marked EXPLORATORY and unquotable (STAGE6_DIAGNOSTIC24_EXPLORATORY_20261103.txt, sha256
+    097cfdf131cc782a293fb4dc5b087524dbec3edd8e62673ceda38facad14162c, "Nothing here may be quoted
+    as a Stage 6 result in its present form"), so this is not a committed finding and is cited
+    here only as the reason to run.
+
+
+D27.2  WHAT IS RUN
+
+Twenty-four frozen single points, all in ORCA, on the committed reactant and transition-state
+geometries of frame 42436.
+
+   three bases          def2-SVP, def2-SVPD, def2-TZVPD
+   three charge vectors 1.3000e_n10 (n = 10), 2.8800e_n10 (n = 10), 5.6433e_n20 (n = 20)
+   two states           R, TS
+   one control per basis charge-free, the same two geometries
+
+   3 bases x 3 vectors x 2 states = 18, plus 3 bases x 2 control states = 6.   TOTAL 24
+
+Every geometry and every charge file is COPIED, byte for byte, from the committed DIAGNOSTIC 24
+inputs. Nothing is regenerated, so the vectors are identical to DIAGNOSTIC 24's by construction and
+not by coincidence:
+
+   6e8f41c7da3bcf4ed9f5c650dc9fcf12c2a36e5af7a900e164892c276497aa88  d24/reactant_qm.xyz
+   2babeb9000ca5220a908a70eaec80ec4a64358c8f5677e9a16cb104e0dffc5bf  d24/transition_state_qm.xyz
+   daf4793d1ec9b3c328046c8f0e80d2697f7286216462bce11934af0c4f199e28  d24/pc_1.3000e_n10.pc
+   345f61f854fa7e6fc53940355f856c4d1eb9672ada465cc90df0dd14f85bc49e  d24/pc_2.8800e_n10.pc
+   fe151bdd3b5ca12b124f8e0a153790fd552c8216ff8b73ae2cdab402dcc6aa6e  d24/pc_5.6433e_n20.pc
+
+The first of those three charge files is byte-identical to d16/def2-SVPD/S6-10_bare_F1_R/pc.pc,
+which is a committed production run. That identity is what makes GATE 3 below possible.
+
+The three vectors, read from the files rather than from any document: n = 10, 10, 20; Sum|q| =
+1.3000, 2.8800, 5.6433 e; each is a symmetric ladder, min q = -max q; none sums to zero (-0.2909,
+-0.6444, -0.2351 e). The non-neutrality is a property of the committed vectors and is not changed
+here; it is the subject of a separate pending amendment and is out of scope.
+
+LEVEL. B3LYP-D3BJ / def2/J / RIJCOSX / TightSCF / SCF MaxIter 300 / charge -2 / multiplicity 1,
+ORCA 6.0.1, IN VACUO, frozen single points. No continuum, by STAGE6_AMENDMENT2_20261027.txt. The
+basis is the ONLY thing that varies between the three groups; the control arm of each group differs
+from its charged arms only by the absence of the %pointcharges line. One job, restartable, eight
+cores, walltime 24:00:00, no -q.
+
+WHAT IS NOT RUN. The Gaussian-smeared charge models of DIAGNOSTIC 24 are not re-run. This
+diagnostic therefore does not make DIAGNOSTIC 24 quotable as a whole; it makes the nine
+point-charge ddE values quotable, under pre-registration, in the production program. The walled and
+pseudopotential arms of DIAGNOSTIC 23 and DIAGNOSTIC 26 are not re-run at def2-TZVPD; if the answer
+below is NOT CONVERGED, those arms need their own run and that is named as a consequence, not
+smuggled in here. No geometry is re-optimised. The relaxation, the optimiser and the grid are
+untouched.
+
+COST, stated before the run so that an overrun is visible as one. Measured ORCA medians on hpc1 for
+this system, eight cores: 67.6 s at 264 basis functions (n = 142 runs), 129.6 s at 402 (n = 384).
+Pure-size exponent 1.52 from the water-probe series and 1.55 from this system's own 264 -> 402 pair.
+def2-TZVPD is 682 basis functions, giving 289 to 294 s per point. Expected total 65 min. The largest
+observed def2-SVPD tail is 7.3x its median; all 24 points at 7.3x would be 7.9 h. Walltime 24:00:00
+is 3.0x the worst case. A point that fails to converge in 300 cycles is stopped by ORCA, not by
+walltime, and is caught by GATE 5.
+
+
+D27.3  THE GATES, WHICH RUN BEFORE ANY NUMBER IS READ
+
+GATE 0  PROVENANCE. Every copied input is byte-identical to the committed file it came from, by
+        sha256 against the five values above. A mismatch stops the reading and names the file.
+
+GATE 1  THE GROUPS DIFFER ONLY IN THE BASIS. For each of the eight run names, the three job.inp
+        files are identical after the basis token is removed. A difference stops the reading and
+        prints the first differing line. This is what licenses calling the result a basis effect.
+
+GATE 2  THE CONTROL AND THE CHARGED ARM DIFFER ONLY BY THE CHARGES. Within each basis, each
+        charged job.inp equals its control job.inp plus exactly the line %pointcharges "pc.pc", and
+        no control directory contains a pc.pc file.
+
+GATE 3  THE COMMITTED PRODUCTION NUMBER REPRODUCES. The def2-SVPD / 1.3000e_n10 arm reproduces the
+        committed d16 ddE of -6.134121 kcal/mol to GATE_KCAL = 1.0e-4 kcal/mol, computed as
+        (barrier of that arm) minus (barrier of the def2-SVPD control). This is the strongest gate
+        available, because the charge file is byte-identical to d16's and the geometry, basis,
+        program and keyword line are the same; it validates the whole input chain against a number
+        already in the repository. A failure stops the reading entirely and nothing else is read.
+
+GATE 4  THE CONTROL BARRIER REPRODUCES. The def2-SVPD control reproduces the committed d16 control
+        barrier of 18.332256 kcal/mol to GATE_KCAL, and its two FINAL SINGLE POINT ENERGY values
+        reproduce d16/def2-SVPD/ctl_R and ctl_TS to GATE_EH = 1e-6 Eh, the figure cs11_vde.py,
+        cs6_d20.py and cs6_d21.py already use.
+
+GATE 5  TERMINATION AND CONVERGENCE. Every one of the 24 runs contains ORCA TERMINATED NORMALLY and
+        reports SCF convergence. A run that does not is not committed; a note about it is. If any
+        def2-TZVPD run fails to converge, the def2-TZVPD column is not read and the diagnostic
+        reports that instead of a verdict.
+
+GATE 6  THE BASIS IS THE ONE ASKED FOR. Each run's printed Number of Electrons NEL equals 118 in
+        all 24, and each run's printed Number of basis functions equals 264 in the def2-SVP group
+        and 402 in the def2-SVPD group. Both of those are ORCA's own printed values from committed
+        runs of this system, so they are asserted. The def2-TZVPD count is NOT asserted: it is
+        PREDICTED as 682 from a pyscf count of the same 24-atom geometry, which reproduced ORCA's
+        264 and 402 exactly but has never been checked against ORCA at this basis. The gate
+        therefore requires only that all eight def2-TZVPD runs report the SAME count and that it
+        exceeds 402, and it RECORDS that count. If it is not 682 the prediction was wrong, which is
+        reported as such and changes no quantity; the basis is set by the keyword, not by this
+        document's count of it. The point charges contribute no basis functions and no electrons;
+        if either count moves, the charges are no longer the electron-free objects the rest of the
+        record describes.
+
+GATE 7  EVERY FIGURE IN THE RESULT DOCUMENT MATCHES THE RUN AT FULL PRECISION, each one recomputed
+        from the committed outputs by the reader and compared against the document as written.
+
+A FAILED GATE IS COMMITTED AS A FAILED GATE. DIAGNOSTIC 26's GATE 7 is the precedent.
+
+
+D27.4  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT RUNS
+
+For each vector v, with all three ddE values from ORCA:
+
+    gap_SD(v) = | ddE(def2-SVPD, v) - ddE(def2-SVP,  v) |      double  -> diffuse double
+    gap_DT(v) = | ddE(def2-TZVPD, v) - ddE(def2-SVPD, v) |     diffuse double -> diffuse triple
+
+The tolerance is TOL = 1.0 kcal/mol. It is not invented here: it is the basis-agreement figure
+already committed as criterion D5.3(d) in STAGE6_DIAGNOSTIC5_20261026.txt, applied to the next step
+of the same sequence.
+
+  CONVERGED AT def2-SVPD        if gap_DT(v) <= TOL for all three vectors, AND gap_DT(v) < gap_SD(v)
+                                for all three. The sequence is then shrinking and def2-SVPD is the
+                                production basis. Nothing in the record needs re-running on account
+                                of the basis.
+
+  NOT CONVERGED                 if gap_DT(v) > TOL for any vector. def2-SVPD is then not sufficient
+                                at that vector, and every committed def2-SVPD quantity at or above
+                                that Sum|q| is provisional until re-run. This includes the walled
+                                and pseudopotential arms of DIAGNOSTIC 23 and DIAGNOSTIC 26 and the
+                                d16 ladder. That consequence is accepted in advance.
+
+  NOT CONVERGING                if gap_DT(v) >= gap_SD(v) for any vector, whatever the absolute
+                                size. A sequence whose steps are not shrinking is not converging to
+                                anything readable, and no quantity at that vector may be quoted at
+                                any of the three bases.
+
+On the third vector specifically, where the two bases already disagree by 13.5154 kcal/mol, the
+arbitration is stated now:
+
+  def2-SVP IS THE ARTEFACT      if | ddE(def2-TZVPD) - ddE(def2-SVPD) | <= TOL
+  def2-SVPD IS THE ARTEFACT     if | ddE(def2-TZVPD) - ddE(def2-SVP)  | <= TOL
+  BOTH ARE ARTEFACTS            if neither holds. The 5.6433e vector is then withdrawn from every
+                                quantity until a larger basis is run, and the ladder above
+                                Sum|q| = 2.88 e has no admissible basis in this record.
+
+If the three vectors do not give the same verdict, the result is reported per vector and no single
+verdict is formed - the same rule DIAGNOSTIC 26 followed when its three sets disagreed.
+
+
+D27.5  WHAT THIS CANNOT SETTLE
+
+1. It is three charge vectors at one frame, one grid and one pair of geometries. It is not a
+   statement about other frames, other arrangements or relaxed geometries.
+2. It cannot separate basis-set incompleteness from density spill-out onto the point charges.
+   DIAGNOSTIC 26 already found that separation set-dependent, which is why this runs.
+3. It says nothing about whether def2-TZVPD is itself converged. A three-point sequence can show a
+   step shrinking; it cannot prove a limit. If the answer is CONVERGED, the honest claim is that
+   the def2-SVPD -> def2-TZVPD step is below TOL, not that the basis-set limit is reached.
+4. It does not re-run DIAGNOSTIC 24's Gaussian-smeared models, so DIAGNOSTIC 24 remains
+   EXPLORATORY and unquotable as a whole.
+5. It is in vacuo, as every Stage 6 arm is. It says nothing about a solvated barrier.
+6. It does not touch the charge representation, the sphere parameters, the grid floors, the
+   optimiser or the relaxation.
+7. It cannot license a barrier. ddE is a difference of differences; the absolute barrier at any of
+   these bases carries B3LYP's own 3 to 5 kcal/mol error on this reaction, which is larger than
+   anything measured here.
+
+MACHINERY. phase2.2/cs6_d27_prepare.py (chorismate-thesis-code, tier1-realism) writes the inputs on
+the PC and is committed with them. The run is one PBS job on hpc1. The reading is a separate script
+and a separate document, built after the outputs are downloaded. Every output file of the finished
+job is downloaded and kept as a physical file; the PC archive outside git carries a sha256 per file;
+the results repository carries the readable outputs; nothing is removed from hpc1 until both are
+done.
