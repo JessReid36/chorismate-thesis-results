@@ -1,0 +1,213 @@
+STAGE 6  DIAGNOSTIC 30                                                      5 November 2026
+IS def2-SVPD CONVERGED UNDER CAM-B3LYP, AND IS THE CAM-B3LYP SOLUTION STABLE?
+TWO ARMS, EACH ABLE TO FAIL ON ITS OWN, BOTH PRE-REGISTERED
+
+PRE-REGISTERED BEFORE ANY INPUT IS GENERATED AND BEFORE ANY JOB IS SUBMITTED.
+Nothing is read, computed or quoted in this document. It states what will be run, what the gates
+are, and what each possible outcome will be taken to mean. The reading is a separate document.
+
+Governing criteria: STAGE6_CRITERIA.txt
+  sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+Inherited criteria, neither invented here:
+  TOL = 1.0 kcal/mol, the basis-agreement figure committed as D5.3(d) in
+    STAGE6_DIAGNOSTIC5_20261026.txt and used by DIAGNOSTIC 27 for this same sequence
+  GATE_EH = 1e-6 Eh, the energy-agreement figure cs11_vde.py, cs6_d20.py and cs6_d21.py use
+This diagnostic does not edit STAGE6_CRITERIA.txt and does not edit DIAGNOSTIC 19, 27 or 28.
+Where its result bears on any of them, that goes in a dated erratum to that document, not here.
+
+
+D30.1  WHY BOTH OF THESE, AND WHY NOW
+
+DIAGNOSTIC 28 established CAM-B3LYP as the accurate functional against a measured anchor: the
+bare dianion's highest occupied orbital sits at -0.5918 eV under CAM-B3LYP against a detachment
+energy of -0.5123 eV, where B3LYP puts it at +1.2307 eV, above zero. It also showed that the gap
+collapse at Sum|q| = 2.8800 e was a B3LYP artefact: the same condition reads 14 per cent of its
+control's gap under B3LYP and 45 per cent under CAM-B3LYP.
+
+TWO THINGS THE RECORD THEREFORE DOES NOT ESTABLISH.
+
+A. DIAGNOSTIC 27's basis verdict was measured entirely under B3LYP. It found def2-SVPD converged
+   at 1.3000 e, NOT CONVERGING at 2.8800 e with gap_DT = 6.946128 kcal/mol, and NOT CONVERGED at
+   5.6433 e. Since the wavefunction artefact at 2.8800 e was B3LYP's, the basis divergence at that
+   vector may be B3LYP's too. DIAGNOSTIC 28 cannot settle it: it ran six charged arms per
+   functional and all six are def2-SVPD. At def2-TZVPD it ran controls only, so no charged arm
+   exists at def2-TZVPD under any range-separated functional.
+
+B. No stability analysis exists under any range-separated functional. Every run in this record
+   carrying %scf STABPerform is B3LYP: twelve of them, in d20. This is not a formality. DIAGNOSTIC
+   19 Reading 2 found the B3LYP lambda = 1.00 solution UNSTABLE with two negative eigenvalues in
+   each state, and ORCA reconverged 0.8564 kcal/mol lower at R and 3.7976 kcal/mol lower at TS.
+   Those two figures are recorded in STAGE6_DIAGNOSTIC19_NOTE1_20261031.txt
+     sha256 ffc6bdb67e3a26e9fb174e49f903b2faab8dbe2ab6cc0afdd06fa08f2f4a88b6
+   as energy changes of -0.8564 and -3.7976 kcal/mol; the sign is the lowering. An instability of
+   that size moves a barrier by more than TOL.
+
+Both are cheap, and both bear on whether charge-placement optimisation can proceed, because the
+optimiser's scores are only as good as the method used to judge the designs it proposes.
+
+
+D30.2  WHAT IS RUN
+
+Twenty-two new single points. The keyword line is identical to DIAGNOSTIC 27's and DIAGNOSTIC 28's
+in every respect but the functional, the basis and Arm B's stability block:
+
+    ! CAM-B3LYP D3BJ <basis> def2/J RIJCOSX TightSCF
+    %maxcore 3000
+    %pal nprocs 8 end
+    %scf MaxIter 300 end                      (Arm B adds STABPerform true inside this block)
+    %pointcharges "pc.pc"                     (omitted for a control)
+    * xyzfile -2 1 substrate.xyz
+
+ARM A, THE BASIS SEQUENCE UNDER CAM-B3LYP.  14 jobs.
+    def2-SVP     1.3000e_n10, 2.8800e_n10, 5.6433e_n20, each R and TS      6
+                 ctl_R, ctl_TS                                             2
+    def2-TZVPD   the same three vectors, each R and TS                     6
+    def2-SVPD    NOT RE-RUN. The six charged arms and the two controls are already committed in
+                 d28/CAM-B3LYP/def2-SVPD and are re-read from there. GATE 6 requires them to
+                 reproduce.
+    def2-TZVPD controls are likewise already committed in d28/CAM-B3LYP/def2-TZVPD and re-read.
+
+ARM B, THE STABILITY OF THE CAM-B3LYP SOLUTION.  8 jobs.
+    def2-SVPD with STABPerform true
+                 the same three vectors, each R and TS                     6
+                 ctl_R, ctl_TS                                             2
+    def2-SVPD is the production basis and the basis d28's arms used, so Arm B's energies are
+    directly comparable to committed ones without a basis change in between.
+
+THE CHARGES AND THE GEOMETRIES ARE NOT RETYPED. Every pc.pc is copied from the committed
+d27/def2-SVPD arm of the same name and every substrate.xyz from the committed control of the same
+state, and GATE 2 requires each to be byte-identical to its source. The three vectors are
+therefore the same three vectors DIAGNOSTIC 27 and DIAGNOSTIC 28 measured, on the same geometries.
+
+NO GEOMETRY IS RE-OPTIMISED. The relaxation, the optimiser and the grid are untouched. No
+continuum appears anywhere, as Amendment 2 A2.1 requires.
+
+COST, STATED BEFORE THE RUN SO THAT AN OVERRUN IS VISIBLE AS ONE. Measured on this system's own
+committed outputs: CAM-B3LYP costs 1.40x B3LYP at def2-TZVPD on the controls (9 min 40 s and
+9 min 13 s against 6 min 45 s) and 1.52x at def2-SVPD on the hardest arm (12 min 03 s against
+7 min 56 s). B3LYP's worst def2-TZVPD arm took 29 min 30 s, so CAM-B3LYP's is budgeted at 45 min.
+Arm B's stability pass is budgeted at 3x its own measured plain run. Expected total 6.2 h.
+Walltime 24:00:00 is 3.9x that. A point that fails to converge in 300 cycles is stopped by ORCA,
+not by walltime, and is caught by GATE 5. run.pbs is restartable: a job that ends on walltime is
+resubmitted and skips what finished.
+
+
+D30.3  ARM A: WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT RUNS
+
+This is DIAGNOSTIC 27's rule, unchanged, with its own tolerance, applied to CAM-B3LYP.
+
+    barrier(basis, arm)  = E(TS) - E(R), from the last FINAL SINGLE POINT ENERGY of each
+    ddE(basis, v)        = barrier(basis, v) - barrier(basis, control of that basis)
+    gap_SD(v)            = | ddE(def2-SVPD, v) - ddE(def2-SVP,  v) |
+    gap_DT(v)            = | ddE(def2-TZVPD, v) - ddE(def2-SVPD, v) |
+
+  CONVERGED AT def2-SVPD    if gap_DT(v) <= TOL for all three vectors AND gap_DT(v) < gap_SD(v)
+                            for all three. def2-SVPD is then the production basis under CAM-B3LYP.
+
+  NOT CONVERGED             if gap_DT(v) > TOL for any vector. def2-SVPD is then not sufficient at
+                            that vector under CAM-B3LYP, and every CAM-B3LYP quantity at or above
+                            that Sum|q| is provisional until re-run. That consequence is accepted
+                            in advance.
+
+  On the third vector, where the two smaller bases disagree under B3LYP by 13.5154 kcal/mol, the
+  arbitration is DIAGNOSTIC 27's, stated now:
+      def2-SVP IS THE ARTEFACT    if | ddE(def2-TZVPD) - ddE(def2-SVPD) | <= TOL
+      def2-SVPD IS THE ARTEFACT   if | ddE(def2-TZVPD) - ddE(def2-SVP)  | <= TOL
+      BOTH ARE ARTEFACTS          if neither holds.
+
+  If the three vectors do not give the same verdict, the result is reported PER VECTOR and no
+  single verdict is formed, as DIAGNOSTIC 26 and DIAGNOSTIC 27 both did.
+
+  REPORTED BESIDE IT, NOT GATED: DIAGNOSTIC 27's B3LYP gap_SD and gap_DT for the same three
+  vectors, re-read from d27 rather than quoted, so that the two functionals' sequences sit side by
+  side. Whether CAM-B3LYP's sequence converges where B3LYP's did not is the question; the
+  comparison is the answer's context and does not enter the verdict.
+
+
+D30.4  ARM B: WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT RUNS
+
+This is DIAGNOSTIC 19 Reading 2's rule, applied to CAM-B3LYP at def2-SVPD.
+
+  For each of the eight conditions, from its own output:
+      STABLE      the stability analysis reports no instability of the restricted solution
+      UNSTABLE    it reports one, with the number of negative eigenvalues recorded
+
+  For any condition reported UNSTABLE, the energy ORCA reconverges to is recorded, and the
+  lowering is reported in kcal/mol. Where both states of a vector are available, the change in
+  that vector's barrier is reported too:
+      MATERIAL        | barrier change | >  TOL
+      IMMATERIAL      | barrier change | <= TOL
+
+  ARM B's VERDICT is the set of conditions reported UNSTABLE, with MATERIAL or IMMATERIAL against
+  each vector for which a barrier change can be formed.
+
+      ALL STABLE              no condition reports an instability. The committed CAM-B3LYP
+                              energies stand as they are.
+      UNSTABLE, IMMATERIAL    instabilities are reported but no vector's barrier moves by more
+                              than TOL. The instability is recorded and the energies stand.
+      UNSTABLE, MATERIAL      at least one vector's barrier moves by more than TOL. Every
+                              CAM-B3LYP barrier at or above that vector is then provisional until
+                              the reconverged solution is used, and that consequence is accepted
+                              in advance.
+
+  THE CONTROL CARRIES THE TEST. If the charge-free control itself reports an instability, the
+  finding is about the method and the bare dianion rather than about the designed field, and the
+  result says so rather than attributing it to the charges. This is why the control is run.
+
+  D19's READING 3 IS NOT FORMED HERE. Reading 3 combines the stability analysis with the FOD
+  multireference indicator, and D19 measured FOD on the d20 lambda ladder, not on these three
+  vectors. Combining the two across different conditions would be the comparison D19 forbade when
+  it named DISAGREE in advance. Arm B forms Reading 2's verdict only.
+
+
+D30.5  THE GATES
+
+GATE 0   Both repositories clean, on main and tier1-realism, and level with origin before anything
+         is placed; and hpc1's file set audited against its own committed manifest, as y64 did.
+GATE 1   All 22 job directories exist, each with job.inp, and each charged one with pc.pc.
+GATE 2   BYTE-IDENTICAL INPUTS. Every pc.pc matches its committed d27/def2-SVPD source by sha256,
+         and every substrate.xyz matches the committed control of its state. A mismatch stops the
+         reading entirely.
+GATE 3   KEYWORD LINES. Every job.inp carries CAM-B3LYP, D3BJ, def2/J, RIJCOSX and TightSCF, and
+         its stated basis. No job.inp contains CPCM. Arm B's eight and only Arm B's eight carry
+         STABPerform.
+GATE 4   NO DOUBLE-COUNTED DISPERSION. D3BJ appears exactly once per keyword line. CAM-B3LYP
+         carries no dispersion of its own, which is why it takes D3BJ, matching d28.
+GATE 5   TERMINATION AND CONVERGENCE. All 22 contain ORCA TERMINATED NORMALLY, none reports
+         MaxIter reached, and each has at least one FINAL SINGLE POINT ENERGY.
+GATE 6   THE COMMITTED ARMS REPRODUCE. The def2-SVPD CAM-B3LYP arms and controls re-read from d28
+         reproduce their committed FINAL SINGLE POINT ENERGY values to GATE_EH. This validates the
+         whole input chain against numbers already in the repository, and a failure stops
+         everything.
+GATE 7   THE LEVEL-SHIFT TRAP. No orbital energy is read from a run whose SCF engaged TRAH with a
+         level shift, detected by "Leaving SCF to start the TRAH-SCF procedure", "(TRAH MAcro)" or
+         a level-shift line, and NOT by a bare search for TRAH, which matches the author credits
+         and the settings listing in every ORCA output. Arm A reads only total energies and is
+         unaffected; Arm B's stability verdict is read from the stability block itself.
+GATE 8   EVERY OUTPUT FILE IS KEPT. Each job's full output set is downloaded, archived outside git
+         with a sha256 per file, and the readable outputs committed, before anything is removed
+         from hpc1.
+
+
+D30.6  WHAT THIS CANNOT SETTLE
+
+1. IT SAYS NOTHING ABOUT +-1 e DESIGNS. All three vectors are partial charges: the largest single
+   charge among them is 0.5389 e. The question of whether a unit charge is usable is untouched
+   here, and the record's unit-charge conditions sit at ma-def2-SVP, a basis this diagnostic does
+   not run.
+2. IT SAYS NOTHING ABOUT RELOCATION. DIAGNOSTIC 29 found that no scalar function of the charges
+   orders density relocation. Nothing here revisits that, and a basis or stability verdict does
+   not bound relocation.
+3. ONE FRAME, ONE GRID, IN VACUO, FIXED GEOMETRIES. No barrier reported here is a prediction of a
+   physical barrier.
+4. ARM B TESTS ONE INSTABILITY. STABPerform tests the restricted solution for an instability
+   toward an unrestricted one. It is not a multireference diagnostic, and a stable result does not
+   establish single-reference character, as D19.4 already recorded of the same instrument.
+5. THE TWO ARMS DO NOT VALIDATE EACH OTHER. Arm A reads total energies and Arm B reads a stability
+   block. A clean Arm A does not license Arm B's energies, and an unstable Arm B does not
+   invalidate Arm A's basis comparison, which is a difference of differences at fixed method.
+6. IT DOES NOT MAKE CAM-B3LYP THE PRODUCTION FUNCTIONAL BY ITSELF. D28 chose it on one measured
+   anchor. A second anchor, and a barrier computed under it, are separate work.
+
+MACHINERY. cs6_d30_prepare.py generates the inputs and verifies every copied file by sha256.
+cs6_d30.py reads the outputs and is committed with the result. Both are in the code repository.
