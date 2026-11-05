@@ -1,0 +1,123 @@
+STAGE 6 - DIAGNOSTIC 27, RESULT                 5 November 2026
+
+THE THREE VECTORS DO NOT AGREE, SO NO SINGLE VERDICT IS FORMED. THE RESULT IS
+REPORTED PER VECTOR, AS D27.4 REQUIRED IN ADVANCE.
+
+Pre-registered in STAGE6_DIAGNOSTIC27_20261104.txt, which is NOT edited and was committed
+before any job was submitted (results c673589, pushed 4 November). STAGE6_CRITERIA.txt is
+unchanged. NOTHING IS DECIDED HERE.
+
+   reader   phase2.2/cs6_d27.py, committed with this document
+            sha256 bf34ce3dfc681151
+   runs     24 ORCA single points, phase2.2/cs_stage6/d27/, one PBS job
+   TOL      1.0 kcal/mol, from D27.4, which took it from criterion D5.3(d)
+
+
+R27.1  WHAT IT RETURNED
+
+Control barriers of the bare substrate, kcal/mol:
+
+   def2-SVP       18.461014
+   def2-SVPD      18.332256
+   def2-TZVPD     17.304571
+
+ddE by vector and basis, kcal/mol. gap_SD is the double to diffuse-double step and gap_DT the
+diffuse-double to diffuse-triple step, both as D27.4 defined them before the run:
+
+   vector          n   sum|q|     def2-SVP    def2-SVPD   def2-TZVPD    gap_SD    gap_DT  verdict
+   1.3000e_n10    10   1.3000    -5.614783    -6.134121    -6.059728  0.519338  0.074393  CONVERGED
+   2.8800e_n10    10   2.8800   -13.187713   -14.151842    -7.205714  0.964130  6.946128  NOT CONVERGING
+   5.6433e_n20    20   5.6433   -24.053383    -1.371470    -4.347824 22.681913  2.976354  NOT CONVERGED
+
+OVERALL: PER VECTOR; NO SINGLE VERDICT IS FORMED
+
+
+R27.2  THE THIRD VECTOR, WHICH IS WHY THIS WAS RUN
+
+DIAGNOSTIC 24's log had def2-SVP and def2-SVPD 13.5154 kcal/mol apart at this vector, a
+factor of 2.28, with no way to tell which was the artefact. In ORCA, at full precision:
+
+   def2-SVP      -24.053383
+   def2-SVPD      -1.371470
+   def2-TZVPD     -4.347824
+   |TZVPD - SVPD|  2.976354      |TZVPD - SVP| 19.705559      TOL 1.0
+
+ARBITRATION, by the rule D27.4 fixed before the run: BOTH ARE ARTEFACTS
+
+Neither double-zeta answer is within TOL of the triple-zeta one. By D27.4 the 5.6433 e
+vector is WITHDRAWN from every quantity until a larger basis is run, and the ladder above
+sum|q| = 2.88 e has no admissible basis in this record.
+
+
+R27.3  WHAT IT MEANS FOR WHAT IS ALREADY COMMITTED
+
+Every committed def2-SVPD quantity at or above the sum|q| of a vector that did not return
+CONVERGED is PROVISIONAL until re-run. D27.4 accepted that consequence in advance. By the
+table in R27.1 that is:
+
+   2.8800e_n10  sum|q| 2.8800   NOT CONVERGING
+   5.6433e_n20  sum|q| 5.6433   NOT CONVERGED
+
+The arms affected are the d16 ladder, DIAGNOSTIC 23's Ne, Ar and He walled arms and
+DIAGNOSTIC 26's f_closed, all of which are def2-SVPD. None of them is withdrawn by this
+document; they are marked provisional, and what re-running them would cost is a separate
+question for a separate pre-registration.
+
+
+R27.4  THE pyscf QUESTION D26's GATE 7 RAISED, NOW CLOSED
+
+D27.1(b) identified DIAGNOSTIC 26's committed GATE 7 failure as two programs rather than a
+defect: DIAGNOSTIC 24 ran in pyscf and every production run is ORCA. This diagnostic removes the
+mixed comparison by running def2-SVP in ORCA. The ORCA def2-SVP ddE values in R27.1 are
+therefore the ones to use, and D26's quantity A - pyscf's -5.6165, to four decimals - is
+superseded for any future use by:
+
+   1.3000e_n10  ORCA def2-SVP    -5.614783
+   2.8800e_n10  ORCA def2-SVP   -13.187713
+   5.6433e_n20  ORCA def2-SVP   -24.053383
+
+A dated erratum to DIAGNOSTIC 26 is warranted and is NOT written here, because a result document
+does not edit another diagnostic. What the erratum has to say is: A was a pyscf number, the ORCA
+value is above, and the direction and size of the change to f_closed follow from it.
+
+D26's R26.6 item 7 said this result could not enter the thesis until DIAGNOSTIC 24 was
+re-registered and re-run. That is now done FOR THE THREE POINT-CHARGE CELLS ONLY. D24's
+Gaussian-smeared models were not re-run, so DIAGNOSTIC 24 as a whole remains EXPLORATORY and
+unquotable, and item 7 is discharged only to the extent of the point-charge vectors.
+
+
+R27.5  THE GATES
+
+All of D27.3's gates ran before any number above was read. The two worth the space:
+
+GATE 3 reproduced d16's committed ddE of -6.134121 kcal/mol at def2-SVPD / 1.3000e from a
+       freshly generated input whose pc.pc is byte-identical to d16's. That is the check that
+       licenses everything else here: it ties this batch to a number already in the repository
+       through the whole chain - generator, transfer, queue, program and reader.
+GATE 8 compared job.out's FINAL SINGLE POINT ENERGY with job.property.txt's &TOTALENERGY in all
+       24 runs. These are two independent prints of the same quantity in two files, and they
+       agree to 1e-09 Eh. It is not in D27.3; it was added by the reader and is recorded here as
+       an addition rather than folded in silently.
+
+GATE 6 recorded def2-TZVPD at 682 basis functions. D27.3 PREDICTED 682 from a pyscf count and
+       did not assert it; the prediction was correct.
+
+
+R27.6  WHAT THIS DOES NOT SETTLE
+
+1. A THREE-POINT SEQUENCE CANNOT PROVE A LIMIT. It can show one step smaller than the step
+   before it. The honest claim is about the def2-SVPD to def2-TZVPD step, not about the
+   basis-set limit, and D27.5 item 3 said so before the run.
+2. ONE FRAME, ONE GRID, THREE VECTORS. Nothing here speaks to other frames, other arrangements
+   or relaxed geometries.
+3. BASIS INCOMPLETENESS AND SPILL-OUT ARE STILL NOT SEPARATED. DIAGNOSTIC 26 found that
+   separation set-dependent, which is why this ran; this diagnostic measures the basis step and
+   does not attribute it.
+4. THE WALLED AND PSEUDOPOTENTIAL ARMS WERE NOT RUN AT def2-TZVPD. D27.2 excluded them.
+5. IN VACUO, as every Stage 6 arm is. Nothing here is a solvated barrier.
+6. NO BARRIER IS QUOTED AND NO DESIGN IS ACCEPTED OR REJECTED. ddE is a difference of
+   differences; the absolute barrier at any of these bases still carries B3LYP's own 3 to 5
+   kcal/mol error on this reaction, which is larger than anything measured here.
+7. THE CHARGE REPRESENTATION, THE GRID FLOORS, THE OPTIMISER AND THE RELAXATION ARE UNTOUCHED.
+8. DIAGNOSTIC 24's GAUSSIAN CELLS ARE STILL INADMISSIBLE, as R27.4 says.
+
