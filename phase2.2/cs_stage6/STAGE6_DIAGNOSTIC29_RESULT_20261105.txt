@@ -1,0 +1,99 @@
+STAGE 6  DIAGNOSTIC 29  RESULT
+No scalar function of the charges orders density relocation
+5 November 2026
+
+Pre-registered in STAGE6_DIAGNOSTIC29_20261105.txt, committed before anything was read.
+Reader: phase2.2/cs6_d29.py, committed with this document.
+Classifier: phase2.2/cs6_audit.py, sha256 1dda394a134b3c7265df1898c9b5dc507d01c41d73aa5e59274495a1e7005dea
+D_LW and R_DIP were loaded from it, not transcribed. The HOMO-LUMO gap and the SCF cycle count
+were not read, as D29.2 said they would not be.
+
+
+R29.1  THE RESULT
+
+  scalar       C (highest not moved)   B (lowest moved)    margin      verdict
+  Sigma q^2          1.1381625             1.1381625       +0.0000000  OVERLAPS
+  Sigma |q|          3.2850000             3.2850000       +0.0000000  OVERLAPS
+  max |q|            0.6500000             0.4125000       -0.2375000  OVERLAPS
+
+  VERDICT   NO SCALAR IN THE SET ORDERS RELOCATION.
+
+This is the outcome D29.3 named in advance as admissible: the diagnostic sets no limit, and that
+is its result. The monotonicity and cross-functional checks do not run, because both are defined
+on a preferred scalar and there is none.
+
+For Sigma q^2 and Sigma |q| the two bounds are not merely close. They are the same number, to
+every digit a double holds, and they are the same number for one reason.
+
+
+R29.2  WHY, IN ONE PAIR OF RUNS
+
+  transfer/def2-SVPD/lam075_R    Sigma |q| 3.2850000000   Sigma q^2 1.138162500000
+                                 Loewdin rise +0.3181   dipole ratio 1.4769   MOVED
+  transfer/def2-SVPD/lam075_TS   Sigma |q| 3.2850000000   Sigma q^2 1.138162500000
+                                 Loewdin rise +0.1136   dipole ratio 1.3071   did not move
+
+THE TWO CHARGE VECTORS ARE IDENTICAL. Not the same totals - the same ten charges, on the same ten
+sites, read from pc.pc files whose charge columns compare equal element by element. The two runs
+differ in the substrate geometry alone, R against TS, and the density relocates in one and not in
+the other.
+
+So no function of the charges can order relocation, because the same charges give both answers.
+That holds for the three scalars tested and for any other function of the charge vector, since
+such a function is constant across this pair by construction. It is not a statement about where a
+threshold lies; it is a statement that a threshold of this kind does not exist.
+
+max |q| fails differently and more coarsely, running backwards: the highest value among
+conditions that did not move, 0.6500 e, is above the lowest among those that did, 0.4125 e.
+
+
+R29.3  THE SET THAT WAS READ
+
+  182  conditions in a diffuse basis carrying both a Loewdin and a dipole block
+  170  primary set, functional B3LYP
+   12  held back for the cross-functional check, CAM-B3LYP and wB97X-D3
+   35  distinct arrangements in the primary set, counting by site coordinates and not by charge
+   26  charge-free controls, in 12 (functional, basis, state) keys, every key's spread 0.000000
+   15  primary conditions moved; 155 did not; the 15 fall in 2 arrangements
+
+D29.2's availability counts of 110 conditions and 16 controls were both wrong. The reader that
+produced them walked a glob over directory names and silently excluded every top-level directory
+not beginning with "d". STAGE6_DIAGNOSTIC29_ERRATUM1_20261105.txt records this, and it is the
+reason this result exists in the form it does: on the restricted set both Sigma q^2 and Sigma |q|
+appeared to separate cleanly, and that reading was wrong.
+
+A CONDITION is a directory carrying a pc.pc. A directory WITHOUT one is not thereby charge-free:
+the ECP-walled arms carry their charges as Ne> lines in job.inp, and 606 job.inp files in this
+tree do so. The reader requires charges absent from both places before calling a directory a
+control. The two representations are disjoint: no directory has both.
+
+OF THE 15 THAT MOVED, 14 satisfy both legs of the criterion and one satisfies the Loewdin leg
+alone - transfer/def2-SVPD/lam075_R, the run above. None rests on the dipole leg alone, which is
+the leg the project already knows to be artefact-prone where ECP centres are present.
+
+THE HELD-BACK CONDITIONS ARE REPORTED DESCRIPTIVELY, there being no boundary to test them
+against. Under both CAM-B3LYP and wB97X-D3 the Sigma |q| = 5.6433 e conditions move and the
+1.3000 e and 2.8800 e conditions do not, which is what DIAGNOSTIC 28 found.
+
+
+R29.4  WHAT THIS CHANGES AND WHAT IT DOES NOT
+
+ERRATUM 5 IS CONFIRMED AND STRENGTHENED. Erratum 5 found, of the CLEAN/STRAINED verdict at
+def2-SVP, that "S6-5 AND E5 CARRY THE SAME TOTAL CHARGE AND THE SAME LARGEST SINGLE CHARGE, ON
+THE SAME BASIS, AND GET OPPOSITE VERDICTS. They differ in how the charge is arranged, not how
+much of it there is." The same conclusion now holds for the relocation leg alone, on diffuse
+bases, and by a stronger instance: not two designs sharing two scalars, but one charge vector
+placed against two substrate geometries.
+
+THE WITHDRAWN Sigma q^2 <= 0.58 e^2 IS NOT REPLACED. There is nothing to replace it with. Any
+limit written into the optimiser would have to be a function of something other than the charge
+vector - the arrangement, the geometry, or both - and this diagnostic does not supply one.
+D29.4.1 said in advance that this diagnostic does not set the budget, and it does not.
+
+THE SET STILL CONTAINS NO UNIT CHARGE. The primary set's max |q| runs from 0.0190 to 0.6500 e.
+Every design carrying a +-1.00 e charge - S6-P, S6-2, S6-3, S6-5, E5, E7 - was run only at
+def2-SVP, the basis DIAGNOSTIC 27 showed to be blind to relocation for want of diffuse functions.
+Nothing in the record measures relocation for a +-1 e design. This was not foreseen in D29.4 and
+is recorded here.
+
+The six items of D29.4 stand as written.

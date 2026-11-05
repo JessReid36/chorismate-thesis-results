@@ -1,0 +1,95 @@
+STAGE 6  DIAGNOSTIC 29  ERRATUM 1
+Both availability counts in the pre-registration are wrong, and why that mattered
+5 November 2026
+
+Correcting STAGE6_DIAGNOSTIC29_20261105.txt
+  sha256 eaba815f89418fb18837335538f8af9f20c21c9451a06f34246f3447dd331a9f
+The pre-registration is not edited. This records what it got wrong, how, and what followed.
+
+
+E1.1  THE TWO STATEMENTS
+
+D29.1 says the availability of the input fields was counted, and reports
+
+   110 conditions in a diffuse basis carry both a Loewdin and a dipole block
+    16 same-basis charge-free controls exist
+
+The correct counts are 182 and 26.
+
+
+E1.2  THE CAUSE
+
+One line. The code that produced both figures, and the first version of the reader, enumerated
+candidate directories with a glob over directory names rooted at the d-series:
+
+   T.glob("d*/**/")              and, for the count, d1[4-9] and d2*
+
+cs_stage6 has 22 top-level directories. Thirteen hold charge files. Seven of those begin with
+"d". The glob therefore excluded, silently and with no error,
+
+   transfer         12 conditions      additivity      36 conditions
+   negatives        12 conditions      negatives_armA  12 conditions
+
+and the charge-free controls under additivity, negatives and negatives_armA, which are six of
+the ten controls the count missed. The other four - d20/def2-SVPD/bare_lam000_R and _TS, and
+d23/ctl_R and ctl_TS - lie inside the d-namespace and were missed for a second reason: the count
+of 16 was taken over a list of eight directory roots written out by hand, which does not include
+d23, and keyed on the name ctl_, which the zero-field lambda arm does not carry. 72 of 182
+conditions - two in five - were never looked at. Every excluded
+directory is a committed diagnostic: transfer and additivity are named in the DIAGNOSTIC 20, 21
+and 22 pre-registrations, negatives carries DIAGNOSTIC14_AMENDMENT1_RESULT.txt and
+negatives_armA carries DIAGNOSTIC15_RESULT.txt.
+
+A glob over names is not a search of the record. It encodes an assumption about how directories
+happen to be called, it fails silently when that assumption is wrong, and nothing in the counts
+it produces shows that anything is missing. The project's own rule covers this: a failed search
+is not absence.
+
+
+E1.3  WHAT IT AFFECTED
+
+THIS ONE CHANGED THE ANSWER. It is not a bookkeeping correction.
+
+On the restricted set of 110, the highest Sigma |q| among conditions that did not relocate was
+2.8800 e and the lowest among those that did was 4.2913 e, so Sigma |q| appeared to SEPARATE with
+a relative margin of 0.49; Sigma q^2 appeared to separate as well. A reading had been written to
+that effect.
+
+On the full set of 182, the excluded transfer directory contains
+
+   transfer/def2-SVPD/lam075_R    MOVED,           Loewdin rise +0.3181
+   transfer/def2-SVPD/lam075_TS   did not move,    Loewdin rise +0.1136
+
+whose charge vectors are identical. C and B collapse onto the same value, 3.2850 e in Sigma |q|
+and 1.1381625 e^2 in Sigma q^2, and no scalar separates. The result is the opposite of what the
+restricted set showed, and it rests on a pair of runs the glob had excluded.
+
+So the apparent separation was an artefact of which directories the reader could see.
+
+HOW IT WAS CAUGHT. Before the reading was committed, the figures were recounted independently,
+from the committed outputs, by code written from scratch against cs6_audit.py's own definitions
+and without reading cs6_d29.py. That recount returned 182 conditions, 170 in the primary set, 35
+arrangements and 15 moved, against 110, 98, 25 and 12, and reported C equal to B for both
+scalars. The discrepancy was the finding; the pair above was then checked by hand against the raw
+job.out and pc.pc files, which is what E1.2 and the result quote.
+
+
+E1.4  THE FIX
+
+phase2.2/cs6_d29.py now enumerates candidates from the whole tree, by what a directory contains
+rather than what it is called: every directory holding a pc.pc or a job.out, anywhere under
+cs_stage6. The committed reader carries the comment recording why.
+
+The controls are likewise identified by content - charges absent from both pc.pc and job.inp -
+and not by name, except that a control must additionally be named ctl_ or be the zero-field arm
+of a lambda series. All 26 are reported with their per-key spread, which is 0.000000 in both the
+maximum Loewdin charge and the dipole for every one of the 12 keys, so no choice among the eight
+duplicate B3LYP def2-SVPD controls changes any figure.
+
+
+E1.5  WHY THIS IS RECORDED RATHER THAN QUIETLY FIXED
+
+A pre-registration's availability counts are what a later reader uses to check that the set was
+the set it claims. Both were wrong, the error reversed the diagnostic's verdict, and the
+corrected reading contradicts a reading that had already been drafted. None of that is visible
+from the corrected files alone.
