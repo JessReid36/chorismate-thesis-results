@@ -1,0 +1,109 @@
+STAGE 6  DIAGNOSTIC 29                                                      5 November 2026
+WHERE DOES DENSITY RELOCATION BEGIN, JUDGED ON THE RELOCATION CRITERION ALONE?
+
+PRE-REGISTERED BEFORE ANYTHING IS READ. Nothing is computed or quoted in this document. No Loewdin
+rise, no dipole ratio, no threshold and no separation has been calculated. The availability of the
+input fields was counted - 110 conditions in a diffuse basis carry both a Loewdin and a dipole
+block, and 16 same-basis charge-free controls exist - and nothing further was looked at.
+
+Governing criteria: STAGE6_CRITERIA.txt
+  sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+This diagnostic edits no pre-registration and no result. It needs no HPC time: it is a re-read of
+committed outputs.
+
+
+D29.1  WHY THIS IS RUN, AND WHAT IT REPLACES
+
+DIAGNOSTIC 28's committed result (sha256
+aa9e4d8ca65c177c7ec0717362f1dc8ece4c4bd98e2e7e21b48eb281eec4ee6f)
+established that B3LYP places the bare dianion's highest occupied orbital well above where its
+measured detachment energy puts it, and that correcting the long-range exchange moves it. The
+consequence for this stage is that the two indicators the readability classifier combines behave
+very differently when the functional changes. At one fixed condition, sum|q| = 2.8800 e:
+
+   the HOMO-LUMO gap moved from 0.4934 eV under B3LYP to 2.8223 and 4.4177 eV under the two
+   range-separated functionals, flipping that condition's verdict from STRAINED to CLEAN
+
+   the Loewdin relocation at the strongest field moved from +0.875 e to +0.750 and +0.750 e,
+   changing no verdict at all
+
+The gap is fragile under a change of functional and the relocation is robust. They also disagreed
+about which conditions were bad: the condition flagged on gap turned out to be fine, and the one
+flagged on relocation did not.
+
+WHAT IS WITHDRAWN, AND BY THIS DOCUMENT RATHER THAN QUIETLY. A figure of Sigma q^2 <= 0.58 e^2 was
+stated on 5 November, together with a claim that the optimiser's committed budget of B = 2.00 e^2
+is about 3.4 times too high, in an uncommitted note and in conversation. Both rested on a
+separation drawn across committed conditions whose verdicts used B3LYP gaps. One of those verdicts
+has now flipped. NEITHER FIGURE IS QUOTABLE AND THIS DIAGNOSTIC DOES NOT ASSUME EITHER. Whether
+Sigma q^2 is even the ordering variable is also not assumed; it is one of three tested below.
+
+
+D29.2  WHAT IS READ
+
+Every committed condition in a diffuse basis (402 or 682 basis functions) that carries both a
+Loewdin and a dipole block and has a charge-free control in the same basis, same state and same
+functional. The judgement is the committed classifier's RELOCATION criterion and nothing else:
+
+   MOVED  if  (maxlw - maxlw of its control) >= D_LW   OR   dip / dip of its control >= R_DIP
+
+with D_LW and R_DIP taken from phase2.2/cs6_audit.py
+  sha256 1dda394a134b3c7265df1898c9b5dc507d01c41d73aa5e59274495a1e7005dea
+by loading that file and reading its constants, not by copying their values into this document.
+
+WHAT IS DELIBERATELY NOT READ: the HOMO-LUMO gap and the SCF cycle count. Both enter the
+classifier's full verdict and both are what DIAGNOSTIC 28 showed to be functional-dependent. A
+reader that consults them is not doing what this diagnostic says it does, and GATE 4 checks that.
+
+THE PRIMARY SET is the B3LYP conditions, which are the bulk of the record. The 20 DIAGNOSTIC 28
+conditions under CAM-B3LYP and wB97X-D3 are held back as a CROSS-FUNCTIONAL CHECK: once a boundary
+is drawn on the B3LYP conditions, does any d28 condition fall on the wrong side of it? That check
+can fail even when the primary separation succeeds.
+
+
+D29.3  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE ANYTHING IS READ
+
+For each candidate scalar s in { Sigma q^2 , Sigma |q| , max |q| }, over the primary set, let
+
+   C(s) = the largest value of s among conditions that did NOT move
+   B(s) = the smallest value of s among conditions that DID move
+
+  s SEPARATES          if B(s) > C(s). Report C(s), B(s) and the margin B(s) - C(s).
+  s OVERLAPS           if B(s) <= C(s). Report both values and the extent of the overlap.
+
+  VERDICT: the set of scalars that separate.
+     If NONE separates, this diagnostic reports that no scalar in the set orders relocation, sets
+     no limit, and names that as its result. That is an admissible outcome and is not a failure.
+     If MORE THAN ONE separates, the one with the largest RELATIVE margin (B - C) / C is reported
+     as the preferred ordering variable and the others are reported beside it.
+
+  MONOTONICITY, checked separately and able to fail on its own: within each group sharing a basis,
+  a state and a functional, is the Loewdin rise non-decreasing in the preferred scalar? If it is
+  not, the separation is reported WITHOUT a monotone relationship behind it.
+
+  CROSS-FUNCTIONAL CHECK, also separate: with the boundary drawn on the B3LYP conditions, every
+  d28 condition is classified and reported as CONSISTENT or INCONSISTENT with it. A single
+  inconsistent condition is reported as such and is not smoothed over.
+
+
+D29.4  WHAT THIS CANNOT SETTLE
+
+1. IT DOES NOT SET THE OPTIMISER'S BUDGET. It reports where relocation begins under one criterion.
+   Changing B in the optimiser is a decision that needs an amendment, and it would also need an
+   argument that relocation is the right thing to bound, which this diagnostic does not supply.
+2. RELOCATION IS ONE INDICATOR. A design can be unusable for reasons it does not see, and a design
+   that does not relocate density is not thereby catalytically useful.
+3. LOEWDIN CHARGES IN A DIFFUSE BASIS ARE NOT A CLEAN OBSERVABLE. That is why the criterion is a
+   disjunction with the dipole ratio, and why both are reported per condition rather than only the
+   verdict.
+4. THE CONDITIONS ARE NOT INDEPENDENT. Several are field-scalings of one arrangement, so a clean
+   separation across them is weaker evidence than the same separation across independent designs.
+   The count of distinct arrangements is reported alongside the count of conditions.
+5. ONE FRAME, ONE GRID, IN VACUO. No barrier is quoted and no design is accepted or rejected.
+6. IT SAYS NOTHING ABOUT THE GAP. DIAGNOSTIC 28 left the gap's own field-dependence unresolved
+   beyond the three vectors it ran, and this diagnostic does not touch it.
+
+MACHINERY. The reader is phase2.2/cs6_d29.py, committed with the result. It loads
+phase2.2/cs6_audit.py by explicit path and records its sha256, so the thresholds and the Loewdin
+and dipole definitions are the committed ones. The reading is a separate bundle and a separate
+document, built after this is pushed.

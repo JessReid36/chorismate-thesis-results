@@ -1,0 +1,42 @@
+STAGE 6  DIAGNOSTIC 28  ERRATUM 1                                           5 November 2026
+THE READER LEFT ITS LOEWDIN AND DIPOLE FIELDS UNPOPULATED
+
+DIAGNOSTIC 28's result document and its pre-registration are NOT edited by this erratum. No figure
+in either changes. What changes is the reader, for its next use.
+
+E28.1  THE DEFECT
+
+phase2.2/cs6_d28.py as committed today
+   sha256 67a9e6b2f6050cdf9b10d0bf7662fa48202e7d64e2998231185a96497a495838
+builds its values file with
+
+   "maxlw_dip": dict(("|".join(map(str, k)), None) for k in R),
+
+which writes a dictionary of None. The Loewdin maximum and the dipole are present in every job.out
+and the reader simply does not extract them. DIAGNOSTIC 28's pre-registration listed both under
+"RECORDED, NOT GATED" in D28.4, so this is a failure to record something the document promised to
+record, not a wrong number.
+
+E28.2  WHAT IT DID AND DID NOT AFFECT
+
+AFFECTED: nothing in STAGE6_DIAGNOSTIC28_RESULT_20261105.txt. That document reports the primary,
+mechanism and secondary readings, all of which are orbital energies and gaps, and none of which
+passes through the unpopulated field. The result stands as committed.
+
+NOT AVAILABLE: the Loewdin and dipole figures D28.4 said would be recorded. They were obtained by
+hand from the same committed outputs afterwards and are reported in an uncommitted note
+(D28_FINDINGS_AND_WITHDRAWAL_20261105.md, which is not pre-registered and not quotable).
+
+E28.3  THE FIX
+
+The reader now obtains both fields through the COMMITTED classifier's own read(), imported by
+explicit path - phase2.2/cs6_audit.py, sha256 1dda394a134b3c72... - rather than by a second
+implementation of the same extraction. cs6_d26.py already loads that classifier the same way. The
+reader's own orbital and TRAH logic is unchanged, because those are what it exists to do and the
+classifier does not do them.
+
+E28.4  WHY THIS IS RECORDED RATHER THAN QUIETLY PATCHED
+
+The reader is committed and was used to produce a committed result. A reader that silently gains a
+capability between one use and the next is not reproducible. DIAGNOSTIC 29 depends on exactly these
+two fields, so the fix and the defect are both on the record before that diagnostic reads anything.
