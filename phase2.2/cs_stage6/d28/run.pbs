@@ -1,0 +1,49 @@
+#!/bin/bash
+#PBS -N cm_d28
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d28/run.pbs.out
+# Stage 6 DIAGNOSTIC 28: 22 single points, two range-separated functionals. Restartable.
+# No -q is given: the allocation is automatic, and walltime 24:00:00 routes through workq to day.
+# Order is deliberate: keyword probes first, then the controls that carry the primary reading,
+# then the charged arms. An early look answers the main question.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d28
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run probe/wB97X-D3
+run probe/CAM-B3LYP
+run wB97X-D3/def2-SVPD/ctl_R
+run wB97X-D3/def2-SVPD/ctl_TS
+run CAM-B3LYP/def2-SVPD/ctl_R
+run CAM-B3LYP/def2-SVPD/ctl_TS
+run wB97X-D3/def2-TZVPD/ctl_R
+run wB97X-D3/def2-TZVPD/ctl_TS
+run CAM-B3LYP/def2-TZVPD/ctl_R
+run CAM-B3LYP/def2-TZVPD/ctl_TS
+run wB97X-D3/def2-SVPD/1.3000e_n10_R
+run wB97X-D3/def2-SVPD/1.3000e_n10_TS
+run wB97X-D3/def2-SVPD/2.8800e_n10_R
+run wB97X-D3/def2-SVPD/2.8800e_n10_TS
+run wB97X-D3/def2-SVPD/5.6433e_n20_R
+run wB97X-D3/def2-SVPD/5.6433e_n20_TS
+run CAM-B3LYP/def2-SVPD/1.3000e_n10_R
+run CAM-B3LYP/def2-SVPD/1.3000e_n10_TS
+run CAM-B3LYP/def2-SVPD/2.8800e_n10_R
+run CAM-B3LYP/def2-SVPD/2.8800e_n10_TS
+run CAM-B3LYP/def2-SVPD/5.6433e_n20_R
+run CAM-B3LYP/def2-SVPD/5.6433e_n20_TS
+echo "end=$(date)"

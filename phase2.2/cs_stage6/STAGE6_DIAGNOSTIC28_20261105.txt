@@ -1,0 +1,205 @@
+STAGE 6  DIAGNOSTIC 28                                                      5 November 2026
+IS B3LYP PLACING THIS DIANION'S HIGHEST OCCUPIED ORBITAL TOO HIGH, AND IF SO DOES THAT ACCOUNT FOR
+THE GAP NARROWING DIAGNOSTIC 27 FOUND?
+
+PRE-REGISTERED BEFORE ANY INPUT IS GENERATED AND BEFORE ANY JOB IS SUBMITTED.
+Nothing is read, computed or quoted in this document. It states what will be run, what the gates
+are, and what each possible outcome will be taken to mean. The reading is a separate document.
+
+Governing criteria: STAGE6_CRITERIA.txt
+  sha256 010d1d83d33c3ff28fcb11a2e05e337fbaa7df0fa51fd38c56973b5b2c93155e
+This diagnostic does not edit STAGE6_CRITERIA.txt and does not edit DIAGNOSTIC 27. It does not
+change the production functional; that would need an amendment and is out of scope here.
+
+
+D28.1  WHY THIS IS RUN
+
+DIAGNOSTIC 27 (STAGE6_DIAGNOSTIC27_RESULT_20261105.txt, sha256
+7e7e9106ba7663cc7ba26bf2c6081b4919966016250a6fe1b4eff1c7a86f8fc8) found that the barrier change
+stops converging with basis above the weakest field tested, and that the HOMO-LUMO gap narrows
+severely as the field rises - at def2-SVPD the bare substrate's gap is 3.5375 eV at the reactant and
+0.4935 eV at sum|q| = 2.8800 e.
+
+There is a known reason to suspect the functional is part of this, and it is visible in DIAGNOSTIC
+27's own charge-free control runs. B3LYP places the highest occupied orbital of the BARE substrate,
+with no charges present at all, at
+
+   def2-SVPD    ctl_R   +1.2307 eV      ctl_TS  +1.3881 eV
+   def2-TZVPD   ctl_R   +1.2756 eV      ctl_TS  +1.4371 eV
+
+All four are POSITIVE, which places the orbital above the vacuum level and so says the second
+electron is not bound. Probe 3 (vde_designs/PROBE3_RESULT.txt, sha256
+f040ab41dd22387fe7f3d357cf62379c02fd5c3135922e87ff7a5a57a288f5f1) measured the vertical detachment
+energy of the same bare dianion at +0.5123 eV, which says it IS bound. Those two statements
+disagree. For the exact functional the highest occupied orbital energy equals minus the detachment
+energy, so it should sit near -0.51 eV rather than +1.23 eV.
+
+That is the standard signature of self-interaction error in a global hybrid, and it matters here
+because the gap narrowing DIAGNOSTIC 27 measured is the occupied level rising toward the empty one.
+If B3LYP starts the occupied level roughly 1.7 eV too high, the field needed to close the gap is
+underestimated and the usable field window is wider than DIAGNOSTIC 27's numbers imply. If B3LYP is
+not the cause, the narrowing is real and DIAGNOSTIC 27's conclusion is strengthened. Both outcomes
+are useful, which is why this is worth four of the twenty-two jobs on its own.
+
+WHAT THIS DOES NOT ASSUME. DIAGNOSTIC 27's committed result stands as written. This diagnostic does
+not revisit its energies, its basis verdict or its density-relocation finding, none of which depend
+on an orbital energy.
+
+A NOTE ON WHAT DIAGNOSTIC 27 DID NOT ESTABLISH. Three of DIAGNOSTIC 27's runs engaged ORCA's TRAH
+converger, and in those three the printed orbital energies are level-shifted and the
+negative-gap warnings ORCA emitted precede SCF convergence rather than describing the converged
+state. No converged gap is therefore available for the sum|q| = 5.6433 e condition in the diffuse
+bases, and none is quoted here or treated as a reference below. The conditions this diagnostic
+compares against - the controls and sum|q| = 1.3000 and 2.8800 e - did not engage TRAH and their
+printed orbital energies are the converged ones.
+
+
+D28.2  WHAT IS RUN
+
+Twenty-two ORCA jobs. Two range-separated functionals, chosen so that the fraction of exact exchange
+at long range increases across the three functionals now in hand:
+
+   B3LYP       0.20 global, no long-range correction     already run, DIAGNOSTIC 27
+   CAM-B3LYP   0.19 short range rising to 0.65 long range
+   wB97X-D3    rising to 1.00 at long range
+
+That ordering is the point: if the long-range exchange is the mechanism, the occupied orbital should
+fall monotonically along it. One functional moving proves much less than three in order.
+
+   2   keyword probes, one per functional: a single water molecule at def2-SVP, a few seconds each,
+       whose only purpose is to establish that ORCA accepts the keyword before twenty real jobs run
+   8   controls: 2 functionals x 2 bases (def2-SVPD, def2-TZVPD) x 2 states, charge-free.
+       THESE CARRY THE PRIMARY READING.
+  12   charged arms: 2 functionals x 3 vectors x 2 states, at def2-SVPD only
+
+The charge vectors and geometries are the same committed files DIAGNOSTIC 27 used, copied byte for
+byte and not regenerated:
+
+   6e8f41c7da3bcf4ed9f5c650dc9fcf12c2a36e5af7a900e164892c276497aa88  d24/reactant_qm.xyz
+   2babeb9000ca5220a908a70eaec80ec4a64358c8f5677e9a16cb104e0dffc5bf  d24/transition_state_qm.xyz
+   daf4793d1ec9b3c328046c8f0e80d2697f7286216462bce11934af0c4f199e28  d24/pc_1.3000e_n10.pc
+   345f61f854fa7e6fc53940355f856c4d1eb9672ada465cc90df0dd14f85bc49e  d24/pc_2.8800e_n10.pc
+   fe151bdd3b5ca12b124f8e0a153790fd552c8216ff8b73ae2cdab402dcc6aa6e  d24/pc_5.6433e_n20.pc
+
+def2-TZVPD is run for the controls only. The occupied-orbital question is answered by the controls,
+and B3LYP places that orbital within 0.05 eV of the same value in the two bases (+1.2307 against
++1.2756 at the reactant), so the second basis is a check on that agreement rather than a separate
+measurement. If the answer is that B3LYP was the cause, the charged arms at def2-TZVPD become worth
+running and that is a separate pre-registration.
+
+LEVEL. Every setting other than the functional and its dispersion token is the one DIAGNOSTIC 27
+used: def2/J, RIJCOSX, TightSCF, %maxcore 3000, %pal nprocs 8, %scf MaxIter 300, charge -2,
+multiplicity 1, in vacuo, frozen single points, ORCA 6.0.1, eight cores. GATE 3 verifies that
+against DIAGNOSTIC 27's own committed job.inp files rather than taking it on trust.
+
+DISPERSION. wB97X-D3 carries its own D3 correction, so no D3BJ token is added to it; adding one
+would count dispersion twice. CAM-B3LYP has no built-in dispersion, so D3BJ is added, matching
+B3LYP D3BJ. GATE 5 checks that each output reports exactly one dispersion correction.
+
+COST, stated before the run. Measured B3LYP wall times on hpc1 for these exact conditions: 39.0 min
+for the eight def2-SVPD jobs, and 405 and 441 s for the two def2-TZVPD controls. Range-separated
+hybrids cost somewhat more per cycle because the long-range exchange is evaluated separately;
+taking that at 1.3 to 1.8x gives roughly 2.0 to 2.8 h for all twenty-two, and the figure is
+ESTIMATED because no range-separated functional has ever been run on this system. Walltime
+24:00:00. One run that fails to converge in 300 cycles is stopped by ORCA, not by walltime.
+
+
+D28.3  THE GATES, WHICH RUN BEFORE ANY NUMBER IS READ
+
+GATE 0  PROVENANCE. Every copied geometry and charge file is byte-identical to the committed d24
+        file it came from, by the five sha256 values above.
+
+GATE 1  THE PROBES PASSED. Both keyword probes terminated normally. If either did not, ORCA does
+        not accept that keyword in this build and no reading is attempted for that functional.
+
+GATE 2  THE INPUTS ARE THE SAME CONDITIONS. For every run that has a DIAGNOSTIC 27 counterpart, the
+        two job.inp files are identical once the keyword line is removed - same %maxcore, %pal,
+        %scf, %pointcharges, charge, multiplicity and geometry reference.
+
+GATE 3  AND THE KEYWORD LINE DIFFERS ONLY IN THE FUNCTIONAL. Each generated keyword line equals
+        DIAGNOSTIC 27's with "B3LYP D3BJ" replaced by this functional's own token and nothing else:
+        basis, def2/J, RIJCOSX and TightSCF all still present and in the same order.
+
+GATE 4  CONTROL AND CHARGED ARM DIFFER ONLY BY THE CHARGES. Each charged job.inp equals its control
+        plus exactly the line %pointcharges "pc.pc", and no control directory contains a pc.pc.
+
+GATE 5  EXACTLY ONE DISPERSION CORRECTION PER RUN, and the functional ORCA reports is not B88/LYP,
+        which is what it prints for B3LYP. A run reporting two dispersion corrections, or reporting
+        B3LYP's functional, is not read.
+
+GATE 6  TERMINATION AND CONVERGENCE. Every job reports ORCA TERMINATED NORMALLY and SCF convergence.
+        A run that does not is not committed; a note about it is.
+
+GATE 7  THE BASIS AND ELECTRON COUNT ARE UNCHANGED. Every substrate run reports 118 electrons, and
+        402 basis functions at def2-SVPD and 682 at def2-TZVPD, the values DIAGNOSTIC 27 recorded.
+
+GATE 8  TRAH IS DECLARED. For every run, whether ORCA engaged TRAH is recorded, and any orbital
+        energy taken from a run that did is reported as unavailable rather than quoted. This gate
+        exists because DIAGNOSTIC 27 did not have it and three of its runs needed it.
+
+GATE 9  EVERY FIGURE IN THE RESULT DOCUMENT MATCHES THE RUN AT FULL PRECISION.
+
+A FAILED GATE IS COMMITTED AS A FAILED GATE.
+
+
+D28.4  WHAT WOULD COUNT AS WHICH ANSWER, STATED BEFORE IT RUNS
+
+THE PRIMARY READING is the highest occupied orbital energy of the BARE substrate - the controls, no
+charges - against B3LYP's +1.2307 eV (def2-SVPD, R) and the -0.5123 eV that Probe 3's detachment
+energy implies. Write H(f) for that energy under functional f, at the reactant, def2-SVPD.
+
+  CONFIRMED            if H(wB97X-D3) < 0.0 eV. The orbital is then bound, as the detachment energy
+                       says it should be, and B3LYP's placement was a material error. The field
+                       window DIAGNOSTIC 27 implies is then too pessimistic and the charged arms at
+                       def2-TZVPD become worth running.
+
+  PARTIAL              if H(wB97X-D3) falls by more than 0.5 eV from B3LYP's value but stays at or
+                       above 0.0 eV. The error is real but does not by itself account for the
+                       orbital being unbound, and no claim is made about the size of the correction
+                       to the field window.
+
+  NOT CONFIRMED        if H(wB97X-D3) falls by 0.5 eV or less, or rises. B3LYP's placement is then
+                       not the explanation, DIAGNOSTIC 27's narrowing stands as measured, and the
+                       functional is removed from the list of things to try.
+
+  MECHANISM CHECK, which is separate and can fail even when the primary reading CONFIRMS:
+                       H(B3LYP) > H(CAM-B3LYP) > H(wB97X-D3), at both states and both bases. If the
+                       three are not in that order, the long-range exchange fraction is not the
+                       mechanism, and the primary verdict is reported WITHOUT a mechanism.
+
+THE SECONDARY READING is the gap at sum|q| = 2.8800 e, def2-SVPD, which B3LYP gives as 0.4935 eV at
+the reactant and 1.2586 eV at the transition state. Taking TOL = 1.0 eV:
+
+  NARROWING IS REAL    if the gap at that condition remains below TOL under wB97X-D3. The narrowing
+                       is then not a B3LYP artefact whatever the primary reading says.
+  NARROWING WAS EXAGGERATED  if it rises above TOL. The usable field window is then wider than
+                       DIAGNOSTIC 27's numbers imply, and by how much is a question for a further
+                       diagnostic, not an answer from this one.
+
+RECORDED, NOT GATED: whether the sum|q| = 5.6433 e runs still engage TRAH under either functional,
+and the Loewdin and dipole values at every condition. These are reported as measured and no
+threshold is set for them here.
+
+If the two functionals disagree on the primary reading, the result is reported per functional and no
+single verdict is formed.
+
+
+D28.5  WHAT THIS CANNOT SETTLE
+
+1. It does not establish which functional is correct. It establishes whether B3LYP's placement of
+   one orbital is anomalous against a measured detachment energy, and whether correcting that
+   changes the gap. Choosing a production functional is a separate decision needing an amendment.
+2. It compares orbital energies across functionals, which is weaker than comparing them within one.
+   The detachment-energy comparison is the anchor precisely because it is an energy difference.
+3. It says nothing about solvation, which addresses the same headroom by a different route.
+4. It does not re-run the sum|q| = 5.6433 e condition at def2-TZVPD, so it cannot say whether the
+   basis sequence converges under a different functional.
+5. Three vectors, one frame, one grid, in vacuo. No barrier is quoted and no design is accepted.
+6. It cannot recover a converged gap for the conditions where DIAGNOSTIC 27's runs engaged TRAH. If
+   that is wanted it needs a run with the level shift controlled, which is not this diagnostic.
+
+MACHINERY. phase2.2/cs6_d28_prepare.py writes the inputs on the PC and is committed with them. The
+run is one restartable PBS job on hpc1, no -q. The reading is a separate script and document built
+after the outputs are downloaded. Every output file is downloaded and kept as a physical file, with
+a PC archive outside git carrying a sha256 per file, readable outputs in the results repository, and
+nothing removed from hpc1 until both are done.
