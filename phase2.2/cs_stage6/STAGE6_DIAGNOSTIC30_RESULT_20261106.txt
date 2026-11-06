@@ -1,0 +1,76 @@
+STAGE 6  DIAGNOSTIC 30  RESULT
+Is def2-SVPD converged under CAM-B3LYP, and is the CAM-B3LYP solution stable?
+6 November 2026
+
+Pre-registered in STAGE6_DIAGNOSTIC30_20261105.txt
+  sha256 be1810b7e23e509b68204ac934d78699b361baa65d5f8d3b8bf9f461ddd87a32
+Reader: phase2.2/cs6_d30.py, committed with this document.
+TOL = 1.0 kcal/mol, read from the pre-registration and not written into the reader.
+Energies are the last FINAL SINGLE POINT ENERGY of each run; the conversion is the project
+constant 627.5094740631 kcal/mol per Hartree.
+
+
+R30.1  ARM A: THE BASIS SEQUENCE UNDER CAM-B3LYP
+
+  ddE(basis, v) = barrier(v) - barrier(control of that basis), in kcal/mol
+
+  vector            def2-SVP    def2-SVPD   def2-TZVPD     gap_SD     gap_DT   verdict
+  1.3000e_n10       -5.8754     -6.4528      -6.3919     0.5774     0.0609   CONVERGED
+  2.8800e_n10      -13.8221    -15.2662     -15.0523     1.4441     0.2139   CONVERGED
+  5.6433e_n20      -23.8428     -8.5704      +1.4313    15.2724    10.0017   NOT CONVERGED
+                   arbitration, by D27's rule: BOTH ARE ARTEFACTS
+
+  VERDICT   PER VECTOR; NO SINGLE VERDICT IS FORMED
+
+  B3LYP's OWN SEQUENCE, RE-READ FROM d27 AND REPORTED BESIDE, NOT ENTERING THE VERDICT:
+
+  vector            def2-SVP    def2-SVPD   def2-TZVPD     gap_SD     gap_DT
+  1.3000e_n10       -5.6148     -6.1341      -6.0597     0.5193     0.0744
+  2.8800e_n10      -13.1877    -14.1518      -7.2057     0.9641     6.9461
+  5.6433e_n20      -24.0534     -1.3715      -4.3478    22.6819     2.9764
+
+  These reproduce DIAGNOSTIC 27's committed figures from the raw outputs rather than
+  quoting them, which is also what validates this reader's arithmetic.
+
+
+R30.2  ARM B: THE STABILITY OF THE CAM-B3LYP SOLUTION
+
+  The verdict of the FIRST stability analysis is the one that judges the solution a plain
+  run would have kept. Where a run restarted, the second analysis judges what it finished on.
+
+  condition           first     blocks  negative eigenvalues   dE vs the committed plain run
+  1.3000e_n10_R       STABLE    1      0                        +0.0000 kcal/mol
+  1.3000e_n10_TS      STABLE    1      0                        +0.0000 kcal/mol
+  2.8800e_n10_R       STABLE    1      0                        +0.0000 kcal/mol
+  2.8800e_n10_TS      STABLE    1      0                        +0.0000 kcal/mol
+  5.6433e_n20_R       UNSTABLE  2      3                       -53.3472 kcal/mol
+  5.6433e_n20_TS      UNSTABLE  2      3                       -46.8256 kcal/mol
+  ctl_R               STABLE    1      0                        +0.0000 kcal/mol
+  ctl_TS              STABLE    1      0                        +0.0000 kcal/mol
+
+  vector              barrier, committed   barrier, stability-aware   change
+  1.3000e_n10                   20.3720                    20.3720   +0.0000   IMMATERIAL
+  2.8800e_n10                   11.5586                    11.5586   +0.0000   IMMATERIAL
+  5.6433e_n20                   18.2544                    24.7761   +6.5217   MATERIAL
+  ctl                           26.8248                    26.8248   +0.0000   IMMATERIAL
+
+  VERDICT   UNSTABLE, MATERIAL
+
+  The lowering is measured against the committed plain def2-SVPD run of the same name,
+  because ORCA does not print the pre-restart SCF energy in a labelled block and because
+  the committed value is the one every committed quantity uses.
+
+
+R30.3  WHAT FOLLOWS, BY THE PRE-REGISTERED RULES AND NOTHING ELSE
+
+  ARM A. def2-SVPD is not sufficient under CAM-B3LYP at 5.6433e_n20.
+  By D30.3, every CAM-B3LYP quantity at or above that Sum|q| is provisional until re-run.
+
+  ARM B. At least one barrier moves by more than TOL: 5.6433e_n20.
+  By D30.4, every CAM-B3LYP barrier at or above that vector is provisional until the
+  reconverged solution is used.
+
+  D30.6's six limitations stand as written. In particular this says nothing about +-1 e
+  designs and nothing about density relocation, and it does not by itself make CAM-B3LYP
+  the production functional.
+
