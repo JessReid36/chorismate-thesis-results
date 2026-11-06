@@ -1,0 +1,109 @@
+#!/bin/bash
+#PBS -N cm_d31
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d31/run.pbs.out
+# Stage 6 DIAGNOSTIC 31: the (n, q) envelope. 62 single points, CAM-B3LYP/def2-SVPD, STABPerform on
+# every one. No -q: the allocation is automatic and walltime 24:00:00 routes through workq to day.
+#
+# Ordered ASCENDING in Sigma|q|. The low-field points are the informative ones and they land first;
+# the points that may not converge at all are last, so an overrun loses only those. Restartable:
+# resubmit and it skips what finished.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d31
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+# --- Sigma|q| = 0.00 e ---
+run ctl_R
+run ctl_TS
+# --- Sigma|q| = 0.25 e ---
+run B/n01_q0.25_R
+run B/n01_q0.25_TS
+# --- Sigma|q| = 0.50 e ---
+run B/n01_q0.50_R
+run B/n01_q0.50_TS
+run B/n02_q0.25_R
+run B/n02_q0.25_TS
+# --- Sigma|q| = 0.75 e ---
+run B/n01_q0.75_R
+run B/n01_q0.75_TS
+run B/n03_q0.25_R
+run B/n03_q0.25_TS
+# --- Sigma|q| = 1.00 e ---
+run A/n01_R
+run A/n01_TS
+run B/n01_q1.00_R
+run B/n01_q1.00_TS
+run B/n02_q0.50_R
+run B/n02_q0.50_TS
+# --- Sigma|q| = 1.25 e ---
+run B/n05_q0.25_R
+run B/n05_q0.25_TS
+# --- Sigma|q| = 1.50 e ---
+run B/n02_q0.75_R
+run B/n02_q0.75_TS
+run B/n03_q0.50_R
+run B/n03_q0.50_TS
+# --- Sigma|q| = 2.00 e ---
+run A/n02_R
+run A/n02_TS
+run B/n02_q1.00_R
+run B/n02_q1.00_TS
+# --- Sigma|q| = 2.25 e ---
+run B/n03_q0.75_R
+run B/n03_q0.75_TS
+# --- Sigma|q| = 2.50 e ---
+run B/n05_q0.50_R
+run B/n05_q0.50_TS
+run B/n10_q0.25_R
+run B/n10_q0.25_TS
+# --- Sigma|q| = 3.00 e ---
+run A/n03_R
+run A/n03_TS
+run B/n03_q1.00_R
+run B/n03_q1.00_TS
+# --- Sigma|q| = 3.75 e ---
+run B/n05_q0.75_R
+run B/n05_q0.75_TS
+# --- Sigma|q| = 5.00 e ---
+run A/n05_R
+run A/n05_TS
+run B/n05_q1.00_R
+run B/n05_q1.00_TS
+run B/n10_q0.50_R
+run B/n10_q0.50_TS
+run B/n20_q0.25_R
+run B/n20_q0.25_TS
+# --- Sigma|q| = 7.50 e ---
+run B/n10_q0.75_R
+run B/n10_q0.75_TS
+# --- Sigma|q| = 10.00 e ---
+run A/n10_R
+run A/n10_TS
+run B/n10_q1.00_R
+run B/n10_q1.00_TS
+run B/n20_q0.50_R
+run B/n20_q0.50_TS
+# --- Sigma|q| = 15.00 e ---
+run B/n20_q0.75_R
+run B/n20_q0.75_TS
+# --- Sigma|q| = 20.00 e ---
+run A/n20_R
+run A/n20_TS
+run B/n20_q1.00_R
+run B/n20_q1.00_TS
+echo "end=$(date)"
+echo "normal terminations: $(grep -l 'ORCA TERMINATED NORMALLY' "$W"/*/job.out "$W"/*/*/job.out 2>/dev/null | wc -l) of 62"
