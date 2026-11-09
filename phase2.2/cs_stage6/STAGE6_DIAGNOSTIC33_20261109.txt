@@ -1,0 +1,187 @@
+STAGE 6 - DIAGNOSTIC 33
+THE FIRST BARRIER EFFECT AT THE CORRECTED LEVEL OF THEORY, ON CONFIGURATIONS MEASURED RELIABLE
+Pre-registered 9 November 2026, before any input exists and before any run is submitted.
+
+STAGE6_CRITERIA.txt is not edited. AMENDMENTS 1 to 5 stand. No budget is reinstated: DIAGNOSTIC 29
+and DIAGNOSTIC 31 rule out a cap written as a function of the charges, the withdrawn
+Sigma q^2 <= 0.58 e^2 stays withdrawn, and nothing below depends on one.
+
+
+D33.1  WHY
+
+Three facts, each from the committed record, do not currently sit together.
+
+  (i)   The optimiser's objective is at the retired level of theory. The A matrix is
+        a_if = V_TS,f(r_i) - V_R,f(r_i), the difference of the BARE substrate's electrostatic
+        potential at site i, from in vacuo B3LYP-D3BJ/def2-SVP densities (A_REPORT.txt). DIAGNOSTIC
+        28 retired B3LYP. Its committed result places the dianion's highest occupied orbital at
+        +1.2307 eV under B3LYP and -0.5918 eV under CAM-B3LYP, against a target of -0.5123 eV set
+        by Probe 3's measured detachment energy of +0.5123 eV. So B3LYP sits 1.7430 eV high and
+        CAM-B3LYP 0.0795 eV low - both differences DERIVED here from those committed figures, not
+        stated in D28.
+
+  (ii)  The reliability envelope is at the corrected level of theory. DIAGNOSTIC 31 and DIAGNOSTIC
+        32 are CAM-B3LYP/def2-SVPD. So the envelope and the objective are not on the same footing,
+        and no design has ever been both optimised and certified at one level of theory.
+
+  (iii) Which configurations break cannot be predicted. DIAGNOSTIC 29 settled it with two runs
+        carrying byte-identical charge vectors and opposite verdicts; DIAGNOSTIC 31 confirmed it on
+        purpose-built iso-total families. So a candidate cannot be screened. It can only be chosen
+        from inside the region already measured, and then measured again.
+
+This diagnostic puts the objective on the same footing as the envelope, and measures the barrier
+effect of the configurations that are inside it. It is the smallest job that produces a barrier
+effect which is simultaneously at the corrected functional, inside a basis window confirmed by
+DIAGNOSTIC 30, and on a configuration measured reliable.
+
+
+D33.2  WHAT IS RUN
+
+Two stages. Geometry is the committed aligned frame 42436 throughout; nothing is relaxed and no
+geometry is generated. The grid is unchanged: the site floors come from floors.tsv at the classical
+Lennard-Jones wall and L_i is that wall's own energy difference, both independent of the electronic
+method, so only a_i changes.
+
+STAGE A - the A matrix at CAM-B3LYP/def2-SVPD                                           16 runs
+   ! CAM-B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF
+   3 in vacuo single points on the bare substrate: R, TS, P
+   1 inverse-transform single point, as the committed A matrix's check (b)
+   orca_vpot on those densities at all 2626 sites of sites_f42436.tsv, giving a_i^new
+   12 finite-difference runs: sites 1678, 1954 and 1612, both states, +-, the SAME three sites the
+      committed A matrix validates against, so the comparison is like for like
+
+STAGE B - the designs                                                                   16 runs
+   ! CAM-B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF
+   Six designs, two states each, plus two wall-only controls at two states each.
+
+   The designs are not listed here, because they are determined by a_i^new. The RULE that picks
+   them is fixed here instead: for each (n, q) below, take the committed greedy pipeline of
+   cs_opt_milp.py - per-site best admissible value of a_i q + L_i, ascending, selected greedily
+   subject to the committed r_min = 3.25 A - with a_i^new in place of the committed a_i, and put
+   |q_i| = q exactly at each selected site at whichever admissible sign is better there.
+
+     (n, q)        Sigma|q|   arm     basis band, on DIAGNOSTIC 30
+     3 x 0.75       2.25 e    bare    inside the confirmed window
+     5 x 0.50       2.50 e    bare    inside
+     11 x 0.25      2.75 e    bare    inside
+     2 x 1.00       2.00 e    walled  inside
+     3 x 1.00       3.00 e    walled  OUTSIDE by 0.12 e
+     20 x 0.25      5.00 e    bare    OUTSIDE, in the untested gap below 5.6433 e
+
+   Every one of those six is inside DIAGNOSTIC 31's reliability envelope for its per-sphere charge,
+   except the two at q = 1.00, which are inside DIAGNOSTIC 32's walled rescue at n <= 3.
+
+   The two walled designs carry the committed DIAGNOSTIC 23 argon block, lifted verbatim by the
+   same check cs6_d32_prepare.py uses, inline geometry, no pc.pc.
+   Wall-only controls at n = 2 and n = 3, zero charge, same sites: DIAGNOSTIC 32 established that
+   the wall is a neutral addition on the relocation leg at n = 1, 5 and 20, and these fill in the
+   two n values this diagnostic actually uses rather than relying on that bracket.
+
+THE CHARGE-FREE CONTROL IS NOT RE-RUN. d31/ctl_R and d31/ctl_TS are already CAM-B3LYP/def2-SVPD at
+this geometry with no charges. Reusing them keeps the pairing with DIAGNOSTIC 31 and DIAGNOSTIC 32
+exact. They are identified by sha256 and the reader refuses to proceed if either has changed:
+   d31/ctl_R/job.out   2f5148d27e932aad2280f0ea7960bdf32fafdf5d769d9efe8911fef0ccadf3f2
+   d31/ctl_TS/job.out  5a650d9ef9d41ff957af9018aa65b9d597dc584148aab78144b976b4a6ba1f80
+
+
+D33.3  THE QUANTITIES, AND THE CRITERIA THAT DECIDE WHAT MAY BE QUOTED
+
+ddE = [E_TS(design) - E_TS(control)] - [E_R(design) - E_R(control)], kcal/mol, negative lowers the
+barrier. H2KCAL = 627.5094740631, as everywhere in Stage 6.
+
+RELIABILITY is the committed classifier phase2.2/cs6_audit.py at its committed thresholds -
+D_LW 0.25 e, R_DIP 2.0, GAP_ABS 1.0 eV, R_GAP 0.5 - read against d31's charge-free control, with
+two rules that are already settled and are restated here so they are not re-decided later:
+   - the DIPOLE leg is NOT applied to a walled arm. ORCA counts an ECP centre as a nucleus, so the
+     dipole there is bookkeeping. D32.3 stated this in advance for DIAGNOSTIC 32 and it holds here.
+   - STABILITY is judged on the LAST analysis in the run, per AMENDMENT 5, that being the solution
+     every reported number is computed from. A corrected first-pass instability is recorded, with
+     its first verdict, its negative-eigenvalue count and its lowest eigenvalue, and is not a flag.
+
+A design's ddE IS QUOTABLE only if BOTH hold:
+   (1) the design is RELIABLE on the criterion above, at both states; and
+   (2) its Sigma|q| <= 2.88 e, the largest vector DIAGNOSTIC 30 confirmed converged against
+       def2-TZVPD under this functional (gap_DT 0.2139 kcal/mol at 2.8800e_n10).
+A design failing (1) or (2) has its ddE REPORTED AND LABELLED, and may not be quoted as a Stage 6
+barrier effect. The two designs listed as OUTSIDE in D33.2 are expected to fail (2); they are run
+because the comparison is informative and the cost is four runs.
+
+
+D33.4  THE READINGS
+
+R33.1  THE NEW A MATRIX AGAINST THE COMMITTED ONE.
+       Reported: the correlation of a_i^new with a_i, the largest absolute change, the change at
+       the three finite-difference sites, the in vacuo barrier at CAM-B3LYP/def2-SVPD against the
+       committed 18.4610 kcal/mol, and how far the site RANKING moves - Spearman rho over all 2626
+       sites, and the overlap of the top 20.
+
+R33.2  WHICH OF THE SIX DESIGNS ARE RELIABLE, each with its flags and its per-state figures.
+
+R33.3  ddE FOR EACH DESIGN, with the quotable subset named under D33.3, and each design's sites,
+       charges and Sigma|q| printed in full.
+
+R33.4  THE LINEAR ESTIMATE'S CALIBRATION. score = sum a_i^new q_i + sum L_i against the measured
+       ddE, for every design. The record has two such pairs, both at B3LYP/def2-SVP and both at the
+       unconstrained optimum: S6-2 score -11.2184 against ddE -12.3835, ratio 1.10, and S6-20
+       score -19.6537 against ddE -24.8261, ratio 1.26. Whether that ratio survives the change of
+       level of theory and the move to constrained per-sphere charges is read, not assumed.
+
+
+D33.5  CONTROLS AND STOPS, FIXED HERE
+
+G1  THE NEW A MATRIX MUST PASS THE COMMITTED A MATRIX'S OWN CHECKS, at the same three sites and
+    with the same per-site limits: 0.0728, 0.0611 and 0.0237 kcal/mol per e for sites 1678, 1954
+    and 1612. If any fails, a_i^new is not used and the diagnostic STOPS after stage A. A
+    finite-difference check that fails is not re-scored with a wider limit.
+
+G2  THE INVERSE-TRANSFORM CHECK must give max |dV| <= 1e-4 Eh/e, the committed limit. Fail: STOP.
+
+G3  THE CONTROL MUST BE THE COMMITTED ONE. Both d31 control outputs must match the sha256 above
+    byte for byte. Fail: STOP, and nothing is read.
+
+G4  EVERY RUN must terminate normally, report a FINAL SINGLE POINT ENERGY, run a stability
+    analysis, and - for the walled arms - report the same basis-function count and electron count
+    as its bare counterpart, the wall adding neither. Fail on any: that design is not read.
+
+G5  SIGMA|Q| IS COMPUTED FROM EACH INPUT'S OWN CHARGES, never assumed from its (n, q) label, and
+    the band under D33.3(2) is assigned from the computed value.
+
+G6  IF THE SITE RANKING MOVES SO FAR THAT NO BASIS-CONFIRMED DESIGN SURVIVES - that is, if for
+    every (n, q) inside the window the greedy selection with a_i^new admits fewer than n sites -
+    the diagnostic STOPS and reports that, rather than substituting designs.
+
+G7  THE WALL-ONLY CONTROLS AT n = 2 AND n = 3 MUST NOT MOVE DENSITY: each must have a Loewdin rise
+    below D_LW against d31's control. If either moves, the walled designs at that n are reported
+    and not quoted, because the wall would then not be a neutral addition there.
+
+
+D33.6  WHAT THIS CANNOT SAY, STATED BEFORE IT IS RUN
+
+1. NOTHING HERE ESCAPES r_safe. Every site in this diagnostic sits at 2.85-2.96 A from the
+   substrate, inside the 3.50 A that DIAGNOSTIC 11 measured, and D11.3 holds that no design
+   measured inside r_safe is interpretable. The choice between moving the surface out and changing
+   the charge model is recorded as open in D11's Erratum 1 and is not settled here. So a quotable
+   ddE from this diagnostic is a barrier effect WITHIN the current grid, not a claim that the
+   current grid is admissible.
+
+2. THE WALL IS NOT ADOPTED AND IS NOT CALIBRATED. Route (b) has no amendment. ERRATUM7 records the
+   Ne parameters used outside their published octet assumption; DIAGNOSTIC 23 found swapping
+   He/Ne/Ar moves d_shield by 37 to 42 per cent of its own value, and records a count of
+   independent alternatives of the same class of zero. So the two walled designs' ddE values are
+   reported for comparison and no production number may rest on them.
+
+3. FROZEN GEOMETRIES, ONE FRAME, IN VACUO, NO CONTINUUM. Stage 6's relaxed half has no committed
+   result, two amendments block every future relaxation, and Finding 4 holds that the wall's entire
+   value lies at the relaxed geometry. No activation free energy follows from this diagnostic.
+
+4. THE GREEDY IS NOT THE MILP. The selection rule in D33.2 is the committed greedy pipeline, which
+   reproduces S6-2 and S6-3 exactly and is therefore the optimum at n <= 3, but at n = 11 and
+   n = 20 the MILP may find better designs. The ddE values are for the designs actually run.
+
+5. SIX DESIGNS ON ONE GRID AND ONE FRAME IS NOT AN OPTIMISATION. This measures the configurations
+   at the edge of a mapped envelope. It does not search, and it does not establish that the best
+   design in that envelope has been found.
+
+6. NO ENVELOPE IS EXTENDED. DIAGNOSTIC 31's envelope and DIAGNOSTIC 32's n <= 3 rescue are used as
+   given. If a design measured reliable here sits where D31 said it would, that is consistency, not
+   a new reliability result, and the envelope is not widened by it.
