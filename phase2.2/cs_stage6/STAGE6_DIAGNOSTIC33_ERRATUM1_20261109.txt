@@ -1,0 +1,62 @@
+STAGE 6  DIAGNOSTIC 33  ERRATUM 1
+G1 pinned an absolute tolerance where the committed check is relative
+9 November 2026
+
+Correcting STAGE6_DIAGNOSTIC33_20261109.txt
+  sha256 e64931679257b5fe8650528d203cdd12e47a2e0092e7dcaded8cf3a20d8957a1
+
+WRITTEN BEFORE STAGE A HAS BEEN READ. No output of this diagnostic has been examined. This is not
+a tolerance being revised to accommodate a result; it is a fault in the pre-registration, found
+while building the reader, recorded before the reader was run.
+
+
+E1.1  WHAT G1 SAYS
+
+   "G1  THE NEW A MATRIX MUST PASS THE COMMITTED A MATRIX'S OWN CHECKS, at the same three sites and
+   with the same per-site limits: 0.0728, 0.0611 and 0.0237 kcal/mol per e for sites 1678, 1954 and
+   1612."
+
+
+E1.2  WHY THAT IS WRONG
+
+The committed check is RELATIVE. phase2.2/cs5_amatrix.py computes
+
+   tol = 0.01 + 0.01 * abs(a)
+
+and the three numbers G1 pins are simply that formula evaluated at the COMMITTED a: site 1678 has
+a = -6.2779 giving 0.0728, site 1954 has a = +5.1138 giving 0.0611, site 1612 has a = +1.3716
+giving 0.0237. All three reproduce exactly.
+
+Stage A computes a new a at each of those sites. The committed formula therefore gives a new
+tolerance at each, and G1's pinned numbers are the tolerance for a quantity this diagnostic is not
+measuring. Pinning them also contradicts WORKING_RULES.md guard rail 4, TOLERANCES RELATIVE, NOT
+ABSOLUTE, which exists for exactly this failure.
+
+
+E1.3  HOW IT IS RESOLVED, AND WHY THIS CANNOT LOOSEN ANYTHING
+
+G1 is read as requiring BOTH tolerances, and a site passes only if it passes both:
+
+   |a_fd - a_new|  <=  min( G1's pinned limit , 0.01 + 0.01 * abs(a_new) )
+
+Taking the minimum means the stricter of the two governs at every site, whichever that is. So this
+resolution cannot admit a finite-difference result that either tolerance alone would have rejected.
+It is strictly at least as demanding as G1 as written, and strictly at least as demanding as the
+committed formula.
+
+Both numbers are reported at every site, with which one bound the test.
+
+This is also the faithful reading of G1's own first clause. It says the new A matrix "MUST PASS THE
+COMMITTED A MATRIX'S OWN CHECKS" - and the committed check is the relative formula. The pinned
+numbers are that formula's output at the old a, quoted as if they were the check itself.
+
+
+E1.4  WHAT IS NOT CHANGED
+
+G1's stop is unchanged: if any site fails, a_i^new is not used and the diagnostic stops after stage
+A. G1's last sentence is unchanged and is the reason this erratum exists at the time it does - a
+finite-difference check that fails is not re-scored with a wider limit, and nothing here widens
+one.
+
+No other gate, criterion or reading of DIAGNOSTIC 33 is affected. The pre-registration is not
+edited.

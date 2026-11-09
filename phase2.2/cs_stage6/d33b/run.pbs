@@ -1,0 +1,44 @@
+#!/bin/bash
+#PBS -N cm_d33b
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=12:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d33b/run.pbs.out
+# Stage 6 DIAGNOSTIC 33 stage B: 16 runs, CAM-B3LYP/def2-SVPD, STABPerform on every one.
+# Ordered ASCENDING in Sigma|q|, so the designs inside D30's confirmed window land first
+# and an overrun loses only the two that are outside it. No -q: the allocation is
+# automatic and walltime 12:00:00 routes through workq to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d33b
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run wall0_n02_R
+run wall0_n02_TS
+run wall0_n03_R
+run wall0_n03_TS
+run wall_n02_q1.00_R
+run wall_n02_q1.00_TS
+run bare_n03_q0.75_R
+run bare_n03_q0.75_TS
+run bare_n05_q0.50_R
+run bare_n05_q0.50_TS
+run bare_n11_q0.25_R
+run bare_n11_q0.25_TS
+run wall_n03_q1.00_R
+run wall_n03_q1.00_TS
+run bare_n20_q0.25_R
+run bare_n20_q0.25_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 16"
