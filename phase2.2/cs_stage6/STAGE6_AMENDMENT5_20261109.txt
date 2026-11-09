@@ -1,0 +1,98 @@
+STAGE 6 - AMENDMENT 5: the wavefunction stability criterion
+9 November 2026. Decided by Jessica on 9 November 2026.
+
+Nothing already committed is edited by this amendment and no committed verdict is rewritten by
+it. It changes what the criterion means from here on, states its scope exactly, and names the
+one reader whose use of the first verdict is CORRECT and must not be changed.
+
+
+A5.1  THE CONTRADICTION
+
+Two questions have been answered by one field.
+
+   (i)  Is the solution that the reported numbers came from a stable solution?
+   (ii) Did the first SCF solution need correcting, and did the correction move anything?
+
+Both have been read off stability["first"], the verdict of the first stability analysis. That
+was sound while the production head carried no STABPerform, because then the first solution
+was the only solution and the two questions had the same answer. DIAGNOSTIC 20's
+pre-registration says so at line 84:
+
+   "The verdict of a run is the FIRST stability analysis, which by GATE 3 is the production
+   solution. A second analysis, where ORCA reconverged, is reported with it."
+
+DIAGNOSTIC 31 put STABPerform on by default. From that point the two questions separate: the
+reported numbers come from the reconverged solution, so (i) is answered by the LAST verdict,
+while (ii) still needs the first. Carried over unexamined, the single field answers (ii) and
+is then used as though it answered (i).
+
+The consequence is recorded in STAGE6_DIAGNOSTIC32_ERRATUM1_20261109.txt.
+
+
+A5.2  THE RULE FROM HERE
+
+A reader that issues a RELIABILITY verdict on a run - whether its reported quantities may be
+used - judges stability on the LAST stability analysis in that run, which is the solution
+every reported quantity was computed from.
+
+A first-pass instability that was then corrected is NOT a reliability flag. It is recorded, as
+a fact about the SCF landscape at that condition, with the first verdict, the number of
+negative eigenvalues and the lowest eigenvalue. It may be reported, counted and discussed. It
+may not by itself make a condition UNRELIABLE.
+
+A run whose LAST verdict is unstable - no restart, or a restart that stayed unstable - is
+flagged, as before. No run in the present record is in that state: across all 208 runs that
+carry a stability analysis, in d19, d20, d21, d22, d30, d31 and d32, zero end unstable.
+
+Any reader that applies this must expose both fields. cs6_d30.py and cs6_d31.py already record
+"first" and "last"; cs6_d32.py records only "first" and must be given "last" before it is used
+again.
+
+
+A5.3  WHAT THIS DOES NOT TOUCH, AND WHY
+
+DIAGNOSTIC 30 IS EXEMPT AND ITS READER MUST NOT BE CHANGED. cs6_d30.py decides arm B with
+
+   unstable = [k for k, c in armB["conditions"].items() if c["stability"]["first"] == "UNSTABLE"]
+   mat      = [k for k, b in bars.items() if b["material"]]
+   if not unstable:  "ALL STABLE"
+   elif not mat:     "UNSTABLE, IMMATERIAL"
+   else:             "UNSTABLE, MATERIAL"
+
+DIAGNOSTIC 30's question is (ii), not (i): it asks whether a first-pass instability exists and
+whether correcting it moves the barrier. Its use of the first verdict is therefore correct. If
+the last verdict were substituted, both of its restarted runs would read stable, "unstable"
+would be empty, the first branch would fire and "mat" would never be consulted - turning its
+committed verdict UNSTABLE, MATERIAL into ALL STABLE and erasing the finding that the
+reconvergence moved a barrier by more than TOL at 5.6433e_n20. This amendment does not apply
+to a diagnostic whose question is (ii).
+
+DIAGNOSTIC 19 AND DIAGNOSTIC 20 ARE NOT IN ERROR. Both pre-registered the first-verdict rule
+with the justification quoted in A5.1, which held when they were written. Their verdicts stand
+as committed and this amendment is not retrospective on them.
+
+DIAGNOSTIC 21 AND DIAGNOSTIC 22 ARE UNAFFECTED IN FACT. None of their 48 runs restarted, so
+the first and last verdicts are the same verdict and no reading of theirs can differ.
+
+DIAGNOSTIC 31 IS UNAFFECTED IN ITS VERDICTS. cs6_d31.py gates on the first verdict and so
+falls under A5.2, but re-reading its committed tree under the corrected rule changes 0 of its
+30 condition verdicts and leaves the iso-total families unchanged, because every one of its
+conditions is independently flagged on relocation. Its reader is corrected for correctness,
+not to change a result.
+
+phase2.2/cs6_audit.py IS NOT AMENDED. It contains no stability logic. The rule lives in the
+individual readers, duplicated, which is how it drifted.
+
+
+A5.4  WHAT IS NOT DECIDED HERE
+
+This amendment does not re-read anything and issues no verdict. DIAGNOSTIC 32's committed
+verdict stands. The recomputation in ERRATUM 1 is post hoc, is labelled as such there, and is
+not promoted to a verdict by this amendment - a re-reading whose outcome is already known
+cannot be pre-registered, and none is claimed.
+
+It also does not address the binding constraint the erratum exposes. At n >= 5 the SCF needs
+level shifting or TRAH, which makes the gap leg unreadable, so those conditions are
+INCONCLUSIVE under the corrected rule rather than RELIABLE. Obtaining a verdict there needs
+either a convergence route that does not shift, or a criterion to stand in for the gap. That
+is a new diagnostic and it is pre-registered when it is designed, not here.

@@ -1,0 +1,122 @@
+STAGE 6  DIAGNOSTIC 32  ERRATUM 1
+The verdict at n = 5 and n = 10 rests on a stability criterion that reads the wrong solution
+9 November 2026
+
+Correcting STAGE6_DIAGNOSTIC32_RESULT_20261109.txt
+  sha256 7ed8b17896e84472bea6cc81ba4bd52f53fa9f1326b3ba280bdfd501f0f535ad
+and noting the same defect in the reader committed with it, phase2.2/cs6_d32.py
+  sha256 1c232296045f2e93bbcf5d9f95437e9133580557a8d0b3fbc7d755e44f6092ba
+
+The result is not edited. This records what its verdict rests on, what the outputs say, and
+what may and may not be concluded from that.
+
+
+E1.1  WHAT THE RESULT SAYS
+
+R32.1 reports the primary verdict
+
+   THE WALL RESCUES IT UP TO SOME n: rescued or unchanged at n = [1, 2, 3],
+   still unreliable at n = [5, 10, 20]
+
+and marks nine of the thirty conditions STILL UNRELIABLE.
+
+
+E1.2  WHAT ACTUALLY FIRED
+
+Every one of those nine was flagged on ONE criterion, the wavefunction stability analysis, and
+on nothing else. Of the five criteria the reader applies:
+
+   relocation      all nine have a Loewdin rise BELOW the 0.25 e threshold. The largest is
+                   A/n20 at +0.2441 e, which is 0.0059 e under the line. The single exception
+                   in the grid is B/n20_q1.00 at +0.8203 e, which IS over and stays flagged.
+   gap             fired on none of them
+   convergence     GATE RUNS records 0 of 66 runs not converged
+   termination     GATE RUNS records all 66 terminated normally
+   stability       fired on all nine
+
+So relocation - the quantity the wall was added to change - passes at every n except the one
+condition named above.
+
+
+E1.3  WHY THAT CRITERION READS THE WRONG SOLUTION
+
+phase2.2/cs6_d32.py judges on stability["first"], the verdict of the FIRST stability analysis.
+Read from the committed outputs with the reader's own markers:
+
+   of the 66 d32 runs, 21 reported an unstable first solution
+   all 21 restarted and reconverged
+   0 of the 66 end with an unstable verdict
+
+   of the 62 d31 runs, 34 reported an unstable first solution
+   all 34 restarted and reconverged
+   0 of the 62 end with an unstable verdict
+
+And in all 128 runs across the two diagnostics there is exactly one LOEWDIN ATOMIC CHARGES
+block and exactly one FINAL SINGLE POINT ENERGY, and both appear AFTER the last stability
+block. Every quantity that reached the result - the Loewdin relocation, the gap, the energy,
+the dipole - was therefore computed from the reconverged, stable solution. The unstable
+solution's numbers were never reported.
+
+The criterion is inherited, and the reason it was once correct has lapsed. DIAGNOSTIC 20's
+pre-registration states it in terms, at line 84:
+
+   "The verdict of a run is the FIRST stability analysis, which by GATE 3 is the production
+   solution. A second analysis, where ORCA reconverged, is reported with it."
+
+and phase2.2/cs6_d19.py prints the same justification. That was true when it was written: the
+production head did not carry STABPerform, so the first analysis WAS the solution the numbers
+came from. DIAGNOSTIC 31 put STABPerform on by default. From that point the production
+solution is the reconverged one, and the first verdict no longer describes it. The rule was
+carried into cs6_d31.py and cs6_d32.py with the code; its justification was not re-examined.
+
+
+E1.4  WHAT A CORRECTED READING GIVES, AND WHY IT IS NOT A VERDICT
+
+The reader was re-run on the committed tree with one line changed - blocks[-1] in place of
+blocks[0] in stability(), nothing else - and gave:
+
+   nine conditions move from UNRELIABLE to INCONCLUSIVE, not to RELIABLE:
+     A/n05  A/n10  A/n20  B/n05_q1.00  B/n10_q0.50  B/n10_q0.75  B/n10_q1.00
+     B/n20_q0.50  B/n20_q0.75
+   the primary becomes "rescued or unchanged at n = [1, 2, 3], still unreliable at n = [20]"
+   no DIAGNOSTIC 31 verdict changes: 0 of 30 conditions, and the iso-total families are
+     unchanged, because every d31 condition is independently flagged on relocation
+
+They become INCONCLUSIVE rather than RELIABLE because all nine required level shifting or
+TRAH to converge. A shifted run's HOMO-LUMO gap reads as the shift floor, so the gap leg is
+unreadable. With relocation passing and the gap unreadable there is nothing left to certify in
+either direction. The three rescued conditions on each arm are the contrast: n = 1, 2 and 3
+are neither shifted nor restarted in either state, so both legs are readable.
+
+THIS RECOMPUTATION IS POST HOC AND IS NOT A REPLACEMENT VERDICT. It was computed after the
+result was committed and after its outcome was known, so it cannot be dressed as a
+pre-registered re-reading, and it is not offered as one. DIAGNOSTIC 32's committed verdict
+stands as the diagnostic's verdict. What this erratum establishes is narrower and is stated
+plainly: the STILL UNRELIABLE verdict at n = 5 and n = 10 rests on a criterion that reads a
+solution no reported number came from, and it should not be quoted as evidence that the wall
+fails there.
+
+Nothing here reinstates a budget or a cap. DIAGNOSTIC 29 still rules out a limit written as a
+function of the charges and the withdrawn Sigma q^2 <= 0.58 e^2 stays withdrawn.
+
+
+E1.5  WAS THE INSTABILITY THE WALL'S DOING
+
+No, and the depths say so. Lowest eigenvalue of the stability matrix on the first pass, from
+the committed outputs:
+
+   wall-only controls, argon centres at zero charge, TS   -0.000157  -0.000158  -0.001973 Eh
+   n = 1, 2, 3 with a full unit charge                     all positive, so stable
+   n = 5                                                   -0.011955 to -0.019596 Eh
+   n = 10 and n = 20                                       -0.124114 to -0.173439 Eh
+
+The charged conditions reach 88 times deeper than the wall ever does, and the depth increases
+monotonically with n. The wall-only arms also did not move density on the relocation leg -
+rises of +0.0004, +0.0063 and -0.0069 e - which is why D32.6 G1 did not fire.
+
+
+E1.6  WHAT FOLLOWS
+
+The criterion is amended prospectively in STAGE6_AMENDMENT5_20261109.txt, committed with this
+erratum. No committed reader is changed by that amendment and no committed verdict is
+rewritten by it.
