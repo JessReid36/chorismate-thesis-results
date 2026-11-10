@@ -1,0 +1,77 @@
+#!/bin/bash
+#PBS -N cm_d34
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d34/run.pbs.out
+# Stage 6 DIAGNOSTIC 34 stage B: 44 runs at CAM-B3LYP/def2-SVPD.
+#   arm 1 (a1_*) is the lift and carries no stability analysis, matching the
+#   committed runs, so arm 1 against the committed ddE changes one variable.
+#   arm 2 (a2_*) adds STABPerform, which no committed QM/MM run has used; it is
+#   ordered last so a rejection costs nothing already measured.
+# The control runs first in each arm: it is the gate on everything else.
+# Within each arm, ascending Sigma|q|, so the designs inside D30's confirmed
+#   basis window land before the three outside it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d34
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run a1_S6-C_R
+run a1_S6-C_TS
+run a1_ADD-s540_qm06500_R
+run a1_ADD-s540_qm06500_TS
+run a1_ADD-s678_qm07625_R
+run a1_ADD-s678_qm07625_TS
+run a1_ADD-s1690_qp10000_R
+run a1_ADD-s1690_qp10000_TS
+run a1_ADD-s678_qm10000_R
+run a1_ADD-s678_qm10000_TS
+run a1_S6-P_R
+run a1_S6-P_TS
+run a1_S6-2_R
+run a1_S6-2_TS
+run a1_S6-3_R
+run a1_S6-3_TS
+run a1_S6-5_R
+run a1_S6-5_TS
+run a1_S6-10_R
+run a1_S6-10_TS
+run a1_S6-20_R
+run a1_S6-20_TS
+run a2_S6-C_R
+run a2_S6-C_TS
+run a2_ADD-s540_qm06500_R
+run a2_ADD-s540_qm06500_TS
+run a2_ADD-s678_qm07625_R
+run a2_ADD-s678_qm07625_TS
+run a2_ADD-s1690_qp10000_R
+run a2_ADD-s1690_qp10000_TS
+run a2_ADD-s678_qm10000_R
+run a2_ADD-s678_qm10000_TS
+run a2_S6-P_R
+run a2_S6-P_TS
+run a2_S6-2_R
+run a2_S6-2_TS
+run a2_S6-3_R
+run a2_S6-3_TS
+run a2_S6-5_R
+run a2_S6-5_TS
+run a2_S6-10_R
+run a2_S6-10_TS
+run a2_S6-20_R
+run a2_S6-20_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 44"

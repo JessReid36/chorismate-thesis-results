@@ -1,0 +1,265 @@
+STAGE 6, DIAGNOSTIC 34
+The production barriers at the corrected level of theory, and whether the committed
+designs were ever measured on reliable densities.
+
+Pre-registered 10 November 2026, before any D34 output exists and before any of the
+three readable criterion legs has been evaluated on the committed frozen outputs.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+Every barrier this project quotes comes from the frozen half, and every one of them
+is at a functional D28 retired and a basis every diagnostic from D30 onward has
+abandoned. The committed inputs all carry
+
+   ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM EnGrad
+
+D33 stage A measured what the functional costs on the bare substrate at these same
+geometries. MEASURED, and the only figures its result states:
+
+   in vacuo barrier   26.8248 kcal/mol at CAM-B3LYP/def2-SVPD, against 18.4610
+                      committed   (STAGE6_DIAGNOSTIC33_STAGEA_RESULT_20261109.txt)
+
+DERIVED here by subtraction from that line and from D27's committed basis series
+(STAGE6_DIAGNOSTIC27_RESULT_20261105.txt R27.1: def2-SVP 18.461014, def2-SVPD
+18.332256), and stated in neither result:
+
+   the whole rise          26.8248 - 18.461014  = +8.3638
+   the basis alone      18.332256 - 18.461014  = -0.1288
+   the functional alone    26.8248 - 18.332256  = +8.4925
+
+So the rise is the functional's, and D34 inherits that as its reference.
+
+The committed lowerings were measured against the 18.4610 reference. What they are
+against the corrected one is not known, and cannot be obtained by arithmetic: ddE is
+a difference of two QM/MM energies, and both move.
+
+Second, and separately: the reliability criterion D31, D32 and D33 use did not exist
+when the frozen half was run. No committed document applies it to S6-P, S6-2, S6-3,
+S6-5, S6-10, S6-20 or the four ADD-* arrangements. D33 stage B then measured that a
+design inside D31's envelope can still fail it (bare_n03_q0.75, UNRELIABLE), so
+whether these ten were ever on reliable densities is an open question about numbers
+already written down.
+
+--------------------------------------------------------------------------------
+2. WHAT IS ALREADY COMMITTED, AND WHERE
+--------------------------------------------------------------------------------
+Inputs, all 22 single points, complete:
+
+   phase2.2/cs_stage6/relax/<arrangement>/R_sp/   job.inp, combined.xyz,
+   phase2.2/cs_stage6/relax/<arrangement>/TS_sp/  site.ORCAFF.prms (20 of 22)
+
+They are under relax/ and not under frozen/. relax/S6-C/{R_sp,TS_sp} is the
+charge-free control and has no MM region, so it has no site.ORCAFF.prms and its
+method line omits QMMM.
+
+Outputs, the matching 22: phase2.2/cs_stage6/frozen/sp_outputs.tar.xz, as
+./<arrangement>/<leg>_sp/{job.out,job.engrad,job.pbs.out}.
+
+Checked while writing this: the committed relax/S6-2/R_sp/job.inp matches, line for
+line, the input echoed in the INPUT FILE block of ./S6-2/R_sp/job.out inside that
+tarball. All 22 output directories have a committed input directory; the two
+further committed inputs, relax/n10_A/{R_sp,TS_sp}, have no outputs in the tarball
+and are not part of this diagnostic.
+
+What the committed outputs carry, counted over all 22:
+   LOEWDIN ATOMIC CHARGES     22 of 22, one block each
+   DIPOLE MOMENT              22 of 22, one block each
+   ORBITAL ENERGIES           22 of 22, one block each
+   WAVEFUNCTION STABILITY      0 of 22
+
+The committed effects, from frozen/frozen.tsv and frozen/FROZEN_REPORT.txt, with
+Sigma|q| and Sigma q computed here from each run's committed site.ORCAFF.prms:
+
+   arrangement             n   ddE(frozen)   Sigma|q|    Sigma q
+   S6-P                    1       -7.6757     1.0000    +1.0000
+   S6-2                    2      -12.3835     2.0000    +0.0000
+   S6-3                    3      -14.7270     2.4125    -0.4125
+   S6-5                    5      -18.1606     3.0000    +0.1000
+   S6-10                  10      -21.8164     4.3800    -0.9800
+   S6-20                  20      -24.8261     5.7600    -0.2400
+   ADD-s1690_qp10000       1       -7.1128     1.0000    +1.0000
+   ADD-s540_qm06500        1       -2.9590     0.6500    -0.6500
+   ADD-s678_qm07625        1       -3.7531     0.7625    -0.7625
+   ADD-s678_qm10000        1       -4.8872     1.0000    -1.0000
+   S6-C                    0             -     0.0000    +0.0000   (the control)
+
+The control's geometry is the same frame as D33 stage A's bare runs. Checked while
+writing this: relax/S6-C/R_sp/combined.xyz is identical in symbols and in every
+coordinate to d33a/sp_42436_R/substrate.xyz, and relax/S6-C/TS_sp/combined.xyz to
+d33a/sp_42436_TS/substrate.xyz, to 0.00e+00 A. That makes stage B's control a
+repeat of a calculation already committed, and G34.5 below turns it into a gate.
+
+--------------------------------------------------------------------------------
+3. STAGE A. THE THREE READABLE LEGS, ON THE COMMITTED OUTPUTS, NO COMPUTE
+--------------------------------------------------------------------------------
+Stage A runs nothing. It applies the committed classifier to the 22 outputs already
+in frozen/sp_outputs.tar.xz, using phase2.2/cs6_audit.py's own thresholds:
+
+   D_LW    = 0.25     Loewdin rise against the control at the same leg
+   R_DIP   = 2.0      dipole magnitude ratio against the control at the same leg
+   GAP_ABS = 1.0 eV   HOMO-LUMO gap floor
+   R_GAP   = 0.5      gap ratio against the control at the same leg
+   NEL, NOCC = 118, 59
+
+Energies are read with the committed cs6_analyse.py read_run convention - bare,
+(MM) and (QM/MM) - and not with a reader written for this diagnostic.
+
+THE FOURTH LEG IS UNREADABLE AND IS NOT SUBSTITUTED. No frozen output carries a
+stability analysis, so stage A cannot evaluate the stability leg and does not guess
+at it. It follows that stage A can never return RELIABLE: that verdict requires
+four legs. Stage A's vocabulary is fixed here as
+
+   FLAGGED                 at least one of the three readable legs fires
+   NOT FLAGGED (3 LEGS)    none of the three fires; the stability leg is unknown
+
+and no document may upgrade "NOT FLAGGED (3 LEGS)" to RELIABLE.
+
+STAGE A IS POST HOC AND IS LABELLED SO WHEREVER IT IS REPORTED. The criterion
+postdates these runs by two weeks; they were neither designed nor selected under it.
+What stage A can do is say whether a criterion the project now applies to every new
+design would have fired on the designs whose barriers it already quotes.
+
+R34.1  For each of the ten designs, at each leg, the Loewdin rise, the dipole ratio
+       and the gap, against S6-C at the same leg, with the verdict in the stage A
+       vocabulary above.
+R34.2  The count of designs FLAGGED, and on which legs.
+R34.3  If any design is FLAGGED, its committed ddE(frozen) is thereafter reported
+       with that flag attached. Nothing is withdrawn by stage A: a flag is a
+       statement about the density, and withdrawal of a number requires its own
+       dated erratum.
+
+--------------------------------------------------------------------------------
+4. STAGE B. 44 RUNS, TWO ARMS, ONE VARIABLE EACH
+--------------------------------------------------------------------------------
+ARM 1, the lift, 22 runs. Every committed input is copied and exactly two lines
+change:
+
+   the method line
+      ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF QMMM EnGrad
+   ->  ! CAM-B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF QMMM EnGrad
+   and, for the control alone, the same pair without QMMM.
+
+   the iteration cap
+      %scf MaxIter 250 end  ->  %scf MaxIter 300 end
+
+Both method lines occur in the committed tree and the prepare script must accept
+both and still refuse to proceed if neither matches a given input exactly once.
+The cap is raised because an iteration cap cannot change a converged result - it can
+only truncate a run that would otherwise have finished - and 300 is what D33 used.
+Everything else is copied byte for byte: combined.xyz, site.ORCAFF.prms, the %qmmm
+block, QMAtoms {0:23}, the charge and multiplicity -2 1, %maxcore, %pal, run names
+and directory layout.
+
+Arm 1 therefore differs from the committed runs in the functional and the basis and
+in nothing that bears on the answer. In particular arm 1 carries NO stability
+analysis, which is what the committed runs also carried, so arm 1 against the
+committed ddE is a one-variable comparison.
+
+ARM 2, the classified arm, 22 runs. Arm 1 plus one line:
+
+   %scf
+     MaxIter 300
+     STABPerform true
+   end
+
+This is the Amendment 5 setting and is what every D31, D32 and D33 run used. It
+makes the fourth leg readable and makes the reported energy the corrected solution
+rather than the first one.
+
+WHETHER ORCA 6.0.1 ACCEPTS STABPerform INSIDE A QM/MM JOB IS NOT ESTABLISHED HERE.
+No committed run combines them. Arm 2 is therefore ordered after arm 1 in the job
+script, so a rejection costs nothing already measured. If ORCA refuses the input or
+the stability analysis does not appear, arm 2 is reported as a failure with ORCA's
+own words, its outputs are not committed, a note about the failure is, and a
+stability-carrying frozen arm needs its own amendment. Arm 1 stands either way.
+
+ORDER. Arm 1 first, ascending in Sigma|q|, so the seven designs inside D30's
+confirmed basis window land before the three outside it; then arm 2 in the same
+order. The control runs first in each arm, because it is the gate on everything
+else.
+
+COST, measured from the committed outputs' own TOTAL RUN TIME: the 22 frozen runs
+have median 5.0 min and maximum 11.3 min at the old level; D33's 16 charged runs at
+CAM-B3LYP/def2-SVPD have median 5.7 min and maximum 33.8 min. 44 runs is therefore
+expected to be a few hours. Walltime 24:00:00, which routes to day. No -q.
+
+--------------------------------------------------------------------------------
+5. STAGE B'S READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R34.4  Arm 1's ddE(frozen) for each of the ten designs, beside the committed value,
+       with the difference. This is the answer to "what does the retired functional
+       cost in the production barriers".
+R34.5  Arm 1's barrier for the control, against D33 stage A's 26.8248. See G34.5.
+R34.6  Arm 1's lowering as a fraction of 26.8248, for each design, beside the
+       committed lowering as a fraction of 18.4610.
+R34.7  Arm 2 minus arm 1, per run, in Eh and in kcal/mol: the size of the stability
+       correction at this level of theory on these systems. This is the first
+       measurement of that quantity anywhere in the project.
+R34.8  Arm 2's full four-leg verdict per design, by the committed classifier, read
+       on the LAST stability block as Amendment 5 requires.
+R34.9  Which corrected ddE values are quotable. A value is quotable only if its
+       arm 2 verdict is RELIABLE and its Sigma|q| <= 2.88 e, the largest vector D30
+       confirmed converged against def2-TZVPD under this functional. By section 2's
+       table that admits at most S6-P, S6-2, S6-3 and the four ADD-* arrangements,
+       and excludes S6-5 at 3.0000 e, S6-10 at 4.3800 e and S6-20 at 5.7600 e
+       whatever their verdicts.
+R34.10 Whether stage A's three-leg reading and arm 2's four-leg verdict agree on
+       which designs are bad. They are different levels of theory, so disagreement
+       is a finding and not an error.
+
+--------------------------------------------------------------------------------
+6. GATES. ANY FAILURE STOPS THE DIAGNOSTIC
+--------------------------------------------------------------------------------
+G34.1  Every arm 1 input differs from its committed source in exactly the method
+       line and the MaxIter line and in no other byte, and its combined.xyz and
+       site.ORCAFF.prms are byte-identical to the committed ones by sha256.
+G34.2  Every arm 2 input differs from its arm 1 counterpart in exactly the %scf
+       block, and in no other byte.
+G34.3  Every finished run reports 118 electrons, terminates normally, and converges
+       its SCF; and for the 20 QM/MM runs the MM point-charge count equals the
+       arrangement's sphere count.
+G34.4  For every QM/MM run, bare + (MM) = (QM/MM) to within 1e-9 Eh, by the
+       committed cs6_analyse.py convention.
+G34.5  Arm 1's control energies equal D33 stage A's committed bare energies for the
+       same geometries to within 1e-6 Eh at each leg, and its barrier equals 26.8248
+       to within 0.0100 kcal/mol. The geometries are identified by sha256, not by
+       name. This is a control test on a quantity already committed, and it licenses
+       nothing it is computed from.
+G34.6  The control still has no MM region: no site.ORCAFF.prms, no QMMM in its
+       method line, and no (MM) energy in its output.
+G34.7  Stage A's reader is the committed cs6_audit.py's thresholds and the committed
+       cs6_analyse.py's energy convention, both identified by sha256 in the result.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D34.1  Nothing here escapes r_safe. Every sphere in every one of these arrangements
+       sits at 2.85-2.96 A, inside D11's measured 3.50 A, and the route (a)/(b)
+       decision is open. A corrected barrier for a design inside r_safe is a
+       corrected number for an uninterpretable design, and D11's wording stands:
+       "No design measured inside r_safe is interpretable."
+D34.2  Three of the ten designs are outside the basis window D30 confirmed, and
+       S6-20 at Sigma|q| = 5.7600 e is past the 5.6433 e vector at which D30 found
+       def2-SVPD not sufficient under CAM-B3LYP. Their corrected barriers are
+       reported and are not quotable.
+D34.3  These ten arrangements were placed by the OLD A matrix. D33 stage A measured
+       that the corrected a_i are a different matrix - Pearson 0.977520, rank
+       0.863979, median |a_new/a_old| 1.1212, largest single change -1.8590 at site
+       1554 - so a corrected barrier for an old design is not the barrier of the
+       design a corrected objective would have chosen. D34 re-reads the record; it
+       does not design anything.
+D34.4  D33 stage B measured that the reliability envelope does not transfer across
+       arrangements. A verdict here is a verdict for that arrangement and for no
+       other, and none of these verdicts may be read as a rule about (n, q).
+D34.5  Frozen geometries, one frame (42436), in vacuo apart from the MM Lennard-
+       Jones term, no continuum, no sampling. No activation free energy follows.
+D34.6  The Sigma qi = 0 decision is untaken and D34 does not take it. Of the ten,
+       only S6-2 has Sigma q = 0.0000 exactly; the other nine would be voided by it.
+       That is recorded as a consequence, not an argument either way.
+D34.7  No budget is reinstated. D29 and D31 rule out a cap written as a function of
+       the charges and the withdrawn Sigma q^2 <= 0.58 e^2 stays withdrawn.
+D34.8  Nothing here is shaped toward a lower barrier. Arm 1 is expected to RAISE
+       every barrier, because the reference it is measured against rose by 8.3638,
+       and if the lowerings shrink that is the result.
