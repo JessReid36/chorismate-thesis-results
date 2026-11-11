@@ -1,0 +1,220 @@
+STAGE 6, DIAGNOSTIC 37, PRE-REGISTERED 11 NOVEMBER 2026
+Six candidate functionals on the record's own two tests: the bound orbital and the barrier.
+
+This file is pre-registered. It is never edited. Changes go into a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+The production level of theory was never adopted by an amendment (D36, section 1). At
+def2-SVPD and def2-TZVPD the record holds three functionals on this dianion at frame
+42436, and two tests of them.
+
+   TEST 1, D28. The highest occupied orbital of the bare dianion, def2-SVPD, reactant,
+   against the -0.5123 eV that Probe 3's detachment energy implies:
+      B3LYP +1.2307 eV    CAM-B3LYP -0.5918 eV    wB97X-D3 -1.3424 eV
+
+   TEST 2, D36, running. The in vacuo barrier at def2-TZVPD against DLPNO-CCSD(T):
+      B3LYP 17.304571    CAM-B3LYP 25.7003    wB97X-D3 27.9689    benchmark: not yet known
+
+If D36 lands away from CAM-B3LYP, the record offers nothing else to turn to: the choice
+would be among three functionals, one of which fails test 1. D37 puts six more through
+the same two tests, on the same two geometries, so that the choice of a level, when
+Jessica makes it, is made among nine and not among three.
+
+WRITTEN BEFORE D36's RESULT. Checked while writing this: the results repository is at
+9812caeb and the code repository at f22924e; d36 holds its 6 inputs and no output. No
+D36 number was known when the candidates and the readings below were fixed, and that is
+deliberate. A candidate list drawn up after the benchmark is known could be drawn up to
+suit it.
+
+WHY THESE SIX, AND WHAT THAT REASON IS WORTH. They were named in the session of 11
+November 2026 from three benchmark papers:
+
+   Goerigk, Grimme and co-workers, Phys. Chem. Chem. Phys. 2017, the GMTKN55 database,
+      pubs.rsc.org/en/content/articlelanding/2017/cp/c7cp04913g
+   "Some Observations on the Performance of the Most Recent Exchange-Correlation
+      Functionals for the Large and Chemically Diverse GMTKN55 Benchmark",
+      arXiv:1905.06172
+   Karton and Goerigk, J. Comput. Chem. 2015, 36, 622, doi:10.1002/jcc.23837, on the
+      barriers of pericyclic reactions
+
+NONE OF THE THREE IS HELD IN chorismate-refs, and they were read as abstracts and
+extracts found online, not in full. By this project's rule they are therefore NOT
+EVIDENCE IN THIS RECORD, and nothing in D37 rests on them. A candidate is judged here by
+this record's own two tests and by nothing else. They are named so that the origin of
+the list is on file and so that Jessica can obtain them.
+
+   two range-separated hybrids       wB97M-V, wB97X-V
+   two global hybrid meta-GGAs       PW6B95-D3BJ, M06-2X-D3(0)
+   two double hybrids                PWPB95-D3BJ, revDSD-PBEP86-D4
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+28 single points on the committed bare substrate of frame 42436,
+d33a/sp_42436_{R,TS}/substrate.xyz, charge -2, multiplicity 1, frozen geometries, in
+vacuo. No charges, no MM region, no wall.
+
+THE CONTROL, 4 runs, FIRST. D28's own CAM-B3LYP inputs, copied byte for byte, at both
+basis sets:
+      ! CAM-B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF
+      ! CAM-B3LYP D3BJ def2-TZVPD def2/J RIJCOSX TightSCF
+   The second is also D36's arm C. Their geometries are identical to d33a's by sha256,
+   checked while writing this, so these are repeats of committed calculations and must
+   return the committed numbers. See G37.4.
+
+THE SIX CANDIDATES, 24 runs: each at def2-SVPD and at def2-TZVPD, reactant and
+transition state. def2-SVPD is the basis of test 1 and of every diagnostic since D30;
+def2-TZVPD is the basis of test 2.
+
+EVERY CANDIDATE INPUT IS THE CONTROL INPUT OF THE SAME BASIS WITH ITS FIRST LINE
+REPLACED. Below the first line the files are identical byte for byte: %maxcore 3000,
+8 cores, %scf MaxIter 300, and the same substrate.xyz. The first lines, with X standing
+for def2-SVPD or def2-TZVPD:
+
+      ! wB97M-V X def2/J RIJCOSX TightSCF
+      ! wB97X-V X def2/J RIJCOSX TightSCF
+      ! PW6B95 D3BJ X def2/J RIJCOSX TightSCF
+      ! M062X D3ZERO X def2/J RIJCOSX TightSCF
+      ! RI-PWPB95 D3BJ X def2/J X/C RIJCOSX TightSCF
+      ! RI-revDSD-PBEP86-D4/2021 X def2/J X/C RIJCOSX TightSCF
+
+   What the first lines share with the control's: the basis, def2/J, RIJCOSX and
+   TightSCF. What differs is the functional, its dispersion correction, and, for the two
+   double hybrids, the correlation-fitting set.
+
+   DISPERSION. Each functional carries the correction it is defined with: the VV10
+   non-local term inside wB97M-V and wB97X-V, which ORCA applies after the SCF by default
+   for these two keywords; D3 with Becke-Johnson damping for PW6B95 and PWPB95, as the
+   committed B3LYP and CAM-B3LYP arms carry; D3 with zero damping for M06-2X; D4 inside
+   the revDSD keyword. The corrections are therefore not the same across the nine
+   functionals and cannot be made the same. This is stated as a limit in D37.6.
+
+   THE DOUBLE HYBRIDS. THIS RECORD HAS NO DOUBLE-HYBRID PRECEDENT. The RI- prefix asks
+   ORCA to use the RI approximation for the second-order part, and that part needs a
+   correlation-fitting set. D36 could not establish whether a /C set exists for these
+   basis sets and used AutoAux. Checked for this document in the ORCA 6.0 manual online
+   (faccts.de/docs/orca/6.0/manual, 11 November 2026): its table of AuxC sets lists
+   def2-SVPD/C and def2-TZVPD/C, its keyword table lists PWPB95 and
+   revDSD-PBEP86-D4/2021 and says of that table "Add the prefix RI- or DLPNO- to use the
+   respective approximation for the MP2 part." The named sets are used, and the Coulomb
+   fitting stays def2/J as in every other arm. Frozen core is ORCA's default and is not
+   overridden.
+
+   THE INTEGRATION GRID is ORCA's default, as in every committed arm, so that the first
+   line differs in the method alone. See D37.5.
+
+   THE KEYWORDS HAVE BEEN CHECKED AGAINST THE MANUAL AND NOT AGAINST A RUN. ORCA is not
+   available where this was written. If ORCA 6.0.1 rejects a line, that candidate is
+   reported as a failure with ORCA's own words, the other candidates stand, and a
+   corrected line needs its own dated amendment. It is not swapped silently.
+
+ORDER. The four control runs; then all six candidates at def2-SVPD; then all six at
+def2-TZVPD; reactant before transition state throughout. Every keyword this record has
+never run is therefore first tried in a run of a few minutes. A run that fails does not
+stop the runs after it.
+
+RESOURCES. 8 cores, 48 GB, walltime 24:00:00, which routes to day. No -q. Its own
+directory, its own lock and its own job name, cm_d37, so it neither waits for D36 nor
+touches it. For scale: D28's CAM-B3LYP controls took 3 to 4 minutes at def2-SVPD and 9
+to 10 minutes at def2-TZVPD on 8 cores (read from their outputs). What the meta-GGA and
+double-hybrid runs take is not known.
+
+--------------------------------------------------------------------------------
+3. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+Energies are the last FINAL SINGLE POINT ENERGY of each output. Orbital energies are
+read by D28's committed reader, cs6_d28.py read_out, under D28's rule: an output in
+which TRAH engaged or a level shift was set yields NO quotable orbital energy and is
+reported as UNAVAILABLE.
+
+R37.1  The control: its four energies and two barriers beside D28's.
+R37.2  TEST 1. For each candidate, the highest occupied orbital energy at def2-SVPD,
+       reactant, beside B3LYP's +1.2307, CAM-B3LYP's -0.5918 and wB97X-D3's -1.3424 eV.
+       BOUND if it is below 0.0 eV, which is D28.4's own criterion. Its distance from
+       -0.5123 eV is reported. The same orbital at the transition state and at
+       def2-TZVPD is reported without a criterion.
+       For the two double hybrids the orbital energies are those of the hybrid SCF step;
+       the second-order part does not change them. They are reported with that label.
+R37.3  The barrier of each candidate at def2-SVPD and at def2-TZVPD, beside the
+       committed 18.332256 / 17.304571 (B3LYP), 26.8248 / 25.7003 (CAM-B3LYP) and
+       29.0441 / 27.9689 (wB97X-D3).
+R37.4  Each candidate's shift from def2-SVPD to def2-TZVPD, beside CAM-B3LYP's -1.1245
+       and wB97X-D3's -1.0752 (D36, R36.5).
+R37.5  TEST 2. IF AND ONLY IF D36's R36.1 is committed and its gates passed: the
+       def2-TZVPD barrier of each of the nine functionals minus the DLPNO-CCSD(T)
+       barrier, listed by absolute difference. If D36 is not committed when D37 is
+       read, R37.5 is reported as NOT EVALUATED and is added by a dated addendum once it
+       is. If D36 carries the caveat of its D36.5, R37.5 carries it wherever it is used.
+R37.6  The two tests side by side for all nine functionals: bound or not, and the
+       distance from the benchmark. NO SCORE COMBINING THE TWO IS DEFINED, and no
+       tolerance is set on either distance. A tolerance chosen after the numbers are
+       seen would be post hoc. Which functional to adopt, if any, is not a reading.
+
+--------------------------------------------------------------------------------
+4. GATES
+--------------------------------------------------------------------------------
+G37.1  Every geometry file is byte-identical by sha256 to d33a/sp_42436_{R,TS}.
+G37.2  The four control inputs are byte-identical by sha256 to D28's
+       CAM-B3LYP/{def2-SVPD,def2-TZVPD}/ctl_{R,TS}/job.inp.
+G37.3  Every candidate input differs from the control input of the same basis in its
+       first line and in nothing else.
+G37.4  CONTROL. The control reproduces D28's committed energies to within 1e-6 Eh each:
+          def2-SVPD    reactant -836.31486034    transition state -836.27211231
+          def2-TZVPD   reactant -837.20938385    transition state -837.16842778
+       and its barriers equal 26.8248 and 25.7003 kcal/mol to within 0.0010.
+G37.5  No file under d28, d33a or d36 is modified by this diagnostic.
+
+       A FAILURE OF G37.1 TO G37.5 STOPS THE DIAGNOSTIC. Nothing else is readable.
+
+G37.6  PER CANDIDATE. All four of its runs terminate normally, converge their SCF and
+       report 118 electrons and 59 occupied orbitals. A candidate that fails this is
+       reported as NOT MEASURED, with the reason, and the other candidates are read.
+G37.7  PER DOUBLE HYBRID. Each output reports that the second-order part was computed
+       with RI and prints its energy. If it does not, that candidate is NOT MEASURED.
+
+--------------------------------------------------------------------------------
+5. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D37.1  It does not adopt a production level of theory. That is an amendment and a
+       decision for Jessica. D37 supplies evidence for it and nothing more.
+D37.2  Six functionals are not the field. No range-separated double hybrid, no
+       optimally tuned functional and no functional outside the three papers of section
+       1 is tested. A candidate absent from this list has not been found wanting.
+D37.3  Test 1 is one orbital at one geometry against one number, and carries every limit
+       D28 states for it. Passing it does not make a functional right for this dianion.
+D37.4  Test 2 inherits every limit of D36: one correlated treatment, one modest basis,
+       one frozen frame, in vacuo. Nearest is nearest there, and nothing more.
+D37.5  THE GRID IS NOT TESTED. Four of the six candidates are meta-GGAs or are built on
+       one (wB97M-V, PW6B95, M06-2X, PWPB95), and meta-GGAs can be sensitive to the
+       integration grid. D37 keeps ORCA's default grid so that its inputs differ from
+       the control's in the method alone. If one of the four leads, a grid check needs
+       its own amendment before that functional is relied on.
+D37.6  THE NINE FUNCTIONALS DO NOT SHARE A DISPERSION CORRECTION. See section 2. For a
+       rearrangement within one molecule the difference between corrections is expected
+       to be small against the differences between functionals. That expectation is not
+       measured here.
+D37.7  THE DOUBLE HYBRIDS ARE THE LEAST CERTAIN ARM. Their second-order part converges
+       more slowly with basis set than a hybrid does, so R37.4 is their only handle on
+       basis-set error here, and def2-TZVPD is modest for them. Their orbital energies
+       are not comparable in meaning with a hybrid's (R37.2). They are run with ORCA
+       6.0.1's built-in parameters, its default frozen core and RI, as they are.
+D37.8  NO CHARGES, NO DESIGN, NO RELIABILITY CLAIM. Nothing here bears on relocation, on
+       r_safe, or on which designs survive. A functional that did well on both tests
+       would still need D31 to D34 measured at it before any design number at that level
+       could be quoted.
+D37.9  Nothing here is shaped toward a lower barrier. No outcome is preferred. The
+       candidates were fixed before D36's result was known, on published rankings of
+       accuracy and not on where their barriers were expected to fall.
+
+--------------------------------------------------------------------------------
+6. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d37/                28 run directories, run.pbs,
+                                          INPUT_CHECKSUMS.sha256 (57 files)
+   phase2.2/cs6_d37_prepare.py            writes them, and refuses to finish unless
+                                          G37.1 to G37.3 hold of what it wrote
+   phase2.2/cs6_d37.py                    the reader; committed with this document and
+                                          tried, before any D37 output existed, on D28's
+                                          committed outputs standing in for D37's
