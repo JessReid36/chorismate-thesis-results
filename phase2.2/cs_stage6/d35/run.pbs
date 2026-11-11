@@ -1,0 +1,39 @@
+#!/bin/bash
+#PBS -N cm_d35
+#PBS -l select=1:ncpus=8:mem=24gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d35/run.pbs.out
+# Stage 6 DIAGNOSTIC 35: Stage 4e's five levels on frame 42436's stationary points.
+# Each job.inp is Stage 4e's own file, byte for byte; only substrate.xyz differs.
+# L1 runs first and is the control: its level already exists at this frame and it
+#   must reproduce 18.461014 kcal/mol (G35.3). Nothing else is readable without it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d35
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run L1_R
+run L1_TS
+run L2_R
+run L2_TS
+run L3_R
+run L3_TS
+run L4_R
+run L4_TS
+run L5_R
+run L5_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 10"

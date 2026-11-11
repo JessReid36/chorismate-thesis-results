@@ -1,0 +1,139 @@
+STAGE 6, DIAGNOSTIC 35
+Stage 4e's five levels of theory, on frame 42436's stationary points.
+
+Pre-registered 11 November 2026, before any D35 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+The table of reference barriers has two halves that cannot be compared. Ten rows are
+frame 42436 and five are frame 41786, and the five at 41786 are Stage 4e's levels -
+B3LYP/6-31G(d), HF/6-31G(d), MP2/6-31G(d) and wB97X-D3/def2-SVP - which exist at no
+other frame. A barrier measured at one geometry may not be set beside a barrier
+measured at another, so the method comparison those five were run for cannot be read
+against anything in Stage 6.
+
+The geometries are not merely different, they are of different kinds.
+
+Frame 42436's reactant and transition state are the SP package's own optimised
+stationary points, r_irc/final.xyz converged in six cycles and ts/final.xyz in seven.
+STAGE6_DECISIONS_20261021.md decision S1 chose them for Stage 6 and says why it did
+not choose the development set, verbatim:
+
+   Its "reactant" is NEB band image 0 and its "TS" is the climbing image. Neither is a
+   stationary point.
+
+Frame 41786 is the development set. Checked while writing this: all 24 atoms of
+phase2.2/cs_stage4e/L1_bare_R/substrate.xyz are identical, to six decimal places in
+every coordinate, to atoms of
+05_qmmm/23_c4_reactant/frames/frame_41786/image0_active.xyz.xz. Stage 4e's reactant
+is band image 0.
+
+C4 then measured whether a band image is a sound reactant. C4_A1_REPORT.txt step 2
+requires |dE_reopt| <= 1.0 kcal/mol; frame 41786 gives -4.58 and fails, frame 42436
+gives -5.12 and fails, and the report records "accepted 0 of 30". Steps 3 to 6, which
+would have repaired them, were not run (C4_CLOSURE.txt). So no frame's band reactant
+was ever repaired, and frame 42436's Stage 6 geometries avoid the problem by coming
+from the SP package's optimisations rather than from the band.
+
+How large the difference is, at the one level that exists at both frames, both values
+recomputed here from the runs' own outputs:
+
+   B3LYP-D3BJ/def2-SVP   frame 41786, band image 0          16.666655 kcal/mol
+   B3LYP-D3BJ/def2-SVP   frame 42436, stationary points     18.461014 kcal/mol
+   the geometry alone                                       +1.794359 (derived)
+
+For scale, from D27 and D33 stage A: the basis def2-SVP -> def2-SVPD moves the
+barrier -0.1288 and the functional B3LYP -> CAM-B3LYP moves it +8.4925 (both derived).
+The geometry is fourteen times the basis effect and about a fifth of the functional's.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+Ten single points. For each of Stage 4e's five levels, the reactant and the transition
+state of frame 42436.
+
+THE INPUT FILE IS COPIED BYTE FOR BYTE FROM STAGE 4e AND NOTHING IN IT IS CHANGED.
+Checked while writing this: within each level, Stage 4e's bare reactant and bare
+transition-state job.inp are the same file by sha256. The only thing that distinguishes
+one run from another is the substrate.xyz beside it. So D35 changes exactly one thing,
+the geometry, and the method line, the auxiliary basis, the SCF settings, the Hirshfeld
+print block and the charge and multiplicity are all Stage 4e's own:
+
+   level  source input                             method line, as Stage 4e wrote it
+   L1     cs_stage4e/L1_bare_{R,TS}/job.inp        ! B3LYP D3BJ def2-SVP def2/J RIJCOSX TightSCF
+   L2     cs_stage4e/L2_bare_{R,TS}/job.inp        ! B3LYP 6-31G(d) TightSCF
+   L3     cs_stage4e/L3_bare_{R,TS}/job.inp        ! HF 6-31G(d) TightSCF
+   L4     cs_stage4e/L4_bare_{R,TS}/job.inp        ! MP2 6-31G(d) TightSCF
+   L5     cs_stage4e/L5_bare_{R,TS}/job.inp        ! WB97X-D3 def2-SVP def2/J RIJCOSX TightSCF
+
+Note that L2, L3 and L4 carry no D3BJ and no RIJCOSX. That is how Stage 4e ran them and
+it is not corrected here; correcting it would change two things at once.
+
+The geometries are the committed bare substrate of frame 42436,
+d33a/sp_42436_R/substrate.xyz and d33a/sp_42436_TS/substrate.xyz, which are the same
+coordinates as the Stage 6 control relax/S6-C/{R,TS}_sp/combined.xyz.
+
+L1 IS THE CONTROL AND IT RUNS FIRST. Its level already exists at this frame, so it must
+reproduce a number the record already holds. See G35.3.
+
+ORDER. L1 R, L1 TS, then L2 to L5 in order, reactant before transition state. Walltime
+24:00:00, which routes to day. No -q. Stage 4e's five batches of 34 runs each took
+between 37 and 98 minutes at this size, so ten runs is well inside it.
+
+--------------------------------------------------------------------------------
+3. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R35.1  The barrier E(TS) - E(R) at frame 42436 for each of the five levels.
+R35.2  Each beside its frame 41786 counterpart, with the difference. This is the
+       geometry's effect on the reference barrier, per level.
+R35.3  Whether the five levels keep their order between the two frames. If the ranking
+       is preserved, Stage 4e's method comparison is at least ordinally robust to the
+       geometry; if it is not, that is a finding about Stage 4e and is reported as one.
+R35.4  Each DFT level's barrier against L4's, at frame 42436. THIS IS A NEW QUANTITY
+       AND IT IS NOT STAGE 4e's k. Stage 4e's k = 0.82 to 0.89 is a ratio of the
+       BARRIER CHANGES produced by eleven residues, not of the bare barrier, and
+       nothing here recomputes it.
+R35.5  Which rows of the consolidated write-up's reference table may now be read
+       against each other, and which may not.
+
+--------------------------------------------------------------------------------
+4. GATES. ANY FAILURE STOPS THE DIAGNOSTIC
+--------------------------------------------------------------------------------
+G35.1  Every D35 job.inp is byte-identical by sha256 to its Stage 4e source.
+G35.2  Every D35 substrate.xyz is byte-identical by sha256 to its d33a source.
+G35.3  CONTROL. L1's two energies equal the committed frame 42436 B3LYP-D3BJ/def2-SVP
+       values to within 1e-6 Eh each, and its barrier equals 18.461014 kcal/mol to
+       within 0.0010. The committed values, recomputed here from
+       frozen/sp_outputs.tar.xz, are R -836.1397955187 Eh and TS -836.1103760199 Eh.
+       If L1 does not reproduce them, the geometry or the input is not what this
+       document says it is and nothing else here may be read.
+G35.4  Every run terminates normally, converges its SCF, and reports 118 electrons.
+G35.5  The geometry in each output's echo matches frame 42436's substrate and does NOT
+       match frame 41786's, tested on the coordinates and not on the file name.
+G35.6  No file under cs_stage4e, d33a or frozen is modified by this diagnostic.
+
+--------------------------------------------------------------------------------
+5. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D35.1  It does not transfer Stage 4e's conclusion. That conclusion is about eleven
+       residues at five levels, 170 runs, and those residues sit in frame 41786's
+       coordinates. Repeating it at frame 42436 is a rebuild and not a lift, and D35
+       does not attempt it. Stage 4e's verdict stands where it stands, at its own
+       frame and on its own geometries.
+D35.2  It does not revisit C4. The band reactant failed step 2 for all 30 frames and
+       steps 3 to 6 were not run; that is recorded here as the reason the two frames
+       are of different kinds, and it is not reopened.
+D35.3  One frame, frozen geometries, bare substrate, in vacuo, no solvation, no
+       sampling, no free energy. No barrier here is a rate.
+D35.4  MP2/6-31G(d) is Stage 4e's chosen reference at a small basis. It is not a
+       benchmark and D35 does not treat it as truth. 6-31G(d) has no diffuse functions,
+       and D30 found even def2-SVPD insufficient for this dianion above 2.88 e of
+       applied charge; no charge is applied here, but the caution about compact bases
+       on a dianion stands.
+D35.5  No charges, no design, no wall. Nothing here bears on reliability, on r_safe, or
+       on any barrier lowering.
+D35.6  Nothing here is shaped toward a lower barrier. The expected direction is that
+       every level rises at the stationary-point geometry, as L1 does by +1.794359, and
+       if a level falls instead that is the result.
