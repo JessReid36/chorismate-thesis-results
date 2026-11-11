@@ -1,0 +1,163 @@
+STAGE 6, DIAGNOSTIC 36
+A correlated reference for the in vacuo barrier: DLPNO-CCSD(T) on frame 42436.
+
+Pre-registered 11 November 2026, before any D36 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+The production level of theory was never adopted by an amendment. D28 made the case
+for CAM-B3LYP and closed with "the production functional is NOT changed by this
+document. NOTHING IS DECIDED HERE." Checked while writing this: Stage 6's Amendments 1
+to 5 are the A matrix, the removal of CPCM, A3, the coordinate system and Hessian, and
+the stability criterion. None of them touches the functional. D30 onward nevertheless
+all run CAM-B3LYP-D3BJ/def2-SVPD, and so do D34's inputs.
+
+The evidence for that choice is one property. D28 measured where the bare dianion's
+highest occupied orbital sits, against a target of -0.5123 eV derived from Probe 3's
+measured detachment energy of +0.5123 eV: B3LYP +1.2307 eV, CAM-B3LYP -0.5918,
+wB97X-D3 -1.3424. B3LYP puts the electron above the vacuum level and is qualitatively
+wrong for this dianion; between the two range-separated functionals that test prefers
+CAM-B3LYP by 0.0795 eV against 0.8301 eV.
+
+It says nothing about the barrier, and on the barrier the two disagree. Recomputed here
+from D28's own control runs:
+
+   functional   def2-SVPD    def2-TZVPD
+   CAM-B3LYP      26.8248      25.7003
+   wB97X-D3       29.0441      27.9689
+
+and B3LYP gives 18.4610 at def2-SVP, 18.332256 at def2-SVPD and 17.304571 at
+def2-TZVPD (D27). The spread between the two range-separated functionals is 2.2 at
+double zeta and 2.3 at triple zeta, and B3LYP sits more than eight below either.
+
+Nothing in the record can arbitrate that. The experimental anchors the record holds -
+STAGE6_ERRATUM7 E7.11 records 24.5 and 20.7 kcal/mol in water - are a free energy and
+an enthalpy in solution, and E7.11 is explicit that "Any comparison of a computed
+barrier with an experimental one must state which quantity is which". Ours is an in
+vacuo electronic barrier on frozen geometries. It is not either of them.
+
+A correlated wavefunction method computes that same quantity without choosing a
+functional. That is what D36 is for. It does not make a functional correct; it measures
+how far each one sits from a correlated treatment of the same electrons at the same
+geometry and the same basis.
+
+THERE IS NO COUPLED-CLUSTER PRECEDENT IN THIS RECORD. Checked while writing this: no
+committed input anywhere in either repository contains DLPNO, CCSD, an /C auxiliary
+basis or AutoAux. Every convention below is therefore stated here for the first time
+rather than inherited, and that is itself a reason to run the control in section 3.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+Six single points on the committed bare substrate of frame 42436,
+d33a/sp_42436_{R,TS}/substrate.xyz, charge -2, multiplicity 1, frozen geometries.
+
+ARM C, the control, 2 runs, FIRST.
+   D28's own input, copied byte for byte:
+      ! CAM-B3LYP D3BJ def2-TZVPD def2/J RIJCOSX TightSCF
+   Its geometry is already identical to d33a's by sha256, checked while writing this,
+   so this is a repeat of a committed calculation and must return the committed number.
+   See G36.3. Nothing else in D36 may be read if it does not.
+
+ARM H, the reference determinant, 2 runs, SECOND.
+      ! HF def2-TZVPD def2/J RIJCOSX TightSCF
+   DLPNO-CCSD(T) is built on a Hartree-Fock reference, and for a dianion that reference
+   may be poorly behaved. Arm H measures it directly rather than leaving it to be dug
+   out of arm B's output: the HF barrier, and the HF highest-occupied orbital energy at
+   each leg, reported beside D28's three DFT values.
+
+ARM B, the benchmark, 2 runs, LAST.
+      ! DLPNO-CCSD(T) def2-TZVPD AutoAux TightSCF TightPNO
+   with %maxcore 5000 and 8 cores.
+
+   THE BASIS IS def2-TZVPD AND NOT A LARGER ONE, DELIBERATELY. The comparison that
+   matters is against CAM-B3LYP/def2-TZVPD at 25.7003 and wB97X-D3/def2-TZVPD at
+   27.9689, which are committed at exactly this basis. Running the benchmark at a
+   larger basis would change two things at once and would answer a different question.
+   The consequence is stated in D36.2: this is a comparison of methods at a fixed
+   basis, not a converged absolute barrier.
+
+   THE AUXILIARY IS AutoAux, FOR A STATED REASON. ORCA ships /C correlation-fitting
+   sets for the def2-TZVPP family; whether one exists for def2-TZVPD is not something
+   this record establishes, and guessing a basis-set name that may not exist is how a
+   job fails at three in the morning. AutoAux is generated from the orbital basis and
+   is always available. If ORCA rejects it, that is reported as a failure and a
+   different auxiliary needs its own amendment; it is not swapped silently.
+
+   Frozen core is ORCA's default and is not overridden.
+
+ORDER. Arm C's two runs, then arm H's two, then arm B's two, reactant before transition
+state in each. Cheapest and most diagnostic first, so a walltime or memory failure in
+arm B costs nothing already measured.
+
+RESOURCES. 8 cores, 48 GB, walltime 24:00:00, which routes to day. No -q. The DFT and
+HF runs at this size take minutes; the two DLPNO-CCSD(T) runs are the unknown, and 24
+hours is requested for that reason. If arm B exceeds the walltime or the memory, that
+is reported as a failure with the scheduler's own words, arms C and H stand, and a
+larger request needs its own amendment.
+
+--------------------------------------------------------------------------------
+3. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R36.1  The DLPNO-CCSD(T) barrier at frame 42436, def2-TZVPD, with its HF and
+       correlation components separated as ORCA reports them.
+R36.2  Each functional's barrier minus the DLPNO-CCSD(T) barrier, at def2-TZVPD and at
+       the same geometry: CAM-B3LYP (25.7003), wB97X-D3 (27.9689), B3LYP (17.304571).
+       This is the ranking the diagnostic exists to produce.
+R36.3  The HF barrier, and the HF highest-occupied orbital energy at each leg, beside
+       D28's +1.2307 / -0.5918 / -1.3424 eV and Probe 3's -0.5123 eV target.
+R36.4  The T1 diagnostic, if ORCA prints one, and otherwise the largest T1 amplitude.
+       If neither can be read, that is stated and the benchmark is reported with the
+       reference-quality question open rather than silently assumed closed.
+R36.5  Whether the double-zeta to triple-zeta shift the functionals show - CAM-B3LYP
+       -1.1245 and wB97X-D3 -1.0752, both derived from the table in section 1 - is a
+       reason to treat def2-SVPD production numbers as carrying a basis uncertainty of
+       about one kcal/mol. The answer may be yes whatever the benchmark says; D36 does
+       not run CCSD(T) at def2-SVPD and cannot measure the method's own basis shift.
+
+--------------------------------------------------------------------------------
+4. GATES. ANY FAILURE STOPS THE DIAGNOSTIC
+--------------------------------------------------------------------------------
+G36.1  Every geometry file is byte-identical by sha256 to d33a/sp_42436_{R,TS}.
+G36.2  Arm C's input is byte-identical by sha256 to D28's
+       CAM-B3LYP/def2-TZVPD/ctl_{R,TS}/job.inp.
+G36.3  CONTROL. Arm C reproduces D28's committed energies, -837.20938385 Eh at the
+       reactant and -837.16842778 Eh at the transition state, to within 1e-6 Eh each,
+       and its barrier equals 25.7003 kcal/mol to within 0.0010. If it does not, the
+       geometry or the pipeline is not what this document says and nothing else is
+       readable.
+G36.4  Every run terminates normally, converges its SCF, and reports 118 electrons.
+G36.5  Arm B's output reports a converged coupled-cluster calculation and prints the
+       final CCSD(T) energy; a run that terminates normally without one is a failure.
+G36.6  The charge is -2 and the multiplicity 1 in all six inputs.
+G36.7  No file under d28, d33a or frozen is modified by this diagnostic.
+
+--------------------------------------------------------------------------------
+5. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D36.1  It does not make any functional correct. It measures distance from one
+       correlated treatment at one basis on one geometry. A functional that sits
+       closest here is the closest here, and nothing more.
+D36.2  IT IS NOT A CONVERGED ABSOLUTE BARRIER. def2-TZVPD is a modest basis for
+       CCSD(T) and the basis was chosen to match the committed DFT arm rather than to
+       converge the correlation energy. The number is a reference for comparison at
+       this basis, and must not be quoted as the true in vacuo barrier.
+D36.3  It is still an in vacuo electronic barrier on one frozen frame. It is not the
+       experimental 24.5 or 20.7 kcal/mol, which are a free energy and an enthalpy in
+       water, and E7.11's rule applies to every sentence that puts them near each
+       other.
+D36.4  DLPNO is an approximation to CCSD(T). TightPNO is requested, and the residual
+       PNO error is not measured here.
+D36.5  A dianion is a hard case for a single-reference method. If the HF reference
+       places the highest occupied orbital above the vacuum level, or if the T1
+       diagnostic is large, the benchmark is reported WITH that caveat attached
+       wherever it is used, and a multireference check becomes an open item.
+D36.6  No charges, no design, no wall, no reliability claim. Nothing here bears on
+       r_safe, on any barrier lowering, or on which designs survive.
+D36.7  It does not adopt a production level of theory. That is an amendment and a
+       decision for Jessica, and D36 only supplies evidence for it.
+D36.8  Nothing here is shaped toward a lower barrier. No outcome is preferred: if
+       CCSD(T) lands nearest B3LYP, which would overturn D28's direction, that is the
+       result and it is reported as plainly as the opposite.

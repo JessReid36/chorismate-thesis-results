@@ -1,0 +1,40 @@
+#!/bin/bash
+#PBS -N cm_d36
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d36/run.pbs.out
+# Stage 6 DIAGNOSTIC 36: a correlated reference for the in vacuo barrier.
+# Arm C is D28's own CAM-B3LYP/def2-TZVPD input byte for byte and is the CONTROL:
+#   it must return -837.20938385 and -837.16842778 Eh (G36.3). It runs first and
+#   nothing else is readable without it.
+# Arm H is the Hartree-Fock reference the coupled-cluster arm is built on.
+# Arm B is DLPNO-CCSD(T)/def2-TZVPD with AutoAux and TightPNO, and runs LAST, so
+#   a walltime or memory failure there costs nothing already measured.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d36
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run C_R
+run C_TS
+run H_R
+run H_TS
+run B_R
+run B_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 6"
+echo "ccsd(t) energies found: $(grep -l 'E(CCSD(T))' B_*/job.out 2>/dev/null | wc -l) of 2"
