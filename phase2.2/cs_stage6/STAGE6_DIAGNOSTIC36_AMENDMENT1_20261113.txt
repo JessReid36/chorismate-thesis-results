@@ -1,0 +1,163 @@
+STAGE 6, DIAGNOSTIC 36 - AMENDMENT 1
+Arm B exceeded its walltime. The resources change; the calculation does not.
+
+Written 13 November 2026, after attempt 1 was killed and before attempt 2 is submitted.
+STAGE6_DIAGNOSTIC36_20261111.txt is not edited. This amendment records what happened,
+what is changed, and what is deliberately left alone.
+
+--------------------------------------------------------------------------------
+1. WHAT HAPPENED
+--------------------------------------------------------------------------------
+The job ran on comp040 from 15:14:44 on 11 November and was killed by the scheduler in
+its own words:
+
+   =>> PBS: job killed: walltime 86516 exceeded limit 86400
+
+Arms C and H finished and are valid:
+
+   C_R    18 min 31 s      C_TS   19 min 00 s
+   H_R    11 min 25 s      H_TS   11 min 09 s
+
+Arm B did not. B_R ran about 23 hours and was killed inside the triples correction;
+B_TS never started. What B_R did reach, read from its archived output:
+
+   E(0), the Hartree-Fock reference        -832.744852436 Eh   measured
+   E(CORR)(strong-pairs)                     -3.023507483 Eh   measured
+   E(CORR)(weak-pairs)                       -0.004618489 Eh   measured
+   E(CORR)(corrected)                        -3.028125973 Eh   measured
+   E(CCSD) = E(0) + E(CORR)                -835.772978409 Eh   DERIVED here
+   T1 diagnostic                              0.015649748      measured
+
+So the Hartree-Fock reference and the full CCSD converged, and the run died in the
+(T) correction: of 11618 triples, five batches completed at roughly 1900 to 1980
+seconds each, about 2.7 hours in all. The remaining twenty hours went to the SCF and
+the CCSD iterations before the triples began.
+
+THE T1 DIAGNOSTIC ADDRESSES PART OF D36.5. The pre-registration named a large T1 as a
+reason the benchmark would have to be reported with a multireference caveat. At
+0.0157 the reactant sits below the conventional 0.02 guide. That guide is not this
+project's and was not pre-registered; the number is the measurement. The transition
+state has not been measured and the question stays open for it.
+
+NONE OF THIS IS COMMITTED AS A RESULT. A failed job is not committed; a note about it
+is, and this amendment is that note. The archived output lives outside git at
+chorismate-hpc-archive/d36_attempt1_walltime with a sha256 for every file.
+
+--------------------------------------------------------------------------------
+2. WHY IT WAS SLOW. TWO CAUSES, BOTH OURS
+--------------------------------------------------------------------------------
+FIRST, THE MEMORY REQUEST STARVED IT ONTO DISK. The input asked %maxcore 5000 on 8
+cores, 40 GB, on a node holding 126 GB. ORCA reported
+
+   PNO-Integral Storage                    ... ON DISK
+
+and wrote 36 GB of intermediates: job.PNO3.tmp at 10.9 GB, job.PNO4.tmp at 3.8 GB and
+six VABPAO.tmp files at 1.8 GB each. Those were written to /home, which is NFS from
+comp047 and 90 per cent full, and streamed through every CCSD iteration. Node-local
+/scratch is 50 GB with 27 GB free and so cannot hold them either; the answer is to
+give ORCA enough memory that it does not go to disk at all.
+
+SECOND, THE NODE WAS SHARED. comp040 has 64 cores and 126 GB and was running seven
+other jobs. Arm C is a repeat of D28's CAM-B3LYP/def2-TZVPD control, which took 9.7
+and 9.2 minutes when D28 ran it; here it took 18.5 and 19.0. Plain density functional
+theory with no PNO files at all ran at half speed, so the contention is real and is
+not an artefact of the coupled-cluster arm.
+
+THE WALLTIME CEILING WAS NEVER THE CLUSTER'S. Checked while writing this: the queues
+are day at 24:00:00, week at 176:00:00 and month at 744:00:00, and routing is by
+walltime with no queue requested. Attempt 1 asked for 24 hours because that is what
+every earlier diagnostic in this record asked for. That was a carried-over habit and
+not a constraint.
+
+--------------------------------------------------------------------------------
+3. WHAT CHANGES
+--------------------------------------------------------------------------------
+                           attempt 1              attempt 2
+   job layout              both legs, one job     one job per leg
+   PBS ncpus               8                      16
+   PBS mem                 48gb                   240gb
+   %pal nprocs             8                      16
+   %maxcore                5000                   12000
+   walltime                24:00:00               168:00:00, routing to week
+
+TWO LINES INSIDE THE INPUT CHANGE, NOT ONE. Attempt 1's input carried %pal nprocs 8,
+so asking PBS for 16 cores without changing it would have left ORCA using eight and
+the rest idle. Both %pal and %maxcore are resource directives: they decide how the
+work is divided and where integrals are held, not what is computed.
+
+One job per leg so that B_TS starts whatever B_R does. 16 cores and 240 GB so the job
+lands on one of the 364 GB nodes with room to spare. %maxcore 12000 on 16 cores is
+192 GB inside a 240 GB request, which should keep the PNO integrals in memory; whether
+it does is reported, because the output states ON DISK or otherwise and the result
+will quote it. The job script also prints nproc and the free memory it actually got,
+so a job that lands on a contended node says so in its own output.
+
+The runs go in a new directory, d36a1, so attempt 1's committed inputs stay exactly as
+they are and remain the record of what was tried.
+
+EVERY ONE OF THESE IS A RESOURCE AND NOT A METHOD. Cores, memory, walltime and the
+job layout cannot change a converged energy. %maxcore changes where integrals are
+stored, not what they are.
+
+--------------------------------------------------------------------------------
+4. WHAT DOES NOT CHANGE
+--------------------------------------------------------------------------------
+The method line is untouched, byte for byte:
+
+   ! DLPNO-CCSD(T) def2-TZVPD AutoAux TightSCF TightPNO
+
+TightPNO stays. Loosening it would make the job faster and would also change the
+number, and a reference that has been loosened to fit a queue is not a reference. If
+attempt 2 also fails, loosening the thresholds or dropping the (T) are the next
+options and each needs its own amendment and its own justification; neither is taken
+here in advance.
+
+AutoAux stays. Attempt 1 cleared the suspicion against it: the three integral
+transformations took 50.7, 65.6 and 37.7 seconds, so the auxiliary basis is not where
+the time went.
+
+def2-TZVPD stays, for the reason D36 section 2 gives: it matches the committed DFT arm
+so the comparison changes one thing and not two.
+
+The geometry stays, byte for byte from d33a/sp_42436_{R,TS}/substrate.xyz.
+
+Arms C and H are NOT re-run. They finished, they are valid, and their outputs on hpc1
+are the ones the harvest will read.
+
+Every reading R36.1 to R36.5, every gate G36.1 to G36.7 and every limitation D36.1 to
+D36.8 stands unchanged.
+
+--------------------------------------------------------------------------------
+5. A NEW GATE, FROM THE FAILURE
+--------------------------------------------------------------------------------
+G36.8  Attempt 2's B_R must reproduce attempt 1's Hartree-Fock reference and CCSD
+       correlation energy, to within 1e-6 Eh each:
+
+          E(0)                 -832.744852436
+          E(CORR)(corrected)     -3.028125973
+
+       Nothing that section 3 changes can alter either number, so if they move, the
+       calculation is not the one attempt 1 ran and nothing downstream is readable.
+       This is a control that cost nothing: it exists only because the first attempt
+       failed where it did.
+
+G36.9  Attempt 2's input differs from the committed d36/B_{R,TS}/job.inp in exactly
+       two lines, %maxcore and %pal nprocs, and in no other byte, and its geometry is
+       byte-identical to d33a's.
+
+G36.10 The result reports whether ORCA kept the PNO integrals in memory or on disk,
+       and the wall-clock time of each leg, so the next person knows what this cost.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS AMENDMENT DOES NOT DO
+--------------------------------------------------------------------------------
+A36.1  It does not adopt a production level of theory. D36 supplies evidence for that
+       amendment; it is not that amendment.
+A36.2  It does not make the benchmark more likely to favour any functional. Nothing
+       changed can move the number.
+A36.3  It does not promise attempt 2 will finish. If it does not, the next step is a
+       method change and that needs its own amendment, written before it is run.
+A36.4  It does not withdraw or revise anything in STAGE6_DIAGNOSTIC36_20261111.txt.
+A36.5  It does not treat the partial reactant numbers in section 1 as a result. They
+       are a note on a failed job, and the only use made of them is as G36.8's
+       control.

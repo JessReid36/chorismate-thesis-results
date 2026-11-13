@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N cm_d36a1_TS
+#PBS -l select=1:ncpus=16:mem=240gb
+#PBS -l walltime=168:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d36a1/run_B_TS.pbs.out
+# DIAGNOSTIC 36 AMENDMENT 1: arm B, TS leg, one job of its own.
+# Attempt 1 asked %%maxcore 5000 on 8 cores and ORCA put the PNO integrals
+#   ON DISK, writing 36 GB onto NFS and streaming it through every CCSD
+#   iteration. %maxcore 12000 on 16 cores is 192 GB inside a 240gb request.
+# The method line, AutoAux, TightPNO, the basis and the geometry are
+#   unchanged. Only resources change, and resources cannot move the answer.
+# walltime 168:00:00 routes to week automatically. No -q.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d36a1/B_TS
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "cores=$(nproc) ; memory:"; free -g | head -2
+if [ -s job.out ] && grep -q "ORCA TERMINATED NORMALLY" job.out; then
+  echo "B_TS done before"; exit 0; fi
+"$ORCA/orca" job.inp > job.out 2>&1 </dev/null
+echo "orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' job.out) $(date)"
+echo "PNO integral storage: $(grep -m1 'PNO-Integral Storage' job.out)"
+echo "ccsdt energy: $(grep -m1 'E(CCSD(T))' job.out)"
+grep -m1 "TOTAL RUN TIME" job.out
