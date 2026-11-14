@@ -1,0 +1,101 @@
+#!/bin/bash
+#PBS -N cm_d36a2_TS
+#PBS -l select=1:ncpus=16:mem=240gb
+#PBS -l walltime=168:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d36a2/run_B_TS.pbs.out
+# DIAGNOSTIC 36 AMENDMENT 2: arm B, TS leg, attempt 3.
+# Attempt 2 failed at exit 1, not at the walltime. ORCA reported PNO-Integral
+#   Storage ON DISK again, because %maxcore is not the control for it; the control
+#   is the %mdci StorageType block, which was never set. The intermediates - 74 GB
+#   for R and 42 GB for TS - went to /home, which is NFS and 97% full, and both
+#   jobs stopped 96 seconds apart on different nodes.
+# This script does two things differently. The input now asks for shared-memory
+#   storage. And the run happens in /scratch on the compute node, which is local
+#   and has 1.5 TB free, so a fallback to disk is survivable instead of fatal.
+# The method line, AutoAux, TightPNO, def2-TZVPD and the geometry are unchanged.
+# walltime 168:00:00 routes to week automatically. No -q.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+H=/home/18660916/system_development/phase2.2/cs_stage6/d36a2/B_TS
+P="$H/PROGRESS.txt"
+NEED_GB=300
+
+cd "$H" || exit 1
+if [ -s job.out ] && grep -q "ORCA TERMINATED NORMALLY" job.out; then
+  echo "B_TS done before"; exit 0; fi
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $H"; exit 1; fi
+
+S="/scratch/18660916/d36a2_B_TS.${PBS_JOBID:-nojobid}"
+
+cleanup() {
+  kill "${WATCH:-}" 2>/dev/null
+  if [ -d "$S" ]; then
+    echo "scratch at exit: $(du -sh "$S" 2>/dev/null | cut -f1)"
+    if cp -f "$S/job.out" "$H/job.out" 2>/dev/null; then rm -f "$H/job.out.partial"; fi
+    cp -f "$S/job.property.txt" "$H/" 2>/dev/null
+    cp -f "$S/job.gbw" "$H/" 2>/dev/null
+    case "$S" in
+      /scratch/18660916/d36a2_B_*) rm -rf "$S" ;;
+      *) echo "REFUSING to remove an unexpected scratch path: $S" ;;
+    esac
+  fi
+  rmdir "$H/.running" 2>/dev/null
+}
+trap cleanup EXIT
+
+echo "host=$(hostname) start=$(date) jobid=${PBS_JOBID:-none}"
+echo "cores=$(nproc) ; memory:"; free -g | head -2
+
+# GUARD (a): enough local scratch, checked now and not seventeen hours in.
+mkdir -p "$S" || { echo "FAIL: cannot create $S on $(hostname)"; exit 1; }
+AVAIL=$(df -P -BG "$S" 2>/dev/null | awk 'NR==2{sub(/G$/,"",$4); print $4}')
+echo "scratch=$S avail=${AVAIL:-unknown}G need=${NEED_GB}G"
+case "${AVAIL:-}" in
+  ''|*[!0-9]*) echo "FAIL: could not read free space on $S"; exit 1 ;;
+esac
+if [ "$AVAIL" -lt "$NEED_GB" ]; then
+  echo "FAIL: $(hostname) has ${AVAIL}G free on /scratch and this needs ${NEED_GB}G."
+  echo "      Nothing is wrong with the calculation. Resubmit and PBS will usually"
+  echo "      place the job on another node."
+  exit 1
+fi
+
+cp -p "$H/job.inp" "$H/substrate.xyz" "$S/" || { echo "FAIL: staging into $S"; exit 1; }
+cd "$S" || exit 1
+
+printf '%s  B_TS attempt 3 on %s, scratch %s, %sG free\n' \
+  "$(date '+%F %T')" "$(hostname)" "$S" "$AVAIL" > "$P"
+
+# GUARDS (b) and (c): the storage mode and the tail of job.out, on /home, while the
+# job is still alive. Attempt 2 printed the storage line too and nobody could read it
+# until the job was dead, and both legs left their last ninety minutes unrecorded.
+(
+  sleep 120
+  while [ -d "$S" ]; do
+    cp -f "$S/job.out" "$H/job.out.partial" 2>/dev/null
+    {
+      printf '%s  used=%s  storage=%s\n' \
+        "$(date '+%F %T')" \
+        "$(du -sh "$S" 2>/dev/null | cut -f1)" \
+        "$(grep -m1 'PNO-Integral Storage' "$S/job.out" 2>/dev/null | sed 's/.*\.\.\.[[:space:]]*//')"
+      printf '    last: %s\n' \
+        "$(grep -v '^[[:space:]]*$' "$S/job.out" 2>/dev/null | tail -1 | cut -c1-100)"
+    } >> "$P"
+    sleep 600
+  done
+) &
+WATCH=$!
+
+"$ORCA/orca" job.inp > job.out 2>&1 </dev/null
+RC=$?
+echo "orca_exit=$RC normal=$(grep -c 'ORCA TERMINATED NORMALLY' job.out) $(date)"
+echo "PNO integral storage: $(grep -m1 'PNO-Integral Storage' job.out)"
+echo "ccsdt energy: $(grep -m1 'E(CCSD(T))' job.out)"
+grep -m1 "TOTAL RUN TIME" job.out
+printf '%s  B_TS orca_exit=%s\n' "$(date '+%F %T')" "$RC" >> "$P"
+exit $RC

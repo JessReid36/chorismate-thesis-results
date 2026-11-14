@@ -1,0 +1,274 @@
+STAGE 6, DIAGNOSTIC 36 - AMENDMENT 2
+Arm B died at exit 1, not at the walltime. Where the integrals are written changes;
+the calculation does not.
+
+Written 14 November 2026, after attempt 2 failed and before attempt 3 is submitted.
+STAGE6_DIAGNOSTIC36_20261111.txt is not edited. STAGE6_DIAGNOSTIC36_AMENDMENT1_20261113.txt
+is not edited; section 7 below corrects one factual claim it makes.
+
+--------------------------------------------------------------------------------
+1. WHAT HAPPENED
+--------------------------------------------------------------------------------
+Two jobs, one per leg, submitted 13 November. Both ended on 14 November with
+
+   Exit_status = 1
+
+and not with the scheduler's walltime message. Neither reached its walltime: 168 hours
+were granted and 17 and 11 hours were used. From the PBS accounting and the archived
+output:
+
+   leg    node      walltime     cput        mem used    vmem        ended
+   B_R    comp064   17:09:40     101:01:24   159.2 GB    171.0 GB    Sat 07:17:51
+   B_TS   comp034   11:01:17      80:41:56   166.9 GB    178.7 GB    Sat 07:16:15
+
+   B_R  started Fri 14:06:32, last wrote job.out at 05:50
+   B_TS started Fri 20:13:18, last wrote job.out at 05:41
+
+THE TWO ENDS ARE 96 SECONDS APART, ON DIFFERENT NODES. Two independent jobs on two
+different machines, started six hours apart, do not stop within a minute and a half of
+each other for a reason local to either. What they share is the filesystem they were
+writing to.
+
+Each leg stopped writing output roughly ninety minutes before it died, and neither
+left a message in job.out. B_TS's last recorded CCSD iteration times, in seconds:
+
+   iteration 11      413.98
+   iteration 12      521.18
+   iteration 13     5042.88
+   iteration 14     6983.53
+
+The step from 12 to 13 is a factor of 9.7. Nothing in the chemistry changes between
+two CCSD iterations; nothing in the arithmetic changes. What changed is how long it
+took to read the integrals back.
+
+NONE OF THIS IS COMMITTED AS A RESULT. A failed job is not committed; a note about it
+is, and this amendment is that note. The archived output lives outside git at
+chorismate-hpc-archive/d36a1_attempt2_io, eleven files with a sha256 for each.
+
+--------------------------------------------------------------------------------
+2. WHY IT FAILED. THE SWITCH WAS NEVER SET
+--------------------------------------------------------------------------------
+Attempt 2's whole purpose was to stop ORCA writing PNO integrals to disk. It did not
+work, and the reason is that %maxcore is not the control for it. Attempt 2 reported,
+in its own output, the same line attempt 1 reported:
+
+   PNO-Integral Storage                    ... ON DISK
+
+192 GB of %maxcore across 16 cores made no difference, because %maxcore governs how
+much memory each process may use for its own working arrays and not where the DLPNO
+integrals are held. The control for that is a separate keyword, documented in the
+ORCA 6.0 manual under MDCI, section 7.14.4:
+
+   %mdci
+        StorageType Shared
+   end
+
+and the manual's own words for what it does and what it costs:
+
+   "For larger systems and tighter thresholds the disk I/O of a DLPNO calculation may
+    become challenging."
+   "In this case, it might be usefull to keep some integrals in memory, if enough RAM
+    is available."
+   "ORCA will try to store certain much-used integrals in shared memory."
+   "If the amount of memory is not sufficient, ORCA will fall back to on-disk storage."
+   "NOTE: This flag will only work if all processes work on the same node."
+
+   source: https://www.faccts.de/docs/orca/6.0/manual/contents/detailed/mdci.html
+   read 14 November 2026
+
+That block was absent from attempts 1 and 2. This is my error and not the cluster's:
+attempt 2 was built on the assumption that %maxcore would move the integrals into
+memory, the assumption was never checked against the manual, and a week of two jobs
+was spent on it.
+
+SO THE INTEGRALS WENT TO DISK, AND THE DISK WAS THE WRONG ONE. Both jobs ran with
+their working directory under /home, so that is where the intermediates went:
+
+   B_R    74 GB
+   B_TS   42 GB
+   total 116 GB
+
+Those three figures were measured by du on hpc1 on 14 November, while the two run
+directories still held their intermediates. They are not in the archive, because what
+was archived is the text output and not 116 GB of regenerable scratch, and they cannot
+be re-read once d36a1's scratch is cleared.
+
+/home on this cluster is NFS exported from comp047, shared by every user, and it was
+already 90 per cent full when attempt 2 started. Measured on 14 November:
+
+   62 TB total, 60 TB used, 2.4 TB available, 97 per cent
+
+116 GB of coupled-cluster intermediates, read and rewritten on every CCSD iteration,
+travelling over a network filesystem that is nearly full and shared with everyone
+else. That is what the factor of 9.7 is. That is why two jobs on two nodes stopped
+within 96 seconds of each other.
+
+WHAT IS NOT CLAIMED HERE. I cannot show the exact error the filesystem returned,
+because neither job wrote one: both went quiet about ninety minutes before exit and
+the last thing in each job.out is an ordinary line of ORCA output. The sequence above
+is read from the PBS accounting, the two output files and df. That a shared NFS volume
+at 97 per cent is what ended both jobs is the reading those measurements support; it is
+not a message either job printed.
+
+--------------------------------------------------------------------------------
+3. WHAT CHANGES
+--------------------------------------------------------------------------------
+                           attempt 2                 attempt 3
+   working directory       /home/.../d36a1/B_x       /scratch on the compute node
+   %mdci StorageType       not set                   Shared
+   %maxcore                12000                     8000
+   PBS ncpus               16                        16, unchanged
+   PBS mem                 240gb                     240gb, unchanged
+   walltime                168:00:00                 168:00:00, unchanged
+   job layout              one job per leg           unchanged
+
+TWO INDEPENDENT FIXES, AND ATTEMPT 3 DOES NOT DEPEND ON EITHER ONE WORKING ALONE.
+
+FIRST, THE INTEGRALS ARE ASKED TO STAY IN MEMORY. The %mdci block above is added.
+The manual's note that it works only if all processes are on one node is satisfied:
+the request is select=1 and has been since attempt 2.
+
+SECOND, IF THEY DO NOT FIT, THEY GO TO LOCAL DISK AND NOT TO NFS. The job now stages
+its input into /scratch on the compute node, runs there, and copies the output back.
+Measured on comp050 on 14 November:
+
+   /scratch        1.9 TB total, 1.5 TB available, writable
+   $TMPDIR          70 GB total,  38 GB available
+
+/scratch is the volume to use and $TMPDIR is not: 38 GB does not hold 74 GB. This is
+the structural point of attempt 3. The manual says ORCA falls back to on-disk storage
+when memory is short, so a fallback must be assumed rather than hoped against; after
+this change a fallback writes 74 GB to a local disk with 1.5 TB free instead of to a
+shared network volume at 97 per cent. ON DISK IS NO LONGER A FAILURE. If attempt 3
+reports ON DISK and finishes, that is a success and the result will say so.
+
+WHY %maxcore GOES DOWN AND NOT UP. The manual does not say whether the shared segment
+is counted inside %maxcore or allocated on top of it. Attempt 2 already used 159 to 167
+GB of its 240 GB request without any shared segment at all. If the segment is allocated
+on top, 192 GB of %maxcore plus a shared segment would exceed the 240 GB PBS limit and
+the job would be killed for memory, which is a worse outcome than a disk fallback
+because it looks exactly like the failure we have just spent a week diagnosing. 8000
+on 16 cores is 128 GB and leaves roughly 110 GB of the request for the segment. If
+instead the segment is counted inside %maxcore, 128 GB is still far more than the 40 GB
+attempt 1 ran in. Either way the job completes; this choice trades a little speed for
+not being killed. The PBS memory request is deliberately not raised: this is a shared
+cluster and 240 GB is what attempt 2 already held.
+
+THREE GUARDS, EACH ONE FROM SOMETHING THAT WENT WRONG.
+
+   (a) The job checks free space on /scratch before it starts and exits immediately
+       with the node name and the figure if there is less than 300 GB, rather than
+       discovering it seventeen hours in. 300 GB is three times what attempt 2 wrote
+       in its single largest leg plus headroom. A node that fails this check is not a
+       reason to change anything: resubmit, and PBS will usually place the job
+       elsewhere.
+
+   (b) The storage mode is written to a file on /home within the first minutes, so
+       ON DISK or IN MEMORY is visible while the job runs instead of in the
+       post-mortem. Attempt 2 printed that line too; nobody could see it until the
+       job was dead.
+
+   (c) job.out is copied back to /home every ten minutes, not only at the end. Both
+       dead jobs left their last ninety minutes unrecorded, and B_TS's ballooning
+       iteration times were the one real warning either job gave.
+
+The runs go in a new directory, d36a2, so d36a1's committed inputs stay exactly as
+they are and remain the record of what attempt 2 tried.
+
+--------------------------------------------------------------------------------
+4. WHAT DOES NOT CHANGE
+--------------------------------------------------------------------------------
+The method line is untouched, byte for byte:
+
+   ! DLPNO-CCSD(T) def2-TZVPD AutoAux TightSCF TightPNO
+
+TightPNO stays. AutoAux stays. def2-TZVPD stays. The charge, the multiplicity and the
+geometry stay, byte for byte from d33a/sp_42436_{R,TS}/substrate.xyz.
+
+%mdci StorageType and %maxcore are storage directives. They decide where numbers are
+held while they are being used. They do not decide what the numbers are, and G36.8
+below is the control that proves it rather than the assertion that it is so.
+
+Arms C and H are NOT re-run. They finished, they are valid, and their outputs on hpc1
+are the ones the harvest will read. The harvest script must now read arm B from d36a2
+and arms C and H from d36; that is a change to the harvest and not to this benchmark.
+
+Every reading R36.1 to R36.5, every gate G36.1 to G36.10 and every limitation D36.1 to
+D36.8 stands unchanged.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+G36.8  CARRIED FORWARD UNCHANGED FROM AMENDMENT 1. Attempt 3's B_R must reproduce
+       attempt 1's Hartree-Fock reference and CCSD correlation energy, to within
+       1e-6 Eh each:
+
+          E(0)                 -832.744852436
+          E(CORR)(corrected)     -3.028125973
+
+       Nothing section 3 changes can alter either number. Where integrals are stored
+       cannot move a converged energy, and this is the measurement that decides it
+       rather than my word. If they move, the calculation is not the one attempt 1 ran
+       and nothing downstream is readable.
+
+G36.11 Attempt 3's input differs from the committed d36a1/B_{R,TS}/job.inp in exactly
+       two ways and in no other byte: the three lines of the %mdci block are inserted,
+       and %maxcore 12000 becomes %maxcore 8000. Its geometry is byte-identical to
+       d33a/sp_42436_{R,TS}/substrate.xyz.
+
+G36.12 The result reports, for each leg, the node it ran on, whether ORCA held the PNO
+       integrals in shared memory or on disk, the peak size reached in /scratch, and
+       the wall-clock time. If ON DISK is reported and the leg finished, that is
+       recorded as a finish and not as a failure.
+
+G36.13 The result states that no output file was read from /home during the run and
+       that every number quoted comes from the job.out copied back out of /scratch,
+       with its sha256.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS AMENDMENT DOES NOT DO
+--------------------------------------------------------------------------------
+A36.6  It does not adopt a production level of theory. D36 supplies evidence for that
+       amendment; it is not that amendment. A36.1 is unchanged.
+A36.7  It does not make the benchmark more likely to favour any functional. Nothing
+       changed can move the number, and G36.8 is the test of that claim.
+A36.8  It does not add the def2-SVPD CCSD(T) pair alongside, and it does not add an
+       F12 pair. Both were considered and dropped: this is a shared cluster, the
+       footprint of two more sixteen-core jobs is not justified before the first
+       number exists, and running a cheaper basis in parallel would not tell us
+       whether the expensive one can finish. If attempt 3 fails as well, def2-SVPD
+       becomes the plan and the reason for it will be a measurement rather than a
+       guess.
+A36.9  It does not promise attempt 3 will finish.
+A36.10 It does not change the harvest. y87 is superseded because arm B has moved
+       directory; rebuilding it is a separate step and is not licensed by this
+       document.
+
+ON AMENDMENT 1'S A36.3. Amendment 1 said that if attempt 2 failed, the next step was a
+method change needing its own amendment. Attempt 3 is not a method change, and the
+reason is section 2: attempt 2 did not fail because the method was too expensive, it
+failed because the switch that was supposed to keep its integrals out of a near-full
+network filesystem was never set. Spending the method on a fault in the job script
+would be the wrong trade and would also corrupt the benchmark. A36.3 is therefore not
+followed, deliberately and on the record. IT APPLIES TO ATTEMPT 4. If attempt 3 fails,
+the next amendment is a method change - loosening TightPNO, or dropping the (T), or
+def2-SVPD - and none of the three is chosen here in advance.
+
+--------------------------------------------------------------------------------
+7. A CORRECTION TO AMENDMENT 1
+--------------------------------------------------------------------------------
+Amendment 1, section 2, says of the compute nodes:
+
+   "Node-local /scratch is 50 GB with 27 GB free and so cannot hold them either"
+
+THAT IS WRONG AND THE ERROR IS MINE. 50 GB is the /scratch volume on the login node.
+On a compute node /scratch is a different filesystem: 1.9 TB total with 1.5 TB
+available, measured on comp050 on 14 November by a job submitted for the purpose.
+Amendment 1 is not edited; this paragraph is the correction, and the sentence quoted
+above should not be relied on by anyone reading that document.
+
+The consequence of the error is not small. Had the figure been right, attempt 2 would
+have run in /scratch and the 116 GB would never have gone near /home. The claim was
+made from the login node, which is the only place I had looked, and was not checked on
+a compute node before it was written down. "I could not find it" would have been the
+honest form; "it cannot hold them" was not.
