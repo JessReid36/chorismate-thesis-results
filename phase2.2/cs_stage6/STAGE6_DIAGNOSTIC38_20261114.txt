@@ -1,0 +1,235 @@
+STAGE 6, DIAGNOSTIC 38
+Do embedding point charges reach the correlated step? A mechanism probe, not a barrier.
+
+Pre-registered 14 November 2026, before any D38 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D36 measured the functional error on the BARE barrier: CAM-B3LYP-D3BJ/def2-TZVPD sits
++1.8400 kcal/mol above DLPNO-CCSD(T)/def2-TZVPD at frame 42436. What the record quotes
+is not a bare barrier but ddE, the change a charge arrangement produces, and D34's three
+quotable values are -3.3985, -4.1567 and -5.3701 kcal/mol. The bare error is therefore
+34 to 54 per cent of the signal, and whether that matters depends entirely on whether
+the error cancels between the bare and the charged system. NOTHING IN THIS RECORD
+MEASURES THAT. D36 never ran a charged system.
+
+The test that would measure it is a coupled-cluster calculation with the arrangement's
+charges present. It is affordable for a reason worth stating: the ORCA 6.0 manual says
+of an external point-charge file that it "adds the point charge contribution to the
+one-electron matrix and the nuclear repulsion", so the charges add no electrons and no
+basis functions and the correlation problem is the same size as the bare one. D36's two
+legs took 4.1 and 6.7 hours.
+
+   source: https://www.faccts.de/docs/orca/6.0/manual/contents/detailed/coords.html
+   read 14 November 2026
+
+BUT THE PRODUCTION DESIGNS DO NOT USE AN EXTERNAL POINT-CHARGE FILE. Checked while
+writing this: D34's inputs use the QM/MM module with an ORCAFF force field, and
+cs6_analyse.py states that ddE is taken on the QM/MM total because "the score this is
+measured against contains L, the sphere's Lennard-Jones energy at TS minus at R, so the
+measurement must contain it too". The Lennard-Jones term is pure molecular mechanics: it
+depends on the geometry and the force field and not at all on the QM method, so it
+cancels exactly when two methods' ddE are compared. What a coupled-cluster run must
+reproduce is therefore the embedding electrostatics, not the whole QM/MM energy.
+
+WHETHER DLPNO-CCSD(T) HONOURS EMBEDDING CHARGES IS NOT ESTABLISHED. Checked while
+writing this: the manual's point-charge page states no restriction to any method; the
+multiscale overview says "Use all kinds of available electronic structure methods as QM
+method"; the QM/MM page's only explicit DLPNO mention is for MOL-CRYSTAL-QMMM, a
+different scheme. I could not find a positive statement that the combination works, and
+I could not find one that it does not. 653 committed inputs in this project use
+%pointcharges - qscale, standoff, sitescan - and none of them uses a correlated method.
+
+THE FAILURE MODE THAT MATTERS IS NOT AN ERROR MESSAGE. It is that ORCA accepts the
+keyword, applies the charges in the SCF, and the correlated step does not see them. The
+output would look entirely normal and the number would be a bare correlation energy on
+a shifted reference. That would pass every gate written so far. D38 exists to make that
+failure visible before a week of node time is spent on it.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+Five single points, all on the committed bare substrate of frame 42436's REACTANT,
+d33a/sp_42436_R/substrate.xyz, QM charge -2, multiplicity 1, frozen geometry.
+
+   ! DLPNO-CCSD(T) def2-SVPD AutoAux TightSCF TightPNO
+
+   run   embedding charge                                     source
+   N     none. no %pointcharges line at all                   the common reference
+   B0     0.000000 e at 44.20782400 19.21545700 38.95945100   inertness check for B
+   B1    +1.000000 e at the same position                     ADD-s1690_qp10000
+   A0     0.000000 e at 45.44147300 23.87423600 30.61699600   inertness check for A
+   A1    -1.000000 e at the same position                     ADD-s678_qm10000
+
+BOTH ARRANGEMENTS ARE ALREADY IN THE FIGURES, which is why these two and not others.
+Checked while writing this, in the committed figure data:
+
+   ADD-s1690_qp10000   F6, F7, T3, T4, T5, controls.tsv, derived.tsv
+   ADD-s678_qm10000    F6, F7, F9, T3, T5, controls.tsv
+
+So whatever D38 and the test it licenses measure can be carried into figures that already
+exist, rather than needing a new one.
+
+THE BASIS IS def2-SVPD AND NOT def2-SVP, DELIBERATELY. def2-SVPD is the production basis
+and it carries diffuse functions. That matters here and not only for consistency: D34
+flagged 7 of 10 arrangements UNRELIABLE at CAM-B3LYP/def2-SVPD while stage A at
+B3LYP/def2-SVP flagged 0 of 10, and def2-SVP has no diffuse functions to see whatever
+def2-SVPD is seeing. A probe at def2-SVP could not show it either.
+
+BOTH SIGNS ARE RUN, AND BOTH ARE REAL. A1 is the largest quotable arrangement; B1 is the
+committed positive arrangement at the same magnitude. Neither charge nor position is
+invented: both are read out of their design's own site.ORCAFF.prms and combined.xyz, and
+G38.6 requires the derivation to be shown and to agree with what the design's name
+encodes.
+
+ORDER. N first, then B0, B1, then A0, A1. The reference and each inertness check come
+before the run that depends on them, and the B arm comes before the A arm because section
+3 is the reason: B1 is the arrangement the record says is electronically bound and A1 the
+one it says is not, so the interpretable probe runs first.
+
+RESOURCES. One job, the five runs sequentially, 16 cores, 120 GB, walltime 24:00:00,
+which routes to day. No -q. The job runs in node-local /scratch and clears each run's
+intermediates before starting the next, so the footprint is one run at a time: this is a
+shared cluster and D36 at a larger basis peaked at 74 GB. D36's three guards carry over -
+free space checked before the run, the PNO storage mode written to /home within minutes,
+and output copied back every ten minutes rather than only at the end.
+
+--------------------------------------------------------------------------------
+3. WHAT THE RECORD ALREADY SAYS ABOUT THESE TWO ARRANGEMENTS
+--------------------------------------------------------------------------------
+Checked while writing this, and it bears on how a failure in either arm must be read.
+
+STAGE6_FINDINGS_20261022.md Finding 8 measured the dianion's highest occupied orbital at
+the reactant geometry with each design's charges present, at def2-SVP:
+
+   S6-C, bare                                    +2.278 eV   not bound
+   S6-P / ADD-s1690 (+1 at site 1690)            -0.243 eV   BOUND
+   ADD-s678 (-1.00)                              +5.205 eV   not bound
+
+and its own words for what that means: "A positive HOMO means the highest electrons are
+not bound; the calculation only looks well-behaved because def2-SVP has no diffuse
+functions to let an electron leave." It concludes "Only the single positive sphere at
+Arg90's own position binds the dianion."
+
+The vertical detachment energies point the same way. STAGE6_PROBE1_ERRATUM1_20261027.txt
+puts the bare substrate at +0.5013 eV at def2-SVPD, bound. Probe 2 at site 1690 measured
++3.4366 eV for +1, MORE bound than bare, and -2.1005 eV for -1 at the same position,
+METASTABLE.
+
+SO THE TWO PROBES ARE NOT EQUALLY SAFE, AND B1 IS THE SAFE ONE. B1's charge is the only
+one in the record that makes this dianion more bound. A1's sign is the one Probe 2 found
+makes it metastable, and A1's own arrangement had the highest positive HOMO of the ten at
+def2-SVP. def2-SVPD, unlike def2-SVP, does have the diffuse functions to let an electron
+leave, so A1's reference may not be a bound state at all here. That is a measurement this
+probe will make and not an assumption it rests on.
+
+WHAT FOLLOWS FOR THE GATES is G38.10, the interpretability contingency, written below
+before any output exists. A coupled-cluster calculation on an unbound reference is the
+case the record already quotes Dreuw and Cederbaum on, and G38.10 gives their words.
+
+A CORRECTION TO SOMETHING I SAID BEFORE WRITING THIS. Looking at the first ten rows of
+figures/T5_positive_charge_vs_verdict.tsv I told Jessica that D34's reliability screen
+eliminates exactly the designs carrying positive charge. Within those ten that is true:
+7 of 7 with positive charge are UNRELIABLE and 3 of 3 without are RELIABLE. ACROSS THE
+WHOLE TABLE IT IS FALSE. Of 46 rows, 43 carry positive charge and 17 of those are
+RELIABLE, including wall_n02_q1.00 and wall_n03_q1.00 at a full +1.0000 e, which is the
+wall rescuing unit charge at small n exactly as F9's node N8 already records. The table's own
+caption says it: "The designs differ in site, sign pattern, n and representation as well
+as magnitude; this table is a tabulation, not a test." The sign of the charge does not set
+the verdict, and D38 does not assume it does.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R38.1  E(0), the Hartree-Fock reference, for each of the five runs, and the shifts
+       A1 minus N and B1 minus N. This says whether the charge reached the SCF.
+R38.2  E(CORR)(corrected) for each run, and the shifts A1 minus N and B1 minus N. THIS
+       IS WHAT THE DIAGNOSTIC EXISTS TO ANSWER: whether the charge reached the
+       correlation treatment or only the reference.
+R38.3  E(CCSD(T)) for each run and the shifts, with the triples correction separated.
+R38.4  The T1 diagnostic for each run. A first look at whether an embedding charge
+       degrades the single-reference quality and whether the sign of the charge matters.
+R38.5  The highest occupied orbital for each run, by the committed cs10_cpcm.py
+       convention, beside D36's measured HF values of -1.9636 eV at the reactant.
+R38.6  Whether ORCA reports how many point charges it read, and what it reports. If it
+       prints no such count, that is stated rather than assumed either way.
+R38.7  The highest occupied orbital of each run at def2-SVPD, against Finding 8's
+       def2-SVP values of +2.278, -0.243 and +5.205 eV and against D36's measured HF
+       value of -1.9636 eV for the bare substrate at def2-TZVPD. This is the first
+       measurement of these arrangements at a basis with diffuse functions, and it is
+       what decides G38.10 for each arm.
+
+--------------------------------------------------------------------------------
+5. GATES. ANY FAILURE STOPS THE DIAGNOSTIC
+--------------------------------------------------------------------------------
+G38.1  INERTNESS. A0 and B0 must each reproduce N's E(0), E(CORR)(corrected) and
+       E(CCSD(T)) to within 1e-8 Eh. A point charge of zero magnitude cannot change a
+       converged energy. If one does, the file is being misparsed and nothing else here
+       is readable.
+G38.2  THE CHARGE REACHES THE SCF. |E(0)[A1] - E(0)[N]| must exceed 1e-6 Eh, and the
+       same for B1. If it does not, the point-charge file is not being read at all.
+G38.3  THE DECISIVE GATE. |E(CORR)(corrected)[A1] - E(CORR)(corrected)[N]| must exceed
+       1e-6 Eh, and the same for B1. If E(0) moves and E(CORR) does not, the correlated
+       step is blind to the embedding charges, the route is void, and no coupled-cluster
+       ddE can be computed this way. A PASS HERE IS THE ONLY THING THAT LICENSES THE
+       EXPENSIVE TEST.
+G38.4  Every run terminates normally, converges its SCF, reports 118 electrons, and
+       prints a CCSD(T) energy. A run that terminates normally without one is a failure.
+G38.5  Every geometry is byte-identical by sha256 to d33a/sp_42436_R/substrate.xyz.
+G38.6  Each charge and position is derived from its design's committed site.ORCAFF.prms
+       and combined.xyz, the derivation is printed, and the charge equals what the
+       design's own name encodes: qm06500 is -0.6500, qm07625 is -0.7625, qm10000 is
+       -1.0000, qp10000 is +1.0000. Nothing is invented.
+G38.7  The five inputs are identical except for the presence and the filename of the
+       %pointcharges line. The method line, basis, auxiliary, PNO thresholds, QM charge
+       and multiplicity are the same in all five.
+G38.8  The QM charge stays -2 and the multiplicity 1 in all five. The embedding charge
+       is never folded into the QM charge.
+G38.9  No file under d28, d33a, d34, d36 or d36a2 is modified by this diagnostic.
+G38.10 THE INTERPRETABILITY CONTINGENCY, written before any output exists so that it
+       cannot be reached for afterwards. An arm whose reference is not a bound state is
+       not evidence about anything, because the record's own citation of Dreuw and
+       Cederbaum says a resonance "can in principle not be correctly computed with bound
+       state methods". So: an arm whose SCF fails to converge, or whose highest occupied
+       orbital at def2-SVPD is at or above zero, is reported NOT INTERPRETABLE, and the
+       mechanism verdict rests on whichever arm is interpretable.
+          - If B1 is interpretable, G38.2 and G38.3 are decided on B1.
+          - If B1 is not interpretable and A1 is, they are decided on A1, and that is
+            stated prominently because it is the weaker evidence.
+          - IF NEITHER ARM IS INTERPRETABLE, D38 HAS NO VERDICT. The expensive test is
+            not licensed, and the open question becomes whether a coupled-cluster
+            treatment of these arrangements is available at all at a diffuse basis.
+       This contingency relaxes nothing: G38.1's inertness requirement and G38.4 to
+       G38.9 apply to every arm regardless, and an arm reported NOT INTERPRETABLE is
+       still reported, with its numbers, rather than dropped.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D38.1  IT IS A MECHANISM TEST AND NOT A BARRIER. One geometry, the reactant only, no
+       transition state, no ddE. It produces no barrier of any kind and none may be
+       quoted from it.
+D38.2  It does not establish that %pointcharges reproduces the QM/MM module's
+       electrostatics. The charges here are read from the force field the QM/MM runs
+       used, but whether the two routes give the same QM energy is a separate control
+       at density functional level and belongs to the real test, not here.
+D38.3  A pass licenses building the real test. It licenses nothing else.
+D38.4  IT DOES NOT REVISIT ANY D34 VERDICT. ADD-s1690_qp10000 is UNRELIABLE at
+       CAM-B3LYP/def2-SVPD and remains so. It is used here because it is the committed
+       positive arrangement at the same magnitude as A1, not because its verdict is in
+       question.
+D38.5  T1 and the highest occupied orbital at one geometry with one charge are a first
+       look. They are not a reference-quality verdict, not a multireference check, and
+       not evidence about any other arrangement.
+D38.6  No design conclusion, no reliability claim, nothing about r_safe, nothing about
+       any barrier lowering, and nothing about which designs survive.
+D38.7  IT DOES NOT TEST WHETHER THE SIGN OF A CHARGE SETS D34's VERDICT. Section 3
+       records that it does not, across the record's own 46 classified rows. Two
+       arrangements of opposite sign cannot test that and are not run for that purpose;
+       they are run because one is bound and one may not be, and because both are
+       already in the figures.
+D38.8  Nothing here is shaped toward an outcome. If the correlated step turns out blind
+       to the embedding charges, that is the result, it is reported as plainly as the
+       opposite, and it closes this route rather than being worked around.
