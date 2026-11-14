@@ -1,0 +1,151 @@
+#!/bin/bash
+#PBS -N cm_d38
+#PBS -l select=1:ncpus=16:mem=120gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d38/run.pbs.out
+# DIAGNOSTIC 38: five DLPNO-CCSD(T)/def2-SVPD single points on one geometry, differing
+#   only in the embedding point charge. The question is whether the charge reaches the
+#   correlated step or only the Hartree-Fock reference.
+# The five run sequentially in one job and each run's scratch is cleared before the next
+#   starts, so the footprint is one run at a time. This is a shared cluster.
+# D36's guards carry over: free space checked before the run, the PNO storage mode
+#   written to /home while the job is alive, and each job.out copied back as its run
+#   finishes rather than everything at the end.
+# walltime 24:00:00 routes to day automatically. No -q.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+H=/home/18660916/system_development/phase2.2/cs_stage6/d38
+P="$H/PROGRESS.txt"
+NEED_GB=100
+RUNS="N B0 B1 A0 A1"
+
+cd "$H" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $H"; exit 1; fi
+
+# AMENDMENT 1. /scratch is only a symlink to /scratch-small-local, and on comp056 the
+# mkdir through it failed. All 32 nodes advertise resources_available.scratch = True,
+# comp056 included, so that flag is not a live check and is not requested. Three
+# candidates are tried instead, each by actually writing into it.
+MARK="d38a1.${PBS_JOBID:-nojobid}"
+WANT_GB=100
+MIN_GB=30
+S=""
+AVAIL=""
+SMARGIN=""
+PEAK=0
+
+pick() {
+  for c in /scratch-small-local/18660916 /scratch/18660916 "${TMPDIR:-}"; do
+    if [ -z "$c" ]; then continue; fi
+    t="$c/$MARK"
+    if mkdir -p "$t" 2>/dev/null; then :; else
+      echo "   candidate $c  mkdir failed"; continue; fi
+    if echo ok > "$t/.probe" 2>/dev/null; then :; else
+      echo "   candidate $c  created but not writable"; continue; fi
+    rm -f "$t/.probe"
+    a=$(df -P -BG "$t" 2>/dev/null | awk 'NR==2{sub(/G$/,"",$4); print $4}')
+    case "${a:-}" in
+      ''|*[!0-9]*) echo "   candidate $c  free space unreadable"; continue ;;
+    esac
+    if [ "$a" -ge "$1" ]; then S="$t"; AVAIL="$a"; return 0; fi
+    echo "   candidate $c  ${a}G free, under the ${1}G asked for"
+  done
+  return 1
+}
+
+cleanup() {
+  kill "${WATCH:-}" 2>/dev/null
+  if [ -n "$S" ] && [ -d "$S" ]; then
+    for r in $RUNS; do
+      if [ -f "$S/$r/job.out" ] && [ -d "$H/$r" ]; then
+        cp -f "$S/$r/job.out" "$H/$r/job.out" 2>/dev/null
+      fi
+    done
+    echo "scratch at exit: $(du -sh "$S" 2>/dev/null | cut -f1)"
+    case "$S" in
+      */d38a1.*) rm -rf "$S" ;;
+      *) echo "REFUSING to remove an unexpected scratch path: $S" ;;
+    esac
+  fi
+  rmdir "$H/.running" 2>/dev/null
+}
+trap cleanup EXIT
+
+echo "host=$(hostname) start=$(date) jobid=${PBS_JOBID:-none}"
+echo "cores=$(nproc) ; memory:"; free -g | head -2
+
+echo "choosing scratch, in order of preference:"
+if pick "$WANT_GB"; then
+  SMARGIN="full"
+elif pick "$MIN_GB"; then
+  SMARGIN="REDUCED"
+  echo "   NOTE: running on the reduced margin. def2-SVPD's scratch footprint is not"
+  echo "   measured anywhere in this record, so this may not be enough. R38.9 reports"
+  echo "   the peak so the next job sets this from a measurement."
+else
+  echo "FAIL: no candidate on $(hostname) is writable with at least ${MIN_GB}G free."
+  echo "      Nothing is wrong with the calculation. Resubmit and PBS will usually"
+  echo "      place the job on another node."
+  exit 1
+fi
+echo "R38.8 scratch=$S avail=${AVAIL}G margin=$SMARGIN"
+
+printf '%s  d38 on %s, scratch %s, %sG free\n' \
+  "$(date '+%F %T')" "$(hostname)" "$S" "$AVAIL" > "$P"
+
+( sleep 120
+  while [ -d "$S" ]; do
+    printf '%s  used=%s  storage=%s  running=%s\n' \
+      "$(date '+%F %T')" \
+      "$(du -sh "$S" 2>/dev/null | cut -f1)" \
+      "$(grep -hm1 'PNO-Integral Storage' "$S"/*/job.out 2>/dev/null | sed 's/.*\.\.\.[[:space:]]*//' | head -1)" \
+      "$(ls "$S" 2>/dev/null | tr '\n' ' ')" >> "$P"
+    sleep 600
+  done ) &
+WATCH=$!
+
+RC=0
+for r in $RUNS; do
+  if [ -s "$H/$r/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$H/$r/job.out"; then
+    echo "=== $r done before, skipping"; continue
+  fi
+  echo "=== $r  start $(date)"
+  mkdir -p "$S/$r" || { RC=1; break; }
+  cp -p "$H/$r/job.inp" "$H/$r/substrate.xyz" "$S/$r/" || { RC=1; break; }
+  if [ -f "$H/$r/charge.pc" ]; then cp -p "$H/$r/charge.pc" "$S/$r/"; fi
+  ( cd "$S/$r" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null )
+  rc=$?
+  cp -f "$S/$r/job.out" "$H/$r/job.out" 2>/dev/null
+  for f in job.property.txt job.gbw; do
+    if [ -f "$S/$r/$f" ]; then cp -f "$S/$r/$f" "$H/$r/$f"; fi
+  done
+  echo "$r orca_exit=$rc normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$H/$r/job.out")"
+  echo "$r storage: $(grep -m1 'PNO-Integral Storage' "$H/$r/job.out")"
+  echo "$r pcharges: $(grep -im1 'point charge' "$H/$r/job.out")"
+  echo "$r E(0):    $(grep -m1 'E(0)' "$H/$r/job.out")"
+  echo "$r E(CORR): $(grep -m1 'E(CORR)(corrected)' "$H/$r/job.out")"
+  echo "$r CCSD(T): $(grep -m1 'E(CCSD(T))' "$H/$r/job.out")"
+  grep -m1 "TOTAL RUN TIME" "$H/$r/job.out"
+  printf '%s  %s orca_exit=%s\n' "$(date '+%F %T')" "$r" "$rc" >> "$P"
+  # R38.9: measure the footprint BEFORE clearing it, so the peak is real
+  u=$(du -sm "$S" 2>/dev/null | cut -f1)
+  case "${u:-}" in
+    ''|*[!0-9]*) u=0 ;;
+  esac
+  if [ "$u" -gt "$PEAK" ]; then PEAK="$u"; fi
+  echo "$r scratch after this run: ${u} MB"
+  # clear this run's intermediates before the next one starts, under the same guard
+  case "$S/$r" in
+    */d38a1.*/?|*/d38a1.*/??) rm -rf "$S/$r" ;;
+    *) echo "REFUSING to remove an unexpected scratch path: $S/$r" ;;
+  esac
+  if [ "$rc" -ne 0 ]; then RC=$rc; fi
+done
+echo "R38.9 peak scratch across the five runs: ${PEAK} MB, on $S at the $SMARGIN margin"
+echo "all runs finished, worst exit=$RC $(date)"
+exit $RC

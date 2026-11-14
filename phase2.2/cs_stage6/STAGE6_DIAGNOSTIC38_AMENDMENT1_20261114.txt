@@ -1,0 +1,152 @@
+STAGE 6, DIAGNOSTIC 38 - AMENDMENT 1
+The job could not create its scratch directory. Where scratch is taken from changes;
+nothing that is computed changes.
+
+Written 14 November 2026, after attempt 1 failed in one second and before attempt 2 is
+submitted. STAGE6_DIAGNOSTIC38_20261114.txt is not edited.
+
+--------------------------------------------------------------------------------
+1. WHAT HAPPENED
+--------------------------------------------------------------------------------
+Job 427881, submitted 20:49, landed on comp056 and stopped one second later with the job
+script's own message:
+
+   FAIL: cannot create /scratch/18660916/d38.427881.hpc1.hpc on comp056.hpc
+
+From the PBS accounting: walltime 00:00:01, cput 00:00:00, mem 0kb, Exit_status = 1,
+exec_host comp056.hpc/3*16. No run started, PROGRESS.txt is empty, no output file exists
+for any of the five runs, and the trap removed what little it had made.
+
+NOTHING WAS MEASURED AND NOTHING IS LOST. A failed job is not committed; a note about it
+is, and this amendment is that note. There is no archive to make, because there is no
+output: 0 of 5 job.out files exist.
+
+THE GUARD BEHAVED AS IT WAS BUILT TO. D36's Amendment 2 added a check so that a node
+without usable scratch would be found in seconds rather than hours. This is that check
+firing, on the step before the free-space test, and it named the node.
+
+--------------------------------------------------------------------------------
+2. WHAT WAS MEASURED BEFORE WRITING THIS
+--------------------------------------------------------------------------------
+A one-core probe was submitted to find out what the scratch landscape actually is rather
+than guess at it. Job 427883, on comp050, measured:
+
+   /scratch                 symlink -> /scratch-small-local   1485 GB free   writable
+   /scratch-small-local     xfs mount, drwxrwxrwx             1485 GB free   writable
+   /scratch-local           absent
+   /scratch1                absent
+   /local                   absent
+   $TMPDIR                  /tmp/pbs.<jobid>, drwx------        38 GB free   writable
+   /tmp                     drwxrwxrwt                          38 GB free   writable
+
+   from mount: /dev/mapper/DATA-scratch--small--local on /scratch-small-local type xfs
+               storage0.hpc:/scratch on /scratch-large-network type fuse.glusterfs
+   from df:    /scratch-small-local  1.9T total, 410G used, 1.5T free, 22 per cent
+               /scratch-large-network 15T total, 13T used, 1.7T free, 89 per cent
+
+SO /scratch IS NOT A FILESYSTEM. It is a symlink, and /scratch-small-local is the mount
+behind it. There is also a network scratch volume, /scratch-large-network, which is not
+what /scratch points at and is not used here.
+
+PBS ADVERTISES A scratch RESOURCE AND IT IS NOT A LIVE CHECK. Counted across every node
+with pbsnodes: 32 of 32 advertise resources_available.scratch = True, and none advertises
+anything else. comp056 advertises True and is the node where mkdir failed. So requesting
+scratch=True in the select statement would exclude no node at all and would give false
+assurance. IT IS THEREFORE NOT REQUESTED.
+
+THE WALLTIME IS WHAT CONTROLS ELIGIBILITY, AND 24 HOURS IS THE PERMISSIVE CHOICE. Each
+node advertises a Qlist of the queues it accepts, and they differ. 27 of 32 nodes accept
+day. comp056's Qlist is day,ee,gpu, which is why a 24-hour job can land there. A probe
+asking 00:10:00 routed to the short queue, which comp056 does not accept, and sat with
+"Not Running: Insufficient amount of resource: host" until it was deleted. A SHORTER
+WALLTIME WOULD MAKE FEWER NODES ELIGIBLE, NOT MORE. The 24:00:00 request is unchanged and
+this is the measurement that justifies it.
+
+WHY comp056's mkdir FAILED IS NOT ESTABLISHED. A dangling /scratch symlink on that node
+would produce exactly this, and so would an unmounted volume, but a probe pinned to
+comp056 could not be made to run while that node was busy, and I am not going to assert a
+cause I have not measured. The design in section 3 does not depend on knowing it.
+
+--------------------------------------------------------------------------------
+3. WHAT CHANGES
+--------------------------------------------------------------------------------
+                          attempt 1                    attempt 2
+   scratch location       /scratch only, or fail       first of three that works
+   free-space rule        one threshold, 100 GB        100 GB preferred, 30 GB accepted
+                                                       and recorded as reduced
+   job script             d38/run.pbs                  d38/run_a1.pbs
+   PBS select             1:ncpus=16:mem=120gb         unchanged
+   walltime               24:00:00                     unchanged
+   scratch=True requested no                           still no, and now for a measured
+                                                       reason
+
+THE CANDIDATES, IN ORDER, each tested by actually creating a directory and writing a file
+into it rather than by looking at it:
+
+   1. /scratch-small-local/18660916/   the mount itself, 1.5 TB free on comp050
+   2. /scratch/18660916/               the symlink, where it resolves
+   3. $TMPDIR/                         PBS-provided, node-local, 38 GB on comp050
+
+The first candidate that is writable and has at least 100 GB free is used. If none has
+100 GB, the first that is writable and has at least 30 GB is used and the output records
+REDUCED MARGIN. If none has 30 GB, the job stops and prints what every candidate offered,
+so the next step is informed rather than guessed.
+
+WHY THE SECOND THRESHOLD IS 30 AND NOT A NUMBER I PREFER. 100 GB came from D36, which
+peaked at 74 GB and 80 GB per leg - at def2-TZVPD. D38 runs def2-SVPD, a much smaller
+basis, AND ITS SCRATCH FOOTPRINT IS NOT MEASURED ANYWHERE IN THIS RECORD. 30 GB is below
+$TMPDIR's measured 38 GB so that $TMPDIR is a real fallback and not a token one, and it is
+not defended as sufficient. If def2-SVPD needs more than the chosen location has, ORCA
+will fail on a write and that is a measurement of the footprint, not a failure of the
+method. R38.9 exists so the next job sets this number from that measurement.
+
+NOTHING ABOUT THE CALCULATION CHANGES. The five inputs, the four charge files and the five
+geometries are not touched: they are the files D38 committed, and G38.11 checks every one
+by sha256 against the committed tree. The method line is untouched in all five:
+
+   ! DLPNO-CCSD(T) def2-SVPD AutoAux TightSCF TightPNO
+
+The order stays N, B0, B1, A0, A1. Each run's scratch is still cleared before the next
+starts. Both removals are still pattern-guarded, and the guard is now built from a marker
+this script creates, d38a1.<jobid>, so it cannot match a path the script did not make.
+
+--------------------------------------------------------------------------------
+4. READINGS ADDED
+--------------------------------------------------------------------------------
+R38.8  Which of the three candidates was used, its free space, and whether the full or
+       the reduced margin applied. Reported for the job, in its own output.
+R38.9  The peak scratch the five runs reached. def2-SVPD's footprint is unmeasured, and
+       this is the measurement that replaces the 100 GB carried over from D36.
+
+Every reading R38.1 to R38.7 and every gate G38.1 to G38.10 stands unchanged.
+
+--------------------------------------------------------------------------------
+5. GATES ADDED
+--------------------------------------------------------------------------------
+G38.11 Every one of the fourteen input files - five job.inp, four charge.pc, five
+       substrate.xyz - is byte-identical by sha256 to what D38 committed. This amendment
+       may not change an input, and this is the measurement of that rather than the
+       claim.
+G38.12 run_a1.pbs differs from the committed run.pbs only in the scratch-selection block,
+       the free-space rule and the removal marker. The PBS select line, the walltime, the
+       run list and its order, the resume guard and the lock are byte-identical, no queue
+       is requested, and scratch=True is not requested.
+G38.13 The result states which candidate was used and the peak reached, so that no later
+       job inherits the unmeasured 100 GB by default.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS AMENDMENT DOES NOT DO
+--------------------------------------------------------------------------------
+A38.1  It does not change the method, the basis, the auxiliary, the PNO thresholds, the
+       charges, the positions or the geometry. G38.11 and G38.12 are the checks.
+A38.2  It does not establish why comp056 could not create the directory. Section 2 says
+       so, and the design does not rest on it.
+A38.3  It does not claim $TMPDIR's 38 GB is enough for def2-SVPD. Section 3 says the
+       footprint is unmeasured and R38.9 is how it stops being unmeasured.
+A38.4  It does not promise attempt 2 will finish.
+A38.5  It does not request a queue, and it does not request scratch=True. Section 2 gives
+       the measurement behind the second of those.
+A38.6  It adopts no production level of theory and it revisits no D34 verdict. D38's
+       D38.1 to D38.8 all stand.
+A38.7  Nothing here is shaped toward an outcome. The probe's question, and the answer
+       G38.3 will give, are untouched by where the integrals are written.
