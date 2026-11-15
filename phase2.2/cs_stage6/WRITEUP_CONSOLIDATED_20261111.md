@@ -1,15 +1,17 @@
 # The charged-sphere design work: a consolidated account
 
-11 November 2026. Written from the committed record only. This is a revision of a first draft of 10 November 2026, made before either was committed, to take in D34, which ran in between.
+15 November 2026; first committed on 11 November 2026. Written from the committed record only. The first committed text was a revision of a draft of 10 November 2026, made to take in D34. This revision takes in the four diagnostics that have reported since, D35 to D38, and a fifth, D39, that is pre-registered, together with the changes that were prepared on 11 November 2026 and held until D36 had reported. Appendix A.6 and A.7 say what changed.
 
 | repository | branch | HEAD this document refers to |
 |---|---|---|
-| chorismate-thesis-results | main | `f461bd1a9daeef0366de7c2a9f81fff4ccac479b` |
-| chorismate-thesis-code | tier1-realism | `23c2500fed83e1f1ddec33e3f42e54038cd2937d` |
+| chorismate-thesis-results | main | `4af2afa086eff0319ae781cb4c1da3d830777091` |
+| chorismate-thesis-code | tier1-realism | `1e476142246ed7c942e26dbf321b5353ba9078ec` |
 
 **How to read the numbers.** Every paragraph or table that carries a number ends with a tag. `[src: KEY]` names the committed file or files in which each number of that paragraph is printed; the keys are resolved in Appendix C. A number under a `[src:]` tag is *measured*, as printed by that source, unless the sentence says otherwise. `[dv: DVnn]` marks a number that is *derived* or *recomputed* here; `figures/derived.tsv` gives its arithmetic and the files its inputs came from. *Post hoc* is said in the sentence wherever the source says it of itself. Nothing in this document is *estimated*. Text inside curly quotation marks is verbatim from a tagged source. `phase2.2/cs_writeup_check.py` in the code repository tests all of this mechanically; its output is Appendix B.
 
-**What this document is not.** It quotes no activation free energy and makes no claim that any design is catalytic. Every design measured so far sits inside r_safe (section 4.6), on one frame, at frozen geometries, in vacuo.
+**What this document is not.** It quotes no activation free energy and makes no claim that any design is catalytic. Every design measured so far sits inside r_safe (section 4.6), on one frame, at frozen geometries, in vacuo. The correlated barrier of section 2 is an electronic energy on frozen gas-phase geometries; it is not the experimental number and is not compared with it.
+
+**A companion document.** `phase2.2/cs_stage6/WRITEUP_SCOPED_20261111.md`, committed on 11 November 2026, is a shorter report scoped to D34 and written conditional on D36. It has not been revised for D36's result. Where the two differ, this document is the later one.
 
 **A limit on the reading behind it.** The three completeness passes of Appendix A were run. The by-question pass did not read every committed document in full; Appendix A.3 lists what was read in full, what at verdict level, and what not at all.
 
@@ -17,41 +19,81 @@
 
 Chorismate mutase catalyses the Claisen rearrangement of chorismate to prephenate. The project asks whether a small set of point-like charges placed around the substrate, with no protein, can lower the barrier of that rearrangement, and whether an optimiser can find such a set. The substrate is the chorismate dianion: 24 atoms, charge -2, singlet, 118 electrons. All Stage 6 work uses the reactant and transition-state geometries of one frame, 42436, taken from the QM/MM ensemble and held frozen. [src: CRIT, D34P]
 
-The design idea is first-order electrostatics. For a site i on a grid around the substrate, a_i is the difference between the bare substrate's electrostatic potential at the transition state and at the reactant. A charge q_i at that site changes the barrier by about a_i q_i, so an optimiser chooses sites and charges to make the sum of a_i q_i, plus a classical Lennard-Jones term L_i, as negative as possible, subject to a minimum spacing of 3.25 A between sites. The grid of frame 42436 has 2626 sites. The quantity every diagnostic reports is ddE: the barrier with the charges minus the barrier without them, negative when the charges lower it. [src: D33P, D25, AREP]
+The design idea is first-order electrostatics, on a grid of sites around the substrate. For each site i, a_i is the electrostatic potential that the bare substrate creates at grid site i when it is in its transition-state geometry, minus the potential it creates at that same site when it is in its reactant geometry (in kcal/mol per unit charge), so a charge q_i placed at site i is predicted to change the barrier by a_i × q_i. An optimiser therefore chooses sites and charges to make the sum of a_i q_i, plus a classical Lennard-Jones term L_i, as negative as possible, subject to a minimum spacing of 3.25 A between sites. The grid of frame 42436 has 2626 sites. The quantity every diagnostic reports is ddE: the barrier with the charges minus the barrier without them, negative when the charges lower it. [src: D33P, D25, AREP]
 
 ## 2. The reference barrier, at every level it exists at
 
 A lowering is only meaningful against the barrier of the bare substrate at the same level of theory and the same geometries. Table 1 gives that barrier, E(TS) - E(R), wherever a charge-free pair of single points is committed. All rows are frozen geometries, no charges, no wall.
 
-| frame | functional | basis | solvation | barrier (kcal/mol) | label | printed by the record as |
+| frame | method | basis | solvation | barrier (kcal/mol) | label | printed by the record as |
 |---|---|---|---|---|---|---|
-| 42436 | B3LYP-D3BJ | def2-SVP | none | 18.461014 | measured; recomputed, agrees | 18.461014 (D27), 18.4610 (A matrix report, frozen report) |
+| 42436 | B3LYP-D3BJ | def2-SVP | none | 18.461014 | measured; recomputed, agrees | 18.461014 (D27; D35 as level L1), 18.4610 (A matrix report, frozen report) |
 | 42436 | B3LYP-D3BJ | ma-def2-SVP | none | 17.8938 | measured; recomputed, agrees | 17.8938 (D1) |
 | 42436 | B3LYP-D3BJ | def2-SVPD | none | 18.332256 | measured; recomputed, agrees | 18.332256 (D27) |
 | 42436 | B3LYP-D3BJ | def2-TZVPD | none | 17.304571 | measured; recomputed, agrees | 17.304571 (D27) |
+| 42436 | B3LYP | 6-31G(d) | none | 20.0658 | measured; recomputed, agrees | 20.0658 (D35, level L2) |
 | 42436 | CAM-B3LYP-D3BJ | def2-SVP | none | 27.1255 | recomputed from raw outputs | not found in a result document |
-| 42436 | CAM-B3LYP-D3BJ | def2-SVPD | none | 26.8248 | measured; recomputed, agrees | 26.8248 (D33 stage A, D30) |
-| 42436 | CAM-B3LYP-D3BJ | def2-TZVPD | none | 25.7003 | recomputed from raw outputs | not found in a result document |
-| 42436 | wB97X-D3 | def2-SVPD | none | 29.0441 | recomputed from raw outputs | not found in a result document |
-| 42436 | wB97X-D3 | def2-TZVPD | none | 27.9689 | recomputed from raw outputs | not found in a result document |
+| 42436 | CAM-B3LYP-D3BJ | def2-SVPD | none | 26.8248 | measured; recomputed, agrees | 26.8248 (D33 stage A, D30, D37) |
+| 42436 | CAM-B3LYP-D3BJ | def2-TZVPD | none | 25.7003 | measured; recomputed, agrees | 25.7003 (D36, D37) |
+| 42436 | wB97X-D3 | def2-SVP | none | 29.2021 | measured; recomputed, agrees | 29.2021 (D35, level L5) |
+| 42436 | wB97X-D3 | def2-SVPD | none | 29.0441 | measured; recomputed, agrees | 29.0441 (D37) |
+| 42436 | wB97X-D3 | def2-TZVPD | none | 27.9689 | measured; recomputed, agrees | 27.9689 (D36, D37) |
+| 42436 | PW6B95-D3BJ | def2-SVPD | none | 22.1571 | measured; recomputed, agrees | 22.1571 (D37) |
+| 42436 | PW6B95-D3BJ | def2-TZVPD | none | 20.9595 | measured; recomputed, agrees | 20.9595 (D37) |
+| 42436 | PWPB95-D3BJ | def2-SVPD | none | 22.2031 | measured; recomputed, agrees | 22.2031 (D37) |
+| 42436 | PWPB95-D3BJ | def2-TZVPD | none | 21.3407 | measured; recomputed, agrees | 21.3407 (D37) |
+| 42436 | wB97M-V | def2-SVPD | none | 28.6953 | measured; recomputed, agrees | 28.6953 (D37) |
+| 42436 | wB97M-V | def2-TZVPD | none | 27.3924 | measured; recomputed, agrees | 27.3924 (D37) |
+| 42436 | M06-2X-D3(0) | def2-SVPD | none | 29.4427 | measured; recomputed, agrees | 29.4427 (D37) |
+| 42436 | M06-2X-D3(0) | def2-TZVPD | none | 28.4003 | measured; recomputed, agrees | 28.4003 (D37) |
+| 42436 | wB97X-V | def2-SVPD | none | 30.7479 | measured; recomputed, agrees | 30.7479 (D37) |
+| 42436 | wB97X-V | def2-TZVPD | none | 29.7565 | measured; recomputed, agrees | 29.7565 (D37) |
+| 42436 | HF | 6-31G(d) | none | 41.7416 | measured; recomputed, agrees | 41.7416 (D35, level L3) |
+| 42436 | HF | def2-TZVPD | none | 41.7466 | measured; recomputed, agrees | 41.7466 (D36, arm H) |
+| 42436 | MP2 | 6-31G(d) | none | 19.4390 | measured; recomputed, agrees | 19.4390 (D35, level L4) |
+| 42436 | DLPNO-CCSD(T) | def2-TZVPD | none | 23.8603 | measured; recomputed, agrees | 23.8603 (D36, arm B) |
 | 42436 | B3LYP-D3BJ | ma-def2-SVP | CPCM | 17.4369 | recomputed from raw outputs | not found in a result document |
-| 41786 | B3LYP-D3BJ | def2-SVP | none | 16.6667 | recomputed from raw outputs | Stage 4e level L1 |
-| 41786 | B3LYP | 6-31G(d) | none | 18.5666 | recomputed from raw outputs | Stage 4e level L2 |
-| 41786 | HF | 6-31G(d) | none | 39.2596 | recomputed from raw outputs | Stage 4e level L3 |
-| 41786 | MP2 | 6-31G(d) | none | 15.8366 | recomputed from raw outputs | Stage 4e level L4 |
-| 41786 | wB97X-D3 | def2-SVP | none | 26.8150 | recomputed from raw outputs | Stage 4e level L5 |
+| 41786 | B3LYP-D3BJ | def2-SVP | none | 16.6667 | measured; recomputed, agrees | 16.6667 (D35; Stage 4e level L1) |
+| 41786 | B3LYP | 6-31G(d) | none | 18.5666 | measured; recomputed, agrees | 18.5666 (D35; Stage 4e level L2) |
+| 41786 | HF | 6-31G(d) | none | 39.2596 | measured; recomputed, agrees | 39.2596 (D35; Stage 4e level L3) |
+| 41786 | MP2 | 6-31G(d) | none | 15.8366 | measured; recomputed, agrees | 15.8366 (D35; Stage 4e level L4) |
+| 41786 | wB97X-D3 | def2-SVP | none | 26.8150 | measured; recomputed, agrees | 26.8150 (D35; Stage 4e level L5) |
 
-Sources for Table 1: [src: D27, D1, D33A, D30, AREP, FROZ, F1T, F1B] [dv: DV20, DV21, DV22, DV23, DV24, DV30, DV31, DV32, DV33, DV34]
+Sources for Table 1: [src: D27, D1, D33A, D30, AREP, FROZ, F1T, F1B, D35R, D36R, D37R] [dv: DV20, DV24]
 
-"Not found in a result document" means I searched the D27, D28, D30 and D33 result documents for the value and did not find it; it does not mean no committed file prints it. The recomputation reads every charge-free single point under `phase2.2/cs_stage6`, recognises the geometry by its interatomic distances rather than by directory name, and reports the spread where several runs give the same quantity. For the two rows the production work rests on, 7 reactant and 7 transition-state runs give the def2-SVP value and 7 and 6 give the CAM-B3LYP/def2-SVPD value; the largest disagreement among them is 1.0e-09 Eh. [src: F1T]
+Every row is a pair of single points at the method named; HF, MP2 and DLPNO-CCSD(T) are not functionals. "Not found in a result document" means I searched the D27, D28, D30, D33, D35, D36 and D37 result documents for the value and did not find it; it does not mean no committed file prints it. The recomputation reads every charge-free single point under `phase2.2/cs_stage6`, recognises the geometry by its interatomic distances rather than by directory name, and reports the spread where several runs give the same quantity. For the two rows the production work rests on, 8 reactant and 8 transition-state runs give the def2-SVP value and 8 and 7 give the CAM-B3LYP/def2-SVPD value; the largest disagreement among them is 1.0e-09 Eh. [src: F1T]
 
 ![F1](figures/F1_reference_barrier.png)
 
-**Figure F1.** Barrier of the bare substrate at each functional and basis. Left: frame 42436, frozen geometries, in vacuo, ten charge-free pairs of single points (the CPCM row of Table 1 is not drawn). A line joins one functional across basis sets; no trend is drawn or implied between functionals. Right: frame 41786, the five Stage 4e levels, which is a different frame and must not be compared bar for bar with the left panel. Data: `figures/F1_reference_barrier.tsv`, `figures/F1b_stage4e_bare_barrier.tsv`. [src: F1T, F1B, S4E]
+**Figure F1.** Barrier of the bare substrate by method and basis; frozen geometries, in vacuo. Top: frame 42436, the 25 charge-free pairs of single points of Table 1 (the CPCM row is not drawn). One row is one method and one marker one basis; the rows are ordered by the barrier at each row's largest basis, which is the number printed. A grey line joins one method across its bases; nothing is drawn or implied between methods. The dashed line is D36's DLPNO-CCSD(T)/def2-TZVPD barrier, an electronic energy on frozen gas-phase geometries and not the experimental number. Bottom: Stage 4e's five levels at frame 41786 (open) and, from D35, at frame 42436 (filled), with the change between them. Data: `figures/F1_reference_barrier.tsv`, `figures/F1b_stage4e_bare_barrier.tsv`. [src: F1T, F1B, S4E, D35R, D36R] [dv: DV266]
+
+**The two frames, measured: D35.** D35 ran Stage 4e's five levels on frame 42436's geometries with Stage 4e's own input files: 10 inputs and 10 outputs (derived counts). Its control reproduces the committed 18.461014 kcal/mol. Every level gives a higher barrier at frame 42436 than at frame 41786, by +1.4992 to +3.6023 kcal/mol, a spread of 2.1031 (derived), and the order of the levels by barrier is “NOT PRESERVED”: MP2/6-31G(d) is the lowest at frame 41786 and B3LYP-D3BJ/def2-SVP the lowest at frame 42436. The two frames' geometries are of different kinds. The Stage 6 criteria and D35's pre-registration say that frame 42436's reactant and transition state are optimised stationary points, taken from the solvated QM/MM system, and that frame 41786's are a band image and a climbing image. D35 says what follows and what does not. Of Stage 4e: “a method comparison made at band image 0 does not carry over to the stationary points unchanged”. Of Stage 4e's reference, MP2/6-31G(d): “It is not a benchmark: 6-31G(d) carries no diffuse functions, and this is a dianion.” Stage 4e's own conclusion rests on eleven residues at frame 41786, and “D35 does not transfer it.” [src: D35R, D35P, CRIT] [dv: DV180, DV181, DV192]
 
 **Which reference matters, and by how much.** The frozen-half lowerings were first measured against 18.4610, at B3LYP-D3BJ/def2-SVP, and D34 has since measured the same arrangements at the corrected level (section 6). The corrected level, CAM-B3LYP-D3BJ/def2-SVPD, gives 26.8248. The difference is 8.3638 kcal/mol (derived: 26.8248 - 18.461014). Of that, the basis alone accounts for -0.1288 (derived: 18.332256 - 18.461014) and the functional for 8.4925 (derived: 26.8248 - 18.332256). D34's pre-registration prints the same three differences. A lowering measured against one reference may not be subtracted from the other: ddE is a difference of two energies and both move. [src: D27, D33A, FROZ, D34P] [dv: DV01, DV02, DV03]
 
-**Why the functional was changed.** D28 found the highest occupied orbital of the bare dianion at +1.2307 eV under B3LYP, -0.5918 eV under CAM-B3LYP and -1.3424 eV under wB97X-D3, at def2-SVPD, reactant geometry, against a detachment energy of +0.5123 eV measured by Probe 3, which puts the target near -0.5123 eV. B3LYP therefore sits 1.7430 eV too high and CAM-B3LYP 0.0795 eV too low (both derived; D33's pre-registration prints the same two differences). D28 states that “the production functional is NOT changed by this document”. I could not find an amendment that changes it. D30 to D34 nevertheless all use CAM-B3LYP-D3BJ/def2-SVPD. [src: D28, D33P] [dv: DV04, DV05]
+**Why the functional was changed.** D28 found the highest occupied orbital of the bare dianion at +1.2307 eV under B3LYP, -0.5918 eV under CAM-B3LYP and -1.3424 eV under wB97X-D3, at def2-SVPD, reactant geometry, against a detachment energy of +0.5123 eV measured by Probe 3, which puts the target near -0.5123 eV. B3LYP therefore sits 1.7430 eV too high and CAM-B3LYP 0.0795 eV too low (both derived; D33's pre-registration prints the same two differences). D28 states that “the production functional is NOT changed by this document”. I could not find an amendment that changes it, and D36's pre-registration says the same: “The production level of theory was never adopted by an amendment.” D30 to D34 nevertheless all use CAM-B3LYP-D3BJ/def2-SVPD. The test is of the functional and not of the species: by its detachment energy the bare dianion is bound, and D28 asks whether a functional's orbital energy agrees with that (section 5 returns to the difference). [src: D28, D33P, D36P] [dv: DV04, DV05]
+
+![F10](figures/F10_homo_by_functional.png)
+
+**Figure F10.** Why B3LYP was retired for the dianion: the highest occupied orbital of the bare substrate under three functionals, in order of their fraction of long-range exact exchange. No charges, frame 42436, frozen geometries, in vacuo. The thick bar is D28's primary reading (def2-SVPD, reactant); the markers are the transition state and def2-TZVPD. The detachment energy says the dianion is bound, so a functional that puts this orbital above the vacuum level is wrong about it: all 4 B3LYP-D3BJ values lie there, and all 8 values of the other two functionals lie below it. The dashed line is minus Probe 3's detachment energy, which is itself a computed energy difference, at B3LYP-D3BJ/ma-def2-SVP and at the reactant, and not an experiment. Against it B3LYP-D3BJ sits 1.7430 eV too high, CAM-B3LYP-D3BJ 0.0795 eV too low and wB97X-D3 0.8301 eV too low (derived; reactant only, because Probe 3 says nothing about the transition state). The 12 orbital energies are recomputed here from the raw outputs and agree with D28's table. D28 limits itself: “It does not establish which functional is correct”, and “It compares orbital energies across functionals, which is weaker than within one.” Data: `figures/F10_homo_by_functional.tsv`. [src: F10T, D28, P3] [dv: DV174, DV175, DV170, DV171, DV172, DV173]
+
+**A benchmark that does not choose a functional: D36.** D36 computed the same quantity, the barrier of the bare substrate on frame 42436's frozen geometries, with a correlated wavefunction method: DLPNO-CCSD(T)/def2-TZVPD with TightPNO. The barrier is 23.8603 kcal/mol. Hartree-Fock alone gives 41.7429, correlation at the CCSD level brings that to 30.4140, and the triples correction takes off a further 6.5537, which is 27.5 per cent of the final barrier (D36's table; recomputed here from the two raw outputs). Its control, D28's CAM-B3LYP-D3BJ/def2-TZVPD calculation run again, returns 25.7003. A separate Hartree-Fock run gives 41.7466, within 0.0038 of the reference inside the coupled-cluster run. The T1 diagnostic is 0.015649748 at the reactant and 0.018809319 at the transition state; of the conventional guide of 0.02, D36 says it “IS NOT THIS PROJECT'S AND WAS NOT PRE-REGISTERED”. [src: D36R, T7W] [dv: DV220, DV221, DV222, DV223, DV224, DV226, DV227]
+
+**How it was obtained.** The coupled-cluster arm needed three attempts, and the two that failed are recorded in dated amendments and committed no output: 2 outputs stand under the third attempt's directory and 0 under the first two (derived counts). The first attempt was killed at its walltime during the triples step. The second ended while writing its intermediates to a shared home volume that was 97 per cent full. Amendment 2 gives that as the reading its measurements support and says plainly that it “is not a message either job printed”; it changes where the integrals are stored and nothing in the method, and it corrects a statement of Amendment 1 about scratch space. The reactant leg of the first attempt had left two converged energies behind, and the third attempt reproduces both to every printed digit, which is the measurement that the change of storage did not move the answer. D36 states the limit of that check itself: “THERE IS NO SUCH CONTROL FOR THE TRANSITION STATE.” [src: D36R, D36A1, D36A2] [dv: DV228, DV229]
+
+**What D36 ranks.** Its pre-registration fixed three functionals to be read against the benchmark at the same basis and the same geometries. CAM-B3LYP-D3BJ lies +1.8400 kcal/mol above it, wB97X-D3 +4.1086 above, and B3LYP-D3BJ -6.5557 below. “Of the three, CAM-B3LYP-D3BJ is closest, at +1.8400 kcal/mol.” And: “that makes it the closest here and nothing more.” [src: D36R, D36P]
+
+**What the number is not.** D36 lists the limits, and each travels with the number wherever it is used. It is not a converged absolute barrier: def2-TZVPD was chosen to match the density-functional arm, and the number “must not be quoted as the true in vacuo barrier.” It is not the experimental number. The record's anchors are 24.5 kcal/mol, a free energy, and 20.7, an enthalpy, both in water; 23.8603 is an electronic energy difference between two frozen gas-phase geometries, with no zero-point, thermal, entropic or solvation term, and the two are not the same quantity: “ITS CLOSENESS TO 24.5 IS NOT AGREEMENT.” It is one frame, and D35 has just measured the barrier moving by up to +3.6023 kcal/mol between two frames at one level. DLPNO is an approximation whose residual error is not measured. D36 cannot measure the method's own shift from def2-SVPD to def2-TZVPD; the 8 functionals measured at both basis sets move by -1.3028 to -0.8624 kcal/mol (recomputed), which is why D36 treats a def2-SVPD barrier as carrying “a basis uncertainty of roughly one kcal/mol”. And it “DOES NOT ADOPT A PRODUCTION LEVEL OF THEORY”: that takes an amendment, and none exists. [src: D36R, D35R, E7] [dv: DV246, DV241, DV242]
+
+**A conflict to settle by erratum.** D36's result describes its geometries as “committed band geometries, not an optimised transition state”. The Stage 6 criteria and D35's pre-registration say otherwise of frame 42436: its reactant and transition state are “the SP package's own optimised stationary points”, and it is the development set, not this frame, whose reactant “is NEB band image 0”. I take the criteria's description, because it names the files. The limit D36 draws from its sentence holds on grounds the criteria do give: the geometries were optimised inside the solvated QM/MM system at the production protocol, not for the bare substrate in vacuo and not at the level of these single points. A result is never edited, so the sentence needs a dated erratum. [src: D36R, D35P, CRIT]
+
+**Five more functionals: D37.** D37 was pre-registered and run while D36 was still running, on the same two geometries, with D28's inputs as its control. Six candidates were registered; 5 were measured and 1, revDSD-PBEP86-D4, is NOT MEASURED, because ORCA rejected its keyword: each of its 4 runs “did not terminate normally: INPUT ERROR” (of 28 committed outputs, 24 terminated normally; derived counts). The five measured are wB97M-V, wB97X-V, PW6B95-D3BJ, M06-2X-D3(0) and the double hybrid PWPB95-D3BJ; their barriers are in Table 1. On D28's orbital test, 6 of the 8 functionals now measured put the highest occupied orbital of the bare dianion below zero at def2-SVPD, reactant (derived count); B3LYP-D3BJ, at +1.2307 eV, and PW6B95-D3BJ, at +0.7296 eV, do not. PWPB95-D3BJ passes at the reactant only: at the transition state its orbital is at +0.0677 eV. D37's own second test, each barrier against D36's, reads “NOT EVALUATED. D36 has no committed result document.”, and the dated addendum it promises is not in the record. [src: D37R, D37P, D37T] [dv: DV247, DV248, DV267, DV264, DV265, DV245, DV246]
+
+**The two tests side by side.** D36's result, committed after D37's, sets D37's five beside its own three and heads the comparison “POST HOC. NOT PRE-REGISTERED IN D36.” Post hoc, then: the eight def2-TZVPD barriers span 12.45 kcal/mol and the benchmark lies 53 per cent of the way up that range. 3 of the 8 are within 3 kcal/mol of it: PW6B95-D3BJ at -2.9008, PWPB95-D3BJ at -2.5196 and CAM-B3LYP-D3BJ at +1.8400. wB97M-V is +3.5321 above, M06-2X-D3(0) +4.5400 and wB97X-V +5.8962. Of the 3, PW6B95-D3BJ fails the orbital test, which leaves 2 functionals, PWPB95-D3BJ and CAM-B3LYP-D3BJ, that are within 3 kcal/mol of the benchmark and also put the orbital below zero at the reactant (derived; post hoc). D36 adds a caution about the orbital test: the three functionals nearest its target give barriers from 21.3407 to 28.4003 kcal/mol, “so that test could not have discriminated between them.” No score combines the two tests, and neither D36 nor D37 adopts a level. [src: D36R, D37R, F11T] [dv: DV238, DV239, DV240, DV249, DV243, DV244]
+
+![F11](figures/F11_two_tests.png)
+
+**Figure F11.** The two tests the record holds for a functional, for the 8 functionals measured at both basis sets on frame 42436; bare substrate, frozen geometries, in vacuo; rows in the order of the def2-TZVPD barrier. Left: the barrier at def2-TZVPD (circle) and at def2-SVPD (square) against D36's DLPNO-CCSD(T)/def2-TZVPD barrier (dashed), with each functional's distance from it. A filled circle is one of the three comparisons D36 pre-registered; an open circle is post hoc. Right: the highest occupied orbital at def2-SVPD, reactant, against the vacuum level and against minus Probe 3's detachment energy, -0.5123 eV, which is a computed energy difference and not an experiment. revDSD-PBEP86-D4 is NOT MEASURED and has no row. The benchmark is not the experimental number and not a converged absolute barrier. No score combines the panels. Data: `figures/F11_two_tests.tsv`. [src: F11T, D36R, D37R, P3] [dv: DV246]
 
 ## 3. Levels of theory and basis sets
 
@@ -59,49 +101,65 @@ Table 2 is the by-file census of pass 1, collapsed to method and basis. A run is
 
 | method | basis | runs | not normal | used for | what validated it |
 |---|---|---|---|---|---|
-| B3LYP | def2-SVP | 1559 | 49 | Phase 1 QM/MM; Phases 2 and 2b; Stages 1 to 4e; the A matrix; the frozen half; D1 to D27 | Stage 4e against MP2: “S4e verdict (L1 against L4): SIGN ROBUST” (frame 41786). Retired for the dianion's frontier orbital by D28 |
+| B3LYP | def2-SVP | 1561 | 49 | Phase 1 QM/MM; Phases 2 and 2b; Stages 1 to 4e; the A matrix; the frozen half; D1 to D27; D35 | Stage 4e against MP2: “S4e verdict (L1 against L4): SIGN ROBUST” (frame 41786). Retired for the dianion's frontier orbital by D28 |
 | B3LYP | def2-SVPD | 821 | 0 | Phase 2b; Stages 4 to 4c; D14 to D27 | D27: converged against def2-TZVPD at 1.3000 e only |
 | MM only | none | 648 | 0 | Lennard-Jones combining-rule test (wp1) | Stage 1, S1.4 |
 | B3LYP | ma-def2-SVP | 500 | 0 | D1, D2, D10 to D13, the probes | none found |
-| CAM-B3LYP | def2-SVPD | 220 | 0 | D28, D30 to D34 | D28 (frontier orbital); D30 (basis, to 2.8800 e) |
+| CAM-B3LYP | def2-SVPD | 222 | 0 | D28, D30 to D34; D37 (control) | D28 (frontier orbital); D30 (basis, to 2.8800 e); at def2-TZVPD, D36: closest of three to the correlated barrier |
 | r2SCAN-3c | own | 144 | 1 | s10 benchmark; one Phase 2b test | none found |
 | HF-3c | own | 141 | 0 | s10 benchmark; smoke test | none found |
 | B97-3c | own | 140 | 0 | s10 benchmark | none found |
 | XTB2 (GFN2-xTB) | own | 140 | 0 | s10 benchmark | none found |
 | B3LYP | def2-TZVPD | 38 | 0 | Stage 4c; D27 | it is the reference |
-| wB97X-D3 | def2-SVP | 35 | 0 | Stage 4e; D28 | Stage 4e against MP2 |
-| B3LYP | 6-31G(d) | 34 | 0 | Stage 4e | Stage 4e against MP2 |
-| HF | 6-31G(d) | 34 | 0 | Stage 4e | Stage 4e against MP2 |
-| MP2 | 6-31G(d) | 34 | 0 | Stage 4e | it is Stage 4e's reference |
+| wB97X-D3 | def2-SVP | 37 | 0 | Stage 4e; D28; D35 | Stage 4e against MP2 |
+| B3LYP | 6-31G(d) | 36 | 0 | Stage 4e; D35 | Stage 4e against MP2 |
+| HF | 6-31G(d) | 36 | 0 | Stage 4e; D35 | Stage 4e against MP2 |
+| MP2 | 6-31G(d) | 36 | 0 | Stage 4e; D35 | it is Stage 4e's reference; D35 says it is not a benchmark |
+| CAM-B3LYP | def2-TZVPD | 12 | 0 | D28, D30; D36 and D37 (control) | it is the reference |
 | none named (FOD) | none named | 10 | 0 | D19 | not applicable |
 | CAM-B3LYP | def2-SVP | 9 | 0 | D28, D30 | not applicable |
-| CAM-B3LYP | def2-TZVPD | 8 | 0 | D28, D30 | it is the reference |
 | wB97X-D3 | def2-SVPD | 8 | 0 | D28 | not applicable |
+| DLPNO-CCSD(T) | def2-SVPD | 5 | 0 | D38: reactant only, one point charge; D39: 3 further inputs, pre-registered | D38's zero-charge runs |
+| DLPNO-CCSD(T) | def2-TZVPD | 2 | 0 | D36 | D36's control arm; its reactant leg reproduced across two attempts; not a converged barrier |
+| HF | def2-TZVPD | 2 | 0 | D36 | not applicable |
 | wB97X-D3 | def2-TZVPD | 2 | 0 | D28 | not applicable |
+| M06-2X, PW6B95, PWPB95, wB97M-V, wB97X-V | def2-SVPD and def2-TZVPD | 2 at each basis | 0 | D37 | D37's control; against the correlated barrier post hoc only |
+| revDSD-PBEP86-D4 | def2-SVPD and def2-TZVPD | 0 | 0 | D37: 2 inputs at each basis, NOT MEASURED | not applicable |
+| IP-EOM-DLPNO-CCSD | def2-SVPD | 0 | 0 | D39: 3 inputs, pre-registered | not applicable |
 
-Sources for Table 2: [src: T1C, S4E, S1, D27, D30]
+Sources for Table 2: [src: T1C, S4E, S1, D27, D30, D35R, D36R, D37R, D39P]
 
 Three of the diagnostics this section names label their own results, and the label travels with them: D3 is INCONCLUSIVE and withdrawn, D13 is PARTIAL, and D24 is EXPLORATORY. [src: D3, D13, D24]
 
-The full table, 98 distinct combinations of method, basis, dispersion, solvation, embedding and job type, is `figures/T1_levels_of_theory.tsv`. The scan read 11927 input and output files, of which 11155 are ORCA; the rest are job logs, potential files and Amber outputs. [src: T1E, T1L, T1D]
+The full table, 116 distinct combinations of method, basis, dispersion, solvation, embedding and job type, is `figures/T1_levels_of_theory.tsv`. The scan read 12038 input and output files, of which 11263 are ORCA; the rest are job logs, potential files and Amber outputs. The outputs of the rejected keyword stopped at ORCA's input parser and echo no keyword line, so the census counts them among the 6 incomplete loose outputs and under no method. [src: T1E, T1L, T1D]
 
 Three things the keyword lines do not show, found by pass 2. First, the ten FOD runs of D19 name no functional or basis; D19's result records what ORCA used: “TPSS/def2-TZVP, 5000 K”. That is the only use of TPSS and of plain def2-TZVP in the record, and neither was used for any energy. Second, two pieces of work ran in pyscf 2.14.0 and committed no inputs or outputs, only a result or a log: Experiment 0, restricted Hartree-Fock on isolated He, Ne and Ar atoms in aug-cc-pV5Z, aug-cc-pwCV5Z and aug-cc-pV(5+d)Z, and D24, B3LYP with Gaussian-smeared charges. Third, the Na and Mg centres of the Phase 2 test `09_mmtest` name their core potential in an input block, not on a keyword line. [src: D19, EXP0, D24, T2N]
 
 **Not tested.** Each name below occurs somewhere in committed text, in a parser's list of names, in a literature discussion, or in ORCA's credits banner, and on no keyword line in either repository. None was run on this system.
 
 <!-- not-tested-begin -->
-Functionals: `M06-2X`, `PBE0`, `PBE`, `BP86`, `BLYP`, `TPSSh`, `revPBE`, `B97-D3`, `wB97X-V`, `PBEh-3c`, `wB97X-3c`.
-Wavefunction methods: `CCSD(T)`, `DLPNO-CCSD(T)`, `DLPNO-CCSD`, `DLPNO-MP2`, `RI-MP2`, `MP3`, `CASSCF`, `CASPT2`, `NEVPT2`.
+Functionals: `PBE0`, `PBE`, `BP86`, `BLYP`, `TPSSh`, `revPBE`, `B97-D3`, `PBEh-3c`, `wB97X-3c`.
+Wavefunction methods: `CCSD(T)`, `DLPNO-CCSD`, `DLPNO-MP2`, `RI-MP2`, `MP3`, `CASSCF`, `CASPT2`, `NEVPT2`.
 Semi-empirical methods: `PM3`, `PM7`, `SCC-DFTB`.
 Basis sets: `def2-TZVPP`, `def2-TZVPPD`, `def2-QZVPP`, `aug-cc-pVDZ`, `aug-cc-pVTZ`, `cc-pVDZ`, `cc-pVTZ`, `6-31+G(d)`, `6-311+G(2d,p)`, `STO-3G`.
-Solvation and dispersion: `SMD`, `COSMO`, `D4`, `VV10`.
+Solvation and dispersion: `SMD`, `COSMO`.
 <!-- not-tested-end -->
 
-The banner-only names, those that occur in output files and nowhere else, are `DLPNO-CCSD`, `DLPNO-MP2`, `CASPT2`, `MP3`, `VV10`, `wB97X-3c`, `MBIS`, `NBO`, `ONIOM` and `ROHF`. Three names need a caution rather than a place on the list: `TPSS` and `def2-TZVP` were used, as the FOD default only; `aug-cc-pV5Z` was used, in pyscf, on a helium atom only. [src: T2N, T1B]
+Five names have left this list since it was first written. D36, D37 and D38 ran three of them: `M06-2X`, under ORCA's keyword `M062X`, `wB97X-V` and `DLPNO-CCSD(T)`. `VV10` was used without being a keyword of its own, as the non-local part of wB97M-V and wB97X-V. `D4` was not computed and is off the list all the same, because it stands on 4 keyword lines, inside the keyword that ORCA rejected, and on no output's echo. Two names stay with a caution: `CCSD(T)` stands for the canonical method, of which only the DLPNO approximation was run, and `RI-MP2` for the method, although PWPB95's own perturbative step was run with that approximation. [src: T2N, T1B]
+
+The banner-only names, those that occur in output files and nowhere else, are `DLPNO-MP2`, `CASPT2`, `MP3`, `wB97X-3c`, `MBIS`, `NBO`, `ONIOM` and `ROHF`. Three names need a caution rather than a place on the list: `TPSS` and `def2-TZVP` were used, as the FOD default only; `aug-cc-pV5Z` was used, in pyscf, on a helium atom only. [src: T2N, T1B]
 
 ![F2](figures/F2_stage4e.png)
 
-**Figure F2.** Stage 4e: eleven barrier-change quantities (six residues alone, five first-order site coefficients) at four levels against the same quantity at MP2/6-31G(d), frame 41786, in vacuo, 170 single points. Each line is the report's fit L4 = k x level through the origin; nothing is interpolated. Data: `figures/F2_stage4e.tsv`, parsed from the Stage 4e report. [src: S4E] [dv: DV93]
+**Figure F2.** Stage 4e: eleven barrier-change quantities (six residues alone, five first-order site coefficients) at four levels against the same quantity at MP2/6-31G(d), frame 41786, in vacuo, 170 single points. Each group of markers at one height is one quantity, named beside it, and its height is its MP2 value. (C) marks the 6 quantities beside a carboxylate and (K) the 2 controls, as the report marks them; its sign test is on those. The grey diagonal is exact agreement with MP2. Each coloured line is the report's fit L4 = k x level through the origin; nothing is interpolated. Data: `figures/F2_stage4e.tsv`, parsed from the Stage 4e report. [src: S4E] [dv: DV93, DV182, DV183]
+
+**Whether the benchmark method can be used with the charges present: D38.** D36 measured the bare barrier only, and what the record quotes is ddE. D38's pre-registration puts the gap in numbers: the +1.8400 kcal/mol by which CAM-B3LYP-D3BJ misses the benchmark on the bare barrier is 34 to 54 per cent of D34's three quotable lowerings, -3.3985, -4.1567 and -5.3701 kcal/mol, and of whether that error cancels between the bare and the charged system it says “NOTHING IN THIS RECORD MEASURES THAT.” A coupled-cluster ddE would measure it. D38 is the step before that, and by its own title it is “A mechanism probe, not a barrier”: 5 DLPNO-CCSD(T)/def2-SVPD single points at the reactant geometry only. One has no charge, two have a charge of zero as a check that the charge file is inert, one has +1.000000 e at site 1690 (run B1, the arrangement ADD-s1690_qp10000) and one has -1.000000 e at the site of ADD-s678_qm10000 (run A1), each as an external point charge. It asks one question: does the charge reach the correlation treatment, or only the Hartree-Fock reference? [src: D38P, D38R] [dv: DV257, DV258, DV263]
+
+**What D38 found.** The zero charges change nothing, to 1.00e-09 Eh (recomputed). With the positive charge the Hartree-Fock energy moves by -0.204109274 Eh and the corrected correlation energy by -0.004901707 Eh, which is 4902 times the gate's threshold and -3.0759 kcal/mol (derived). The verdict: “THE EMBEDDING CHARGE REACHES THE CORRELATION TREATMENT.” It rests on run B1 alone. Run A1 is “NOT INTERPRETABLE” under a rule D38 fixed before any output existed: an arm whose highest occupied orbital at def2-SVPD is at or above zero is reported and not used, and A1's Hartree-Fock orbital is at +0.3539 eV, against -4.8267 eV for B1 and -2.0444 eV with no charge. A1's numbers are in `figures/T8_d38_probe.tsv` and are not evidence. The verdict licenses one thing: “The coupled-cluster test of ddE with the arrangement's charges present may be built.” D38 computes no barrier and no ddE, revisits no D34 verdict, and does not show that an external point charge reproduces the QM/MM module's electrostatics, which is a control the licensed test still needs. [src: D38R, D38P, T8W] [dv: DV259, DV250, DV251, DV256, DV260]
+
+**Two things in D38's record, found while recomputing.** The result has one erratum already, on its scratch measurement (section 7); these are two other points. First, its result says “ORCA prints no point-charge count in these outputs”. The outputs do print one: each of the 4 runs that has a charge file carries the line “Reading point charge file ... ok (1 point charges)”, and the run with no charge file has no such line (recomputed; the committed classifier reads the same count). The result's reader looked for a different wording. The verdict does not depend on it; the sentence needs a dated erratum. Second, D38's pre-registration quotes Finding 8 of the findings of 22 October 2026, that a positive orbital energy “means the highest electrons are not bound”, as what the record says of these two arrangements. The record had withdrawn that reading. D2 found the bare dianion bound by its detachment energy despite a positive orbital energy, and said that Finding 8's second half “must be withdrawn as an artefact of reading Koopmans' theorem off a DFT orbital”. Probe 1's Erratum 1 repeats it: “The sign of a DFT HOMO is not the criterion for whether an anion is electronically bound.” Probe 2 heads its result “THE HOMO IS NOT THE TEST”. D38's own rule reads a Hartree-Fock orbital, not a density-functional one, and it was fixed in advance, so its label for A1 stands as the rule gives it. What does not follow is that the A1 species has been shown to be unbound: no detachment energy has been computed for it. D39's pre-registration, written the day after D38's, sets this right in substance: it calls the orbital energy “a Koopmans-style proxy” and says “The observable this project actually uses for boundedness is not the orbital energy.” [src: D38R, D38P, D38O, FIND, D2, P1E, P2, D39P] [dv: DV262]
+
+**The detachment energy at the benchmark level: D39, pre-registered.** D39 was pre-registered on 15 November 2026 and has 6 inputs and 0 outputs committed (derived counts), so nothing of it is a result. It will compute the vertical detachment energy at DLPNO-CCSD(T)/def2-SVPD, at the reactant geometry only, for the three systems whose dianion D38 has already run: no charge, +1.000000 e at site 1690 and -1.000000 e at site 678. Two routes are registered: the monoanion's energy minus the dianion's, and an IP-EOM-DLPNO-CCSD calculation on the dianion as a control on the first. Its committed comparators are B3LYP-D3BJ values, +0.5013 eV for the bare dianion at the same basis and +3.4366 eV for the positive arrangement at another basis. Of the negative arrangement it says “Nothing committed measures the detachment energy of A1's arrangement.” That arrangement is ADD-s678_qm10000, the sphere behind the largest of D34's quotable lowerings, here as an external point charge. D39 runs no transition state, revisits no D34 verdict and, in its own words, “DOES NOT LICENSE THE ddE TEST”. [src: D39P] [dv: DV290, DV291]
 
 ## 4. The approaches taken, and the verdict on each
 
@@ -109,13 +167,15 @@ Figure F9 is the map. Each box carries the record's own status; the words behind
 
 ![F9](figures/F9_decision_tree.png)
 
-**Figure F9.** The programme as a decision tree. No numerical data; thirteen nodes, each tied to a quoted sentence of a committed document. The D34 node, shown as pre-registered in the first draft, now carries its committed result.
+**Figure F9.** The programme as a decision tree. No numerical data; seventeen nodes, each tied to a quoted sentence of a committed document. The D34 node, shown as pre-registered in the first draft, carries its committed result, and four nodes were added on 15 November 2026 for the level of theory: D36, D37, D38, which is a mechanism probe, and D39, which is pre-registered.
 
 ### 4.1 Bare point charges
 
 *Meant to fix:* nothing; it is the starting representation, a charge with no size. *Measured by:* the frozen half (22 single points, B3LYP-D3BJ/def2-SVP), D11, D12, D13, D31, D33 stage B and D34. *Cost:* the distance ladder alone is 52 runs, the (n, q) grid 62. *Finding:* D11 measured the distance inside which a bare charge and the same charge behind a Pauli wall disagree, and returned r_safe = 3.50 A, with the consequence “No design measured inside r_safe is interpretable.” The committed arrangements sit at 2.85-2.96 A. At CAM-B3LYP-D3BJ/def2-SVPD, D31 found every design carrying a unit charge UNRELIABLE at every n from 1 to 20, and reliable envelopes of 0.75 e to n = 3, 0.5 e to n = 5 and 0.25 e to n = 20; of those envelopes D31 says “They are not a rule a new design must obey”. D33 stage B then measured a design inside the envelope, three spheres at 0.75 e, UNRELIABLE. *Status:* in use, not adopted by any amendment as valid, and uninterpretable inside r_safe on D11's own reading. [src: D11, D31, D33B, D33P] [dv: DV94, DV75, DV71]
 
 D34 then lifted the ten production arrangements, which are point charges with a Lennard-Jones term and no wall, to the same level: 7 are UNRELIABLE and 3 RELIABLE, and the 3 are the only arrangements with no positive charge (derived). The sign matters to how D31 is read. Each of D31's 12 unit-charge conditions carries a positive unit charge and none of its 30 conditions is without a positive charge (derived), so D31 measured positive and mixed sets; D34's single sphere at -1.0000 e, RELIABLE, does not contradict it. Reading the sign across diagnostics in this way is post hoc; it is a hypothesis, not a finding (section 11, H2). [src: D34R, D34T, T3D] [dv: DV127, DV126, DV128, DV129, DV148, DV145, DV149]
+
+D38's pre-registration records a correction that limits this reading, and the correction is itself a post hoc tabulation. Across the 46 designs of `figures/T5_positive_charge_vs_verdict.tsv`, 43 carry a positive charge and 17 of those are RELIABLE (derived; the count is confirmed here), among them two walled designs at a full unit charge. In its words, “The sign of the charge does not set the verdict”. What survives is the one-way statement: no arrangement without a positive charge has relocated. It does not follow that an arrangement with one will. [src: D38P, T5W] [dv: DV200, DV201, DV202]
 
 **Verdict.** A bare point charge at the committed distances is not a reliable instrument, and no committed rule says in advance which arrangements fail.
 
@@ -210,7 +270,9 @@ D34 holds a controlled pair for this term. S6-P and ADD-s1690_qp10000 are the sa
 
 Sources for the table: [src: AUD, D33P, D34P, A5]
 
-**Where they came from.** The thresholds were written for D6's audit of the whole record and have been inherited unchanged; D31, D32 and D33 read them from the file at read time. D6 says of them that they “were chosen AFTER the Stage 6 outputs had been inspected” and that the classification “is not a blind test”; it anchored them to in-corpus controls, of which 0 of 352 are classified anything but CLEAN. A first construction on the Loewdin leg alone was abandoned: Erratum 3 records that it called 616 of 832 def2-SVP runs collapsed. The stability leg was added by D19 and D20 and re-defined by Amendment 5: until D31 the first analysis was the production solution; once the stability analysis was switched on by default the reported numbers come from the reconverged solution, so the last analysis is the one that judges them. “A first-pass instability that was then corrected is NOT a reliability flag.” [src: A5, D31, D6, E3]
+**Where they came from.** The thresholds were written for D6's audit of the whole record and have been inherited unchanged; D31, D32 and D33 read them from the file at read time. D6 says of them that they “were chosen AFTER the Stage 6 outputs had been inspected” and that the classification “is not a blind test”; it anchored them to in-corpus controls, of which 0 of 352 are classified anything but CLEAN. A first construction on the Loewdin leg alone was abandoned: Erratum 3 records that it called 616 of 832 def2-SVP runs collapsed. The stability leg was added by D19 and D20 and re-defined by Amendment 5: until D31 the first analysis was the production solution; once the stability analysis was switched on by default the reported numbers come from the reconverged solution, so the last analysis is the one that judges them. “A first-pass instability that was then corrected is NOT a reliability flag.” Erratum 7 adds that the four indicators D6 started from “have no literature backing as diagnostics for the effect they were built to detect”, and that no paper in the project's library gives a distance or a size of charge at which the effect sets in. The threshold of 0.25 e is the project's own. [src: A5, D31, D6, E3, E7, AUD]
+
+**How much rests on 0.25 e.** Post hoc, from the rises tabulated for Figure F4. Among the bare conditions of D31 no rise lies between 0.0931 and 0.7991 e, so every threshold in that gap flags the same 17 conditions. The walled conditions of D32 are not so placed: the largest rise below the threshold is 0.2441 e, which is 0.0059 e under it, and the 29 conditions below the threshold (section 4.4) would be 28 at 0.24 or 0.20 e, 23 at 0.15 e and 21 at 0.10 e (all derived). The bare verdicts do not turn on the number. The walled count does. [src: F4T, T10W, AUD] [dv: DV271, DV272, DV270, DV275, DV277, DV97, DV280, DV281, DV282, DV283]
 
 **A dark leg is not a pass.** Two statements in the record fix this. D32: “a condition whose gap cannot be read is never called RELIABLE”. D34: “no document may upgrade "NOT FLAGGED (3 LEGS)" to RELIABLE”. A run whose gap leg is unreadable is INCONCLUSIVE at best. A run with no stability analysis has three legs, not four, and cannot be called reliable. None of the 22 frozen-half outputs carries a stability analysis. [src: D32P, D34P]
 
@@ -226,7 +288,13 @@ Sources for the table: [src: AUD, D33P, D34P, A5]
 
 **What D34 shows about the legs.** The committed result reports arm 2's legs only. Read from the raw outputs with the same classifier, arm 1, which is the same level without the stability analysis, already has the Loewdin rise at or over the threshold in the same 7 arrangements, with a largest rise of 1.6692 e. At the old level 0 of the ten reach it and the largest rise is 0.0711 e, on the same arrangements, charges and geometries (all recomputed; the old-level figures agree with D34's stage A). So the relocation is not produced by the stability correction, and the old level looked clean because it could not see the relocation, not because a fourth leg was missing. D34 changes functional and basis together and cannot say which of the two is responsible. In D34 the stability leg adds no arrangement to those the relocation leg already flags, whereas in D32 it was the only leg that fired in nine conditions. [src: T3D, D34R, D34T] [dv: DV113, DV116, DV117, DV115, DV118]
 
+7. The criterion against D38's rule. ADD-s678_qm10000 is RELIABLE on four legs in D34 and is the arrangement that run A1 of D38, a mechanism probe, marks NOT INTERPRETABLE. They are not the same calculation: D34's is a density-functional run in the QM/MM module with a Lennard-Jones sphere, and D38's is a Hartree-Fock reference with an external point charge. D38 says of itself that it “REVISITS NO D34 VERDICT”. [src: D38R, D34T]
+
 Two earlier results point to the basis. D18 found no relocation in either arm at def2-SVP, and D29 calls def2-SVP “the basis DIAGNOSTIC 27 showed to be blind to relocation for want of diffuse functions”; D29's own relocations were read from conditions in a diffuse basis, most of them under B3LYP. [src: D18, D29]
+
+**What the four legs do not read: whether the electron stays bound.** The criterion has no leg for whether the dianion still binds its second electron once the charges are present. The record's test for that is the detachment energy, the energy of the monoanion minus that of the dianion with the same charges present in both, and not the sign of an orbital energy (section 3). It has been measured with charges twice, both times at B3LYP-D3BJ/ma-def2-SVP and at the reactant only. Probe 2 placed one unit charge 2.960 A from the substrate, at the position D38's pre-registration identifies as site 1690: with +1.0 e the detachment energy is +3.4366 eV, bound, and with -1.0 e it is -2.1005 eV, “METASTABLE”, of which Probe 2 says “Any ddE measured at such a condition is not a barrier effect and must not be reported as one.” Probe 3 found the three designs it tested, S6-P, S6-2 and S6-20, bound. [src: P2, P3, D38P]
+
+None of the five arrangements whose lowering is quotable at the corrected level has a detachment energy at any level: not the three single negative spheres of D34 and not the two designs of D33 stage B. The nearest measurement is Probe 2's, at another site and a retired functional, with a charge of the same sign and size as D34's largest quotable sphere. As data only, and post hoc: with the charges present, the highest occupied orbital of all 5 lies above zero in both states at CAM-B3LYP-D3BJ/def2-SVPD, between +0.7782 and +2.4036 eV, where the charge-free control is at -0.5918 eV at the reactant (recomputed from the raw outputs; no level shift was engaged in any of them). The record holds that this is not the test, so it settles nothing; it is the reason the test is worth running (section 8.8). D39 is pre-registered to run it for one of the five, the sphere of -1.000000 e at site 678, as an external point charge, at the coupled-cluster level and at the reactant. Of the 20 RELIABLE designs of `figures/T5_positive_charge_vs_verdict.tsv`, 9 have the orbital below zero in both states and 11 do not (derived; post hoc; data only). The 2 RELIABLE walled designs of D33 stage B are among the 9, and the wall is NOT ADOPTED. Every row is in `figures/T9_orbital_with_charges.tsv`. [src: T9W, P2, P1E, D39P] [dv: DV207, DV208, DV209, DV210, DV203, DV204, DV205, DV215]
 
 ![F3](figures/F3_nq_grid.png)
 
@@ -237,7 +305,7 @@ Two earlier results point to the basis. D18 found no relocation in either arm at
 Each item states its level of theory, its run count where it has one, and its frame. All are frozen geometries, frame 42436, in vacuo, unless said otherwise. [src: CRIT]
 
 1. **The bare-substrate barrier is 18.461014 kcal/mol at B3LYP-D3BJ/def2-SVP and 26.8248 at CAM-B3LYP-D3BJ/def2-SVPD.** Measured, and recomputed here from every committed charge-free pair. [src: D27, D33A, F1T]
-2. **B3LYP places the dianion's highest occupied orbital above the vacuum level; CAM-B3LYP and wB97X-D3 bind it.** Measured, D28, 22 runs, and monotone in the long-range exchange fraction at two bases and both states. [src: D28] [dv: DV69]
+2. **B3LYP places the dianion's highest occupied orbital above the vacuum level, where the detachment energy says it should not be; CAM-B3LYP and wB97X-D3 place it below.** Measured, D28, 22 runs, and monotone in the long-range exchange fraction at two bases and both states. [src: D28] [dv: DV69]
 3. **r_safe = 3.50 A for a bare unit charge on one axis from one site, at B3LYP-D3BJ/ma-def2-SVP.** Measured, D11. The wall arm it is defined against is neon, used outside its published assumption. [src: D11, D33P]
 4. **No scalar function of the charges orders density relocation.** Measured, D29, from one pair of committed runs with identical charge vectors and opposite outcomes; B3LYP-D3BJ/def2-SVPD. [src: D29]
 5. **A bare design carrying a positive unit charge is unreliable at every n tested; reliable envelopes exist only in partial charges and are not transferable.** Measured, D31, 62 runs, and D33 stage B, CAM-B3LYP-D3BJ/def2-SVPD. [src: D31, D33B] [dv: DV71]
@@ -258,6 +326,18 @@ Each item states its level of theory, its run count where it has one, and its fr
 
 This is not the first stability correction in the record. D20 measured corrections of 9.5558 and 3.3164 kcal/mol on ddE for S6-20 under B3LYP at def2-SVPD, and said of them “every correction above is a LOWER BOUND on the correction, not the correction.” D34 is the first to measure it with a separate arm, at the corrected level, across all ten arrangements. [src: D20]
 
+15. **The correlated barrier of the bare substrate is 23.8603 kcal/mol at DLPNO-CCSD(T)/def2-TZVPD.** Measured, D36, frame 42436, frozen geometries, in vacuo; recomputed here from the two raw outputs. It is a reference for comparison at that basis and not a converged barrier. It is not the experimental number either: the record's 24.5 kcal/mol is a free energy in water, a different quantity, and D36 says “ITS CLOSENESS TO 24.5 IS NOT AGREEMENT.” [src: D36R, T7W] [dv: DV220]
+
+16. **Of the three functionals D36 pre-registered, CAM-B3LYP-D3BJ is the closest to it, +1.8400 kcal/mol above; wB97X-D3 is +4.1086 above and B3LYP-D3BJ -6.5557 below.** Measured, def2-TZVPD, the same geometries. D36: “that makes it the closest here and nothing more.” No amendment adopts a production level. [src: D36R, D36P]
+
+17. **The geometry moves the bare barrier by more than the basis does.** Measured, D35: Stage 4e's five levels give barriers higher by +1.4992 to +3.6023 kcal/mol at frame 42436 than at frame 41786, and the order of the levels is not preserved. The eight functionals measured at both basis sets move by -1.3028 to -0.8624 kcal/mol from def2-SVPD to def2-TZVPD (recomputed). [src: D35R, F11T] [dv: DV241, DV242]
+
+18. **Five further functionals are measured on the same geometries, and none is closer to the correlated barrier than CAM-B3LYP-D3BJ.** D37, def2-SVPD and def2-TZVPD, 24 normally terminated runs of 28 (derived counts); revDSD-PBEP86-D4 is NOT MEASURED. Set against the benchmark they are post hoc, by D36's own label: PWPB95-D3BJ -2.5196, PW6B95-D3BJ -2.9008, wB97M-V +3.5321, M06-2X-D3(0) +4.5400 and wB97X-V +5.8962 kcal/mol. [src: D37R, D36R] [dv: DV265, DV264]
+
+19. **An embedding point charge reaches the correlation treatment in DLPNO-CCSD(T).** Measured, D38, a mechanism probe: def2-SVPD, the reactant geometry only, on the run with +1.000000 e, where the corrected correlation energy moves by -0.004901707 Eh. The run with -1.000000 e is NOT INTERPRETABLE by D38's pre-registered rule and is not evidence. No barrier and no ddE exists at this level. [src: D38R, D38P, T8W]
+
+20. **No quotable lowering has been tested for whether the dianion stays bound.** The five arrangements with a quotable lowering at the corrected level, the three of item 10 and the two of item 8, have no detachment energy at any level. Probe 2 measured a unit negative charge at another site, at a retired level, as “METASTABLE”. This is an absence in the record and not a finding that they are unbound; section 5 sets out what is and is not known. D39 is pre-registered to measure one of the five, at another level. [src: P2, D39P]
+
 ![F7](figures/F7_production_designs.png)
 
 **Figure F7.** The ten production arrangements at three readings, frozen geometries, QM/MM single points with the Lennard-Jones term. Left: ddE at the old level (B3LYP-D3BJ/def2-SVP, 22 runs; D6 classed S6-10 and S6-20 STRAINED there and the other designs it covered CLEAN, and no four-leg verdict exists), at D34 arm 1 (CAM-B3LYP-D3BJ/def2-SVPD, first SCF solution, 22 runs) and at D34 arm 2 (the same with the stability analysis, 22 runs); arm 2's marker shows its committed verdict, 3 RELIABLE and 7 UNRELIABLE. Each ddE is against its own level's reference barrier, 18.4610 and 26.8248. The grey bar joins one arrangement's three readings; it is not a trend. Right: the Loewdin rise at the same three readings against the threshold of 0.25 e. Rows are ordered by total charge. Of the old-level numbers the frozen report says “NOTHING HERE IS A BARRIER.” Data: `figures/F7_production_designs.tsv`, `figures/T3_d34_arms.tsv`. [src: F7T, T3D, D34R, D34T, FROZ, E3] [dv: DV126, DV127]
@@ -276,10 +356,13 @@ This is not the first stability correction in the record. D20 measured correctio
 | D26's def2-SVP input, the pyscf value -5.6165 | D27 R27.4, superseded | The ORCA value -5.614783 |
 | D32's verdict STILL UNRELIABLE at n = 5 and 10, as evidence that the wall fails there | D32 Erratum 1; the verdict stands, its use is restricted | Amendment 5 for future readers |
 | D33 stage B's “largest quotable lowering”, a walled design; the wall is NOT ADOPTED | D33 Erratum 2; the number stands, its use is restricted | The bare five-sphere design, -14.3612 |
+| D38's scratch figure of 11 MB, as the peak of its runs and as what a later job should use | Erratum 1 of D38's result: “11 MB must not be used to size anything.” | “31 GB <= true peak < 43 GB, per run”; the 11 MB is the residue a finished run leaves |
 
-Sources for the table: [src: D29P, D29, D29E1, D29E2, D32E1, D32E2, D32, E3, D13, D27, D33E2, D33B]
+Sources for the table: [src: D29P, D29, D29E1, D29E2, D32E1, D32E2, D32, E3, D13, D27, D33E2, D33B, D38E1]
 
 **D34 withdraws nothing.** Its result says so: “Nothing is withdrawn here; withdrawal of a committed number needs its own dated erratum.” What it does is narrower. It marks 7 of the ten corrected numbers not quotable, and it leaves the ten old-level numbers standing as committed, at a retired level and now known to belong, in 7 cases, to arrangements whose density is unreliable at the corrected one. Whether they are withdrawn is the decision of section 8.5. [src: D34R] [dv: DV127]
+
+**D35 to D38 withdraw no energy.** The one figure withdrawn is the last row of the table, a measurement of scratch space, and its erratum says that every energy, gate and verdict of D38 is unaffected. Three other documents correct an earlier one of their own diagnostic, and say so: D36's Amendment 2 corrects a statement of its Amendment 1 about scratch space, D38's result corrects two points of its Amendment 1, and D38's pre-registration corrects a statement about the sign of the charge that had been made outside the record (section 4.1). Two statements, one in D36's result and one in D38's, are contradicted by other committed files and still need errata of their own (sections 2 and 3); neither is a number. [src: D36A2, D38R, D38P, D38E1]
 
 The record also holds an earlier do-not-quote list covering Phase 1 and Phase 2 figures; it is section 5 of the committed attempt inventory and is not repeated here. That inventory describes itself as hand-written and as stopping at an earlier commit. [src: INV]
 
@@ -311,6 +394,18 @@ I could not find the phrase "relocated pose" in either repository; I searched al
 
 The first draft's open item here was the scope of D34; D34 has run as registered. What remains is the decision its result leaves to a dated erratum: whether the ten frozen-half lowerings at B3LYP-D3BJ/def2-SVP, 7 of which belong to arrangements D34 finds UNRELIABLE at the corrected level, are withdrawn, restricted, or left as committed. *Depends on it:* whether any later document may quote the old numbers, including the two-sphere and twenty-sphere figures that earlier diagnostics use as baselines. *Cost of either branch:* no compute; one erratum. D34 also says what it is not: “D34 re-reads the record; it designs nothing.” The arrangements were placed with the old A matrix, so new production numbers have to come from designs chosen with the corrected one, which D33 stage B began with six. D34's own reading of the old outputs, its stage A, is post hoc by its own words and decides nothing here. [src: D34R] [dv: DV127]
 
+### 8.6 The production level of theory
+
+*Depends on it:* the level at which every later design is evaluated, and whether D30 to D34 are the production record or a provisional one. No amendment has ever adopted a level (section 2). D36 supplies the evidence it was built to supply and leaves the decision where it lies: “That is an amendment and a decision for Jessica.” *What the record offers:* of the three pre-registered functionals CAM-B3LYP-D3BJ is the closest to the correlated barrier, and it is also the nearest to D28's orbital target; D36 itself calls the agreement of the two tests “weaker evidence than it looks”. Post hoc, PWPB95-D3BJ is the only other functional within 3 kcal/mol of the benchmark that passes the orbital test at the reactant; it is a double hybrid, which the record has never used for a design. *Cost of adopting CAM-B3LYP-D3BJ/def2-SVPD:* one amendment and no compute; by D36's reading the basis carries roughly one kcal/mol on the bare barrier. *What adoption would not settle:* whether the functional's error cancels in ddE (section 8.7). [src: D36R, D36P]
+
+### 8.7 Whether to build the coupled-cluster test of ddE
+
+*Depends on it:* whether any quoted lowering can be said to survive the functional's error. D38, a mechanism probe, licenses the test and nothing else. *What it needs first, by D38's own account:* a control at density-functional level that an external point charge and the QM/MM module give the same QM energy, and a transition-state leg. *Which arrangement:* of the two D38 probed, the positive one is interpretable and is UNRELIABLE at the production level, and the negative one is RELIABLE at the production level and NOT INTERPRETABLE under D38's rule. Neither is, as it stands, both a quotable number and an admissible coupled-cluster arm. D39 is pre-registered to measure the detachment energy of both, which is the observable that D38's rule stands in for. *Cost:* D38's pre-registration records that D36's two legs took 4.1 and 6.7 hours at def2-TZVPD, and Erratum 1 of D38's result bounds the scratch of one def2-SVPD run between 31 and 43 GB. [src: D38R, D38P, D38E1, D39P]
+
+### 8.8 A binding test for charged designs
+
+*Depends on it:* the five quotable lowerings (section 6, item 20). The criterion has no leg for it, and the record's own test, the detachment energy, has not been run for any of them. *Cost of running it:* 10 monoanion single points at CAM-B3LYP-D3BJ/def2-SVPD (derived: 5 arrangements at both geometries), the dianion energies being committed already. *If any is not bound:* Probe 2's sentence applies to it, that its ddE “is not a barrier effect and must not be reported as one”. *If all are bound:* the caveat is closed, at those two geometries, for those five. Whether the test then becomes a fifth leg of the criterion is an amendment. D39 covers one of the five, at the coupled-cluster level and as an external point charge; the other four, the production level and the transition state are not covered by it. [src: P2, D39P] [dv: DV214, DV207]
+
 ## 9. Untested variables and approaches
 
 **The only geometric variable ever varied is the radial stand-off distance**, in D11, on one axis from one site. **No angular or orientational variable has been scanned.** I walked every diagnostic's question and varied variable and found none whose variable is an angle or an orientation. D12 varies the site, which changes direction and distance together and holds neither fixed.
@@ -320,25 +415,29 @@ Also absent from that walk, each stated as "I could not find", not as "there is 
 - any design of more than one charge, at any level, outside r_safe (D12 measured single unit charges beyond it, at a retired level);
 - a second frame: every Stage 6 number is frame 42436, Stage 4e is frame 41786, and the s10 benchmark's 35 frames have no recorded conclusion;
 - the valence axis of the basis: every basis test moves along the diffuse axis, and plain triple-zeta without diffuse functions was never used for an energy;
+- a correlated barrier at a second basis, with a second PNO setting, or at a second frame: D36 is one of each, and its residual DLPNO error is not measured;
+- a coupled-cluster calculation with a charge at the transition state, and so any correlated ddE: D38 is the reactant only;
+- a control that an external point charge and the QM/MM module give the same QM energy, which D38 names as part of the test it licenses;
+- the sixth candidate of D37, revDSD-PBEP86-D4, which is NOT MEASURED, and the addendum D37 promises for its second test;
 - a triple-zeta arm for any walled design;
 - a counterpoise-corrected ion comparison, which D3 names as required;
 - a multireference calculation, which D19 says its result licenses and does not replace;
 - any wall species from a second published source;
-- detachment energies at the transition-state geometry: both probes are at the reactant;
+- a detachment energy at the transition-state geometry, at the corrected level, or for any arrangement with a quotable lowering (section 5): the probes that measured one are at the reactant and at B3LYP-D3BJ/ma-def2-SVP, and D39, at the coupled-cluster level, is pre-registered for the reactant and has no output;
 - a committed result for D25 or for the relaxed half of Stage 6;
 - a reading of the 132 committed unit-charge conditions at ma-def2-SVP;
 - the audit Erratum 3 asks of the earlier point-charge record, where D6 found COLLAPSED single points in three sets of runs: it “needs the same audit before it is carried into the write-up”. I could not find a later document that performs it (both repositories searched for the three directory names), and this document draws no conclusion from those runs;
 - a sign-swapped control at the corrected level: no site has been measured there with both a positive and a negative charge (D2 and D11 measured both at site 1690 and D12 at ten more sites, at the retired functional only), and none of D31's 30 conditions is without a positive charge (derived); the observation that prompts this is post hoc (section 11, H2);
-- free energies, sampling, or explicit solvent with a designed charge present. [src: CRIT, S4E, INV, D29E2, D11, D12, D3, D19, P3, D33P, T5W, E3, D6] [dv: DV145, DV149]
+- free energies, sampling, or explicit solvent with a designed charge present. [src: CRIT, S4E, INV, D29E2, D11, D12, D3, D19, P2, P3, D33P, T5W, E3, D6, D35R, D36R, D37R, D38R, D39P] [dv: DV145, DV149]
 
 **The deliberate checks.**
 
 - *Tried and abandoned:* continuum solvation (Amendment 2); Gaussian smearing (EXPLORATORY); real ions (INCONCLUSIVE, withdrawn); the scalar budget (D29).
-- *Proposed and never adopted:* the wall, route (b), NOT ADOPTED; the neutrality constraint; CAM-B3LYP as the production functional, which D28 declines to change.
+- *Proposed and never adopted:* the wall, route (b), NOT ADOPTED; the neutrality constraint; CAM-B3LYP as the production functional, which D28 declines to change and D36 declines to adopt.
 - *Withdrawn numbers:* section 7.
-- *Self-labelled PARTIAL or INCONCLUSIVE:* D13 (PARTIAL); D3 (INCONCLUSIVE); D33 stage B's twenty-sphere design (INCONCLUSIVE); one D32 cell (INCONCLUSIVE); D27 and D30, which form no single verdict.
-- *At only one level of theory:* r_safe (B3LYP-D3BJ/ma-def2-SVP); the (n, q) envelope and the wall's rescue (CAM-B3LYP-D3BJ/def2-SVPD); the old-level production lowerings (B3LYP-D3BJ/def2-SVP), which D34 has now re-measured at a second level with a different outcome for most.
-- *For only one frame:* everything in Stage 6.
+- *Self-labelled PARTIAL or INCONCLUSIVE:* D13 (PARTIAL); D3 (INCONCLUSIVE); D33 stage B's twenty-sphere design (INCONCLUSIVE); one D32 cell (INCONCLUSIVE); D27 and D30, which form no single verdict; run A1 of D38 (NOT INTERPRETABLE); the sixth candidate of D37 (NOT MEASURED) and D37's second test (NOT EVALUATED).
+- *At only one level of theory:* r_safe (B3LYP-D3BJ/ma-def2-SVP); the (n, q) envelope and the wall's rescue (CAM-B3LYP-D3BJ/def2-SVPD); the old-level production lowerings (B3LYP-D3BJ/def2-SVP), which D34 has now re-measured at a second level with a different outcome for most; the correlated barrier (one basis, one PNO setting).
+- *For only one frame:* everything in Stage 6. D35 is the one comparison of two frames, and it is of the bare substrate at five small-basis levels.
 - *Never had a negative control:* I could not find a random-design or scrambled-charge control for any measured ddE; the wall-only and charge-free controls test the instrument, not the design.
 
 ## 10. Conclusions
@@ -369,6 +468,16 @@ Also absent from that walk, each stated as "I could not find", not as "there is 
 
 13. **Stage 6's own purpose, the relaxation, has no committed result and two open amendments in front of it.** D33's pre-registration and the Loss finding. Scope: nothing about relaxed geometries is established. [src: D33P, LOSS]
 
+14. **A correlated calculation puts the bare barrier at 23.8603 kcal/mol, and CAM-B3LYP-D3BJ is the closest to it of the three functionals it was registered to rank, +1.8400 above.** D36, DLPNO-CCSD(T)/def2-TZVPD, frame 42436, frozen, in vacuo. Scope: one frame, one basis, an approximate method whose residual error is unmeasured; not a converged barrier; not the experimental number, which is a free energy in water and a different quantity; it adopts no level, and no amendment has. [src: D36R] [dv: DV220]
+
+15. **No functional measured so far is within one kcal/mol of the correlated barrier, and the eight measured span 12.45.** D36 and D37, def2-TZVPD. Scope: for D37's five the comparison is post hoc; one frame; the benchmark's own uncertainty is not known. [src: D36R, D37R] [dv: DV238]
+
+16. **Between the two frames the geometry moves the bare barrier by +1.4992 to +3.6023 kcal/mol and changes the order of the levels.** D35, five small-basis levels. Scope: two frames whose geometries are of different kinds; it does not transfer Stage 4e's conclusion and it benchmarks nothing. [src: D35R]
+
+17. **The benchmark method sees an embedding charge, and that is all that is known about it with charges.** D38, a mechanism probe: at the reactant the correlation energy responds to a point charge of +1.000000 e, and “THE EMBEDDING CHARGE REACHES THE CORRELATION TREATMENT.” Scope: one arm of two, the other being NOT INTERPRETABLE; no transition state, so no barrier and no ddE. The error of CAM-B3LYP-D3BJ on the bare barrier, +1.8400 kcal/mol, is 34 to 54 per cent of the three quotable lowerings of item 3, and whether it cancels in ddE is unmeasured. [src: D38R, D38P] [dv: DV257, DV258]
+
+18. **The quotable lowerings carry a caveat that the criterion does not test.** None of the five arrangements behind items 3 and 10 has a detachment energy, which is the record's test of whether the dianion stays bound with the charges present; Probe 2 found a unit negative charge at another site “METASTABLE” at a retired level. Scope: an absence, not a finding; section 5 gives what is and is not known, and section 8.8 the test. D39 is pre-registered to measure one of the five, at another level and at the reactant. [src: P2, D39P]
+
 ## 11. Hypotheses
 
 Ranked by what each unblocks. Run counts are counts of single points and are stated as arithmetic in `figures/derived.tsv` where they are not already a committed diagnostic's own. The first draft's leading hypothesis, that the frozen half was measured on unreliable densities, was tested by D34 and not falsified; it is section 6, item 11, and the rest are renumbered.
@@ -385,6 +494,10 @@ Ranked by what each unblocks. Run counts are counts of single points and are sta
 
 *Against, and limiting; this paragraph too is post hoc.* In the D34 sample sign is confounded with site: the negative spheres sit at sites 540 and 678 and the positive one at 1690, so no site carries both signs there. The same-site swaps in the record, D11's, D12's and D2's, are all at the retired functional. None of D31's 30 conditions is without a positive charge. The two pairs that are controlled test other things: the two spheres at site 678 vary magnitude at a fixed negative sign, and S6-P with ADD-s1690_qp10000 varies only the Lennard-Jones term. [src: T5W, F7T] [dv: DV145, DV149]
 
+*Limiting, from D38's pre-registration; post hoc.* Across all 46 tabulated designs, 43 carry a positive charge and 17 of those are RELIABLE: the sign does not set the verdict. H2 claims only the converse, that an arrangement with no positive charge does not relocate. [src: D38P, T5W] [dv: DV200, DV201, DV202]
+
+*Against its usefulness, from the record's probes; post hoc.* If H2 holds, the arrangements it protects are those with no positive charge, and those are the ones the record's detachment energies warn about: Probe 2 found the dianion “METASTABLE” with a charge of -1.0 e beside it and bound with +1.0 e (B3LYP-D3BJ/ma-def2-SVP, reactant, one site). An arrangement could therefore pass the criterion because nothing attracts the density, and still not be a bound state. H7 is the test of that. [src: P2]
+
 *What does not survive, post hoc or otherwise, is a magnitude threshold.* Across D33 stage B and D34 together, the 6 non-walled designs whose largest positive charge is at most 0.5000 e are all RELIABLE or INCONCLUSIVE and the 8 at 0.5500 e or more are all UNRELIABLE. But D31, at the same level on the same frame and the only series that holds the sites fixed while the magnitude changes, has 3 RELIABLE conditions whose largest positive charge is 0.7500 e and 2 UNRELIABLE ones at 0.5000 e. No threshold in the largest positive charge holds across the three diagnostics, which is what D29 found for every other scalar. [src: T5W, D29] [dv: DV141, DV143, DV146, DV147, DV142, DV144]
 
 **H3. Outside r_safe a bare charge is reliable at every magnitude up to one.** *Unblocks:* route (a). *Falsified if:* a unit charge at 3.50 A or beyond fires any leg of the criterion at CAM-B3LYP-D3BJ/def2-SVPD. *Cheapest test:* D11's five rungs repeated at the corrected level with the stability analysis, both signs, both states: 20 charged runs (derived). *Bears on it:* for: D11's shielding term falls from 0.3994 at 3.50 A to 0.0195 at 4.50 A; against: D12, where 3 of the 4 sites beyond 3.50 A fail D11's tolerance at B3LYP-D3BJ/ma-def2-SVP, with a shielding term of up to +8.0656 kcal/mol, and D11's far-field control failed as written. [src: D11, D12, D11E] [dv: DV101, DV161, DV162]
@@ -394,6 +507,10 @@ Ranked by what each unblocks. Run counts are counts of single points and are sta
 **H5. The barrier lowering of a reliable design survives a triple-zeta basis.** *Unblocks:* quoting any number above 2.88 e. *Falsified if:* a reliable stage B design changes by more than 1.0 kcal/mol between def2-SVPD and def2-TZVPD. *Cheapest test:* the two section 6 designs at def2-TZVPD, both states: 4 new runs (derived), the def2-TZVPD control being committed already. *Bears on it:* D30 confirmed 1.3000 e and 2.8800 e on a different arrangement; D33 found reliability does not transfer between arrangements, so basis convergence may not either. [src: D30, D33B, D33P] [dv: DV103]
 
 **H6. The predicted lowering of the neutral, on-mechanism designs is smaller than that of the committed ones.** *Unblocks:* the Sigma q_i = 0 decision. *Falsified if:* a re-solve with the neutrality row gives scores within 15 per cent of the committed ones. *Cheapest test:* no QM; one re-solve per n with the corrected matrix. *Bears on it:* D25's direction statement says the restriction can only make the score worse; by how much is not known. [src: D25]
+
+**H7. Each arrangement with a quotable lowering is a bound dianion at the corrected level, at both geometries.** *Unblocks:* quoting any of the five numbers without the caveat of section 5, and the choice of an arm for a coupled-cluster ddE. *Falsified if:* the detachment energy, monoanion minus dianion with the same charges, is zero or negative for any of the five at CAM-B3LYP-D3BJ/def2-SVPD at either geometry. *Cheapest test:* 10 monoanion single points (derived), pre-registered, with Probe 3's value for the bare dianion as the control. *Bears on it:* against: Probe 2's “METASTABLE” for a unit negative charge at another site and level; run A1 of D38; and, as data only and post hoc, orbital energies of +0.7782 to +2.4036 eV with the charges present. For: Probe 3 found S6-2 and S6-20, which carry negative charges, bound; and the record is explicit that an orbital energy is not the test. D39, when it reports, bears on one of the five. [src: P2, P3, T9W, D38R, D39P] [dv: DV214, DV209, DV210]
+
+**H8. The functional's error on the barrier cancels in ddE.** *Unblocks:* quoting a density-functional ddE as more than a number at that functional. *Falsified if:* a coupled-cluster ddE for an arrangement that is reliable and bound differs from the CAM-B3LYP-D3BJ ddE at the same basis by more than the tolerance its pre-registration sets. *Cheapest test:* for one arrangement, the charged and the charge-free single point at each of the two geometries at DLPNO-CCSD(T)/def2-SVPD, and the density-functional control of section 8.7; D38's reactant runs are already half of the four for either of its arrangements. *Bears on it:* D38 shows that the correlated step sees the charge; the error to cancel is +1.8400 kcal/mol on the bare barrier at def2-TZVPD; nothing measures the cancellation. [src: D38R, D38P]
 
 **What the current grid cannot test at all.** Any hypothesis about orientation; and any hypothesis about relaxed geometries, until sections 8.3 and 8.4 are decided. Designs outside r_safe are testable only at the grid sites that lie there: D12 found some among its 36, and I have not counted how many the grid holds. [src: D12]
 
@@ -407,73 +524,84 @@ Ranked by what each unblocks. Run counts are counts of single points and are sta
 
 ### A.2 Pass 2, by name
 
-`figures/sweep_pass2.py` searched all committed text for 308 names. *Added by this pass:* the two pieces of pyscf work that committed no inputs (Experiment 0 and D24), which no file census can see; the functional and basis behind the FOD runs; the core potential named in an input block. *Corrected by this pass:* my own first list of banner names. The brief's examples of banner-only names did not all hold for this tree: `M06-2X`, `PBE0` and `BP86` occur in a committed parser's list of names and not in any output, and `aug-cc-pV5Z` was in fact used, in pyscf. [src: T2N]
+`figures/sweep_pass2.py` searched all committed text for 312 names. *Added by this pass:* the two pieces of pyscf work that committed no inputs (Experiment 0 and D24), which no file census can see; the functional and basis behind the FOD runs; the core potential named in an input block. *Corrected by this pass:* my own first list of banner names. The brief's examples of banner-only names did not all hold for this tree: `M06-2X`, `PBE0` and `BP86` occur in a committed parser's list of names and not in any output, and `aug-cc-pV5Z` was in fact used, in pyscf. *Corrected on 15 November 2026:* the pass matched each name against keyword lines by its own spelling only, so a method run under ORCA's keyword for it (`M062X` for M06-2X, `RI-PWPB95` for PWPB95) showed no keyword line and could have been listed as never run. The script now counts those keywords, and the checker refuses such a name on the not-tested list. [src: T2N]
 
 ### A.3 Pass 3, by question
 
-*Read in full:* the Stage 6 criteria; Amendment 5; D25; D32, D33 and D34 with every erratum; the results of D1, D2 with its Amendment 1, D3, D4, D5, D7, D10, D11 with its erratum, D12, D13, D17 to D23 and D26 to D31 with the errata of D28 and D29; the third, fourth and fifth items of Erratum 3; the frozen report, the A matrix report, the Stage 4e report; the attempt inventory of 4 November 2026. *Read in part:* D6's result, in full apart from the rows of its table of flagged runs. *Read at verdict level only* (title, verdict lines, closing limitations): the results of D8, D9, D14 with its Amendment 1, D15 and D16; the three probes; Experiment 0; the Stage 1 to 4d reports; the opening of Amendments 1 to 4 and of Errata 1, 2 and 4 to 7, and the headings of the first two items of Erratum 3. *Not read:* the pre-registrations of D1 to D24 and D26 to D31 beyond what their results quote; the two work logs and two assessments in the Stage 6 directory; the citation-integrity, literature-position and ECP-convention notes; the Stage 1 to 5 criteria; the charge-model, optimiser and plan documents. Section 4's statements about D8, D9, D14, D15 and D16 therefore still rest on verdict lines, and section 9's list of untested variables rests on a walk that did not open every pre-registration.
+*Read in full:* the Stage 6 criteria; Amendment 5; D25; D32, D33 and D34 with every erratum; the results of D1, D2 with its Amendment 1, D3, D4, D5, D7, D10, D11 with its erratum, D12, D13, D17 to D23 and D26 to D31 with the errata of D28 and D29; the pre-registrations and results of D35, D36, D37 and D38, with both amendments of D36, the amendment of D38 and Erratum 1 of D38's result; the results of Probe 2 and Probe 3; the third, fourth and fifth items of Erratum 3; the frozen report, the A matrix report, the Stage 4e report; the attempt inventory of 4 November 2026. *Read in part:* D6's result, in full apart from the rows of its table of flagged runs. *Read at verdict level only* (title, verdict lines, closing limitations): the results of D8, D9, D14 with its Amendment 1, D15 and D16; Probe 1's result; Experiment 0; the Stage 1 to 4d reports; the opening of Amendments 1 to 4 and of Errata 1, 2 and 4 to 7, and the headings of the first two items of Erratum 3. *Read in part on 15 November 2026:* the first two items of Probe 1's Erratum 1; the item of the findings of 22 October 2026 that D38 quotes, and nothing else of that document; the two items of Erratum 7 on the indicators and on experimental numbers; D39's pre-registration, of which the sections on what is open, the comparators, the two routes, the runs and what it does not do were read, and the sections on readings, gates and contingencies were not. *Not read:* the pre-registrations of D1 to D24 and D26 to D31 beyond what their results quote; the two work logs and two assessments in the Stage 6 directory; the citation-integrity, literature-position and ECP-convention notes; the Stage 1 to 5 criteria; the charge-model, optimiser and plan documents. Section 4's statements about D8, D9, D14, D15 and D16 therefore still rest on verdict lines, and section 9's list of untested variables rests on a walk that did not open every pre-registration.
 
 *Changed by the reading of 11 November 2026.* D2's and D12's results carry sign arms that the first draft missed: section 11's hypothesis on the sign, and two entries of section 9, were rewritten for them. D12 measured single charges beyond r_safe: section 4.6, the conclusion on route (a) and the hypothesis on charges outside r_safe no longer say that nothing has been measured there. D4, D5 and D7 with Erratum 3 gave section 4.8 its earlier attempts. D6 and Erratum 3 gave section 5 the provenance of the thresholds, and with D20 they show that the old level had already marked S6-10 and S6-20: the caption of Figure F7, the item on the frozen half in section 6 and the conclusion on the old level said otherwise and were corrected. Erratum 3's open audit of the earlier record was added to section 9.
 
-*Added by this pass:* the four s10 benchmark methods, which exist only inside one archive; the MM-only runs; the FOD runs; the Na and Mg centres. *Corrected by this pass:* a first aggregate counted inputs by distinct content, which undercounts runs that share one input and differ in the charge file; runs are now counted by distinct normally-terminated outputs. [src: T1L, T1D]
-
-### A.2 Pass 2, by name
-
-`figures/sweep_pass2.py` searched all committed text for 308 names. *Added by this pass:* the two pieces of pyscf work that committed no inputs (Experiment 0 and D24), which no file census can see; the functional and basis behind the FOD runs; the core potential named in an input block. *Corrected by this pass:* my own first list of banner names. The brief's examples of banner-only names did not all hold for this tree: `M06-2X`, `PBE0` and `BP86` occur in a committed parser's list of names and not in any output, and `aug-cc-pV5Z` was in fact used, in pyscf. [src: T2N]
-
-### A.3 Pass 3, by question
-
-*Read in full:* the Stage 6 criteria; Amendment 5; D25; D32, D33 and D34 with every erratum; the results of D1, D3, D10, D11 with its erratum, D13, D18, D19, D23 and D26 to D31 with the errata of D28 and D29; the frozen report, the A matrix report, the Stage 4e report; the attempt inventory of 4 November 2026. *Read at verdict level only* (title, verdict lines, closing limitations): the results of D2, D4 to D9, D12, D14 to D17, D20 to D22; the three probes; Experiment 0; the Stage 1 to 4d reports; the opening of Amendments 1 to 4 and Errata 1 to 7. *Not read:* the pre-registrations of D1 to D24 and D26 to D31 beyond what their results quote; the two work logs and two assessments in the Stage 6 directory; the citation-integrity, literature-position and ECP-convention notes; the Stage 1 to 5 criteria; the charge-model, optimiser and plan documents. Section 4's statements about D4 to D9, D14, D16, D17, D20 to D22 therefore rest on verdict lines, and section 9's list of untested variables rests on a walk that did not open every pre-registration.
+*Changed by the reading of 15 November 2026.* D38's pre-registration pointed at two things this document had passed over because the probes had been read at verdict level only. Probe 2 found the dianion metastable with a unit negative charge beside it, and says a ddE measured there is not a barrier effect; the three quotable lowerings of D34 are single negative spheres, and none has a detachment energy. That is now in sections 5, 6, 8, 10 and 11. And the record had twice withdrawn the reading of an orbital's sign as a test of binding, which the caption of Figure F10 and one item of section 6 had worded loosely; both were reworded. Erratum 7's statement that the indicators have no literature backing was added to section 5.
 
 *Added by this pass:* the conflict between D11's Erratum 1 and D12 on route (a); the absence of a committed D25 result; the status of the argon parameters. *Found while recomputing:* the stage A result's “rank 0.863979” is a rank correlation of magnitudes (section 4.10). [src: D33A]
 
 ### A.4 Figures proposed and what became of them
 
-All nine proposed figures were drawn. F7 was first drawn at the old level only, because D34 had not run; it now carries the old level and both of D34's arms, with a second panel for the relocation leg. F1 gained a second panel for frame 41786 so that the Stage 4e barriers are not read against frame 42436. No figure was dropped. [src: F1T, F1B, S4E]
+All nine proposed figures were drawn; a tenth, Figure F10, was added afterwards at the author's request (A.6), and an eleventh, Figure F11, on 15 November 2026 (A.7). F1 was redrawn on 15 November 2026, one row to a method, because the levels at frame 42436 had more than doubled and D35 had measured Stage 4e's five at both frames. F7 was first drawn at the old level only, because D34 had not run; it now carries the old level and both of D34's arms, with a second panel for the relocation leg. F1 gained a second panel for frame 41786 so that the Stage 4e barriers are not read against frame 42436. No figure was dropped. [src: F1T, F1B, S4E]
 
 ### A.5 The revision of 11 November 2026
 
 D34 ran between the first draft and this one, and neither draft was committed in between. Changed for it: sections 2, 3, 4.1, 4.2, 5, 6, 7, 8.2, 8.5, 9, 10 and 11. In the section on the legs, D34 is a sixth case and the old level's blindness is set out. In the section on what is established, items 10 to 14 are new or rewritten. The section on withdrawn figures says that D34 withdraws nothing. In the conclusions, those on the production arrangements, on the old level and on the stability correction are new, and those on bare positive charges and on the largest reliable lowering are restated. In the hypotheses, the first draft's leading one became a finding and the post hoc one on the sign of the charge is new. Three tables were added, each recomputed from raw outputs through the committed readers: `figures/T3_d34_arms.tsv` (every leg at three readings; D34's result prints arm 2's only), `figures/T4_twin_arrangements.tsv` and `figures/T5_positive_charge_vs_verdict.tsv`. A fourth, `figures/T6_d2_both_signs_site_1690.tsv`, came from the reading recorded in A.3, as did six rows of `figures/derived.tsv` read from D12's tables. The decision tree's D34 node now carries its result.
 
+### A.6 Changes prepared on 11 November 2026, committed with the revision of 15 November 2026
+
+Five things were changed after the document had been committed on 11 November 2026. They were held, at the author's decision, so that the document would be rebuilt once, after D36; they enter the record with A.7. First, the sentence in section 1 that defines a_i was reworded at the author's request, because its wording let the transition state and the reactant be read as places and not as the two states of the substrate; the definition is the one the D33 pre-registration gives, and it is unchanged. Second, Figure F10 was added to section 2 at the author's request, drawn from D28's committed outputs. Third, both repositories had moved in the meantime, by D35's pre-registration and inputs, and D35 was entered in sections 2 and 9 as pre-registered; A.7 supersedes that entry. Fourth, a mistake of assembly was removed from this appendix: the committed text carried A.2 twice and, under a second A.3 heading, the superseded list of what had been read. Fifth, the groups of markers in Figure F2 were named, at the author's request, with the report's own marks for the quantities its sign test is on, and the caption now says how to read the figure. These five changed no number, source tag or conclusion of the committed text.
+
+### A.7 The revision of 15 November 2026
+
+Four diagnostics were committed after 11 November 2026 and are entered here: D35 (Stage 4e's five levels on the Stage 6 frame), D36 with its two amendments (the correlated barrier), D37 (five further functionals; a sixth not measured) and D38 with its amendment (whether an embedding charge reaches the correlated step). Two further documents were pushed on the morning of 15 November 2026, while this revision was being built, and are entered as well: Erratum 1 of D38's result, and D39's pre-registration with its inputs. Every table was regenerated at the two commits named in the header. *Changed for them:* sections 2, 3, 4, 5, 6, 7, 8, 9, 10 and 11. In the section on the reference barrier, Table 1 and Figure F1 were rebuilt and D35, D36, D37 and Figure F11 entered. In the section on levels of theory, Table 2, the census and the not-tested list were rebuilt and D38 entered. The decision tree gained four nodes, and the reading of the sign of the charge gained its limit. The section on the criterion gained the provenance of the threshold, how much rests on it, a seventh case of disagreement, and what the legs do not read. Six items were added to what is established, three open decisions, five conclusions, and two hypotheses with two paragraphs under the hypothesis on the sign. *Tables added,* each recomputed from raw outputs and compared with the table the diagnostic's own reader committed: `figures/T7_d36_benchmark.tsv`, `figures/T8_d38_probe.tsv`, `figures/F11_two_tests.tsv`; and two post hoc tabulations, `figures/T9_orbital_with_charges.tsv` and `figures/T10_loewdin_thresholds.tsv`. `figures/F1b_stage4e_bare_barrier.tsv` now holds both frames.
+
+*Mistakes of mine corrected in this revision.* The census script did not know the new method keywords and filed their runs under no method; it does now. The by-name pass could have listed a method as never run when it had been run under ORCA's spelling of it (A.2). The check that every figure has its three files skipped figures numbered above nine. The identifiers of the derived numbers for the reference barriers would have shifted by one when D35 added a level; they are pinned, and the new levels have identifiers of their own.
+
+*Found in the record while recomputing, and not mine to correct.* Two statements need a dated erratum from their own diagnostics: D36's description of its geometries as band geometries (section 2) and D38's statement that ORCA prints no point-charge count (section 3). A third, D38's use of a reading of the orbital energy that D2 and Probe 1's Erratum 1 had withdrawn (section 3), has been set right in substance by D39's pre-registration. None changes a number or a verdict. D37's addendum for its second test is outstanding, and its committed reader looks for D36's coupled-cluster outputs in the first attempt's directory, where there are none.
+
+The provenance record in Appendix B was regenerated.
+
 ## Appendix B. Provenance
 
-The record below is `figures/PROVENANCE.txt` as the validation script wrote it on the staged copies: the two HEAD hashes, the sha256 of every script used, the sixteen checks and the negative tests. The run reproduced here included the slow regeneration of the name table. The committed readers' hashes can be compared with the ones the record itself prints for them.
+The record below is `figures/PROVENANCE.txt` as the validation script wrote it on the staged copies: the two HEAD hashes, the sha256 of every script used, the twenty checks and the negative tests. The run reproduced here included the slow regeneration of the name table. The committed readers' hashes can be compared with the ones the record itself prints for them.
 
 ```
 PROVENANCE of WRITEUP_CONSOLIDATED_20261111.md
 
-chorismate-thesis-results  main           HEAD f461bd1a9daeef0366de7c2a9f81fff4ccac479b
-chorismate-thesis-code     tier1-realism  HEAD 23c2500fed83e1f1ddec33e3f42e54038cd2937d
+chorismate-thesis-results  main           HEAD 4af2afa086eff0319ae781cb4c1da3d830777091
+chorismate-thesis-code     tier1-realism  HEAD 1e476142246ed7c942e26dbf321b5353ba9078ec
 
 sha256 of every script used
-   8f6f8587726795d11c1fb3ddadc686551ffce80331d56529e7a7f63157d2a475  figures/make_figures.py
-   ea269b1eb1effd20197a2f45d4294a69f3b892d15236695c8750e746d49628c4  figures/sweep_pass1.py
-   f5e37414d97e7cd475ff6eb8ee606de9d47c5fcd63ae849ab50101ae658229f1  figures/sweep_pass2.py
-   b5a6a3f02255b5ee587aa870e98bf7da3c31cebd3c6ec208062add8dca8bc145  code: phase2.2/cs_writeup_check.py
+   745ea722a1e9e627cd5383462fbe0ec1d8760d7a937d0766b8f41140c3821af8  figures/make_figures.py
+   a381ad3e06ae271b9c50a052bac2ddaf3571b5a8168f8311da7b656ce06a8c3c  figures/sweep_pass1.py
+   bb56f3daf4bbdef6b9f1b59987472ea644d7d29ad8703d6081b5025d08643510  figures/sweep_pass2.py
+   37ebfc0c11a20b38b11831cc9fa8e2aefdd14f45fb133eac4ce070b4099fe103  code: phase2.2/cs_writeup_check.py
    6e0d0f90e0e7ab3f2f9da7c527e192c1686a6c77a885df6ccc4caf560665052a  code: phase2.2/cs6_analyse.py  (committed reader, imported)
    1dda394a134b3c7265df1898c9b5dc507d01c41d73aa5e59274495a1e7005dea  code: phase2.2/cs6_audit.py  (committed reader, imported)
    c6a8c3958a4e7532c9e28082b6d8f25c51549c0ea70f06fcf95d1370b3cde2f6  code: phase2.2/cs6_d33b.py  (committed reader, imported)
 
 validation output
 
-    1 numbers      PASS   (363 sourced in a named committed file, 155 derived (figures/derived.tsv), 0 estimated; 917 items not treated as numerals)
-    2 quotes       PASS   (65 quotations)
-    3 citations    PASS   (78 files in Appendix C)
-    4 withdrawn    PASS   (7 registry entries)
-    5 selflabels   PASS   (8 registry entries)
-    6 controls     PASS   (161 recomputed; worst: C13.01 ddE bare_n03_q0.75 (D33 stage B): |diff| 4.89e-05 against a tolerance of 5.0e-05)
-    7 counts       PASS   (29 run counts)
-    8 not_tested   PASS   (37 names)
-    9 regeneration PASS   (22 tables regenerated)
+    1 numbers      PASS   (553 sourced in a named committed file, 236 derived (figures/derived.tsv), 0 estimated; 1431 items not treated as numerals)
+    2 quotes       PASS   (120 quotations)
+    3 citations    PASS   (102 files in Appendix C)
+    4 withdrawn    PASS   (8 registry entries)
+    5 selflabels   PASS   (10 registry entries)
+    6 controls     PASS   (327 recomputed; worst: C13.01 ddE bare_n03_q0.75 (D33 stage B): |diff| 4.89e-05 against a tolerance of 5.0e-05)
+    7 counts       PASS   (33 run counts)
+    8 not_tested   PASS   (32 names)
+    9 regeneration PASS   (28 tables regenerated)
    10 heads        PASS   (two repositories)
       -- added 11 November 2026 for DIAGNOSTIC 34
-   11 exp_heads    PASS   (results f461bd1, code 23c2500)
-   12 d34_numbers  PASS   (19 blocks cite D34: 52 numerals in its result or d34.tsv, 66 derived)
+   11 exp_heads    PASS   (results 4af2afa, code 1e47614)
+   12 d34_numbers  PASS   (20 blocks cite D34: 52 numerals in its result or d34.tsv, 66 derived)
    13 d34_controls PASS   (arm 1 26.8248, arm 2 26.8248; 10 frozen ddE, worst |diff| 4.8e-07)
    14 arm1_legs    PASS   (63 values recomputed from d34/a1_*)
    15 claims       PASS   (40 numbers behind C1 to C6 recomputed)
-   16 posthoc      PASS   (8 blocks discuss C3)
-   RESULT: ALL SIXTEEN CHECKS PASS
+   16 posthoc      PASS   (11 blocks discuss C3)
+      -- added 15 November 2026 for DIAGNOSTICS 35 to 38
+   17 benchmark    PASS   (DLPNO-CCSD(T) barrier 23.8603 recomputed from d36a2/; two shifts recomputed from d38/)
+   18 experiment   PASS   (2 blocks hold the experimental 24.5)
+   19 d38_a1       PASS   (1 blocks quote a number of run A1)
+   20 posthoc_lvl  PASS   (3 blocks quote a post hoc distance; 2 an orbital energy of a charged design)
+   RESULT: ALL TWENTY CHECKS PASS
 
    NEGATIVE TESTS
       a number                                     -> check 'numbers' FIRED: section '6. What is actually established': 26.8348 is in no [src:] file of its block (D27, D33A, F1T, D28, D11
@@ -484,9 +612,9 @@ validation output
       a withdrawn figure used as evidence          -> check 'withdrawn' FIRED: the withdrawn figure '0.58' appears in section '6. What is actually established', outside the withdrawal secti
       a self-label                                 -> check 'selflabels' FIRED: section '4. The approaches taken, and the verdict on each' uses D13 (matched /\bD13\b/) and does not carry its
       a figure's tsv                               -> check 'regeneration' FIRED: F5_distance_ladder.tsv differs from the file regenerated from committed sources
-      a HEAD hash                                  -> check 'heads' FIRED: chorismate-thesis-code: the document records 33c2500fed83e1f1ddec33e3f42e54038cd2937d and HEAD is 23c2500fed83
-      the not-tested list                          -> check 'not_tested' FIRED: CAM-B3LYP is listed as not tested and stands on 474 keyword line(s)
-      the commit the revision was built from       -> check 'exp_heads' FIRED: the document does not state f461bd1 as the HEAD of chorismate-thesis-results (it states e461bd1a9dae)
+      a HEAD hash                                  -> check 'heads' FIRED: chorismate-thesis-code: the document records 2e476142246ed7c942e26dbf321b5353ba9078ec and HEAD is 1e476142246e
+      the not-tested list                          -> check 'not_tested' FIRED: CAM-B3LYP is listed as not tested and stands on 486 keyword line(s)
+      the commit the revision was built from       -> check 'exp_heads' FIRED: the document does not state 4af2afa as the HEAD of chorismate-thesis-results (it states 5af2afa086ef)
       a D34 number that another cited file holds   -> check 'd34_numbers' FIRED: section '10. Conclusions': 14.3612 is in neither the D34 result nor d34.tsv and is no [dv:] value of its block  [check 'numbers' passed it]
       a raw control output of d34/                 -> check 'd34_controls' FIRED: arm 1 control barrier recomputed from d34/ is 26.8875, not 26.8248
       a recorded frozen ddE                        -> check 'd34_controls' FIRED: figures/controls.tsv records -7.675815 (PASS) for the frozen ddE of S6-P (C07.01); recomputed here: -7.675715
@@ -495,7 +623,14 @@ validation output
       a claim the recomputation rejected           -> check 'claims' FIRED: C6 (the size of the stability correction): a form of the claim that the recomputation rejected appears: '8 of 
       C3 stated as a conclusion                    -> check 'claims' FIRED: C3 is post hoc and appears in the Conclusions: ...7. **A bare positive charge is not a reliable model at the c
       the post hoc label                           -> check 'posthoc' FIRED: section '11. Hypotheses': a block discusses C3 (matched /without a positive charge/) without the words post ho
-      19 of 19 negative tests fired
+      the benchmark's derived value                -> check 'benchmark' FIRED: DV220 (E(CCSD(T)) part of the barrier) is 23.8703 in figures/derived.tsv; recomputed here from d36a2/: 23.8603
+      the denial beside the experimental number    -> check 'experiment' FIRED: section '6. What is actually established': a block sets the correlated barrier beside the experimental 24.5 wi
+      the experimental number without its kind     -> check 'experiment' FIRED: section '6. What is actually established': a block holds the experimental 24.5 and does not say it is a free e
+      the label of run A1                          -> check 'd38_a1' FIRED: section '3. Levels of theory and basis sets': a block quotes a number of run A1 (matched /\+0\.3539/) without 
+      the post hoc label of a distance             -> check 'posthoc_lvl' FIRED: section '6. What is actually established': a block quotes a post hoc distance from the benchmark (matched /-2\
+      the data-only label of an orbital energy     -> check 'posthoc_lvl' FIRED: section '11. Hypotheses': a block quotes an orbital energy of a charged design (matched /\+0\.7782/) without '
+      a method run under another spelling          -> check 'not_tested' FIRED: M06-2X is listed as not tested and stands on 8 keyword line(s) as M062X
+      26 of 26 negative tests fired
 ```
 
 ## Appendix C. Sources
@@ -542,6 +677,24 @@ R is chorismate-thesis-results at the HEAD above; C is chorismate-thesis-code; W
 | D33A | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC33_STAGEA_RESULT_20261109.txt |
 | D33B | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC33_STAGEB_RESULT_20261109.txt |
 | D34P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC34_20261110.txt |
+| D35P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC35_20261111.txt |
+| D35R | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC35_RESULT_20261111.txt |
+| D36P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC36_20261111.txt |
+| D36A1 | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC36_AMENDMENT1_20261113.txt |
+| D36A2 | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC36_AMENDMENT2_20261114.txt |
+| D36R | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC36_RESULT_20261114.txt |
+| D37P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC37_20261111.txt |
+| D37R | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC37_RESULT_20261111.txt |
+| D37T | R | phase2.2/cs_stage6/d37.tsv |
+| D38P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC38_20261114.txt |
+| D38R | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC38_RESULT_20261115.txt |
+| D38O | R | phase2.2/cs_stage6/d38/B1/job.out |
+| D38E1 | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC38_RESULT_ERRATUM1_20261115.txt |
+| D39P | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC39_20261115.txt |
+| FIND | R | phase2.2/cs_stage6/STAGE6_FINDINGS_20261022.md |
+| P1E | R | phase2.2/cs_stage6/STAGE6_PROBE1_ERRATUM1_20261027.txt |
+| P2 | R | phase2.2/cs_stage6/vde_probe/PROBE2_RESULT.txt |
+| E7 | R | phase2.2/cs_stage6/STAGE6_ERRATUM7_20261026.txt |
 | D34R | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC34_RESULT_20261110.txt |
 | D34E1 | R | phase2.2/cs_stage6/STAGE6_DIAGNOSTIC34_ERRATUM1_20261110.txt |
 | D34T | R | phase2.2/cs_stage6/d34.tsv |
@@ -582,3 +735,9 @@ R is chorismate-thesis-results at the HEAD above; C is chorismate-thesis-code; W
 | T4W | W | T4_twin_arrangements.tsv |
 | T5W | W | T5_positive_charge_vs_verdict.tsv |
 | T6W | W | T6_d2_both_signs_site_1690.tsv |
+| F10T | W | F10_homo_by_functional.tsv |
+| F11T | W | F11_two_tests.tsv |
+| T7W | W | T7_d36_benchmark.tsv |
+| T8W | W | T8_d38_probe.tsv |
+| T9W | W | T9_orbital_with_charges.tsv |
+| T10W | W | T10_loewdin_thresholds.tsv |

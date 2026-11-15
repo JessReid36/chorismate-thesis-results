@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Completeness pass 1 (by file) for WRITEUP_CONSOLIDATED_20261110.md.
+"""Completeness pass 1 (by file) for WRITEUP_CONSOLIDATED_20261111.md.
 
     python3 sweep_pass1.py --res <results repo> --code <code repo> --out <this directory>
 
@@ -190,10 +190,16 @@ def kind_of(name):
     return None
 
 
-METHODS = ["CAM-B3LYP", "B3LYP", "WB97X-D3", "MP2", "R2SCAN-3C", "HF-3C", "B97-3C", "XTB2", "HF"]
+# A keyword line is split on white space and matched token by token, so WB97X-V is not WB97X-D3.
+# The last name is the keyword of DIAGNOSTIC 37's sixth candidate, which ORCA 6.0.1 rejected: it stands on four
+# committed keyword lines and was never run, and the census shows it as inputs without a normal output.
+METHODS = ["CAM-B3LYP", "B3LYP", "WB97X-D3", "WB97M-V", "WB97X-V", "PW6B95", "M062X", "RI-PWPB95", "DLPNO-CCSD(T)",
+           "IP-EOM-DLPNO-CCSD", "RI-REVDSD-PBEP86-D4/2021", "MP2", "R2SCAN-3C", "HF-3C", "B97-3C", "XTB2", "HF"]
 BASES_ = ["DEF2-SVPD", "MA-DEF2-SVP", "DEF2-TZVPD", "DEF2-SVP", "6-31G(D)"]
 JOBS = ["NEB-TS", "NEB-CI", "OPTTS", "L-OPT", "OPT", "NUMFREQ", "FREQ", "IRC", "ENGRAD", "MD"]
-PRETTY_ = {"WB97X-D3": "wB97X-D3", "R2SCAN-3C": "r2SCAN-3c", "HF-3C": "HF-3c", "B97-3C": "B97-3c", "XTB2": "XTB2 (GFN2-xTB)",
+PRETTY_ = {"WB97M-V": "wB97M-V", "WB97X-V": "wB97X-V", "M062X": "M06-2X", "RI-PWPB95": "PWPB95",
+           "RI-REVDSD-PBEP86-D4/2021": "revDSD-PBEP86-D4 (keyword rejected by ORCA)",
+           "WB97X-D3": "wB97X-D3", "R2SCAN-3C": "r2SCAN-3c", "HF-3C": "HF-3c", "B97-3C": "B97-3c", "XTB2": "XTB2 (GFN2-xTB)",
            "DEF2-SVPD": "def2-SVPD", "MA-DEF2-SVP": "ma-def2-SVP", "DEF2-TZVPD": "def2-TZVPD", "DEF2-SVP": "def2-SVP",
            "6-31G(D)": "6-31G(d)"}
 
@@ -227,7 +233,9 @@ def parse(kw, flags):
     meth = [m for m in METHODS if m in toks]
     basis = [b for b in BASES_ if b in toks]
     job = [j for j in JOBS if j in toks]
-    disp = "D3BJ" if "D3BJ" in toks else ("in functional" if "WB97X-D3" in toks else "-")
+    disp = "D3BJ" if "D3BJ" in toks else ("D3ZERO" if "D3ZERO" in toks else ("in functional" if "WB97X-D3" in toks else (
+        "VV10, in functional" if ("WB97M-V" in toks or "WB97X-V" in toks) else (
+            "D4, in keyword" if "RI-REVDSD-PBEP86-D4/2021" in toks else "-"))))
     emb = []
     if "QMMM" in toks:
         emb.append("QM/MM")

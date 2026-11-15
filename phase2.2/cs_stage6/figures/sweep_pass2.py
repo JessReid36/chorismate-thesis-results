@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Completeness pass 2 (by name) for WRITEUP_CONSOLIDATED_20261110.md.
+"""Completeness pass 2 (by name) for WRITEUP_CONSOLIDATED_20261111.md.
 
     python3 sweep_pass2.py --res <results repo> --code <code repo> --out <this directory>
 
@@ -32,6 +32,7 @@ QCISD(T) CBS-QB3 G3B3 G4 W1 CBS
 PM3 PM6 PM7 RM1 AM1-BCC AM1 MNDO OM2 OM3 DFTB3 DFTB SCC-DFTB GFN2-xTB GFN1-xTB GFN-FF GFN2 GFN1 XTB2 XTB1 xtb EVB
 def2-SVP def2-SVPD def2-SV(P) def2-TZVP def2-TZVPP def2-TZVPD def2-TZVPPD def2-QZVP def2-QZVPP def2-QZVPD def2-QZVPPD
 ma-def2-SVP ma-def2-TZVP ma-def2-TZVPP ma-def2-QZVPP def2-mSVP def2-mTZVP def2/J def2/JK def2-SVP/C def2-TZVP/C def2-TZVPP/C AutoAux
+def2-SVPD/C def2-TZVPD/C TightPNO IP-EOM-DLPNO-CCSD
 6-31G(d) 6-31G* 6-31G** 6-31G(d,p) 6-31+G(d) 6-31+G* 6-31+G** 6-31+G(d,p) 6-31++G(d,p) 6-31++G** 6-311G(d,p) 6-311G**
 6-311+G(d,p) 6-311+G** 6-311++G(d,p) 6-311++G** 6-311+G(2d,p) 6-311+G(2df,2p) 6-311+G(3df,2p) 6-31G 6-311G 3-21G STO-3G MINIX vDZP
 cc-pVDZ cc-pVTZ cc-pVQZ cc-pV5Z aug-cc-pVDZ aug-cc-pVTZ aug-cc-pVQZ aug-cc-pV5Z jun-cc-pVDZ jun-cc-pVTZ jul-cc-pVDZ
@@ -51,6 +52,15 @@ QM/MM ONIOM electrostatic-embedding mechanical-embedding polarizable-embedding
 CS = """
 HF UHF RHF ROHF RI NL D3 D4 ASH OPC MK ESP SCAN PBE CBC PCM NEB IRC FOD ECP sqm MD MM LJ MP2 DFT
 """
+
+
+# A name that ORCA is asked for under another spelling: the keyword token or tokens, in upper case as pass 1 stores
+# them, that request it.  Without this a method run under its ORCA keyword (M062X for M06-2X, RI-PWPB95 for PWPB95)
+# would show no keyword line and could be listed as never run.  VV10 is the non-local correlation that wB97M-V and
+# wB97X-V include.  D4 and revDSD-PBEP86 stand only inside the keyword of DIAGNOSTIC 37's sixth candidate, which
+# ORCA 6.0.1 rejected: they are on keyword lines of inputs and on no output's echo, and nothing was computed with them.
+ALIAS = {"M06-2X": ["M062X"], "PWPB95": ["RI-PWPB95"], "revDSD-PBEP86": ["RI-REVDSD-PBEP86-D4/2021"],
+         "D4": ["RI-REVDSD-PBEP86-D4/2021"], "VV10": ["WB97M-V", "WB97X-V"]}
 
 
 SKIP = (".gbw", ".densities", ".npz", ".png", ".svg", ".docx", ".rst7", ".prmtop", ".inpcrd", ".pdf", ".hess", ".densitiesinfo",
@@ -173,9 +183,13 @@ def main():
         f.write("# and (kw_*) the number of ORCA keyword lines carrying it, from pass 1. %d files searched for %d names.\n"
                 % (len(lists), len(set(ci) | set(cs))))
         f.write("# example: the first path, in sorted order, of each kind in which the name occurs.\n")
+        f.write("# kw_* also count the keyword tokens that request a name under another spelling: %s.\n"
+                % "; ".join("%s <- %s" % (k, ", ".join(v)) for k, v in sorted(ALIAS.items())))
         f.write("name\tkw_input_files\tkw_output_echoes\tn_input_files\tn_output_files\tn_script_files\tn_doc_files\texample\n")
         for n in sorted(set(ci) | set(cs), key=lambda s: (s.lower(), s)):
             kw = tok.get(n.upper(), (0, 0))
+            for al in ALIAS.get(n, []):
+                kw = (kw[0] + tok.get(al, (0, 0))[0], kw[1] + tok.get(al, (0, 0))[1])
             e = "; ".join("%s: %s" % (c, sorted(ex[n][c])[0]) for c in classes if ex[n][c])
             f.write("%s\t%d\t%d\t%s\t%s\n" % (n, kw[0], kw[1], "\t".join(str(counts[n][c]) for c in classes), e))
     print("files searched: %d; names on the list: %d; found somewhere: %d" % (len(lists), len(set(ci) | set(cs)),
