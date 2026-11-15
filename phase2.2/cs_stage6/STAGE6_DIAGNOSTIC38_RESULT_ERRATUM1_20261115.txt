@@ -1,0 +1,94 @@
+==============================================================================
+STAGE 6, DIAGNOSTIC 38, RESULT.  ERRATUM 1
+R38.9 REPORTED THE RESIDUE AND CALLED IT THE PEAK
+Written 15 November 2026.
+==============================================================================
+
+A result is never edited. This erratum sits beside it.
+
+WHAT IS WRONG
+
+STAGE6_DIAGNOSTIC38_RESULT_20261115.txt reports, under R38.8 AND R38.9:
+
+   peak over 5 runs 11 MB
+
+and then:
+
+   "def2-SVPD figure was unmeasured and that R38.9 was how it would stop
+   being unmeasured. The measured peak above is that figure, and it is what
+   a later job should use rather than the number carried over."
+
+The figure is not the peak, and the instruction built on it would under-size a later
+job by more than three orders of magnitude.
+
+THE EVIDENCE IS IN THE SAME COMMIT
+
+d38/PROGRESS.txt was committed alongside the result. Its watcher sampled the scratch
+directory every ten minutes while the job was alive. Its own lines:
+
+   2026-11-14 21:55:20  used=27G  storage=ON DISK  running=N
+   2026-11-14 22:05:21  used=31G  storage=ON DISK  running=N
+   2026-11-15 00:05:33  used=29G  storage=ON DISK  running=B1
+   2026-11-15 02:25:48  used=28G  storage=ON DISK  running=A1
+
+Every one of the five runs shows the same shape: 27 to 31 GB in the first twenty
+minutes, settling to 13 to 14 GB for the rest of the run. So the record already
+contained the right order of magnitude, in the same commit, and the two halves
+contradict each other. The half carrying the instruction is the wrong half.
+
+WHY IT HAPPENED
+
+In d38/run_a1.pbs the measurement is taken after ORCA returns:
+
+   ( cd "$S/$r" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null )
+   ...
+   u=$(du -sm "$S" 2>/dev/null | cut -f1)
+
+By that point ORCA has deleted its own temporary files. What `du` measured was the
+residue a finished run leaves behind, not the space the run needed while it was
+running. The gate that checked R38.9 checked that a peak was reported, not that the
+measurement was taken at a time when a peak could exist. A check by the claim's own
+method is not a check.
+
+THE CORRECTED STATEMENT
+
+   sampled maximum        31 GB, from d38/PROGRESS.txt, 10-minute sampling
+   free space available   43 GB, and the job completed
+   therefore              31 GB <= true peak < 43 GB, per run, closed-shell
+                          def2-SVPD, 24 atoms, 16 cores, %maxcore 6000
+   residue after a run    11 MB, which is what R38.9 actually measured
+
+The true peak is bounded, not measured: a ten-minute sampling interval can miss a
+spike, and the only upper bound is that 43 GB sufficed.
+
+WHAT IS WITHDRAWN
+
+The sentence "it is what a later job should use" is withdrawn. 11 MB must not be used
+to size anything. Any job sized from it would run out of scratch partway through.
+
+WHAT IS UNAFFECTED
+
+Every energy, every T1 diagnostic, every orbital energy, every gate and the verdict.
+Those come from the five job.out files, which are archived, hash-verified and
+unaffected by a mis-timed `du`. R38.8 stands in full: the node, the chosen scratch
+path, the 43 GB free and the REDUCED margin are all correct, and the candidate
+refusals and the ENOSPC correction are unaffected.
+
+WHAT D39 DOES DIFFERENTLY
+
+Two changes, both in Diagnostic 39's job script:
+
+   The peak is sampled while the run is alive, by the same background watcher that
+   writes PROGRESS.txt, and the maximum it sees is carried into the reading. The
+   post-run `du` is still taken but is reported as the residue under its own name, so
+   the two quantities cannot be confused again.
+
+   The free-space floor is set from the corrected figure rather than from 11 MB.
+   D38 ran at a REDUCED margin of 43 GB against a true requirement of at least 31 GB,
+   which is a 12 GB margin that nobody had measured at the time. The ORCA manual puts
+   open-shell runs at "about twice as expensive as the corresponding closed-shell
+   versions", so D39's floor is set well above twice the corrected figure and a
+   candidate that cannot meet it is refused at the start of the job rather than
+   discovered three hours in. On this cluster that rules out $TMPDIR, which held 38 GB
+   on comp050 and 43 GB on comp056, and means D39 needs /scratch-small-local to be
+   genuinely available on whichever node PBS gives it.
