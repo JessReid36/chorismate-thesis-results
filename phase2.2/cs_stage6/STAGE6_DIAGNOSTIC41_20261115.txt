@@ -1,0 +1,135 @@
+STAGE 6, DIAGNOSTIC 41
+The correlated barrier at the production basis: DLPNO-CCSD(T)/def2-SVPD on frame 42436.
+
+Pre-registered 15 November 2026, before any D41 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D36 measured the correlated barrier of the bare substrate at def2-TZVPD: 23.8603
+kcal/mol. Every design in the record is evaluated at def2-SVPD. So the benchmark and the
+production numbers are at different basis sets, and D36 says what it could not do about
+that: "D36 DOES NOT RUN CCSD(T) AT def2-SVPD AND CANNOT MEASURE THE METHOD'S OWN BASIS
+SHIFT." What it offered in place of a measurement is the shift the functionals show,
+which for the eight functionals now measured at both basis sets runs from -0.8624 to
+-1.3028 kcal/mol (def2-TZVPD minus def2-SVPD; D37's table).
+
+Half of the missing measurement already exists. D38's run N is the bare substrate at
+frame 42436's reactant at DLPNO-CCSD(T)/def2-SVPD, committed:
+
+   d38/N    E(0) -831.831909980   E(CCSD(T)) -834.533005232   T1 0.016726026
+
+D41 runs the other half, the transition state, with the same input.
+
+It is also a leg that the coupled-cluster test of ddE, which D38 licensed, cannot do
+without: that test needs the charge-free barrier at the basis the charged runs use.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+One single point.
+
+   run   geometry                             input
+   T     d33a/sp_42436_TS/substrate.xyz       d38/N/job.inp, byte for byte
+
+   ! DLPNO-CCSD(T) def2-SVPD AutoAux TightSCF TightPNO
+   %maxcore 6000, %pal nprocs 16, %scf MaxIter 300, charge -2, multiplicity 1
+
+No charges, no MM region, no wall. The reactant leg is NOT run again: it is
+d38/N/job.out as committed, and its sha256 is written beside the inputs
+(d41/REACTANT_LEG.sha256) so that the reader can require that very file.
+
+RESOURCES. One job, cm_d41, 16 cores, 120 GB, walltime 24:00:00, no -q. The job script is
+D39's, cut down to one closed-shell run: it works in node-local scratch, copies the
+output home, and samples the scratch in use every 60 s while ORCA is running. D38's
+result Erratum 1 bounds a reactant run at this basis between 31 and 43 GB. The transition
+state is not measured; at def2-TZVPD it needed more than the reactant (80 GB against 74,
+D36). So 100 GB is asked for and 60 GB is the least a scratch location may offer. That
+figure is not defended as sufficient. If the run fails on a write, that is a measurement
+of the footprint and not a failure of the method. D38's five runs took between 1 h 05 and
+1 h 14 each.
+
+--------------------------------------------------------------------------------
+3. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R41.1  The DLPNO-CCSD(T) barrier at def2-SVPD, E(T) minus E(d38/N), with its Hartree-Fock
+       and correlation components separated as ORCA reports them, as D36's R36.1 does.
+R41.2  THE METHOD'S OWN BASIS SHIFT: D36's 23.8603 minus R41.1, and the same difference
+       for each component, beside the eight functionals' shifts of -0.8624 to -1.3028.
+       D36 treated a def2-SVPD barrier as carrying "a basis uncertainty of roughly one
+       kcal/mol" on the functionals' evidence. If the correlated shift differs from
+       -1.0 by more than 1.0 kcal/mol either way, the result says that D36's statement
+       is not supported for the benchmark itself.
+R41.3  Each of the eight functionals' committed def2-SVPD barriers minus R41.1:
+
+          B3LYP-D3BJ 18.3323    CAM-B3LYP-D3BJ 26.8248    wB97X-D3 29.0441
+          wB97M-V 28.6953       wB97X-V 30.7479           PW6B95-D3BJ 22.1571
+          M06-2X-D3(0) 29.4427  PWPB95-D3BJ 22.2031
+
+       and whether the order of the eight by distance from the benchmark is the order
+       they have at def2-TZVPD in D36's result. THE EIGHT BARRIERS ARE KNOWN AND THE
+       BENCHMARK IS NOT, so this comparison is fixed before its outcome can be seen. It
+       is still not the comparison D36 pre-registered, which named three functionals at
+       def2-TZVPD.
+R41.4  The T1 diagnostic at the transition state, beside d38/N's 0.016726026 and D36's
+       0.015649748 and 0.018809319.
+R41.5  The highest occupied orbital of the Hartree-Fock reference at the transition
+       state, by the committed cs10_cpcm.py convention, beside d38/N's -2.0444 eV.
+R41.6  Which scratch location was used, the maximum sampled while ORCA was running, and
+       the residue after the run, each under its own name.
+
+--------------------------------------------------------------------------------
+4. GATES. ANY FAILURE STOPS THE DIAGNOSTIC
+--------------------------------------------------------------------------------
+G41.1  T/substrate.xyz is byte-identical by sha256 to d33a/sp_42436_TS/substrate.xyz, and
+       d38/N/substrate.xyz to d33a/sp_42436_R/substrate.xyz.
+G41.2  T/job.inp is byte-identical by sha256 to d38/N/job.inp.
+G41.3  THE REACTANT LEG. d38/N/job.out has the sha256 recorded in d41/REACTANT_LEG.sha256
+       and prints E(CCSD(T)) = -834.533005232.
+G41.4  The run terminates normally, converges its SCF, reports 118 electrons and prints a
+       CCSD(T) energy, and its last FINAL SINGLE POINT ENERGY is that energy. A label
+       that ORCA prints more than once must print one value.
+G41.5  In both legs, E(0) plus E(CORR)(corrected) equals E(CCSD), and E(CCSD) plus the
+       triples correction equals E(CCSD(T)), each to within 2e-9 Eh.
+G41.6  No committed file under d33a, d36, d36a2 or d38 is modified.
+
+THERE IS NO INDEPENDENT CONTROL FOR THE TRANSITION STATE AT THIS BASIS, as D36 said of
+its own transition-state leg. What stands behind the number is this: the input is D38's
+run N; D38 ran the same method line and settings four more times, twice with a charge of
+zero, and those two reproduced run N to 1e-9 Eh; and D36's G36.8 measured that where the
+integrals are stored does not move a converged energy.
+
+--------------------------------------------------------------------------------
+5. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D41.1  IT IS NOT A CONVERGED BARRIER. def2-SVPD is a smaller basis than D36's, which D36
+       already calls modest for CCSD(T). The number is for comparison at the production
+       basis and must not be quoted as the in vacuo barrier.
+D41.2  It is not the experimental number. E7.11 applies to every sentence that puts it
+       near 24.5 or 20.7 kcal/mol, which are a free energy and an enthalpy in water.
+D41.3  One frame, frozen geometries, in vacuo. D35 measured the barrier moving by +1.4992
+       to +3.6023 kcal/mol between two frames.
+D41.4  DLPNO is an approximation; TightPNO is requested and its residual error is not
+       measured. The two legs were run in different jobs.
+D41.5  Two basis sets do not make an extrapolation, and none is attempted.
+D41.6  No charges, no design, no reliability claim, nothing about r_safe.
+D41.7  It adopts no production level of theory. That is an amendment and a decision for
+       Jessica.
+D41.8  Nothing here is shaped toward an outcome. If the functionals' order at def2-SVPD
+       differs from their order at def2-TZVPD, or CAM-B3LYP-D3BJ is not the closest of
+       D36's three at this basis, that is the result.
+
+--------------------------------------------------------------------------------
+6. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d41/        T/job.inp, T/substrate.xyz, run.pbs,
+                                  INPUT_CHECKSUMS.sha256, REACTANT_LEG.sha256
+   phase2.2/cs6_d41_prepare.py    writes them, and refuses to finish unless G41.1 and
+                                  G41.2 hold of what it wrote
+
+The job script was tried before submission with a stand-in for ORCA: once with too
+little scratch, where it refused and left nothing behind, and once through to the end.
+
+The reader is not written yet. It will be committed before it is run on any D41 output,
+and it may report only the readings fixed in section 3, under the gates of section 4.

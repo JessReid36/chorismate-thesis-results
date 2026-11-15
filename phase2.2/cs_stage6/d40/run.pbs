@@ -1,0 +1,55 @@
+#!/bin/bash
+#PBS -N cm_d40
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d40/run.pbs.out
+# Stage 6 DIAGNOSTIC 40: detachment energies at the density-functional level.
+# C_CAM_R is D28's own CAM-B3LYP dianion input byte for byte and is the CONTROL (G40.4).
+# Every other run is a monoanion, charge -1 multiplicity 2: a committed dianion input
+#   with that one line changed. A_B3LYP is Probe 1's committed monoanion input and must
+#   return its committed detachment energy (G40.5).
+# Order: the control, the two anchors, the production-level runs, then the six
+#   functionals whose open-shell runs this record has not made before.
+# A run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d40
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run C_CAM_R
+run A_B3LYP
+run A_CAM
+run B_bare_R
+run B_bare_TS
+run B_ADD-s540_qm06500_R
+run B_ADD-s540_qm06500_TS
+run B_ADD-s678_qm07625_R
+run B_ADD-s678_qm07625_TS
+run B_ADD-s678_qm10000_R
+run B_ADD-s678_qm10000_TS
+run B_bare_n05_q0.50_R
+run B_bare_n05_q0.50_TS
+run B_bare_n11_q0.25_R
+run B_bare_n11_q0.25_TS
+run A_wB97XD3
+run A_wB97MV
+run A_wB97XV
+run A_PW6B95
+run A_M062X
+run A_PWPB95
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 21"

@@ -1,0 +1,40 @@
+#!/bin/bash
+#PBS -N cm_d37a1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d37a1/run.pbs.out
+# Stage 6 DIAGNOSTIC 37, AMENDMENT 1: revDSD-PBEP86-D4, which D37 could not run.
+# The CAM_* runs are D28's own CAM-B3LYP input byte for byte and are the CONTROL.
+# Arm RI asks for RI in an %mp2 block; arm K carries the keyword alone.
+# A run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d37a1
+cd "$W" || exit 1
+if ! mkdir .running 2>/dev/null; then echo "FAIL: another job holds .running in $W"; exit 1; fi
+trap 'rmdir "$W/.running" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run CAM_SV_R
+run CAM_SV_TS
+run revDSD_RI_SV_R
+run revDSD_RI_SV_TS
+run revDSD_K_SV_R
+run revDSD_K_SV_TS
+run revDSD_RI_TZ_R
+run revDSD_RI_TZ_TS
+run revDSD_K_TZ_R
+run revDSD_K_TZ_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' */job.out 2>/dev/null | wc -l) of 10"

@@ -1,0 +1,146 @@
+STAGE 6, DIAGNOSTIC 37, AMENDMENT 1, 15 NOVEMBER 2026
+revDSD-PBEP86-D4, which D37 could not run.
+
+This file is never edited. It changes nothing in STAGE6_DIAGNOSTIC37_20261111.txt, in its
+result, or in any file under d37. Changes to this file go into a further dated amendment.
+
+--------------------------------------------------------------------------------
+A1.1  WHAT HAPPENED
+--------------------------------------------------------------------------------
+D37 ran on 11 November 2026 and is committed at results 64ca690. Five of its six
+candidates were measured. The sixth, revDSD-PBEP86-D4, was not: ORCA 6.0.1 stopped all
+four of its runs before any calculation, in these words (d37/revDSD_SV_R/job.out):
+
+                                 INPUT ERROR
+            UNRECOGNIZED OR DUPLICATED KEYWORD(S) IN SIMPLE INPUT LINE
+              RI-REVDSD-PBEP86-D4/2021
+
+D37's pre-registration had said its keywords were checked against the manual and not
+against a run, and that a rejected line "needs its own dated amendment. It is not swapped
+silently." This is that amendment.
+
+THE ERROR WAS IN THE PRE-REGISTRATION, NOT IN THE FUNCTIONAL. The manual's sentence about
+the RI- prefix was read as applying to every keyword of its table. ORCA 6.0.1 does not
+accept it on this one. The same prefix on PWPB95 was accepted, and that run did use RI
+(d37/PWPB95_TZ_R/job.out, "RI-MP2 ENERGY", 1664 correlation-fitting functions).
+
+D37's four failed runs stay in the record as they are. They are results.
+
+--------------------------------------------------------------------------------
+A1.2  WHAT IS RUN
+--------------------------------------------------------------------------------
+10 single points on the same committed geometries, d33a/sp_42436_{R,TS}/substrate.xyz,
+charge -2, multiplicity 1, in vacuo, in a new directory d37a1.
+
+THE CONTROL, 2 runs, FIRST. D28's CAM-B3LYP input at def2-SVPD, byte for byte, as in D37.
+
+TWO ARMS, 4 runs each: def2-SVPD and def2-TZVPD, reactant and transition state. Both
+carry the same first line, which is D37's rejected line with the prefix removed and
+nothing else changed (X is the basis):
+
+      ! revDSD-PBEP86-D4/2021 X def2/J X/C RIJCOSX TightSCF
+
+   ARM RI adds one line to the input, directly above the geometry line:
+      %mp2 RI true end
+   It asks for the RI approximation in the second-order part by the %mp2 block instead
+   of by the prefix. PWPB95 in D37 used RI, so this is the arm that treats revDSD as D37
+   treated its other double hybrid.
+
+   ARM K adds nothing. It is the control input with its first line replaced, which is
+   exactly what D37 pre-registered for every candidate. What ORCA then does in the
+   second-order part, RI or not, is read from the output and reported; it is not assumed.
+
+WHY TWO ARMS. One manual-based keyword has already failed. The two arms ask for the same
+functional by two routes, so that a second rejection of one route does not leave the
+candidate unmeasured again. If both run, their difference is the effect of the RI
+approximation on this barrier and is reported.
+
+CHECKED IN THE ORCA 6.0 MANUAL ONLINE, 11 November 2026, AND NOT AGAINST A RUN: its keyword
+table lists revDSD-PBEP86-D4/2021 without a prefix, one of its worked examples uses that
+keyword with a /C set and no prefix, and its list of %mp2 keywords includes RI, default
+false. def2-SVPD/C and def2-TZVPD/C are known to exist in ORCA 6.0.1: D37's PWPB95 runs
+used them.
+
+ORDER. The control; arm RI then arm K at def2-SVPD; arm RI then arm K at def2-TZVPD. A run
+that fails does not stop the runs after it. 8 cores, 48 GB, walltime 24:00:00, no -q, job
+name cm_d37a1, its own directory and lock. How long a second-order part without RI takes
+at def2-TZVPD is not known.
+
+--------------------------------------------------------------------------------
+A1.3  READINGS AND THE RULE FOR WHICH ARM IS ENTERED, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+Energies and orbital energies are read exactly as D37 reads them (last FINAL SINGLE POINT
+ENERGY; cs6_d28.py read_out under D28's rule).
+
+R-A1.1  The control: its two energies and its barrier beside D28's.
+R-A1.2  For each arm that ran: whether its outputs say RI was used in the second-order
+        part, its barrier at both basis sets, the shift between them, and the highest
+        occupied orbital at def2-SVPD, reactant, with D37's criterion (BOUND below 0.0 eV)
+        and its distance from -0.5123 eV. As in D37, a double hybrid's orbital energies
+        are those of its hybrid SCF step.
+R-A1.3  If both arms ran: arm RI minus arm K, for the barrier at each basis set.
+R-A1.4  THE ENTRY FOR revDSD-PBEP86-D4 in D37's readings R37.2 to R37.6 is
+           arm RI, if all four of its runs pass the gates and its outputs say RI was used;
+           otherwise arm K, if all four of its runs pass the gates, labelled with what its
+              outputs say about RI;
+           otherwise NOT MEASURED.
+        The choice is made by this rule and not by the numbers.
+R-A1.5  D37's table of the two tests, as its result document prints it, with the entry
+        of R-A1.4 added as a ninth row. D37's own rows are read from d37.tsv and are not
+        recomputed or changed.
+R-A1.6  Test 2 for the entry: its def2-TZVPD barrier minus D36's DLPNO-CCSD(T)/def2-TZVPD
+        barrier. D36's result is committed and prints 23.8603 kcal/mol. The reader takes
+        that number from the result document and requires it to agree with the barrier
+        recomputed from d36a2/B_{R,TS}/job.out, which is where D36's result says its
+        coupled-cluster arm is read from. D37's own reader looks under d36, where that
+        arm has no output; that is why D37's R37.5 could not have been evaluated by it,
+        and it is not relied on here.
+
+--------------------------------------------------------------------------------
+A1.4  GATES
+--------------------------------------------------------------------------------
+GA1.1  Every geometry file is byte-identical by sha256 to d33a/sp_42436_{R,TS}.
+GA1.2  The two control inputs are byte-identical to D28's.
+GA1.3  Every arm K input differs from D28's control input of the same basis in its first
+       line and in nothing else. Every arm RI input differs from the arm K input in the
+       one added line and in nothing else.
+GA1.4  CONTROL. The control reproduces D28's -836.31486034 and -836.27211231 Eh to within
+       1e-6 Eh and its barrier equals 26.8248 kcal/mol to within 0.0010.
+GA1.5  No committed file under d28, d33a, d36, d36a2 or d37 is modified.
+
+       A FAILURE OF GA1.1 TO GA1.5 STOPS THE AMENDMENT. Nothing else is readable.
+
+GA1.6  PER ARM. All four runs terminate normally, converge their SCF, report 118 electrons
+       and 59 occupied orbitals, and contain a second-order section. An arm that fails
+       this is reported as NOT MEASURED, with ORCA's own words, and the other arm is read.
+
+--------------------------------------------------------------------------------
+A1.5  WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+Everything in section 5 of D37's pre-registration applies unchanged, D37.7 above all:
+the double hybrids are the least certain arm. In addition:
+
+DA1.1  Arm K and arm RI are one functional run two ways. They are not two candidates.
+DA1.2  WHAT WAS KNOWN WHEN THIS WAS WRITTEN. The arms, the gates and the entry rule were
+       drafted on 11 November 2026, after D37's result and before D36's. That draft was
+       never committed, so the record cannot show it. This file is committed on 15
+       November 2026, when D36's benchmark, 23.8603 kcal/mol, and the eight measured
+       functionals' distances from it are all known. What can be checked is narrower and
+       is enough: no revDSD-PBEP86-D4 number exists anywhere in the record, because its
+       four runs stopped at the input parser; and the entry rule R-A1.4 depends on gates
+       and on what the outputs say about RI, not on any barrier.
+DA1.3  For this one functional, test 2 is therefore fixed before its own number exists
+       and after the benchmark's does. D36 labels its comparison of D37's other five
+       functionals POST HOC, and that label is D36's and stays.
+DA1.4  It adopts no level of theory and bears on no design.
+
+--------------------------------------------------------------------------------
+A1.6  FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d37a1/              10 run directories, run.pbs,
+                                          INPUT_CHECKSUMS.sha256 (21 files checksummed)
+   phase2.2/cs6_d37a1_prepare.py          writes them, and refuses to finish unless
+                                          GA1.1 to GA1.3 hold of what it wrote
+
+The reader is not committed with this file. It will be committed before it is run on any
+d37a1 output, and it may report only the readings fixed in A1.3, under the gates of A1.4.

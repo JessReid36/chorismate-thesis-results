@@ -1,0 +1,213 @@
+STAGE 6, DIAGNOSTIC 40
+Detachment energies at the density-functional level: eight functionals on the bare
+substrate, and the five arrangements whose lowering is quotable.
+
+Pre-registered 15 November 2026, before any D40 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+The record's test of whether the dianion keeps its second electron is the vertical
+detachment energy, and not the sign of an orbital energy. Diagnostic 2 said so, Probe 1's
+Erratum 1 withdrew a column for reading the orbital instead, and Probe 2's result heads
+itself "THE HOMO IS NOT THE TEST". Diagnostic 39's pre-registration says it again: "The
+observable this project actually uses for boundedness is not the orbital energy."
+
+Two things in the record rest on the orbital all the same, because the observable has
+never been computed where it is needed.
+
+FIRST, THE CHOICE OF FUNCTIONAL. D28 and D37 read each functional's highest occupied
+orbital against one number, -0.5123 eV, which is minus a detachment energy computed with
+B3LYP-D3BJ at ma-def2-SVP. Checked while writing this: every committed input at charge -1
+and multiplicity 2 is B3LYP-D3BJ (one at def2-SVP, one at def2-SVPD, nine at
+ma-def2-SVP), apart from the three DLPNO-CCSD(T) inputs of D39, which have no output yet.
+CAM-B3LYP, which D30 to D34 all use, has no detachment energy of its own, and neither has
+any other functional of D28 or D37. So each functional's orbital is being compared with
+another functional's energy difference at another basis.
+
+SECOND, THE QUOTABLE NUMBERS. Five lowerings are quotable at CAM-B3LYP-D3BJ/def2-SVPD:
+
+   D34, R34.9            ADD-s540_qm06500    -3.3985   one sphere of -0.6500 e
+                         ADD-s678_qm07625    -4.1567   one sphere of -0.7625 e
+                         ADD-s678_qm10000    -5.3701   one sphere of -1.0000 e
+   D33 stage B, with     bare_n05_q0.50     -14.3612   five point charges, 0.50 e each
+   its Erratum 2         bare_n11_q0.25     -13.0007   eleven point charges, 0.25 e each
+
+None of the five has a detachment energy at any level. What the record does hold is
+Probe 2, at B3LYP-D3BJ/ma-def2-SVP and at the reactant: one charge of -1.0 e at 2.960 A
+gives -2.1005 eV, METASTABLE, and Probe 2's verdict on such a condition is "Any ddE
+measured at such a condition is not a barrier effect and must not be reported as one."
+That charge sits at another site than D34's three spheres, so it does not decide them.
+Probe 3 found S6-P, S6-2 and S6-20 bound. The four-leg reliability criterion has no leg
+for this: D34's three are RELIABLE on four legs and that says nothing about binding.
+
+D40 computes the observable in both places. D39 is computing it at the coupled-cluster
+level for the bare substrate and two point-charge arrangements; D40 is the
+density-functional side of the same question and is read beside D39 when D39 reports.
+
+--------------------------------------------------------------------------------
+2. THE CONVENTION, TAKEN FROM THE RECORD
+--------------------------------------------------------------------------------
+Probe 2's result: "VDE = E(monoanion) - E(dianion) at the committed reactant geometry,
+same external charge in both. Positive means bound." The monoanion is charge -1,
+multiplicity 2. The conversion is the probes' own, 27.211386245988 eV per Eh
+(vde_designs/cs11_design_vde.py). Energies are the last FINAL SINGLE POINT ENERGY; for a
+QM/MM run the energy is read the way cs6_analyse.py reads it for ddE, the QM/MM total,
+and the Lennard-Jones term is the same in the monoanion and the dianion because nothing
+but the QM charge differs.
+
+   BOUND at this condition       VDE above zero
+   METASTABLE at this condition  VDE at or below zero
+
+These are Probe 2's two words and no third is introduced.
+
+--------------------------------------------------------------------------------
+3. WHAT IS RUN
+--------------------------------------------------------------------------------
+21 single points on frame 42436. 20 are monoanions. EVERY MONOANION INPUT IS A COMMITTED
+DIANION INPUT WITH ITS CHARGE-AND-MULTIPLICITY LINE CHANGED FROM "-2 1" TO "-1 2" AND
+NOTHING ELSE TOUCHED, beside byte-for-byte copies of that run's own geometry, point-charge
+and force-field files. The dianion half of every difference is the committed output of
+the run the input was copied from; it is not run again.
+
+THE CONTROL, 1 run, first.
+   C_CAM_R    D28's CAM-B3LYP-D3BJ/def2-SVPD dianion input at the reactant, byte for byte.
+
+PART A, 8 runs. The bare substrate at the reactant, def2-SVPD, one per functional.
+
+   run         copied from                       functional
+   A_B3LYP     d27/def2-SVPD/ctl_R               B3LYP-D3BJ
+   A_CAM       d28/CAM-B3LYP/def2-SVPD/ctl_R     CAM-B3LYP-D3BJ
+   A_wB97XD3   d28/wB97X-D3/def2-SVPD/ctl_R      wB97X-D3
+   A_wB97MV    d37/wB97MV_SV_R                   wB97M-V
+   A_wB97XV    d37/wB97XV_SV_R                   wB97X-V
+   A_PW6B95    d37/PW6B95_SV_R                   PW6B95-D3BJ
+   A_M062X     d37/M062X_SV_R                    M06-2X-D3(0)
+   A_PWPB95    d37/PWPB95_SV_R                   PWPB95-D3BJ, with RI as D37 ran it
+
+   A_B3LYP is a second control. Checked while writing this: the input it produces is
+   byte-identical to qscan/VDE/C5_mono_R/job.inp, Probe 1's committed monoanion input,
+   whose committed detachment energy is +0.5013 eV.
+
+   revDSD-PBEP86-D4 is not in part A. D37 could not run it, and Amendment 1 to D37,
+   committed with this document, has not yet shown that either of its keywords works.
+
+PART B, 12 runs. CAM-B3LYP-D3BJ/def2-SVPD with the stability analysis, at the reactant
+and at the transition state.
+
+   run                         copied from                    what it is
+   B_bare_{R,TS}               d31/ctl_{R,TS}                 the bare substrate
+   B_ADD-s540_qm06500_{R,TS}   d34/a2_ADD-s540_qm06500_{..}   D34 arm 2, QM/MM, one
+   B_ADD-s678_qm07625_{R,TS}   d34/a2_ADD-s678_qm07625_{..}   Lennard-Jones sphere
+   B_ADD-s678_qm10000_{R,TS}   d34/a2_ADD-s678_qm10000_{..}   each
+   B_bare_n05_q0.50_{R,TS}     d33b/bare_n05_q0.50_{..}       D33 stage B, point
+   B_bare_n11_q0.25_{R,TS}     d33b/bare_n11_q0.25_{..}       charges
+
+   These are the runs the five quotable numbers were read from, so the monoanion sees
+   exactly the charges, the positions, the force field and the SCF settings that the
+   quoted dianion saw. The inputs carry "STABPerform true" because their sources do.
+
+WHY PART B CARRIES THE STABILITY ANALYSIS AND PART A DOES NOT. Neither is a choice made
+here: each input inherits what its committed source has. It matters all the same. A
+monoanion solution that is not the lowest one makes the detachment energy too HIGH, so an
+undetected instability favours BOUND. Part B's runs are analysed for it. Part A's are
+not, and section 6 says how that limits them. A_CAM and B_bare_R are the same species at
+the same level, without and with the analysis, and their difference is a reading.
+
+ORDER. The control; A_B3LYP and A_CAM; the twelve runs of part B; then the other six of
+part A, whose open-shell runs this record has never made. A run that fails does not stop
+the runs after it. One job, cm_d40, 8 cores, 48 GB, walltime 24:00:00, no -q.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R40.1  The control's energy beside D28's -836.31486034 Eh, and A_B3LYP's detachment
+       energy beside Probe 1's +0.5013 eV.
+R40.2  PART A. For each functional: the monoanion's energy, the committed dianion's, the
+       detachment energy, and <S**2> of the monoanion. Beside each, the functional's
+       committed highest occupied orbital at the same basis and geometry, and the sum of
+       the two, which is zero for a functional whose orbital energy equals minus its own
+       detachment energy.
+R40.3  PART A against the benchmark. Each functional's detachment energy minus D39's
+       coupled-cluster value for the bare dianion. NOT EVALUATED HERE. D39 has no output
+       and its result's format is not known; the comparison is made by a dated addendum
+       to D40 once D39's result is committed, from the number that result prints.
+R40.4  PART B. For the bare substrate and each of the five arrangements, at each state:
+       the detachment energy, BOUND or METASTABLE, <S**2>, whether the stability
+       analysis found the first solution stable and whether the last is, and whether a
+       level shift or TRAH was engaged.
+R40.5  A_CAM against B_bare_R: the two monoanion energies and their difference.
+R40.6  For each arrangement, the change in detachment energy from the bare substrate at
+       the same state, in eV. Reported, not interpreted.
+R40.7  WHAT THE RULE OF THE RECORD THEN REACHES. A lowering is a difference between a
+       transition state and a reactant. If either state of an arrangement is METASTABLE,
+       Probe 2's sentence applies to that arrangement's ddE, and the result names the
+       number it reaches. If both states are BOUND, the result says that this objection
+       does not reach the number at this level and basis. D40 does no more than that:
+       section 6.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+G40.1  Every geometry, point-charge and force-field file is byte-identical by sha256 to
+       the file of the committed run it was copied from, and the bare geometries to
+       d33a/sp_42436_{R,TS}/substrate.xyz.
+G40.2  Every monoanion input differs from its committed source in exactly one line, the
+       charge-and-multiplicity line, and the control input in none.
+G40.3  A_B3LYP/job.inp is byte-identical to qscan/VDE/C5_mono_R/job.inp.
+G40.4  CONTROL. C_CAM_R reproduces D28's -836.31486034 Eh to within 1e-6 Eh.
+G40.5  CONTROL. A_B3LYP's detachment energy equals +0.5013 eV to within 0.001 eV.
+G40.6  No committed file under d27, d28, d31, d33a, d33b, d34, d37 or qscan is modified,
+       and every committed dianion output read is the file at the commit this document
+       is committed on.
+
+       A FAILURE OF G40.1 TO G40.6 STOPS THE DIAGNOSTIC. Nothing else is readable.
+
+G40.7  PER RUN. A monoanion run is read only if it terminates normally, converges its
+       SCF and reports 117 electrons. A run that fails this is reported NOT MEASURED with
+       ORCA's own words, and is not dropped. No keyword is changed to make it run; that
+       needs a dated amendment.
+G40.8  An arrangement is classified only if both of its states are measured. One state
+       alone is reported with its number and no classification of the arrangement.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D40.1  IT WITHDRAWS NOTHING AND CHANGES NO VERDICT. D34's and D33's verdicts are
+       reliability verdicts and stay as committed. If R40.7 reaches a quotable number,
+       what becomes of that number is a dated erratum and a decision for Jessica. D34's
+       result says the same of its own numbers: "withdrawal of a committed number needs
+       its own dated erratum".
+D40.2  It does not make binding a leg of the reliability criterion. That is an amendment.
+D40.3  A detachment energy computed with unrestricted Kohn-Sham is an energy difference
+       between two self-consistent solutions. Part A's monoanions are not analysed for
+       stability, so each of part A's values is an upper bound in this sense: a lower
+       monoanion solution, if one exists, would lower it. Spin contamination is reported
+       and not corrected; Probe 3's committed S6-2 monoanion shows <S**2> of 1.243299.
+D40.4  A METASTABLE species has no bound state to converge to. In a finite basis its
+       energy depends on the basis, which is what Dreuw and Cederbaum warn of in the
+       record's citation. So where a detachment energy is negative, its sign is the
+       reading and its size is not.
+D40.5  One basis, def2-SVPD. Probe 1 measured a change of sign in the bare detachment
+       energy between def2-SVP and def2-SVPD.
+D40.6  Vertical, not adiabatic: both species at the dianion's geometry.
+D40.7  One frame. The transition-state values of part B are the first at that geometry
+       in the record at any level, and have nothing to reproduce.
+D40.8  All five arrangements sit inside r_safe. D40 says nothing about that.
+D40.9  It does not test the functionals against the benchmark: R40.3 waits for D39.
+D40.10 It adopts no level of theory.
+D40.11 NOTHING HERE IS SHAPED. The five arrangements are the record's only quotable
+       lowerings. A METASTABLE result for any of them is reported as plainly as BOUND, in
+       the same table, by a rule fixed here before any output exists.
+
+--------------------------------------------------------------------------------
+7. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d40/        21 run directories, run.pbs, INPUT_CHECKSUMS.sha256
+                                  (53 files checksummed)
+   phase2.2/cs6_d40_prepare.py    writes them from the committed runs, and refuses to
+                                  finish unless G40.1 to G40.3 hold of what it wrote
+
+The reader is not written yet. It will be committed before it is run on any D40 output,
+and it may report only the readings fixed in section 4, under the gates of section 5.
