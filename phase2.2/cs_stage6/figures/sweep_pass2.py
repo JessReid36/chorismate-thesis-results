@@ -57,10 +57,11 @@ HF UHF RHF ROHF RI NL D3 D4 ASH OPC MK ESP SCAN PBE CBC PCM NEB IRC FOD ECP sqm 
 # A name that ORCA is asked for under another spelling: the keyword token or tokens, in upper case as pass 1 stores
 # them, that request it.  Without this a method run under its ORCA keyword (M062X for M06-2X, RI-PWPB95 for PWPB95)
 # would show no keyword line and could be listed as never run.  VV10 is the non-local correlation that wB97M-V and
-# wB97X-V include.  D4 and revDSD-PBEP86 stand only inside the keyword of DIAGNOSTIC 37's sixth candidate, which
-# ORCA 6.0.1 rejected: they are on keyword lines of inputs and on no output's echo, and nothing was computed with them.
-ALIAS = {"M06-2X": ["M062X"], "PWPB95": ["RI-PWPB95"], "revDSD-PBEP86": ["RI-REVDSD-PBEP86-D4/2021"],
-         "D4": ["RI-REVDSD-PBEP86-D4/2021"], "VV10": ["WB97M-V", "WB97X-V"]}
+# wB97X-V include.  D4 and revDSD-PBEP86 stand only inside two keywords for one functional: RI-REVDSD-PBEP86-D4/2021,
+# DIAGNOSTIC 37's, which ORCA 6.0.1 rejected (on keyword lines of inputs and on no output's echo), and
+# REVDSD-PBEP86-D4/2021, DIAGNOSTIC 37 Amendment 1's, which ORCA accepted and ran.
+ALIAS = {"M06-2X": ["M062X"], "PWPB95": ["RI-PWPB95"], "revDSD-PBEP86": ["RI-REVDSD-PBEP86-D4/2021", "REVDSD-PBEP86-D4/2021"],
+         "D4": ["RI-REVDSD-PBEP86-D4/2021", "REVDSD-PBEP86-D4/2021"], "VV10": ["WB97M-V", "WB97X-V"]}
 
 
 SKIP = (".gbw", ".densities", ".npz", ".png", ".svg", ".docx", ".rst7", ".prmtop", ".inpcrd", ".pdf", ".hess", ".densitiesinfo",

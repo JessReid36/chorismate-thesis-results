@@ -9,7 +9,7 @@ What it does, in order:
      phase2.2/cs6_d33b.py (the stability block and the level-shift markers) and phase2.2/cs6_analyse.py
      (the bare / (MM) / (QM/MM) energy convention) - so that every number here is read the way the
      record reads it;
-  2. writes one .tsv per figure (F1 .. F11) and per table (T3 .. T9), plus controls.tsv (quantities recomputed from raw outputs
+  2. writes one .tsv per figure (F1 .. F12) and per table (T3 .. T13), plus controls.tsv (quantities recomputed from raw outputs
      beside the value the record prints) and derived.tsv (every derived number the write-up quotes, with
      its arithmetic and the files its inputs came from);
   3. unless --tsv-only, draws each figure from its own .tsv as .svg and .png.
@@ -40,16 +40,18 @@ FUNCS = ["CAM-B3LYP", "WB97X-D3", "B3LYP"]            # the three functionals of
 # every method keyword that heads a committed charge-free single point on frame 42436, as ORCA's keyword line
 # spells it in upper case.  A keyword line is split on white space and matched token by token, so WB97X-V is not
 # WB97X-D3 and RI-PWPB95 is not PW6B95.
-METHODS = ["DLPNO-CCSD(T)", "CAM-B3LYP", "WB97X-D3", "WB97M-V", "WB97X-V", "PW6B95", "M062X", "RI-PWPB95", "B3LYP",
-           "HF", "MP2"]
+METHODS = ["DLPNO-CCSD(T)", "CAM-B3LYP", "WB97X-D3", "WB97M-V", "WB97X-V", "PW6B95", "M062X", "RI-PWPB95",
+           "REVDSD-PBEP86-D4/2021", "B3LYP", "HF", "MP2"]
+# REVDSD-PBEP86-D4/2021 is the keyword DIAGNOSTIC 37's Amendment 1 ran.  The keyword D37 itself tried,
+# RI-REVDSD-PBEP86-D4/2021, was rejected by ORCA, left no normally terminated output, and is not in this list.
 # the order of the rows of F1: the record's three functionals first, as before, then the rest
-METHOD_ORDER = ["B3LYP", "CAM-B3LYP", "WB97X-D3", "PW6B95", "RI-PWPB95", "WB97M-V", "M062X", "WB97X-V", "HF", "MP2",
-                "DLPNO-CCSD(T)"]
+METHOD_ORDER = ["B3LYP", "CAM-B3LYP", "WB97X-D3", "PW6B95", "RI-PWPB95", "REVDSD-PBEP86-D4/2021", "WB97M-V", "M062X", "WB97X-V",
+                "HF", "MP2", "DLPNO-CCSD(T)"]
 BASIS_ORDER = ["6-31G(D)", "DEF2-SVP", "MA-DEF2-SVP", "DEF2-SVPD", "DEF2-TZVPD"]
 BASES = ["DEF2-TZVPD", "MA-DEF2-SVP", "DEF2-SVPD", "DEF2-SVP", "6-31G(D)"]
 PRETTY = {"CAM-B3LYP": "CAM-B3LYP", "WB97X-D3": "wB97X-D3", "B3LYP": "B3LYP", "HF": "HF", "MP2": "MP2",
           "WB97M-V": "wB97M-V", "WB97X-V": "wB97X-V", "PW6B95": "PW6B95", "M062X": "M06-2X", "RI-PWPB95": "PWPB95",
-          "DLPNO-CCSD(T)": "DLPNO-CCSD(T)",
+          "DLPNO-CCSD(T)": "DLPNO-CCSD(T)", "REVDSD-PBEP86-D4/2021": "revDSD-PBEP86-D4",
           "DEF2-TZVPD": "def2-TZVPD", "MA-DEF2-SVP": "ma-def2-SVP", "DEF2-SVPD": "def2-SVPD",
           "DEF2-SVP": "def2-SVP", "6-31G(D)": "6-31G(d)"}
 EV = 27.211386245988        # eV per Eh (CODATA 2018)
@@ -228,6 +230,8 @@ def build(res, code, out):
         c["level"] = level_of(t)
         c["sig"] = dist_signature(echoed_coords(t) or [])
         c["nfinal"] = len(re.findall(r"FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)", t))
+        c["chmult"] = (sorted(set(re.findall(r"^\s*Total Charge\s+Charge\s+\.+\s+(-?\d+)\s*$", t, re.M))),
+                       sorted(set(re.findall(r"^\s*Multiplicity\s+Mult\s+\.+\s+(\d+)\s*$", t, re.M))))
         return c
 
     # ---- the reference geometries of frame 42436, by content -----------------------------------
@@ -262,6 +266,9 @@ def build(res, code, out):
             continue
         if c["nopt"] or c["nfinal"] != 1:
             continue                               # an optimisation's last energy is not at the frozen geometry
+        if c["chmult"] != (["-2"], ["1"]):
+            continue                               # the pool is the dianion, a closed-shell singlet: a monoanion on the
+                                                   # same geometry at the same keywords (D39, D40) is another species
         st = state_of(c)
         if st is None:
             continue
@@ -292,7 +299,11 @@ def build(res, code, out):
                "functional: the method of the keyword line (PWPB95 is run as RI-PWPB95, M06-2X as M062X; HF, MP2 and DLPNO-CCSD(T)",
                "are not functionals).  The energy is the last FINAL SINGLE POINT ENERGY, which for MP2, PWPB95 and DLPNO-CCSD(T)",
                "includes the correlation part.  HOMO_*_eV is the highest occupied orbital of the self-consistent-field step;",
-               "level_shift: whether a level shift or TRAH was engaged in either run, in which case the record does not quote it."],
+               "level_shift: whether a level shift or TRAH was engaged in either run, in which case the record does not quote it.",
+               "Only runs that ORCA reports as total charge -2 and multiplicity 1 are pooled: the monoanion single points of",
+               "DIAGNOSTICS 39 and 40 stand on the same geometries at the same keyword lines and are not the bare dianion.",
+               "revDSD-PBEP86-D4 is DIAGNOSTIC 37 Amendment 1 (keyword revDSD-PBEP86-D4/2021); its two arms ran the same calculation,",
+               "so n_R and n_TS are 2.  DLPNO-CCSD(T)/def2-SVPD is DIAGNOSTIC 41: the reactant is d38/N, the transition state d41/T."],
               ["functional", "basis", "dispersion", "solvation", "nbasis", "E_R_Eh", "E_TS_Eh", "barrier_kcal",
                "n_R", "n_TS", "spread_Eh", "HOMO_R_eV", "example_R", "example_TS", "HOMO_TS_eV", "level_shift"], f1)
 
@@ -954,6 +965,149 @@ def build(res, code, out):
                                          ("highest occupied orbital, TS, eV", float(r[14]), v["hT"], 1.5e-4, 4)):
             k += 1
             control("C42.%02d" % k, "DIAGNOSTIC 37, %s/%s, %s (d37.tsv)" % (fn, bs, what), mine, rec, D37T, tol, nd)
+    # ---- DIAGNOSTIC 41: the correlated barrier at the production basis, def2-SVPD ------------------------------
+    # One new single point, the transition state (d41/T).  The reactant leg is DIAGNOSTIC 38's run N, as committed.
+    D41R, D41T = S6 + "/STAGE6_DIAGNOSTIC41_RESULT_20261115.txt", S6 + "/d41.tsv"
+    S41 = {"R": cc(root / "d38" / "N"), "TS": cc(root / "d41" / "T")}
+    for st in ("R", "TS"):
+        x = S41[st]
+        if (state_of(x["c"]) != st or x["c"]["level"][1] != "DEF2-SVPD" or x["c"]["npc"] or x["npc_printed"] != "none read"
+                or x["c"]["chmult"] != (["-2"], ["1"])):
+            stop("%s is not a charge-free DLPNO-CCSD(T)/def2-SVPD dianion single point on frame 42436's %s geometry" % (x["rel"], st))
+        j = "1" if st == "R" else "2"
+        control("C46.%s1" % j, "DIAGNOSTIC 41 %s leg: E(0) + E(CORR)(corrected) against E(CCSD), Eh" % st,
+                x["E(0)"] + x["E(CORR)(corrected)"], x["E(CCSD)"], x["rel"] + "/job.out", 2e-9, 9)
+        control("C46.%s2" % j, "DIAGNOSTIC 41 %s leg: E(CCSD) + (T) against E(CCSD(T)), Eh" % st,
+                x["E(CCSD)"] + x["Triples Correction (T)"], x["E(CCSD(T))"], x["rel"] + "/job.out", 2e-9, 9)
+        control("C46.%s3" % j, "DIAGNOSTIC 41 %s leg: the last FINAL SINGLE POINT ENERGY against E(CCSD(T)), Eh" % st,
+                x["E"], x["E(CCSD(T))"], x["rel"] + "/job.out", 1e-9, 9)
+    rec41 = {}
+    for l in (root / "d41.tsv").read_text().splitlines()[1:]:
+        f = l.split("\t")
+        rec41[f[0]] = tuple(float(v) for v in f[1:6])
+    t41 = (root / "STAGE6_DIAGNOSTIC41_RESULT_20261115.txt").read_text()
+    s411 = t41[t41.index("R41.1 "):t41.index("R41.2 ")]
+    s412 = t41[t41.index("R41.2 "):t41.index("R41.3 ")]
+    s413 = t41[t41.index("R41.3 "):t41.index("R41.4 ")]
+    bench_sv = (S41["TS"]["E(CCSD(T))"] - S41["R"]["E(CCSD(T))"]) * H
+    t11, k = [], 0
+    for lab, shown in (("E(0)", "E(0), Hartree-Fock"), ("E(CORR)(strong-pairs)", None), ("E(CORR)(weak-pairs)", None),
+                       ("E(CORR)(corrected)", None), ("E(CCSD)", None), ("Triples Correction (T)", None), ("E(CCSD(T))", None)):
+        shown = shown or lab
+        vR, vT = S41["R"][lab], S41["TS"][lab]
+        bsv, btz = (vT - vR) * H, (B36["TS"][lab] - B36["R"][lab]) * H
+        t11.append((shown, fmt(vR, 9), fmt(vT, 9), fmt(bsv, 4), fmt(btz, 4), "%+.4f" % (btz - bsv)))
+        for what, mine, rec, tol, nd in (("R, Eh", vR, rec41[shown][0], 1e-9, 9), ("TS, Eh", vT, rec41[shown][1], 1e-9, 9),
+                                         ("barrier at def2-SVPD, kcal/mol", bsv, rec41[shown][2], 6e-5, 4),
+                                         ("barrier at def2-TZVPD, kcal/mol", btz, rec41[shown][3], 6e-5, 4),
+                                         ("def2-TZVPD minus def2-SVPD, kcal/mol", btz - bsv, rec41[shown][4], 6e-5, 4)):
+            k += 1
+            control("C47.%02d" % k, "DIAGNOSTIC 41, %s, %s (d41.tsv)" % (shown, what), mine, rec, D41T, tol, nd)
+        m = re.search(r"^\s+" + re.escape(shown) + r"\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$", s411, re.M)
+        if not m:
+            stop("DIAGNOSTIC 41's result does not print the row %s in R41.1" % shown)
+        for what, mine, rec, tol, nd in (("R, Eh", vR, float(m.group(1)), 1e-9, 9), ("TS, Eh", vT, float(m.group(2)), 1e-9, 9),
+                                         ("TS minus R, kcal/mol", bsv, float(m.group(3)), 6e-5, 4)):
+            k += 1
+            control("C47.%02d" % k, "DIAGNOSTIC 41 R41.1, %s, %s" % (shown, what), mine, rec, D41R, tol, nd)
+        if lab in ("E(0)", "E(CORR)(corrected)", "E(CCSD)", "Triples Correction (T)", "E(CCSD(T))"):
+            m = re.search(r"^\s+" + re.escape(shown) + r"\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+([+-]\d+\.\d+)\s*$", s412, re.M)
+            if not m:
+                stop("DIAGNOSTIC 41's result does not print the row %s in R41.2" % shown)
+            k += 1
+            control("C47.%02d" % k, "DIAGNOSTIC 41 R41.2, %s, def2-TZVPD minus def2-SVPD, kcal/mol" % shown, btz - bsv, float(m.group(3)), D41R, 6e-5, 4)
+    for st, tag in (("TS", "d41/T, transition state, def2-SVPD"), ("R", "d38/N, reactant, def2-SVPD")):
+        m = re.search(r"^\s+" + re.escape(tag) + r"\s+(0\.\d{9})\s*$", t41, re.M)
+        if not m:
+            stop("DIAGNOSTIC 41's result does not print the T1 diagnostic of %s" % tag)
+        k += 1
+        control("C47.%02d" % k, "DIAGNOSTIC 41 R41.4, T1 diagnostic, %s" % st, S41[st]["T1 diagnostic"], float(m.group(1)), D41R, 1e-9, 9)
+    for st, tag in (("TS", "d41/T, transition state"), ("R", "d38/N, reactant")):
+        m = re.search(r"^\s+" + re.escape(tag) + r"\s+(-?\d+\.\d{4}) eV\s*$", t41, re.M)
+        if not m:
+            stop("DIAGNOSTIC 41's result does not print the highest occupied orbital of %s" % tag)
+        k += 1
+        control("C47.%02d" % k, "DIAGNOSTIC 41 R41.5, highest occupied orbital of the Hartree-Fock reference, %s, eV" % st,
+                S41[st]["homo"], float(m.group(1)), D41R, 1.5e-4, 4)
+    r413 = {}
+    for fn in POOLKEY:
+        m = re.search(r"^\s+" + re.escape(fn) + r"\s+(\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s*$", s413, re.M)
+        if not m:
+            stop("DIAGNOSTIC 41's result does not print %s in R41.3" % fn)
+        # R41.3 is defined on the COMMITTED def2-SVPD barriers, the four-decimal values of d37.tsv that the pre-registration
+        # lists (controls C42 hold each of them against the raw outputs), minus the benchmark; so it is formed that way here
+        sv = rec37[(fn, "def2-SVPD")]["bar"]
+        if abs(sv - float(m.group(1))) > 0:
+            stop("DIAGNOSTIC 41's R41.3 does not print d37.tsv's def2-SVPD barrier for %s" % fn)
+        k += 1
+        control("C47.%02d" % k, "DIAGNOSTIC 41 R41.3, %s/def2-SVPD barrier minus the def2-SVPD benchmark, kcal/mol" % fn,
+                sv - bench_sv, float(m.group(2)), D41R, 6e-5, 4)
+        r413[fn] = sv - bench_sv
+    t11.append(("T1 diagnostic", fmt(S41["R"]["T1 diagnostic"], 9), fmt(S41["TS"]["T1 diagnostic"], 9), "-", "-", "-"))
+    t11.append(("T1 diagnostic at def2-TZVPD (DIAGNOSTIC 36)", fmt(B36["R"]["T1 diagnostic"], 9), fmt(B36["TS"]["T1 diagnostic"], 9), "-", "-", "-"))
+    t11.append(("triples computed", S41["R"]["triples"], S41["TS"]["triples"], "-", "-", "-"))
+    t11.append(("highest occupied orbital of the Hartree-Fock reference, eV", fmt(S41["R"]["homo"], 4), fmt(S41["TS"]["homo"], 4), "-", "-", "-"))
+    write_tsv(out / "T11_d41_benchmark_svpd.tsv",
+              ["T11. DIAGNOSTIC 41: DLPNO-CCSD(T)/def2-SVPD (AutoAux, TightSCF, TightPNO) on the bare substrate, frame 42436, frozen geometries, in vacuo.",
+               "The reactant leg is DIAGNOSTIC 38's run N (%s/d38/N/job.out), as committed; the transition state is %s/d41/T/job.out." % (S6, S6),
+               "The two legs were run in different jobs.  barrier = (TS - R) x %.10f kcal/mol per Eh." % H,
+               "barrier_TZVPD_kcal: the same component of DIAGNOSTIC 36's barrier, recomputed here from %s/d36a2/B_{R,TS}/job.out." % S6,
+               "shift: def2-TZVPD minus def2-SVPD.  Controls C46 and C47 compare with d41.tsv and with the result's printed tables.",
+               "22.8968 is NOT a converged barrier and must not be quoted as the in vacuo barrier (D41.1); it is NOT the experimental number (D41.2).",
+               "Two basis sets do not make an extrapolation, and none is attempted (D41.5)."],
+              ["quantity", "R_d38N", "TS_d41T", "barrier_SVPD_kcal", "barrier_TZVPD_kcal", "shift_TZVPD_minus_SVPD_kcal"], t11)
+
+    # ---- DIAGNOSTIC 37, Amendment 1: revDSD-PBEP86-D4, which D37 could not run, run two ways ---------------------
+    D37A1R, D37A1T = S6 + "/STAGE6_DIAGNOSTIC37_AMENDMENT1_RESULT_20261115.txt", S6 + "/d37a1.tsv"
+    rec37a = {}
+    for l in (root / "d37a1.tsv").read_text().splitlines()[1:]:
+        f = l.split("\t")
+        rec37a[(f[0], f[1])] = dict(eR=float(f[2]), eT=float(f[3]), bar=float(f[4]), hR=float(f[5]), hT=float(f[6]), ri=f[7], status=f[8], entered=f[9])
+    A1, k = {}, 0
+    for arm in ("RI", "K"):
+        for bs, tag in (("def2-SVPD", "SV"), ("def2-TZVPD", "TZ")):
+            e = {}
+            for st in ("R", "TS"):
+                d = root / "d37a1" / ("revDSD_%s_%s_%s" % (arm, tag, st))
+                c = run(d)
+                if (c is None or not c["norm"] or c["notconv"] or c["npc"] or state_of(c) != st or c["level"][0] != "REVDSD-PBEP86-D4/2021"
+                        or PRETTY[c["level"][1]] != bs or c["chmult"] != (["-2"], ["1"]) or c["shifted"] or c["nfinal"] != 1):
+                    stop("%s is not a normally terminated, converged, charge-free revDSD-PBEP86-D4/%s dianion run on frame 42436" % (d, bs))
+                e[st] = c
+            A1[(arm, bs)] = e
+            v = rec37a[(arm, bs)]
+            if v["status"] != "measured":
+                stop("d37a1.tsv does not mark arm %s at %s as measured" % (arm, bs))
+            for what, mine, rec, tol, nd in (("E(R), Eh", e["R"]["E"], v["eR"], 1e-8, 8), ("E(TS), Eh", e["TS"]["E"], v["eT"], 1e-8, 8),
+                                             ("barrier, kcal/mol", (e["TS"]["E"] - e["R"]["E"]) * H, v["bar"], 6e-5, 4),
+                                             ("highest occupied orbital, R, eV", e["R"]["homo"], v["hR"], 1.5e-4, 4),
+                                             ("highest occupied orbital, TS, eV", e["TS"]["homo"], v["hT"], 1.5e-4, 4)):
+                k += 1
+                control("C50.%02d" % k, "DIAGNOSTIC 37 Amendment 1, arm %s, %s, %s (d37a1.tsv)" % (arm, bs, what), mine, rec, D37A1T, tol, nd)
+    if [a for a in ("RI", "K") if rec37a[(a, "def2-SVPD")]["entered"] == "yes" and rec37a[(a, "def2-TZVPD")]["entered"] == "yes"] != ["RI"]:
+        stop("d37a1.tsv does not enter arm RI, and arm RI alone")
+    cam37a = {}
+    for st in ("R", "TS"):
+        c = run(root / "d37a1" / ("CAM_SV_%s" % st))
+        if (c is None or not c["norm"] or c["notconv"] or c["npc"] or state_of(c) != st or c["level"][:2] != ("CAM-B3LYP", "DEF2-SVPD")
+                or c["chmult"] != (["-2"], ["1"])):
+            stop("d37a1/CAM_SV_%s is not the CAM-B3LYP-D3BJ/def2-SVPD control on frame 42436" % st)
+        cam37a[st] = c
+    k += 1
+    control("C50.%02d" % k, "DIAGNOSTIC 37 Amendment 1, the control: CAM-B3LYP-D3BJ/def2-SVPD barrier, run again", (cam37a["TS"]["E"] - cam37a["R"]["E"]) * H,
+            26.8248, D37A1R, 5e-5, 4)
+    rsd_sv = (A1[("RI", "def2-SVPD")]["TS"]["E"] - A1[("RI", "def2-SVPD")]["R"]["E"]) * H
+    rsd_tz = (A1[("RI", "def2-TZVPD")]["TS"]["E"] - A1[("RI", "def2-TZVPD")]["R"]["E"]) * H
+    rsd_k_sv = (A1[("K", "def2-SVPD")]["TS"]["E"] - A1[("K", "def2-SVPD")]["R"]["E"]) * H
+    rsd_k_tz = (A1[("K", "def2-TZVPD")]["TS"]["E"] - A1[("K", "def2-TZVPD")]["R"]["E"]) * H
+    m = re.search(r"revDSD-PBEP86-D4, arm RI, def2-TZVPD: (\d+\.\d{4}), which is ([+-]\d+\.\d{4}) from the benchmark\.",
+                  (root / "STAGE6_DIAGNOSTIC37_AMENDMENT1_RESULT_20261115.txt").read_text())
+    if not m:
+        stop("DIAGNOSTIC 37 Amendment 1's result does not print its test 2")
+    k += 1
+    control("C50.%02d" % k, "DIAGNOSTIC 37 Amendment 1 R-A1.6, revDSD-PBEP86-D4/def2-TZVPD barrier minus the benchmark, kcal/mol", rsd_tz - bench,
+            float(m.group(2)), D37A1R, 6e-5, 4)
+
     target_eV = -float(m_p3.group(1))
     f11 = []
     for fn in POOLKEY:
@@ -963,18 +1117,36 @@ def build(res, code, out):
         f11.append([fn, rec37[(fn, "def2-TZVPD")]["kind"], float(sv[7]), float(tz[7]), float(tz[7]) - float(sv[7]), float(tz[7]) - bench,
                     rec37[(fn, "def2-SVPD")]["hR"], rec37[(fn, "def2-SVPD")]["hR"] - target_eV])
     f11.sort(key=lambda r: r[3])
+    # the ninth row: revDSD-PBEP86-D4 from Amendment 1, arm RI, the arm d37a1.tsv enters
+    rsd = ["revDSD-PBEP86-D4", "amendment 1", rsd_sv, rsd_tz, rsd_tz - rsd_sv, rsd_tz - bench, rec37a[("RI", "def2-SVPD")]["hR"],
+           rec37a[("RI", "def2-SVPD")]["hR"] - target_eV]
+    if any(A1[("RI", b)][s]["shifted"] for b in ("def2-SVPD", "def2-TZVPD") for s in ("R", "TS")):
+        stop("a level shift was engaged in a bare run of revDSD-PBEP86-D4; its orbital energy may not be quoted")
+    f11x = sorted(f11 + [rsd], key=lambda r: r[3])
+
+    def svd(r):
+        """The def2-SVPD barrier, at the four decimals the record commits it with, minus DIAGNOSTIC 41's benchmark (R41.3's definition)."""
+        return float(fmt(r[2], 4)) - bench_sv
     write_tsv(out / "F11_two_tests.tsv",
-              ["F11. Eight functionals on the two tests the record holds for the bare substrate, frame 42436, frozen geometries, in vacuo.",
+              ["F11. Nine functionals on the two tests the record holds for the bare substrate, frame 42436, frozen geometries, in vacuo.",
                "Test 1 (DIAGNOSTIC 28's): the highest occupied orbital at def2-SVPD, reactant, against zero and against minus Probe 3's",
-               "detachment energy.  homo_eV is the committed value of d37.tsv; controls C42 recompute it from the raw outputs.",
+               "detachment energy.  homo_eV is the committed value of d37.tsv, and of d37a1.tsv for revDSD-PBEP86-D4; controls C42 and C50 recompute it.",
                "Test 2: the def2-TZVPD barrier minus DIAGNOSTIC 36's DLPNO-CCSD(T)/def2-TZVPD barrier, %s kcal/mol, recomputed here." % fmt(bench, 4),
                "DIAGNOSTIC 36 pre-registered this comparison for three functionals (kind = committed).  For the five of DIAGNOSTIC 37",
                "(kind = candidate) it is POST HOC: DIAGNOSTIC 36's result says so, and DIAGNOSTIC 37's own test 2 is NOT EVALUATED.",
-               "revDSD-PBEP86-D4 was NOT MEASURED (ORCA rejected its keyword) and has no row.  No score combines the two tests.",
-               "The benchmark is not the experimental number and is not a converged absolute barrier (DIAGNOSTIC 36, D36.2 and D36.3)."],
+               "For revDSD-PBEP86-D4 (kind = amendment 1) DIAGNOSTIC 37's Amendment 1 fixed test 2 before its own number existed and after",
+               "the benchmark's did (DA1.3).  D37's own table marks it NOT MEASURED; the amendment measured it, and its arm RI is the entry.",
+               "minus_SVPD_benchmark_kcal: the def2-SVPD barrier, at its four committed decimals, minus DIAGNOSTIC 41's DLPNO-CCSD(T)/def2-SVPD",
+               "barrier, %s kcal/mol, recomputed here." % fmt(bench_sv, 4),
+               "DIAGNOSTIC 41 fixed that comparison for the eight when their barriers were known and its benchmark was not (R41.3), and says",
+               "it is still not the comparison DIAGNOSTIC 36 pre-registered.  For revDSD-PBEP86-D4 it is POST HOC.",
+               "SVPD_minus_TZVPD_benchmark_kcal: the def2-SVPD barrier minus the def2-TZVPD benchmark.  POST HOC for all nine: no committed",
+               "document defines it.  No score combines the tests.  Neither benchmark is the experimental number, and neither is a converged",
+               "absolute barrier (DIAGNOSTIC 36, D36.2 and D36.3; DIAGNOSTIC 41, D41.1 and D41.2)."],
               ["functional", "kind", "barrier_SVPD_kcal", "barrier_TZVPD_kcal", "basis_shift_kcal", "minus_benchmark_kcal", "homo_SVPD_R_eV",
-               "homo_minus_target_eV"],
-              [(r[0], r[1], fmt(r[2], 4), fmt(r[3], 4), fmt(r[4], 4), "%+.4f" % r[5], "%+.4f" % r[6], "%+.4f" % r[7]) for r in f11])
+               "homo_minus_target_eV", "minus_SVPD_benchmark_kcal", "SVPD_minus_TZVPD_benchmark_kcal"],
+              [(r[0], r[1], fmt(r[2], 4), fmt(r[3], 4), fmt(r[4], 4), "%+.4f" % r[5], "%+.4f" % r[6], "%+.4f" % r[7],
+                "%+.4f" % svd(r), "%+.4f" % (r[2] - bench)) for r in f11x])
 
     # ---- DIAGNOSTIC 38 -------------------------------------------------------------------------------------
     rec38 = {}
@@ -1089,9 +1261,303 @@ def build(res, code, out):
            "figures/F1_reference_barrier.tsv")
     DV.add("DV267", str(len(list((root / "d37").glob("*/job.out"))) - n37ok), "count", "DV264 - DV265: outputs of DIAGNOSTIC 37 that did not terminate normally",
            S6 + "/d37")
-    # DIAGNOSTIC 39 is pre-registered: its inputs are committed and, when this was written, no output
+    # DIAGNOSTIC 39: counts of its committed files only.  Its result is committed and is NOT ENTERED in the revision of
+    # 15 November 2026 (evening); no number of it is read anywhere in this script.
     DV.add("DV290", str(len(list((root / "d39").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d39" % S6, S6 + "/d39")
     DV.add("DV291", str(len(list((root / "d39").rglob("job.out")))), "count", "number of committed job.out files under %s/d39" % S6, S6 + "/d39")
+
+    # ---- derived numbers of DIAGNOSTIC 41 and of DIAGNOSTIC 37's Amendment 1 ---------------------------------
+    T11, comp41 = "figures/T11_d41_benchmark_svpd.tsv", {r[0]: r for r in t11}
+    DV.add("DV300", fmt(bench_sv, 4), "recomputed from raw outputs", "(E(CCSD(T)) at TS, d41/T - at R, d38/N) x %.10f, DLPNO-CCSD(T)/def2-SVPD" % H, T11)
+    DV.add("DV301", comp41["E(0), Hartree-Fock"][3], "recomputed from raw outputs", "the E(0) part of the def2-SVPD correlated barrier", T11)
+    DV.add("DV302", comp41["E(CCSD)"][3], "recomputed from raw outputs", "the def2-SVPD barrier at the CCSD level, before the triples", T11)
+    DV.add("DV303", comp41["Triples Correction (T)"][3], "recomputed from raw outputs", "the triples correction's part of the def2-SVPD correlated barrier", T11)
+    DV.add("DV304", comp41["E(CORR)(corrected)"][3], "recomputed from raw outputs", "the CCSD correlation energy's part of the def2-SVPD correlated barrier", T11)
+    DV.add("DV305", comp41["E(CCSD(T))"][5], "recomputed from raw outputs", "DV220 - DV300: the correlated barrier, def2-TZVPD minus def2-SVPD", T11)
+    DV.add("DV306", comp41["E(0), Hartree-Fock"][5], "recomputed from raw outputs", "the E(0) part of DV305", T11)
+    DV.add("DV307", comp41["E(CORR)(corrected)"][5], "recomputed from raw outputs", "the CCSD correlation energy's part of DV305", T11)
+    DV.add("DV308", comp41["E(CCSD)"][5], "recomputed from raw outputs", "DV305 at the CCSD level, before the triples", T11)
+    DV.add("DV309", comp41["Triples Correction (T)"][5], "recomputed from raw outputs", "the triples correction's part of DV305", T11)
+    DV.add("DV310", fmt(abs((bench - bench_sv) - (-1.0)), 4), "derived", "|DV305 - (-1.0)|: the distance DIAGNOSTIC 41's pre-registered rule reads", T11)
+    DV.add("DV311", fmt(100.0 * abs(float(comp41["Triples Correction (T)"][3])) / bench_sv, 1), "derived", "100 x |DV303| / DV300, per cent", T11)
+    DV.add("DV312", fmt(S41["TS"]["T1 diagnostic"] - S41["R"]["T1 diagnostic"], 9), "derived", "T1 diagnostic at def2-SVPD, TS minus R", T11)
+    DV.add("DV313", str(sum(1 for r in f11 if (r[4] < 0) != ((bench - bench_sv) < 0))), "derived",
+           "functionals of DIAGNOSTIC 37's eight whose def2-SVPD to def2-TZVPD shift has the sign opposite to DV305", F11)
+    for i, fn in enumerate(POOLKEY):
+        DV.add("DV%d" % (314 + i), "%+.4f" % r413[fn], "recomputed from raw outputs", "%s/def2-SVPD barrier minus DV300" % fn, F11)
+    DV.add("DV322", "%+.4f" % svd(rsd), "recomputed from raw outputs; POST HOC", "revDSD-PBEP86-D4/def2-SVPD barrier minus DV300", F11)
+    nine = sorted(f11 + [rsd], key=lambda r: r[3])
+    n3tz = [r[0] for r in nine if abs(r[5]) < 3.0]
+    DV.add("DV323", str(len(n3tz)), "derived; POST HOC", "functionals of the nine within 3 kcal/mol of DV220 at def2-TZVPD (%s)" % ", ".join(n3tz), F11)
+    n3sv = [r[0] for r in nine if abs(svd(r)) < 3.0]
+    DV.add("DV324", str(len(n3sv)), "derived; POST HOC", "functionals of the nine within 3 kcal/mol of DV300 at def2-SVPD (%s)" % ", ".join(n3sv), F11)
+    chg = [float("%.4f" % svd(r)) - float("%.4f" % r[5]) for r in f11]       # from the two columns as F11_two_tests.tsv prints them
+    DV.add("DV325", "%+.4f" % min(chg), "derived", "smallest (def2-SVPD distance from DV300) minus (def2-TZVPD distance from DV220) among DIAGNOSTIC 37's eight", F11)
+    DV.add("DV326", "%+.4f" % max(chg), "derived", "largest such difference among the eight", F11)
+    DV.add("DV327", str(len(nine)), "count", "functionals with a committed barrier at def2-SVPD and def2-TZVPD on frame 42436, Amendment 1's entry included", F11)
+    near_sv = sorted(nine, key=lambda r: abs(svd(r)))
+    DV.add("DV328", "%+.4f" % svd(near_sv[0]), "derived; POST HOC" if near_sv[0][0] == "revDSD-PBEP86-D4" else "recomputed from raw outputs",
+           "the smallest def2-SVPD distance from DV300 among the nine (%s)" % near_sv[0][0], F11)
+    near_tz = sorted(nine, key=lambda r: abs(r[5]))
+    DV.add("DV329", ", ".join(r[0] for r in near_tz[:3]), "derived; POST HOC", "the three of the nine nearest DV220 at def2-TZVPD, nearest first", F11)
+    for i, fn in enumerate(list(POOLKEY) + ["revDSD-PBEP86-D4"]):
+        r = next(x for x in nine if x[0] == fn)
+        DV.add("DV%d" % (330 + i), "%+.4f" % (r[2] - bench), "derived; POST HOC", "%s/def2-SVPD barrier minus DV220, the def2-TZVPD benchmark" % fn, F11)
+    near_mx = sorted(nine, key=lambda r: abs(r[2] - bench))
+    DV.add("DV339", ", ".join(r[0] for r in near_mx[:3]), "derived; POST HOC", "the three of the nine whose def2-SVPD barrier is nearest DV220, nearest first", F11)
+    DV.add("DV340", fmt(rsd_sv, 4), "recomputed from raw outputs", "revDSD-PBEP86-D4/def2-SVPD barrier, arm RI of DIAGNOSTIC 37 Amendment 1", F11)
+    DV.add("DV341", fmt(rsd_tz, 4), "recomputed from raw outputs", "revDSD-PBEP86-D4/def2-TZVPD barrier, arm RI", F11)
+    DV.add("DV342", "%+.4f" % (rsd_tz - rsd_sv), "recomputed from raw outputs", "DV341 - DV340", F11)
+    DV.add("DV343", "%+.4f" % (rsd_tz - bench), "recomputed from raw outputs", "DV341 - DV220; test 2 as Amendment 1 fixed it (DA1.3)", F11)
+    DV.add("DV344", "%+.4f" % rsd[7], "derived", "revDSD-PBEP86-D4/def2-SVPD, reactant: highest occupied orbital (d37a1.tsv) minus the target, eV", F11)
+    DV.add("DV345", "%+.4f" % (rsd_sv - rsd_k_sv), "recomputed from raw outputs", "arm RI minus arm K, def2-SVPD barrier, kcal/mol", S6 + "/d37a1")
+    DV.add("DV346", "%+.4f" % (rsd_tz - rsd_k_tz), "recomputed from raw outputs", "arm RI minus arm K, def2-TZVPD barrier, kcal/mol", S6 + "/d37a1")
+    DV.add("DV347", "%.1e" % max(abs(A1[("RI", b)][s]["E"] - A1[("K", b)][s]["E"]) for b in ("def2-SVPD", "def2-TZVPD") for s in ("R", "TS")),
+           "recomputed from raw outputs", "largest |arm RI - arm K| over the four total energies, Eh", S6 + "/d37a1")
+    both_tz = [r[0] for r in nine if abs(r[5]) < 3.0 and r[6] < 0]
+    DV.add("DV372", str(len(both_tz)), "derived; POST HOC",
+           "functionals of the nine within 3 kcal/mol of DV220 at def2-TZVPD whose highest occupied orbital is also below zero at def2-SVPD, reactant (%s)"
+           % ", ".join(both_tz), F11)
+    both_sv = [r[0] for r in nine if abs(svd(r)) < 3.0 and r[6] < 0]
+    DV.add("DV373", str(len(both_sv)), "derived; POST HOC",
+           "functionals of the nine within 3 kcal/mol of DV300 at def2-SVPD whose highest occupied orbital is also below zero at def2-SVPD, reactant (%s)"
+           % ", ".join(both_sv), F11)
+    DV.add("DV348", str(len(list((root / "d37a1").glob("*/job.out")))), "count", "number of committed job.out files under %s/d37a1" % S6, S6 + "/d37a1")
+    DV.add("DV349", str(sum(1 for q in (root / "d37a1").glob("*/job.out") if "****ORCA TERMINATED NORMALLY****" in q.read_text(errors="replace"))),
+           "count", "of those, normally terminated", S6 + "/d37a1")
+
+    # ============================ DIAGNOSTIC 40: detachment energies at the density-functional level ==========
+    # VDE = E(monoanion) - E(dianion) at the same geometry with the same external charges.  The monoanion single points
+    # are unrestricted, which the committed cs6_audit.read does not parse, so they are read here by the rule of DIAGNOSTIC
+    # 40's own reader: a plain or point-charge run gives the last FINAL SINGLE POINT ENERGY; a QM/MM run gives the (QM/MM)
+    # total, which must be the QM energy plus the (MM) term.  <S**2> is read where ORCA prints it; stability and the shift
+    # markers are those of cs6_d33b.  Each dianion energy is that of the committed run d40.tsv names as the source, read
+    # through the committed readers; that the pair is one geometry with one set of charges is checked here, by content.
+    D40R, D40T = S6 + "/STAGE6_DIAGNOSTIC40_RESULT_20261115.txt", S6 + "/d40.tsv"
+    CHG = r"^\s*Total Charge\s+Charge\s+\.+\s+(-?\d+)\s*$"
+    MUL = r"^\s*Multiplicity\s+Mult\s+\.+\s+(\d+)\s*$"
+
+    def mono(d, kind):
+        d = Path(d)
+        t = (d / "job.out").read_text(errors="replace")
+        if "****ORCA TERMINATED NORMALLY****" not in t or "SCF NOT CONVERGED" in t or not re.search(r"SCF CONVERGED AFTER\s+\d+\s+CYCLES", t):
+            stop("%s is not a normally terminated, converged run" % d)
+        if (sorted(set(re.findall(CHG, t, re.M))), sorted(set(re.findall(MUL, t, re.M)))) != (["-1"], ["2"]):
+            stop("%s is not a monoanion doublet" % d)
+        qm = re.findall(r"FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)", t)
+        mm = re.findall(r"FINAL SINGLE POINT ENERGY \(MM\)\s+(-?\d+\.\d+)", t)
+        tot = re.findall(r"FINAL SINGLE POINT ENERGY \(QM/MM\)\s+(-?\d+\.\d+)", t)
+        if kind == "qmmm":
+            if not (len(qm) == len(mm) == len(tot) == 1) or abs(float(qm[0]) + float(mm[0]) - float(tot[0])) > 1e-9:
+                stop("%s does not print one QM, one (MM) and one (QM/MM) energy that add up" % d)
+            e, emm = float(tot[0]), float(mm[0])
+        else:
+            if mm or tot or len(qm) != 1:
+                stop("%s is not a plain single point with one final energy" % d)
+            e, emm = float(qm[0]), 0.0
+        s2 = re.findall(r"Expectation value of <S\*\*2>\s*:\s*(\d+\.\d+)", t)
+        if len(s2) != 1:
+            stop("%s prints <S**2> %d times" % (d, len(s2)))
+        return dict(E=e, Emm=emm, s2=float(s2[0]), stab=d33b.stability(t), shifted=any(re.search(x, t) for x in d33b.SHIFT),
+                    level=level_of(t), sig=dist_signature(echoed_coords(t) or []), rel=d.relative_to(res).as_posix())
+
+    def same_files(a, b, names):
+        return all((Path(a) / n).is_file() and (Path(b) / n).is_file() and sha(Path(a) / n) == sha(Path(b) / n) for n in names)
+
+    t40 = (root / "STAGE6_DIAGNOSTIC40_RESULT_20261115.txt").read_text()
+    rec40, hdr40 = {}, None
+    for l in (root / "d40.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdr40 is None:
+            hdr40 = f
+            continue
+        rec40[f[1]] = dict(zip(hdr40, f + [""] * (len(hdr40) - len(f))))
+    if any(v["status"] != "measured" for v in rec40.values()):
+        stop("d40.tsv holds a run that is not marked measured")
+    A40 = [("A_B3LYP", "B3LYP-D3BJ"), ("A_CAM", "CAM-B3LYP-D3BJ"), ("A_wB97XD3", "wB97X-D3"), ("A_wB97MV", "wB97M-V"), ("A_wB97XV", "wB97X-V"),
+           ("A_PW6B95", "PW6B95-D3BJ"), ("A_M062X", "M06-2X-D3(0)"), ("A_PWPB95", "PWPB95-D3BJ")]
+    B40 = [("bare", "plain", None), ("ADD-s540_qm06500", "qmmm", "d34"), ("ADD-s678_qm07625", "qmmm", "d34"), ("ADD-s678_qm10000", "qmmm", "d34"),
+           ("bare_n05_q0.50", "pc", "d33b"), ("bare_n11_q0.25", "pc", "d33b")]
+    FILES40 = {"plain": ("substrate.xyz",), "pc": ("substrate.xyz", "pc.pc"), "qmmm": ("combined.xyz", "site.ORCAFF.prms")}
+    if len(rec40) != len(A40) + 2 * len(B40):
+        stop("d40.tsv holds %d runs, expected %d" % (len(rec40), len(A40) + 2 * len(B40)))
+
+    def pair(rn, kind, st):
+        """(monoanion, dianion energy, the dianion's reading) for one run of DIAGNOSTIC 40."""
+        mo = mono(root / "d40" / rn, kind)
+        src = root / rec40[rn]["source"]
+        di = run(src)
+        if di is None or not di["norm"] or di["notconv"] or di["chmult"] != (["-2"], ["1"]):
+            stop("%s is not a normally terminated, converged dianion run" % src)
+        if not same_files(root / "d40" / rn, src, FILES40[kind]):
+            stop("%s and %s do not hold the same geometry and charges, byte for byte" % (rn, rec40[rn]["source"]))
+        if state_of(mo) != st or state_of(di) != st or mo["level"][:4] != di["level"][:4] or mo["level"][4] != di["level"][4]:
+            stop("%s and its source are not one level of theory on frame 42436's %s geometry" % (rn, st))
+        if kind == "qmmm":
+            nat = int((src / "combined.xyz").read_text().split()[0])
+            etot, emm, _g = analyse.read_run(src, nat - 24)
+            if abs(emm - mo["Emm"]) > 1e-12:
+                stop("%s and its source do not carry the same (MM) term" % rn)
+            edi = etot
+        else:
+            edi = di["E"]
+        return mo, edi, di
+
+    s402 = t40[t40.index("R40.2 "):t40.index("R40.3 ")]
+    s404 = t40[t40.index("R40.4 "):t40.index("R40.5 ")]
+    s406 = t40[t40.index("R40.6 "):t40.index("R40.7 ")]
+    t12, k40 = [], 0
+    for rn, fn in A40:
+        mo, edi, di = pair(rn, "plain", "R")
+        if PRETTY[mo["level"][0]] != PRETTY[POOLKEY[fn]] or mo["level"][1] != "DEF2-SVPD":
+            stop("%s is not %s/def2-SVPD" % (rn, fn))
+        v = (mo["E"] - edi) * EV
+        r = rec40[rn]
+        for what, mine, rec, tol, nd in (("E(monoanion), Eh", mo["E"], float(r["E_mono_Eh"]), 1e-8, 8), ("E(dianion), Eh", edi, float(r["E_di_Eh"]), 1e-8, 8),
+                                         ("detachment energy, eV", v, float(r["VDE_eV"]), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(r["S2"]), 1e-6, 6),
+                                         ("highest occupied orbital of the dianion, eV", di["homo"], float(r["homo_di_eV"]), 1.5e-4, 4)):
+            k40 += 1
+            control("C48.%02d" % k40, "DIAGNOSTIC 40 part A, %s, %s (d40.tsv)" % (fn, what), mine, rec, D40T, tol, nd)
+        # the orbital energy DIAGNOSTIC 40 sets beside the detachment energy is the committed one of d37.tsv ("Each orbital
+        # energy read here is the one d37.tsv carries"); controls C42 hold it against the raw output.  The sum is formed the same way.
+        hrec = rec37[(fn, "def2-SVPD")]["hR"]
+        m = re.search(r"^\s+" + re.escape(fn) + r"\s+(-\d+\.\d{8})\s+(-\d+\.\d{8})\s+([+-]\d+\.\d{4})\s+(\d\.\d{6})\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s*$", s402, re.M)
+        if not m:
+            stop("DIAGNOSTIC 40's result does not print %s in R40.2" % fn)
+        for what, mine, rec, tol, nd in (("detachment energy, eV", v, float(m.group(3)), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(m.group(4)), 1e-6, 6),
+                                         ("the orbital energy it is set beside, eV", hrec, float(m.group(5)), 1e-9, 4),
+                                         ("orbital energy plus detachment energy, eV", hrec + v, float(m.group(6)), 6e-5, 4)):
+            k40 += 1
+            control("C48.%02d" % k40, "DIAGNOSTIC 40 R40.2, %s, %s" % (fn, what), mine, rec, D40R, tol, nd)
+        t12.append((fn, rn, rec40[rn]["source"], fmt(mo["E"], 8), fmt(edi, 8), "%+.4f" % v, fmt(mo["s2"], 6), "%+.4f" % hrec, "%+.4f" % (hrec + v), v))
+    write_tsv(out / "T12_d40_bare_functionals.tsv",
+              ["T12. DIAGNOSTIC 40, part A: the detachment energy of the BARE dianion at the reactant, frame 42436, def2-SVPD, in vacuo, by functional.",
+               "VDE = E(monoanion) - E(dianion) at one geometry, in eV at %.12f eV per Eh; positive means bound.  Vertical, not adiabatic." % EV,
+               "E_mono is the last FINAL SINGLE POINT ENERGY of %s/d40/<run>/job.out (unrestricted Kohn-Sham); E_di is that of the committed" % S6,
+               "dianion run named in source, through the committed phase2.2/cs6_audit.py read().  Controls C48 compare with d40.tsv.",
+               "HOMO_di_eV: the committed dianion's highest occupied orbital, as d37.tsv carries it.  HOMO_plus_VDE_eV is zero for a functional whose orbital energy",
+               "equals minus its own detachment energy.  These monoanions are NOT analysed for stability, so each value is an upper bound",
+               "in that sense (D40.3).  <S**2> is reported and not corrected; the ideal value is 0.75.",
+               "The comparison with a coupled-cluster value (R40.3) is NOT EVALUATED: DIAGNOSTIC 40 leaves it to a dated addendum."],
+              ["functional", "run", "source", "E_mono_Eh", "E_di_Eh", "VDE_eV", "S2", "HOMO_di_eV", "HOMO_plus_VDE_eV"], [r[:9] for r in t12])
+
+    t13, vde40 = [], {}
+    for name, kind, where in B40:
+        for st in ("R", "TS"):
+            rn = "B_%s_%s" % (name, st)
+            mo, edi, di = pair(rn, kind, st)
+            if mo["level"][:2] != ("CAM-B3LYP", "DEF2-SVPD"):
+                stop("%s is not CAM-B3LYP/def2-SVPD" % rn)
+            if not mo["stab"]["ran"] or mo["stab"]["first"] is None or mo["stab"]["last"] is None:
+                stop("%s carries no readable stability analysis" % rn)
+            v = (mo["E"] - edi) * EV
+            word = "BOUND" if v > 0 else "METASTABLE"
+            r = rec40[rn]
+            if r["word"] != word or r["stab_first"] != mo["stab"]["first"] or r["stab_last"] != mo["stab"]["last"]:
+                stop("%s: d40.tsv says %s, %s/%s; read here %s, %s/%s" % (rn, r["word"], r["stab_first"], r["stab_last"], word, mo["stab"]["first"], mo["stab"]["last"]))
+            for what, mine, rec, tol, nd in (("E(monoanion), Eh", mo["E"], float(r["E_mono_Eh"]), 1e-8, 8), ("E(dianion), Eh", edi, float(r["E_di_Eh"]), 1e-8, 8),
+                                             ("detachment energy, eV", v, float(r["VDE_eV"]), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(r["S2"]), 1e-6, 6)):
+                k40 += 1
+                control("C48.%02d" % k40, "DIAGNOSTIC 40 part B, %s %s, %s (d40.tsv)" % (name, st, what), mine, rec, D40T, tol, nd)
+            m = re.search(r"^\s+" + re.escape(name) + r"\s+" + st + r"\s+([+-]\d+\.\d{4})\s+(BOUND|METASTABLE)\s+(\d\.\d{6})\s+(\w+)/(\w+)\s+(yes|no)\s+(yes|no)\s*$", s404, re.M)
+            if not m:
+                stop("DIAGNOSTIC 40's result does not print %s %s in R40.4" % (name, st))
+            if (m.group(2), m.group(4), m.group(5)) != (word, mo["stab"]["first"], mo["stab"]["last"]) or (m.group(6) == "yes" or m.group(7) == "yes") != mo["shifted"]:
+                stop("%s: DIAGNOSTIC 40's R40.4 and the raw output do not give one reading" % rn)
+            for what, mine, rec, tol, nd in (("detachment energy, eV", v, float(m.group(1)), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(m.group(3)), 1e-6, 6)):
+                k40 += 1
+                control("C48.%02d" % k40, "DIAGNOSTIC 40 R40.4, %s %s, %s" % (name, st, what), mine, rec, D40R, tol, nd)
+            q, _rep = charges_of(root / "d40" / rn)
+            if kind == "qmmm":
+                nat = int((root / "d40" / rn / "combined.xyz").read_text().split()[0])
+                q = sphere_charges(root / "d40" / rn / "site.ORCAFF.prms", nat - 24)
+            vde40[(name, st)] = dict(v=v, word=word, E=edi, mo=mo, nq=len(q), sumq=sum(q), maxq=max(q) if q else 0.0, minq=min(q) if q else 0.0)
+    # the lowering each arrangement is quoted with, recomputed from the committed dianion outputs against the charge-free control
+    # of the same diagnostic: D34 arm 2's S6-C for its three, D31's control for the two of D33 stage B
+    QUOTED = {"ADD-s540_qm06500": -3.3985, "ADD-s678_qm07625": -4.1567, "ADD-s678_qm10000": -5.3701, "bare_n05_q0.50": -14.3612, "bare_n11_q0.25": -13.0007}
+    ctl40 = {"d34": {st: X[("a2", "S6-C", st)]["Etot"] for st in ("R", "TS")}, "d33b": {st: run(root / "d31" / ("ctl_%s" % st))["E"] for st in ("R", "TS")}}
+    for i, (name, kind, where) in enumerate(B40[1:]):
+        dde = ((vde40[(name, "TS")]["E"] - ctl40[where]["TS"]) - (vde40[(name, "R")]["E"] - ctl40[where]["R"])) * H
+        if not re.search(r"^\s+%s\s+quoted lowering %s kcal/mol" % (re.escape(name), re.escape("%.4f" % QUOTED[name])), t40, re.M):
+            stop("DIAGNOSTIC 40's result does not quote %.4f for %s" % (QUOTED[name], name))
+        control("C49.%d" % (i + 1), "DIAGNOSTIC 40 R40.7, %s: the quoted lowering, recomputed from the committed dianion outputs, kcal/mol" % name,
+                dde, QUOTED[name], D40R, 6e-5, 4)
+        vde40[(name, "R")]["dde"] = vde40[(name, "TS")]["dde"] = dde
+        m = re.search(r"^\s+" + re.escape(name) + r"\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s*$", s406, re.M)
+        if not m:
+            stop("DIAGNOSTIC 40's result does not print %s in R40.6" % name)
+        for j, st in enumerate(("R", "TS")):
+            control("C49.%d" % (6 + 2 * i + j), "DIAGNOSTIC 40 R40.6, %s %s: detachment energy minus the bare substrate's at the same state, eV" % (name, st),
+                    vde40[(name, st)]["v"] - vde40[("bare", st)]["v"], float(m.group(1 + j)), D40R, 6e-5, 4)
+    for name, kind, where in B40:
+        for st in ("R", "TS"):
+            x = vde40[(name, st)]
+            mo = x["mo"]
+            t13.append((name, st, "B_%s_%s" % (name, st), rec40["B_%s_%s" % (name, st)]["source"], x["nq"], "%+.4f" % x["sumq"] if x["nq"] else "-",
+                        "%+.4f" % x["maxq"] if x["nq"] else "-", "%+.4f" % x["minq"] if x["nq"] else "-",
+                        fmt(mo["E"], 8), fmt(x["E"], 8), "%+.4f" % x["v"], x["word"], fmt(mo["s2"], 6), mo["stab"]["first"], mo["stab"]["last"],
+                        "yes" if mo["shifted"] else "no", "%+.4f" % (x["v"] - vde40[("bare", st)]["v"]) if name != "bare" else "-",
+                        "%.4f" % x["dde"] if "dde" in x else "-"))
+    write_tsv(out / "T13_d40_arrangements.tsv",
+              ["T13. DIAGNOSTIC 40, part B: the detachment energy with each arrangement's charges present, CAM-B3LYP-D3BJ/def2-SVPD, frame 42436,",
+               "both states, with the stability analysis on the monoanion.  The five arrangements are those whose lowering the record held quotable.",
+               "VDE = E(monoanion) - E(dianion) at the same geometry with the same external charges, eV at %.12f eV per Eh." % EV,
+               "word: BOUND if VDE is above zero, METASTABLE if it is at or below zero (the convention of Probe 2 and of DIAGNOSTIC 40).",
+               "Where VDE is negative its SIGN is the reading and its size is not (D40.4): a METASTABLE species has no bound state to converge to.",
+               "E_mono: %s/d40/<run>/job.out; for a QM/MM run the (QM/MM) total.  E_di: the committed dianion run named in source" % S6,
+               "(cs6_analyse.read_run for a QM/MM run).  The (MM) Lennard-Jones term is the same in both and cancels.  Controls C48: d40.tsv.",
+               "stab_first/stab_last: the monoanion's first and last stability analysis (cs6_d33b.stability).  shift: TRAH or a level shift engaged.",
+               "dVDE_vs_bare_eV: this row's VDE minus the bare substrate's at the same state.  REPORTED, NOT INTERPRETED (R40.6).",
+               "quoted_ddE_kcal: the lowering the record quotes for the arrangement, recomputed here from the committed dianion outputs (controls C49).",
+               "Probe 2: a ddE measured where the dianion is METASTABLE 'is not a barrier effect and must not be reported as one'.",
+               "DIAGNOSTIC 40 withdraws nothing and changes no verdict (D40.1).  One basis, one frame, vertical; all five sit inside r_safe."],
+              ["arrangement", "state", "run", "source", "n_charges", "sum_q_e", "largest_q_e", "most_negative_q_e", "E_mono_Eh", "E_di_Eh", "VDE_eV", "word",
+               "S2", "stab_first", "stab_last", "shift", "dVDE_vs_bare_eV", "quoted_ddE_kcal"], t13)
+    f12 = [("A: bare dianion, reactant, by functional", r[0], "R", r[5], "BOUND" if r[9] > 0 else "METASTABLE", "-") for r in sorted(t12, key=lambda r: r[9])]
+    f12 += [("B: CAM-B3LYP-D3BJ, with the arrangement's charges", r[0], r[1], r[10], r[11], r[17]) for r in t13]
+    write_tsv(out / "F12_detachment_energy.tsv",
+              ["F12. DIAGNOSTIC 40: detachment energies, E(monoanion) - E(dianion), def2-SVPD, frame 42436, frozen geometries.  Positive means bound.",
+               "Panel A: the bare dianion at the reactant, one run per functional, no stability analysis (rows of T12_d40_bare_functionals.tsv).",
+               "Panel B: CAM-B3LYP-D3BJ with each arrangement's charges present, both states, monoanion stable on its first and last analysis",
+               "(rows of T13_d40_arrangements.tsv).  METASTABLE: at or below zero.  Where the value is negative its sign is the reading, not its size.",
+               "quoted_ddE_kcal: the lowering the record quotes for the arrangement.  DIAGNOSTIC 40 withdraws nothing and changes no verdict."],
+              ["panel", "row", "state", "VDE_eV", "word", "quoted_ddE_kcal"], f12)
+    T12N, T13N = "figures/T12_d40_bare_functionals.tsv", "figures/T13_d40_arrangements.tsv"
+    DV.add("DV350", str(len(list((root / "d40").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d40" % S6, S6 + "/d40")
+    DV.add("DV351", str(len(list((root / "d40").rglob("job.out")))), "count", "number of committed job.out files under %s/d40" % S6, S6 + "/d40")
+    DV.add("DV352", str(len(t12) + len(t13)), "count", "monoanion single points of DIAGNOSTIC 40 read here: %d of part A, %d of part B" % (len(t12), len(t13)), S6 + "/d40")
+    arr5 = [n for n, _k, _w in B40[1:]]
+    DV.add("DV353", str(sum(1 for n in arr5 if all(vde40[(n, s)]["word"] == "METASTABLE" for s in ("R", "TS")))), "recomputed from raw outputs",
+           "of the five quotable arrangements, those METASTABLE at both states, CAM-B3LYP-D3BJ/def2-SVPD", T13N)
+    DV.add("DV354", str(sum(1 for n in arr5 for s in ("R", "TS") if vde40[(n, s)]["word"] == "METASTABLE")), "recomputed from raw outputs",
+           "of the ten arrangement-states (five arrangements, two states), those METASTABLE", T13N)
+    DV.add("DV355", "%+.4f" % min(r[9] for r in t12), "recomputed from raw outputs", "smallest detachment energy of the bare dianion among the eight functionals, eV (%s)"
+           % min(t12, key=lambda r: r[9])[0], T12N)
+    DV.add("DV356", "%+.4f" % max(r[9] for r in t12), "recomputed from raw outputs", "largest detachment energy of the bare dianion among the eight functionals, eV (%s)"
+           % max(t12, key=lambda r: r[9])[0], T12N)
+    DV.add("DV357", str(sum(1 for r in t12 if r[9] > 0)), "recomputed from raw outputs", "functionals of the eight at which the bare dianion is bound at the reactant", T12N)
+    neg = [vde40[(n, s)]["v"] for n in arr5 for s in ("R", "TS")]
+    DV.add("DV358", "%+.4f" % max(neg), "recomputed from raw outputs", "the detachment energy nearest zero among the ten arrangement-states, eV", T13N)
+    DV.add("DV359", "%+.4f" % min(neg), "recomputed from raw outputs", "the most negative detachment energy among the ten arrangement-states, eV", T13N)
+    DV.add("DV360", fmt(max(vde40[(n, s)]["mo"]["s2"] for n, _k, _w in B40 for s in ("R", "TS")), 6), "recomputed from raw outputs",
+           "largest <S**2> among the twelve monoanions of part B (ideal 0.75)", T13N)
+    DV.add("DV361", fmt(max(float(r[6]) for r in t12), 6), "recomputed from raw outputs", "largest <S**2> among the eight monoanions of part A (ideal 0.75)", T12N)
+    DV.add("DV362", str(sum(1 for n, _k, _w in B40 for s in ("R", "TS") if vde40[(n, s)]["mo"]["stab"]["first"] != "STABLE" or vde40[(n, s)]["mo"]["stab"]["last"] != "STABLE")),
+           "recomputed from raw outputs", "monoanions of part B whose first or last stability analysis is not STABLE", T13N)
+    DV.add("DV363", str(sum(1 for n, _k, _w in B40 for s in ("R", "TS") if vde40[(n, s)]["mo"]["shifted"])), "recomputed from raw outputs",
+           "monoanions of part B in which TRAH or a level shift was engaged", T13N)
+    DV.add("DV364", "%+.4f" % vde40[("bare", "TS")]["v"], "recomputed from raw outputs", "detachment energy of the bare dianion at the transition state, CAM-B3LYP-D3BJ/def2-SVPD, eV", T13N)
+    DV.add("DV365", "%+.4f" % vde40[("bare", "R")]["v"], "recomputed from raw outputs", "detachment energy of the bare dianion at the reactant, CAM-B3LYP-D3BJ/def2-SVPD, eV", T13N)
+    DV.add("DV366", "%.1e" % abs(mono(root / "d40" / "A_CAM", "plain")["E"] - vde40[("bare", "R")]["mo"]["E"]), "recomputed from raw outputs",
+           "|E(A_CAM) - E(B_bare_R)|: one species at one level, without and with the stability analysis, Eh", S6 + "/d40")
+    DV.add("DV367", str(len(arr5)), "count", "arrangements of part B other than the bare substrate", T13N)
+    cam_a = next(r for r in t12 if r[0] == "CAM-B3LYP-D3BJ")
+    DV.add("DV368", cam_a[8], "derived", "CAM-B3LYP-D3BJ/def2-SVPD, reactant: highest occupied orbital plus its own detachment energy, eV", T12N)
+    DV.add("DV369", "%+.4f" % min(float(r[8]) for r in t12), "derived", "smallest highest-occupied-orbital-plus-detachment-energy among the eight, eV (%s)"
+           % min(t12, key=lambda r: float(r[8]))[0], T12N)
+    DV.add("DV370", "%+.4f" % max(float(r[8]) for r in t12), "derived", "largest highest-occupied-orbital-plus-detachment-energy among the eight, eV (%s)"
+           % max(t12, key=lambda r: float(r[8]))[0], T12N)
+
 
     # run counts, from what is on disk
     k = 60
@@ -1189,11 +1655,13 @@ def build(res, code, out):
     for name, d in designs.items():
         tab.append(("D33 stage B", "argon ECP centre" if d["arm"] == "wall" else "bare point charge", name, d["n"],
                     fmt(max([x for x in d["q"] if x > 0] or [0.0]), 4), fmt(min([x for x in d["q"] if x < 0] or [0.0]), 4), b33[name]["verdict"]))
+    d31net = []
     for r in f3:
         cname = ("n%02d" % int(r[1])) if r[0] == "A" else ("n%02d_q%s" % (int(r[1]), r[2]))
         qs, _rep = charges_of(root / "d31" / r[0] / (cname + "_R"))
         tab.append(("D31", "bare point charge", "%s/%s" % (r[0], cname), len(qs), fmt(max([x for x in qs if x > 0] or [0.0]), 4),
                     fmt(min([x for x in qs if x < 0] or [0.0]), 4), r[3]))
+        d31net.append((r[3], sum(qs)))
     write_tsv(out / "T5_positive_charge_vs_verdict.tsv",
               ["T5. POST HOC. The largest positive charge of every design classified at CAM-B3LYP-D3BJ/def2-SVPD on frame 42436, against its committed verdict.",
                "D34 arm 2: d34.tsv, charges from relax/<name>/R_sp/site.ORCAFF.prms. D33 stage B: its result and designs_d33b.tsv.",
@@ -1209,6 +1677,18 @@ def build(res, code, out):
     DV.add("DV143", str(len(hi)), "derived", "of DV140, largest positive charge at or above +0.55 e", "figures/T5_positive_charge_vs_verdict.tsv")
     DV.add("DV144", str(sum(1 for t in hi if t[6] != "UNRELIABLE")), "derived", "of DV143, not UNRELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
     d31t = [t for t in tab if t[0] == "D31"]
+    # the net charge of DIAGNOSTIC 31's RELIABLE conditions: what a binding test of arrangements that are not net negative could
+    # be run on without a new dianion single point (section 11).  Charges from d31/<family>/<condition>_R/pc.pc, as T5 reads them.
+    rel31 = [s for v, s in d31net if v == "RELIABLE"]
+    DV.add("DV374", str(len(rel31)), "derived", "DIAGNOSTIC 31 conditions that are RELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
+    DV.add("DV375", str(sum(1 for s in rel31 if s > -5e-5)), "derived", "of DV374, those whose charges sum to zero or more",
+           S6 + "/d31/<family>/<condition>_R/pc.pc")
+    DV.add("DV376", str(sum(1 for s in rel31 if s <= -5e-5)), "derived", "of DV374, those whose charges sum to less than zero",
+           S6 + "/d31/<family>/<condition>_R/pc.pc")
+    DV.add("DV377", str(2 * sum(1 for s in rel31 if s > -5e-5)), "derived", "2 x DV375: monoanion single points for those conditions at both states",
+           S6 + "/d31/<family>/<condition>_R/pc.pc")
+    DV.add("DV378", "%+.4f" % min(rel31), "derived", "smallest net charge among DIAGNOSTIC 31's RELIABLE conditions, e", S6 + "/d31/<family>/<condition>_R/pc.pc")
+    DV.add("DV379", "%+.4f" % max(rel31), "derived", "largest net charge among DIAGNOSTIC 31's RELIABLE conditions, e", S6 + "/d31/<family>/<condition>_R/pc.pc")
     DV.add("DV145", str(len(d31t)), "derived", "DIAGNOSTIC 31 conditions tabulated", "figures/T5_positive_charge_vs_verdict.tsv")
     DV.add("DV146", str(sum(1 for t in d31t if float(t[4]) >= 0.55 and t[6] == "RELIABLE")), "derived",
            "DIAGNOSTIC 31 conditions with largest positive charge at or above +0.55 e that are RELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
@@ -1603,13 +2083,23 @@ F9 = [
      "measured: 23.8603 at DLPNO-CCSD(T)/def2-TZVPD; adopts no level",
      S6 + "/STAGE6_DIAGNOSTIC36_RESULT_20261114.txt", "THE BARRIER IS 23.8603 kcal/mol."),
     ("N14", "N13", "five further functionals (D37)",
-     "measured; read against the benchmark post hoc only; one NOT MEASURED",
+     "measured; read against the benchmark post hoc only; the sixth NOT MEASURED until Amendment 1",
      S6 + "/STAGE6_DIAGNOSTIC37_RESULT_20261111.txt", "No score combines them and none is defined."),
     ("N15", "N13", "charges in the correlated step (D38)",
      "measured: yes, on the one interpretable arm; licenses the coupled-cluster test of ddE only",
      S6 + "/STAGE6_DIAGNOSTIC38_RESULT_20261115.txt", "THE EMBEDDING CHARGE REACHES THE CORRELATION TREATMENT."),
-    ("N16", "N15", "detachment energy at that level (D39)", "pre-registered; no output",
+    ("N16", "N15", "detachment energy at that level (D39)", "open: result committed; NOT ENTERED in this revision",
      S6 + "/STAGE6_DIAGNOSTIC39_20261115.txt", "THE DETACHMENT ENERGY AT THE BENCHMARK LEVEL"),
+    ("N17", "N13", "benchmark at the production basis (D41)",
+     "measured: 22.8968 at def2-SVPD; its basis shift opposes the functionals'",
+     S6 + "/STAGE6_DIAGNOSTIC41_RESULT_20261115.txt", "THE BARRIER AT def2-SVPD IS 22.8968 kcal/mol."),
+    ("N18", "N14", "revDSD-PBEP86-D4 (D37 Amendment 1)",
+     "measured: 21.4957 at def2-TZVPD, -2.3646 from the benchmark",
+     S6 + "/STAGE6_DIAGNOSTIC37_AMENDMENT1_RESULT_20261115.txt",
+     "revDSD-PBEP86-D4, arm RI, def2-TZVPD: 21.4957, which is -2.3646 from the benchmark."),
+    ("N19", "N12", "is the dianion bound? (D40)",
+     "METASTABLE at both states for all five quotable arrangements; withdraws nothing",
+     S6 + "/STAGE6_DIAGNOSTIC40_RESULT_20261115.txt", "It withdraws nothing and changes no verdict (D40.1):"),
 ]
 
 
@@ -1963,7 +2453,8 @@ def draw(out):
 
     def tint(s):
         s = s.lower()
-        if s.startswith(("ruled out", "inconclusive", "exploratory", "not recovered", "inside r_safe", "not adopted", "verdicts are")):
+        if s.startswith(("ruled out", "inconclusive", "exploratory", "not recovered", "inside r_safe", "not adopted", "verdicts are",
+                         "metastable")):
             return tone["not"]
         if s.startswith(("open", "partial", "pre-registered", "retired")):
             return tone["open"]
@@ -2040,36 +2531,97 @@ def draw(out):
     # is post hoc.  No score combines the panels and none is drawn.
     r11 = read_tsv(out / "F11_two_tests.tsv")
     bench11 = float([r for r in read_tsv(out / "T7_d36_benchmark.tsv") if r["quantity"] == "E(CCSD(T))"][0]["TS_minus_R_kcal"])
+    bench11sv = float([r for r in read_tsv(out / "T11_d41_benchmark_svpd.tsv") if r["quantity"] == "E(CCSD(T))"][0]["barrier_SVPD_kcal"])
     tgt11 = float(r11[0]["homo_SVPD_R_eV"]) - float(r11[0]["homo_minus_target_eV"])
-    fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 4.3), gridspec_kw={"width_ratios": [1.25, 1]}, sharey=True)
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.6, 5.2), gridspec_kw={"width_ratios": [1.25, 1]}, sharey=True)
     for y, r in enumerate(r11):
         pre = r["kind"] == "committed"
+        mk11 = dict(marker="D", ms=6.2, mfc=INK) if r["kind"] == "amendment 1" else dict(marker="o", ms=7, mfc=INK if pre else "white")
         sv, tz, hm = float(r["barrier_SVPD_kcal"]), float(r["barrier_TZVPD_kcal"]), float(r["homo_SVPD_R_eV"])
         ax.plot([sv, tz], [y, y], color=MUTE, lw=0.7, zorder=1)
         ax.plot([sv], [y], marker="s", ms=5, mfc="#9a9a9a", mec=INK, mew=0.8, ls="none", zorder=3)
-        ax.plot([tz], [y], marker="o", ms=7, mfc=INK if pre else "white", mec=INK, mew=1.1, ls="none", zorder=4)
-        ax.text(max(sv, tz) + 0.5, y, "%+.2f" % float(r["minus_benchmark_kcal"]), va="center", fontsize=7.8, zorder=5,
-                bbox=dict(facecolor="white", edgecolor="none", pad=0.8))
-        bx.plot([hm], [y], marker="o", ms=7, mfc=INK if pre else "white", mec=INK, mew=1.1, ls="none", zorder=4)
+        ax.plot([tz], [y], mec=INK, mew=1.1, ls="none", zorder=4, **mk11)
+        ax.text(max(sv, tz) + 0.5, y, ("%+.2f | %+.2f" % (float(r["minus_benchmark_kcal"]), float(r["minus_SVPD_benchmark_kcal"]))).replace("-", MINUS),
+                va="center", fontsize=7.6, zorder=5, bbox=dict(facecolor="white", edgecolor="none", pad=0.8))
+        bx.plot([hm], [y], mec=INK, mew=1.1, ls="none", zorder=4, **mk11)
         bx.text(hm + (0.12 if hm < 0.9 else -0.12), y, "%+.2f" % hm, va="center", ha="left" if hm < 0.9 else "right", fontsize=7.8,
                 zorder=5, bbox=dict(facecolor="white", edgecolor="none", pad=0.8))
     ax.axvline(bench11, color=INK, lw=0.9, ls="--", zorder=0)
-    ax.text(bench11 + 0.3, -0.7, "DLPNO-CCSD(T)/def2-TZVPD, %.2f;\nnot the experimental number" % bench11, fontsize=7.0, va="bottom", ha="left")
-    ax.set_yticks(range(len(r11))); ax.set_yticklabels([r["functional"] for r in r11]); ax.set_ylim(-0.8, len(r11) - 0.2)
-    ax.set_xlim(14.5, 35.5); ax.grid(axis="x", color=GRID, lw=0.6)
-    ax.set_xlabel("E(TS) − E(R), bare substrate (kcal/mol);\nthe number is the def2-TZVPD barrier minus the benchmark")
+    ax.axvline(bench11sv, color=INK, lw=1.0, ls=":", zorder=0)
+    ax.text(bench11 + 0.3, -1.52, "DLPNO-CCSD(T)/def2-TZVPD, %.2f;\nnot the experimental number" % bench11, fontsize=7.0, va="bottom", ha="left")
+    ax.text(bench11sv - 0.3, -1.52, "DLPNO-CCSD(T)/def2-SVPD,\n%.2f (D41)" % bench11sv, fontsize=7.0, va="bottom", ha="right")
+    ax.set_yticks(range(len(r11))); ax.set_yticklabels([r["functional"] for r in r11]); ax.set_ylim(-1.6, len(r11) - 0.2)
+    ax.set_xlim(14.5, 37.0); ax.grid(axis="x", color=GRID, lw=0.6)
+    ax.set_xlabel("E(TS) − E(R), bare substrate (kcal/mol).  The two numbers: the def2-TZVPD barrier\nminus the def2-TZVPD benchmark | the def2-SVPD barrier minus the def2-SVPD benchmark")
     ax.set_title("Test 2: the barrier against the correlated benchmark")
     ax.plot([], [], marker="o", ms=7, mfc=INK, mec=INK, ls="none", label="def2-TZVPD; comparison pre-registered (D36)")
     ax.plot([], [], marker="o", ms=7, mfc="white", mec=INK, mew=1.1, ls="none", label="def2-TZVPD; comparison post hoc (D37's five)")
+    ax.plot([], [], marker="D", ms=6.2, mfc=INK, mec=INK, ls="none", label="def2-TZVPD; fixed by D37 Amendment 1, benchmark known")
     ax.plot([], [], marker="s", ms=5, mfc="#9a9a9a", mec=INK, mew=0.8, ls="none", label="def2-SVPD, the production basis")
-    ax.legend(loc="upper left", fontsize=6.8, frameon=True, facecolor="white", edgecolor="none", framealpha=1.0)
+    ax.plot([], [], color=INK, lw=0.9, ls="--", label="benchmark at def2-TZVPD (D36)")
+    ax.plot([], [], color=INK, lw=1.0, ls=":", label="benchmark at def2-SVPD (D41)")
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center", ncol=3, fontsize=7.0, frameon=False, columnspacing=1.6, handlelength=2.2)
     bx.axvline(0.0, color=INK, lw=0.9, zorder=0); bx.axvline(tgt11, color=INK, lw=0.9, ls="--", zorder=0)
     bx.text(0.04, len(r11) - 0.45, "vacuum level", fontsize=7.0, va="top")
-    bx.text(tgt11 - 0.04, -0.72, "minus the detachment\nenergy, %.4f eV" % tgt11, fontsize=7.0, va="bottom", ha="right")
+    bx.text(tgt11 - 0.04, -1.52, "minus the detachment\nenergy, %.4f eV" % tgt11, fontsize=7.0, va="bottom", ha="right")
     bx.set_xlim(-2.4, 1.9); bx.grid(axis="x", color=GRID, lw=0.6)
     bx.set_xlabel("highest occupied orbital, def2-SVPD, reactant (eV)")
     bx.set_title("Test 1: the orbital against the detachment energy")
-    fig.tight_layout(); save(fig, "F11_two_tests")
+    fig.tight_layout(rect=(0, 0.075, 1, 1)); save(fig, "F11_two_tests")
+
+    # ---- F12: DIAGNOSTIC 40's detachment energies.  Black, grey and white.  The reading is the side of zero a marker
+    # stands on; the numbers are printed in a column of their own so that no label covers a marker.
+    r12 = read_tsv(out / "F12_detachment_energy.tsv")
+    pa = [r for r in r12 if r["panel"].startswith("A")]
+    pb = [r for r in r12 if r["panel"].startswith("B")]
+    names_b = []
+    for r in pb:
+        if r["row"] not in names_b:
+            names_b.append(r["row"])
+    fig, (bx, ax) = plt.subplots(2, 1, figsize=(9.4, 7.2), gridspec_kw={"height_ratios": [len(names_b) + 1.3, len(pa) + 0.5]}, sharex=True)
+    XL, XR, XV = -2.3, 2.75, 1.55
+    for a_ in (ax, bx):
+        a_.axvspan(XL, 0, facecolor="#f1f1f1", edgecolor="#c9c9c9", hatch="////", lw=0, zorder=0)
+        a_.axvline(0, color=INK, lw=1.0, zorder=2)
+        a_.grid(axis="x", color=GRID, lw=0.6, zorder=1); a_.set_axisbelow(True)
+        a_.tick_params(axis="y", length=0)
+    nb = len(names_b)
+    for i, n in enumerate(names_b):
+        y = nb - 1 - i
+        v = {r["state"]: float(r["VDE_eV"]) for r in pb if r["row"] == n}
+        bx.plot([v["R"], v["TS"]], [y, y], color=MUTE, lw=0.8, zorder=3)
+        bx.plot([v["R"]], [y], marker="o", ms=7, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
+        bx.plot([v["TS"]], [y], marker="o", ms=7, mfc="white", mec=INK, mew=1.1, ls="none", zorder=4)
+        bx.text(XV, y, ("R %+.4f    TS %+.4f" % (v["R"], v["TS"])).replace("-", MINUS), va="center", ha="left", fontsize=7.8, color=INK)
+    lab_b = []
+    for n in names_b:
+        q = next(r["quoted_ddE_kcal"] for r in pb if r["row"] == n)
+        lab_b.append("bare substrate\nno charges" if n == "bare" else ("%s\nquoted lowering %s kcal/mol" % (n, q)).replace("-0", MINUS + "0").replace("-1", MINUS + "1")
+                     .replace("-3", MINUS + "3").replace("-4", MINUS + "4").replace("-5", MINUS + "5"))
+    bx.set_yticks([nb - 1 - i for i in range(nb)]); bx.set_yticklabels(lab_b, fontsize=7.6)
+    bx.set_ylim(-0.6, nb - 0.5 + 0.95)
+    bx.text(XL + 0.05, nb - 0.5 + 0.82, "METASTABLE: at or below zero", fontsize=8.5, style="italic", va="top", ha="left",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.5))
+    bx.text(0.05, nb - 0.5 + 0.82, "BOUND: above zero", fontsize=8.5, style="italic", va="top", ha="left")
+    bx.plot([], [], marker="o", ms=7, mfc=INK, mec=INK, ls="none", label="reactant (R)")
+    bx.plot([], [], marker="o", ms=7, mfc="white", mec=INK, mew=1.1, ls="none", label="transition state (TS)")
+    bx.legend(loc="upper right", fontsize=7.6, ncol=1, borderaxespad=0.2)
+    bx.set_title("Part B. With each arrangement's charges present: CAM-B3LYP-D3BJ, both states", loc="left")
+    na = len(pa)
+    for i, r in enumerate(pa):
+        y = na - 1 - i
+        v = float(r["VDE_eV"])
+        ax.plot([0, v], [y, y], color=MUTE, lw=0.8, zorder=3)
+        ax.plot([v], [y], marker="o", ms=7, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
+        ax.text(XV, y, ("R %+.4f" % v).replace("-", MINUS), va="center", ha="left", fontsize=7.8, color=INK)
+    ax.set_yticks([na - 1 - i for i in range(na)]); ax.set_yticklabels([r["row"] for r in pa], fontsize=7.8)
+    ax.set_ylim(-0.6, na - 0.4)
+    ax.set_title("Part A. The bare dianion at the reactant, by functional (monoanion not analysed for stability)", loc="left")
+    ax.set_xlim(XL, XR)
+    ax.set_xticks([-2.0, -1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5])
+    ax.set_xlabel("detachment energy, E(monoanion) " + MINUS + " E(dianion), def2-SVPD (eV)\nwhere it is negative, the sign is the reading and the size is not")
+    fig.tight_layout(); save(fig, "F12_detachment_energy")
+
 
 def main():
     ap = argparse.ArgumentParser()
