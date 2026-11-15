@@ -1,0 +1,500 @@
+==============================================================================
+STAGE 6, DIAGNOSTIC 39.  PRE-REGISTRATION
+THE DETACHMENT ENERGY AT THE BENCHMARK LEVEL
+Written 15 November 2026, before any output exists.
+==============================================================================
+
+A pre-registration is never edited. Anything that has to change goes in a dated
+amendment beside it.
+
+
+==============================================================================
+1.  WHAT IS OPEN
+==============================================================================
+
+Diagnostic 38 decided which of its two arms could be read, and it decided it on the
+Hartree-Fock highest occupied orbital. B1 at -4.8267 eV was interpretable; A1 at
++0.3539 eV was not, and G38.10 reported it NOT INTERPRETABLE rather than dropping it.
+That was the right rule to have written in advance, and the orbital energy is the only
+thing a bound-state coupled-cluster output offers for the purpose. It is a
+Koopmans-style proxy.
+
+The observable this project actually uses for boundedness is not the orbital energy. It
+is the vertical detachment energy, and three committed probes measure it:
+
+   STAGE6_PROBE1_ERRATUM1_20261027.txt, the bare dianion at three bases
+   vde_probe/PROBE2_RESULT.txt, a single external charge of each sign
+   vde_designs/PROBE3_RESULT.txt, four committed designs
+
+Every one of those runs is DFT. The inputs are checked, not recalled:
+
+   qscan/VDE/C5_mono_R/job.inp     ! B3LYP D3BJ def2-SVPD def2/J RIJCOSX TightSCF
+   vde_probe/ctl_mono/job.inp      ! B3LYP D3BJ ma-def2-SVP def2/J RIJCOSX TightSCF
+   vde_designs/S6-2_mono/job.inp   ! B3LYP D3BJ ma-def2-SVP def2/J RIJCOSX TightSCF
+
+Three searches of this repository for a charge -1 input at a correlated level returned
+nothing. I could not find one. So:
+
+   The project's own boundedness observable has never been computed at the level the
+   D36 benchmark is built on, and D38's interpretability decision rests on a proxy
+   for it rather than on the observable itself.
+
+D39 computes it. Six single points, one geometry, and the dianion halves are not re-run
+because D38 already measured them.
+
+
+==============================================================================
+2.  WHAT MAKES THE COMPARISON EXACT, AND WHERE IT IS NOT
+==============================================================================
+
+The geometry. Every file below is byte-identical, sha256 beginning 6e8f41c7da3bcf4e:
+
+   d33a/sp_42436_R/substrate.xyz        frame 42436's reactant, the committed geometry
+   qscan/VDE/C1_mono_R/substrate.xyz    Probe 1
+   qscan/VDE/C3_mono_R/substrate.xyz    Probe 1
+   qscan/VDE/C5_mono_R/substrate.xyz    Probe 1
+   d38/N/substrate.xyz  and B0 B1 A0 A1  Diagnostic 38
+
+So nothing below differs by geometry. The comparisons differ by method, by basis, or by
+charge arrangement, and each is named.
+
+   THE BARE CASE.  Probe 1's C5 is def2-SVPD, which is D38's basis and D39's basis.
+   Its committed value is
+
+      C5  def2-SVPD  VDE +0.5013 eV  ->  BOUND at this condition
+
+   and the only difference between it and D39's bare VDE is B3LYP-D3BJ against
+   coupled cluster. This is an exact like-for-like test of the method on the
+   observable.
+
+   Probe 1's other two are at other bases and are carried as context only:
+   C1 def2-SVP -0.3167 eV METASTABLE, C3 ma-def2-SVP +0.5123 eV BOUND. The sign flip
+   between C1 and C5 is the basis dependence Dreuw and Cederbaum warn of, already on
+   this project's record, and it is a reason to read D39's bare number against C5 and
+   not against the other two.
+
+   THE POSITIVE ARM.  vde_probe/dref_p1_di/pc.pc holds
+
+      1
+         1.000000        44.20782400        19.21545700        38.95945100
+
+   and d38/B1/charge.pc holds
+
+      1
+          1.000000      44.20782400      19.21545700      38.95945100
+
+   the same charge at the same position: site 1690, +1.000000 e. Probe 3's S6-P is the
+   same arrangement again and reports the same number. So the committed comparator for
+   D39's B1 is
+
+      +3.4366 eV  at ma-def2-SVP, B3LYP-D3BJ
+
+   differing from D39 in both basis and method. Comparable in sign and order of
+   magnitude; not a like-for-like test.
+
+   THE NEGATIVE ARM HAS NO MATCHED COMPARATOR.  d38/A1/charge.pc is -1.000000 e at
+   45.44147300 23.87423600 30.61699600, which is site 678. Probe 2's negative condition
+   dref_m1 is -1.000000 e at site 1690, a different site, and reports -2.1005 eV. Probe
+   3's S6-2 does carry -1.000000 e at site 678 and reports +1.1058 eV, but its charge
+   file holds two charges:
+
+      2
+          1.000000        44.20782400        19.21545700        38.95945100
+         -1.000000        45.44147300        23.87423600        30.61699600
+
+   so it is the positive sphere and the negative sphere together, not the negative one
+   alone. Nothing committed measures the detachment energy of A1's arrangement.
+
+   This is stated rather than papered over. D39's A1 number will be the first of its
+   kind in this record and it has nothing to reproduce.
+
+
+==============================================================================
+3.  THE CONVENTION, TAKEN FROM THE RECORD AND NOT REDEFINED
+==============================================================================
+
+STAGE6_PROBE2_20261027.txt states it:
+
+   "VDE = E(monoanion, charge -1, multiplicity 2) - E(dianion, charge -2, multiplicity
+   1), both at the"  [same geometry]
+
+and both result documents repeat "VDE = E(monoanion) - E(dianion). Positive means
+bound." D39 uses that convention unchanged and in the same direction. A gate requires
+the harvest to name it and requires the sign rule to be the committed one, so a sign
+error cannot pass as a finding.
+
+The constant is the one vde_probe/cs11_vde.py already uses, EV = 27.211386245988.
+
+
+==============================================================================
+4.  TWO ROUTES, AND WHY BOTH
+==============================================================================
+
+ROUTE M, the difference of two total energies.
+
+   The monoanion is run at charge -1, multiplicity 2, and the VDE is the difference
+   against D38's committed dianion. The ORCA 6.1.1 manual supports this directly:
+
+      "The perturbative triples correction referred to as, (T), is also available for
+      the open-shell species."
+
+      "The DLPNO-CCSD(T) method is applicable to closed-shell or high-spin open-shell
+      species."
+
+      "Since ORCA 4.2, the improved iterative perturbative triples correction for
+      open-shell DLPNO-CCSD is available as well."
+
+      "The open-shell versions are about twice as expensive as the corresponding
+      closed-shell versions."
+
+   A doublet monoanion is a high-spin open-shell species, so it qualifies. The cost
+   statement is why the walltime below is what it is. The version statement is for the
+   iterative variant (T1); the plain (T) sentence carries no version, and the cluster
+   runs 6.0.1, so plain (T) on an open-shell reference is taken as available there by
+   inference from the 4.2 statement rather than from a 6.0-manual quote. Section 9
+   pre-registers what is recorded if that inference is wrong.
+
+   This route gives a full CCSD(T) detachment energy, which is the quantity asked for.
+
+   A CORRECTION, RECORDED HERE BECAUSE THE DESIGN RESTED ON IT.  In conversation on
+   15 November I said that the manual warns of a "somewhat unbalanced treatment of the
+   closed- and open-shell states in some cases" for open-shell DLPNO-CCSD, and that
+   this bears directly on a detachment energy because a detachment energy is exactly a
+   closed-shell-minus-open-shell difference. The phrase is in the manual. It is not
+   about this method. The manual applies it to the older UHF-LPNO scheme, attributes it
+   to screening weak pairs with semi-canonical UMP2 pair energies, and says the
+   open-shell DLPNO approach was designed to avoid that problem. I had attributed a
+   predecessor's documented weakness to its replacement. Route M is in better standing
+   than I told her, and this correction is on the record because the two-route design
+   below was argued for partly on a claim that was wrong.
+
+   What does survive is general and is not specific to DLPNO:
+
+      "an UHF reference wavefunction suffers from spin-contamination which can spoil
+      the results"
+
+   with quasi-restricted orbitals offered as the remedy. That is a real concern for any
+   UHF-referenced open-shell treatment, including this one. D39 does not assume it away
+   and does not assume it bites. It measures it: every route M output prints the
+   expectation value of S squared against the ideal doublet value, and R39.5 reports
+   both.
+
+ROUTE X, the detachment computed directly, with no open-shell reference at all.
+
+   IP-EOM-DLPNO-CCSD starts from the closed-shell dianion and computes the ionisation
+   as an excitation of the coupled-cluster wavefunction. There is no UHF reference, so
+   spin contamination cannot enter. The keyword line is documented in the ORCA 6.0
+   manual, which is the version on the cluster:
+
+      ! IP-EOM-DLPNO-CCSD TightSCF NORMALPNO def2-SVP def2-SVP/C def2/J RIJCOSX
+
+   with nroots set in the %mdci block.
+
+   It is CCSD-based. It produces no (T), so it cannot give the CCSD(T) number and is
+   not a substitute for route M.
+
+WHAT THE PAIR SETTLES THAT NEITHER DOES ALONE.
+
+   Route M prints E(CCSD) as well as E(CCSD(T)), and so does every committed D38
+   dianion output. So route M yields a CCSD detachment energy as well as a CCSD(T) one.
+   Route X yields a CCSD detachment energy by a formalism with no open-shell reference.
+   Those two CCSD numbers are the same physical quantity computed two ways, one through
+   a UHF reference and one not.
+
+   If they agree, the spin contamination that the manual warns about is not affecting
+   this quantity at this geometry, and route M's CCSD(T) number carries that support.
+   If they disagree, the disagreement is the measurement of the problem and R39.6
+   reports it rather than a preference between them.
+
+   This is the reason for the second route. It is a control on the first, not an
+   independent estimate competing with it, and section 10 states that it cannot promote
+   itself into one.
+
+
+==============================================================================
+5.  THE SIX RUNS
+==============================================================================
+
+   run    route  charge  mult  embedding charge                  method keyword
+   M_N    M        -1     2    none                              DLPNO-CCSD(T)
+   M_B1   M        -1     2    +1.000000 e at site 1690          DLPNO-CCSD(T)
+   M_A1   M        -1     2    -1.000000 e at site 678           DLPNO-CCSD(T)
+   X_N    X        -2     1    none                              IP-EOM-DLPNO-CCSD
+   X_B1   X        -2     1    +1.000000 e at site 1690          IP-EOM-DLPNO-CCSD
+   X_A1   X        -2     1    -1.000000 e at site 678           IP-EOM-DLPNO-CCSD
+
+Everything else is held at D38's values and is not a choice here, because the dianion
+halves of these differences are D38's committed outputs and the basis treatment must be
+the same on both sides of every subtraction:
+
+   def2-SVPD AutoAux TightSCF TightPNO, %maxcore 6000, %pal nprocs 16,
+   %scf MaxIter 300
+
+The charge files are not regenerated. d38/B1/charge.pc and d38/A1/charge.pc are copied
+byte for byte, and a gate requires the copies to be identical to the committed
+originals. Nothing about the charge arrangements is re-derived, re-decoded or
+re-decided in D39; D38 did that and its gates checked it against each design's own
+site.ORCAFF.prms and combined.xyz.
+
+ORDER.  M_N, M_B1, M_A1, X_N, X_B1, X_A1. Route M first because it is the primary and
+because M_N is the one run with an exact-basis committed comparator, so the first number
+out of the job is the one that can be checked hardest. X_N before the other two X runs
+for the reason in section 9.
+
+SEQUENTIAL, ONE JOB.  Each run's scratch is cleared before the next starts, so the
+footprint is one run at a time.
+
+SCRATCH, SIZED FROM A FIGURE THIS BUNDLE HAD TO CORRECT FIRST.  D38's result reports
+its scratch peak as 11 MB and says that figure "is what a later job should use". It is
+not the peak. The measurement was taken after ORCA returned, so it recorded the residue
+a finished run leaves behind. d38/PROGRESS.txt, committed in the same commit, samples
+every ten minutes and records used=31G during the first run and 27 to 29 GB at the
+start of each of the others. STAGE6_DIAGNOSTIC38_RESULT_ERRATUM1_20261115.txt, in this
+bundle, withdraws the instruction and states the corrected bound:
+
+   31 GB <= true peak < 43 GB, per run, closed-shell def2-SVPD on this system
+
+D39 sizes from that and not from 11 MB. The manual puts open-shell runs at "about twice
+as expensive as the corresponding closed-shell versions", so the floor is set at 150 GB
+asked for and 100 GB as the lowest a candidate may offer and still be used. That is
+above twice the corrected upper bound, and a candidate below it is refused in the first
+minute of the job rather than discovered three hours in.
+
+   This rules out $TMPDIR on this cluster, which held 38 GB on comp050 and 43 GB on
+   comp056. D39 therefore needs /scratch-small-local to be genuinely available on
+   whichever node PBS gives it. On comp056 it was full; on comp050 it had 1.5 TB free.
+   If the node PBS picks cannot offer 100 GB the job stops at once with the node named,
+   which is a resubmission and not a failed calculation.
+
+D39 also fixes the measurement rather than inheriting it: the background watcher that
+writes PROGRESS.txt carries the maximum it sees while each run is alive, and the
+post-run measurement is still taken but is reported separately and under its own name,
+so the peak and the residue cannot be confused again.
+
+
+==============================================================================
+6.  THE DIANION HALVES ARE REUSED, BY HASH
+==============================================================================
+
+These three are already committed and are not re-run:
+
+   d38/N/job.out    sha256 18a58ac48f7890b6bbd7622a507cd560a75ce8f13cb3742fa6cec9ce6ef28a9c
+   d38/B1/job.out   sha256 307eab716f3f719ebff3afc9d07b58dbfc891abb7ace04599b6fcb04e6835929
+   d38/A1/job.out   sha256 64013339b8e8f5ee8442638f785cebd32434512cec7a4551335ce796d8228422
+
+and these are the numbers the subtractions use, as read from them:
+
+   run         E(0)              E(CCSD)            E(CCSD(T))         T1
+   N      -831.831909980     -834.428319344     -834.533005232     0.016726026
+   B1     -832.036019254     -834.637330324     -834.743458654     0.019507511
+   A1     -831.648351321     -834.246393432     -834.351462380     0.016858947
+
+The harvest re-reads them from the committed files and re-checks the three hashes. If
+any hash differs, the harvest refuses. Those numbers are not retyped into the harvest as
+constants.
+
+
+==============================================================================
+7.  THE READINGS
+==============================================================================
+
+R39.1  For each of M_N, M_B1, M_A1: E(0), E(CORR)(corrected), E(CCSD), E(CCSD(T)),
+       T1 diagnostic, the SCF cycle count, and whether ORCA terminated normally.
+
+R39.2  For each of X_N, X_B1, X_A1: every root printed, with the lowest root identified
+       as the detachment, in eV and in Eh.
+
+R39.3  The detachment energy at CCSD(T), per system, by route M:
+          VDE = E(CCSD(T), monoanion) - E(CCSD(T), dianion), times EV.
+       This is the headline number and the one the figure wants.
+
+R39.4  The detachment energy at CCSD, per system, by route M, the same way from E(CCSD).
+
+R39.5  The expectation value of S squared for each route M run, with the ideal doublet
+       value ORCA prints beside it, and the difference.
+
+R39.6  R39.4 against route X's lowest root, per system. Reported as a difference in eV,
+       with no preference asserted between them.
+
+R39.7  R39.3 against the committed DFT comparators, each labelled with its basis:
+          bare   against Probe 1 C5  +0.5013 eV  def2-SVPD, exact basis match
+          B1     against Probe 2 dref_p1 / Probe 3 S6-P  +3.4366 eV  ma-def2-SVP
+          A1     no comparator exists; stated as such
+       These are reported as differences. None of them is a gate. A method change is
+       expected to move a detachment energy and the size of the move is the finding.
+
+R39.8  Whether each system is BOUND (VDE > 0) or METASTABLE (VDE <= 0) at CCSD(T),
+       using the committed sign rule, and whether that agrees with what D38's HF
+       highest occupied orbital said about the same system.
+
+R39.9  Scratch, with the two quantities D38 conflated kept apart: the candidate
+       chosen, the free space found when it was chosen, the margin, the maximum the
+       live watcher saw during the runs together with its sampling interval, and
+       separately the residue each finished run left behind. The watcher's maximum is
+       a sampled lower bound on the peak and is reported as such.
+
+
+==============================================================================
+8.  THE GATES
+==============================================================================
+
+WHEN EACH ONE RUNS.  G39.1 to G39.9, G39.13, G39.14, G39.16 and G39.17 are checked by
+this bundle, before anything is placed and again against the placed copies. G39.10 to
+G39.12 are checked when the harvest is built, because they are about the harvest script
+and no harvest exists until there are outputs to read. They are written here, now, so
+that the harvest is built against conditions fixed before its inputs existed.
+
+G39.1   Every substrate.xyz placed under d39 is byte-identical to
+        d33a/sp_42436_R/substrate.xyz.
+
+G39.2   d39/M_B1/charge.pc is byte-identical to the committed d38/B1/charge.pc, and
+        d39/M_A1/charge.pc to d38/A1/charge.pc. Likewise for the X runs.
+
+G39.3   Each route M input carries exactly "* xyzfile -1 2 substrate.xyz". Each route X
+        input carries exactly "* xyzfile -2 1 substrate.xyz".
+
+G39.4   The basis and auxiliary specification, the SCF settings, %maxcore and %pal are
+        character-for-character the same in all six inputs and the same as the
+        committed d38/N/job.inp carries, the method keyword and the charge line
+        excepted. Checked by reconstruction: the script rebuilds each input from
+        d38/N/job.inp by applying only the documented substitutions and requires the
+        result to equal what it wrote.
+
+G39.5   The three committed D38 dianion outputs are present and each matches the sha256
+        recorded in section 6.
+
+G39.6   No queue is requested. No "#PBS -q" line and no "-q" on any qsub in the
+        generated script.
+
+G39.7   The scratch selection and both removal paths are pattern-guarded on a
+        d39-specific marker, and the per-run guard admits a run name of any length
+        used here.
+
+G39.8   Nothing under d28, d33a, d34, d36, d36a2 or d38 is modified by this bundle.
+        Checked with git status on those paths.
+
+G39.9   STAGE6_DIAGNOSTIC39_20261115.txt is not already committed, and
+        phase2.2/cs_stage6/d39 does not already exist.
+
+G39.10  The harvest names the committed VDE convention and the committed sign rule, and
+        carries the committed constant EV = 27.211386245988.
+
+G39.11  The harvest does not carry the three dianion energies as literals. It reads
+        them from the committed outputs.
+
+G39.12  The harvest carries no hartree-to-kcal conversion factor and the word kcal
+        appears nowhere in it. A detachment energy at one geometry is not a barrier and
+        D39 computes no barrier.
+
+G39.13  This pre-registration states that A1's arrangement has no committed comparator.
+
+G39.14  This pre-registration states all four section 9 contingencies before any output
+        exists.
+
+G39.15  Both repositories are clean and level with their remotes before anything is
+        placed, and the gates are re-run against the placed copies before anything is
+        committed.
+
+G39.16  STAGE6_DIAGNOSTIC38_RESULT_ERRATUM1_20261115.txt is present in this bundle, it
+        withdraws the "what a later job should use" instruction, it states the
+        corrected bound, and it quotes d38/PROGRESS.txt's used=31G line. Checked
+        against the committed PROGRESS.txt rather than against the erratum's own
+        account of it.
+
+G39.17  The generated job script asks for at least 150 GB, refuses any candidate
+        offering less than 100 GB, and takes its peak measurement from a sampler that
+        runs while ORCA is running. A script whose only footprint measurement is taken
+        after ORCA returns fails this gate, because that is the defect the erratum
+        records.
+
+
+==============================================================================
+9.  CONTINGENCIES, WRITTEN BEFORE ANY OUTPUT EXISTS
+==============================================================================
+
+These are recorded outcomes. None of them is a failure to be worked around, and none
+licenses changing a run to get a number.
+
+C39.1  OPEN-SHELL (T) NOT AVAILABLE IN 6.0.1.  If a route M run terminates with the
+       triples unavailable for an open-shell reference, or terminates normally without
+       printing E(CCSD(T)), then R39.3 is not produced and the detachment energy is
+       reported at the CCSD level only, from R39.4. Both sides print E(CCSD), so that
+       number exists either way. The result says plainly that the CCSD(T) detachment
+       energy was not obtained and why, and the inference in section 4 is recorded as
+       having been wrong.
+
+C39.2  ROUTE X REFUSING THE AUXILIARY BASIS.  The documented example names an explicit
+       correlation-fitting set, def2-SVP/C. D39 uses def2-SVPD with AutoAux instead,
+       because the dianion side of every subtraction is D38's committed output and that
+       is what D38 used; matching it is not a preference but a condition of the
+       comparison being exact. The def2 series has no def2-SVPD/C, so substituting a
+       named set would mean choosing one, and that choice is not made here. If X_N
+       refuses the auxiliary basis or refuses AutoAux, X_B1 and X_A1 are not attempted,
+       the result records the refusal with ORCA's own message, and route M stands alone
+       with its spin contamination reported from R39.5 but uncontrolled. X_N runs
+       before the other two X runs for this reason.
+
+C39.3  SCF FAILURE ON AN UNBOUND SPECIES.  If a run's SCF does not converge in 300
+       cycles, that run is reported as not converged with its cycle count, and no
+       energy is read from it. Its system then has no detachment energy from that
+       route. The diagnostic continues for the other systems.
+
+C39.4  A1's DETACHMENT ENERGY IS EXPECTED TO BE NEGATIVE, AND IS NOT A CLEAN
+       OBSERVABLE.  D38 measured A1's dianion highest occupied orbital at +0.3539 eV
+       and G38.10 called it NOT INTERPRETABLE on that ground. If the detachment energy
+       confirms it, the number is the size of the problem rather than a property of a
+       bound state: it is a bound-state method's description of what Dreuw and
+       Cederbaum call a resonance, and basis-set dependence of such a number is
+       expected rather than anomalous. R39.8 will report it with that label attached
+       and the result will not place it beside the bound values without it. A negative
+       A1 does not retract G38.10; it is the observable agreeing with the proxy. If
+       instead A1 comes out bound, that is the observable disagreeing with the proxy,
+       and the result says so and says what follows for D38's reading: the proxy was
+       the wrong test, G38.10 excluded an arm it should not have, and that is a finding
+       about D38's rule rather than a licence to reinterpret D38's numbers here.
+
+
+==============================================================================
+10.  WHAT D39 DOES NOT DO
+==============================================================================
+
+NO BARRIER (D39.1).  Six single points at one geometry. No transition state is run,
+nothing is subtracted along a reaction coordinate, and the harvest carries no
+hartree-to-kcal factor so that nothing of the sort can be assembled from it. G39.12
+enforces that.
+
+IT REVISITS NO D34 VERDICT (D39.2).  ADD-s1690_qp10000 and ADD-s678_qm10000 keep
+whatever reliability classification D34 gave them. A detachment energy is not a
+reliability screen and does not feed one.
+
+NO DESIGN CONCLUSION (D39.3).  Nothing here says either arrangement is a good design,
+a better design, or a design worth pursuing. Two arrangements were chosen because D38
+already ran their dianions, not because they are candidates.
+
+IT DOES NOT LICENSE THE ddE TEST (D39.4).  D38 licensed that, by showing the embedding
+charge reaches the correlated step. D39 neither extends nor withdraws that licence.
+
+ROUTE X CANNOT PROMOTE ITSELF (D39.5).  Route X is a control on route M's open-shell
+reference and nothing else. If the two CCSD numbers disagree, that is reported as a
+disagreement. Route X's number is not substituted for route M's, and route M's is not
+adjusted toward route X's.
+
+ONE GEOMETRY, AND IT IS THE REACTANT (D39.6).  Every committed VDE in this project is
+at the reactant and so is this one. Nothing here says whether boundedness changes along
+the reaction coordinate. Probes 2 and 3 both state the same limitation and it is
+unchanged.
+
+ONE BASIS (D39.7).  def2-SVPD only. Probe 1 measured a sign flip between def2-SVP and
+def2-SVPD on this very quantity, so basis dependence here is known to be large and is
+not characterised by a single-basis run.
+
+IT DOES NOT COMPARE TO EXPERIMENT (D39.8).  E7.11 forbids it and nothing here is a
+free energy or a barrier in any case.
+
+NOTHING WAS SHAPED (D39.9).  The method, basis, auxiliary treatment, SCF settings and
+geometry are D38's, unchanged, because the dianion halves are D38's outputs. The two
+arrangements are D38's. The convention and the constant are the committed probes'. The
+comparators are quoted from committed documents with their bases named. The only new
+choices in D39 are the charge and multiplicity of the monoanion, which the convention
+fixes, and the decision to run a second route as a control, which section 4 argues for
+and section 10 limits.
