@@ -1,0 +1,183 @@
+STAGE 6, DIAGNOSTIC 38 - RESULT
+Do embedding point charges reach the correlated step, or only the reference?
+
+Read by phase2.2/cs6_d38.py                       sha256 3d46364a356eb078fcda8b6fd3d91e9801c83f84c699e9a35ea4385d896292c7
+   pre-registration STAGE6_DIAGNOSTIC38_20261114.txt        
+                    sha256 fa28a507de1fa106967ec3b60ef6ccd2966321209b4fa19ad685cda37698d0a5
+   amendment 1      STAGE6_DIAGNOSTIC38_AMENDMENT1_20261114.txt
+                    sha256 3fa180ca9221c82aecc1b70c006e378b8b16e30ba722346ead409de90247575b
+
+A MECHANISM TEST. One geometry, the reactant only, no transition state, no ddE,
+no barrier. D38.1 says so and nothing here may be read as one.
+
+==============================================================================
+R38.8 AND R38.9  WHERE IT RAN, AND WHAT IT COST
+==============================================================================
+
+   node             comp056.hpc
+   scratch          /tmp/pbs.427885.hpc1.hpc/d38a1.427885.hpc1.hpc
+   free when chosen 43 GB
+   margin           REDUCED
+   peak over 5 runs 11 MB
+
+   candidates it refused before settling:
+      /scratch-small-local/18660916            mkdir failed
+      /scratch/18660916                        mkdir failed
+      /tmp/pbs.427885.hpc1.hpc                 43G free, under the 100G asked for
+      /scratch-small-local/18660916            mkdir failed
+      /scratch/18660916                        mkdir failed
+
+   THIS IS THE FIRST MEASUREMENT OF def2-SVPD's SCRATCH FOOTPRINT ANYWHERE
+   IN THIS RECORD. Amendment 1 carried a 100 GB preference over from D36,
+   which peaked at 74 and 80 GB - at def2-TZVPD - and said plainly that the
+   def2-SVPD figure was unmeasured and that R38.9 was how it would stop
+   being unmeasured. The measured peak above is that figure, and it is what
+   a later job should use rather than the number carried over.
+
+   CORRECTION TO AMENDMENT 1. That document said the cause of attempt 1's
+   failure was not established, and offered a dangling symlink or an unmounted
+   volume as the shapes that would produce it. The cause IS now established and
+   is neither: attempt 1's own scheduler output, preserved as
+   run.pbs.out.attempt1_427881 and archived, carries the line
+
+      mkdir: cannot create directory /scratch/18660916: No space left on device
+
+   The filesystem was full. Amendment 1 is not edited; this paragraph is the
+   correction. The amendment's design was unaffected by the wrong guess, because
+   it tried candidates rather than reasoning about one, but the guess was wrong
+   and is recorded as such.
+
+   AND A SECOND CORRECTION, OF AN OMISSION. Amendment 1 said there was no
+   archive to make because no output existed. That was true of the five job.out
+   files and false of run.pbs.out, which existed, held the message above, and
+   was the primary source for the amendment's own section 1. Attempt 2 writes to
+   the same path and would have overwritten it. It was copied aside and archived
+   before attempt 2 was submitted, with its sha256 matched across hpc1 and the
+   archive, so nothing was lost - but the rule of 18 October should have caught
+   it when the amendment was written, and did not.
+
+   THE SAME OVERSIGHT EXPLAINS A FILE NAME. Amendment 1 changed where scratch
+   comes from and did not change the job script's -o line, so attempt 2's own
+   scheduler output is committed as d38/run.pbs.out rather than under the
+   run_a1 name its script carries. Attempt 1's copy, preserved as
+   run.pbs.out.attempt1_427881, is archived and is not committed, because a
+   failed job is not committed and this document is its note.
+
+==============================================================================
+G38.1  INERTNESS. A charge of zero magnitude cannot change a converged energy
+==============================================================================
+
+   If it does, the point-charge file is being misparsed and nothing else here is
+   readable. Threshold 1e-08 Eh.
+
+   B0  vs N   worst difference 1.00e-09 Eh in E(CORR)(corrected) PASS
+   A0  vs N   worst difference 1.00e-09 Eh in E(CORR)(corrected) PASS
+
+==============================================================================
+R38.1 to R38.7  EVERY QUANTITY, AS READ
+==============================================================================
+
+   run             E(0)      E(CORR)corr       E(CCSD(T))           T1    HOMO eV  npc
+   N     -831.831909980     -2.596409363   -834.533005232  0.016726026    -2.0444    -
+   B0    -831.831909980     -2.596409364   -834.533005232  0.016726026    -2.0444    -
+   B1    -832.036019254     -2.601311070   -834.743458654  0.019507511    -4.8267    -
+   A0    -831.831909980     -2.596409364   -834.533005232  0.016726026    -2.0444    -
+   A1    -831.648351321     -2.598042111   -834.351462380  0.016858947    +0.3539    -
+
+   R38.6  ORCA prints no point-charge count in these outputs; stated, not assumed
+
+   R38.5 and R38.7  the highest occupied orbital, against the record
+
+      D36 measured HF/def2-TZVPD on the bare substrate     -1.9636 eV
+      Finding 8 measured these at def2-SVP, which has no diffuse functions:
+         S6-C, bare                               +2.2780 eV
+         S6-P / ADD-s1690, +1 at site 1690        -0.2430 eV
+         ADD-s678, -1.00                          +5.2050 eV
+
+      def2-SVPD, measured here, DOES have them. Finding 8's own words were that
+      the def2-SVP calculation "only looks well-behaved because def2-SVP has no
+      diffuse functions to let an electron leave". These are the first values
+      for these arrangements at a basis that does.
+
+==============================================================================
+G38.10  WHICH ARMS ARE EVIDENCE AT ALL
+==============================================================================
+
+   Pre-registered before any output existed. An arm whose SCF fails, or whose
+   highest occupied orbital sits at or above zero, is NOT INTERPRETABLE: the
+   record's citation of Dreuw and Cederbaum is that a resonance "can in
+   principle not be correctly computed with bound state methods". Such an arm is
+   reported with its numbers, not dropped.
+
+   B1   HOMO -4.8267 eV   interpretable
+   A1   HOMO +0.3539 eV   NOT INTERPRETABLE: HOMO +0.3539 eV is at or above zero
+
+==============================================================================
+G38.2 AND G38.3  THE QUESTION
+==============================================================================
+
+   G38.2 asks whether the charge reached the Hartree-Fock reference.
+   G38.3 asks whether it reached the correlation treatment. Threshold 1e-06 Eh.
+
+   A NOTE ON WHAT THESE TWO ARE. The pre-registration lists them under a heading
+   that says any gate failure stops the diagnostic, which reads oddly for the
+   two quantities the diagnostic exists to measure. Its D38.8 settles it: if the
+   correlated step turns out blind to the charges, "that is the result, it is
+   reported as plainly as the opposite, and it closes this route rather than
+   being worked around". So a negative G38.3 is reported here as the verdict and
+   does not abort the document. G38.1 and G38.4 are the ones that genuinely stop
+   it, because they mean the numbers are not readable at all.
+
+   B1   ADD-s1690_qp10000
+      dE(0)                     -0.204109274 Eh  moved         G38.2 PASS
+      dE(CORR)(corrected)       -0.004901707 Eh  moved         G38.3 PASS
+      dE(CCSD(T))               -0.210453422 Eh  moved         
+
+   A1   ADD-s678_qm10000
+      dE(0)                     +0.183558659 Eh  moved         G38.2 PASS
+      dE(CORR)(corrected)       -0.001632748 Eh  moved         G38.3 PASS
+      dE(CCSD(T))               +0.181542852 Eh  moved         
+
+==============================================================================
+THE VERDICT
+==============================================================================
+
+   THE EMBEDDING CHARGE REACHES THE CORRELATION TREATMENT.
+   On B1 the Hartree-Fock reference moves by -0.204109274 Eh and the corrected
+   correlation energy moves by -0.004901707 Eh, which is 4902 times the
+   threshold. The silent failure this diagnostic was built to catch - a
+   charge entering the SCF and not the correlated step - did not happen.
+
+   WHAT THAT LICENSES, AND ONLY THAT. The coupled-cluster test of ddE
+   with the arrangement's charges present may be built. D38.3 says a pass
+   licenses the expensive test and licenses nothing else. No barrier, no
+   ddE, no design conclusion and no production level of theory follows
+   from this document.
+
+==============================================================================
+WHAT THIS CANNOT SAY
+==============================================================================
+
+   NO BARRIER (D38.1). One geometry, the reactant only. No transition state was
+   run, so no barrier and no ddE exists in this document at any level.
+   IT DOES NOT SHOW THAT %pointcharges REPRODUCES THE QM/MM MODULE (D38.2). The
+   charges here are read from the force field the QM/MM runs used, but whether
+   the two routes give the same QM energy is a separate control at density
+   functional level and belongs to the test this licenses, not here.
+   IT REVISITS NO D34 VERDICT (D38.4). ADD-s1690_qp10000 is UNRELIABLE at
+   CAM-B3LYP/def2-SVPD and remains so.
+   T1 AND THE HIGHEST OCCUPIED ORBITAL ARE A FIRST LOOK (D38.5), not a
+   reference-quality verdict and not a multireference check.
+   NO DESIGN CONCLUSION (D38.6). Nothing about r_safe, any barrier lowering, or
+   which designs survive.
+   IT DOES NOT TEST WHETHER THE SIGN OF A CHARGE SETS D34's VERDICT (D38.7).
+   Two arrangements cannot test that, and the record's own 46 classified rows
+   show the sign does not set it.
+   NOTHING WAS SHAPED (D38.8). The arms were fixed in advance, both charges were
+   read out of committed force fields, and the two re-runs changed only where
+   scratch was taken from.
+
+==============================================================================
+ALL GATES PASS. G38.1 to G38.13.
+==============================================================================
+
