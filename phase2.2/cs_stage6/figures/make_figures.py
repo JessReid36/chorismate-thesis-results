@@ -9,7 +9,7 @@ What it does, in order:
      phase2.2/cs6_d33b.py (the stability block and the level-shift markers) and phase2.2/cs6_analyse.py
      (the bare / (MM) / (QM/MM) energy convention) - so that every number here is read the way the
      record reads it;
-  2. writes one .tsv per figure (F1 .. F12) and per table (T3 .. T13), plus controls.tsv (quantities recomputed from raw outputs
+  2. writes one .tsv per figure (F1 .. F12) and per table (T3 .. T14), plus controls.tsv (quantities recomputed from raw outputs
      beside the value the record prints) and derived.tsv (every derived number the write-up quotes, with
      its arithmetic and the files its inputs came from);
   3. unless --tsv-only, draws each figure from its own .tsv as .svg and .png.
@@ -1513,15 +1513,7 @@ def build(res, code, out):
                "DIAGNOSTIC 40 withdraws nothing and changes no verdict (D40.1).  One basis, one frame, vertical; all five sit inside r_safe."],
               ["arrangement", "state", "run", "source", "n_charges", "sum_q_e", "largest_q_e", "most_negative_q_e", "E_mono_Eh", "E_di_Eh", "VDE_eV", "word",
                "S2", "stab_first", "stab_last", "shift", "dVDE_vs_bare_eV", "quoted_ddE_kcal"], t13)
-    f12 = [("A: bare dianion, reactant, by functional", r[0], "R", r[5], "BOUND" if r[9] > 0 else "METASTABLE", "-") for r in sorted(t12, key=lambda r: r[9])]
-    f12 += [("B: CAM-B3LYP-D3BJ, with the arrangement's charges", r[0], r[1], r[10], r[11], r[17]) for r in t13]
-    write_tsv(out / "F12_detachment_energy.tsv",
-              ["F12. DIAGNOSTIC 40: detachment energies, E(monoanion) - E(dianion), def2-SVPD, frame 42436, frozen geometries.  Positive means bound.",
-               "Panel A: the bare dianion at the reactant, one run per functional, no stability analysis (rows of T12_d40_bare_functionals.tsv).",
-               "Panel B: CAM-B3LYP-D3BJ with each arrangement's charges present, both states, monoanion stable on its first and last analysis",
-               "(rows of T13_d40_arrangements.tsv).  METASTABLE: at or below zero.  Where the value is negative its sign is the reading, not its size.",
-               "quoted_ddE_kcal: the lowering the record quotes for the arrangement.  DIAGNOSTIC 40 withdraws nothing and changes no verdict."],
-              ["panel", "row", "state", "VDE_eV", "word", "quoted_ddE_kcal"], f12)
+    # the table of Figure F12 is written below, where DIAGNOSTIC 42's rows are formed: one table for one figure
     T12N, T13N = "figures/T12_d40_bare_functionals.tsv", "figures/T13_d40_arrangements.tsv"
     DV.add("DV350", str(len(list((root / "d40").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d40" % S6, S6 + "/d40")
     DV.add("DV351", str(len(list((root / "d40").rglob("job.out")))), "count", "number of committed job.out files under %s/d40" % S6, S6 + "/d40")
@@ -1689,6 +1681,269 @@ def build(res, code, out):
            S6 + "/d31/<family>/<condition>_R/pc.pc")
     DV.add("DV378", "%+.4f" % min(rel31), "derived", "smallest net charge among DIAGNOSTIC 31's RELIABLE conditions, e", S6 + "/d31/<family>/<condition>_R/pc.pc")
     DV.add("DV379", "%+.4f" % max(rel31), "derived", "largest net charge among DIAGNOSTIC 31's RELIABLE conditions, e", S6 + "/d31/<family>/<condition>_R/pc.pc")
+    # ============================ DIAGNOSTIC 42: is the dianion bound with the charges of D31's RELIABLE conditions ==========
+    # VDE = E(monoanion) - E(dianion), as for DIAGNOSTIC 40 and read by the same rule (mono() above); the dianion half is the
+    # committed D31 run of the same condition and state, read through the committed readers.  That the pair is one geometry with
+    # one set of charges is checked here, by content.  The words are DIAGNOSTIC 42's: METASTABLE at or below zero; BOUND above zero
+    # with the monoanion's last stability analysis STABLE; above zero otherwise is not counted as BOUND.
+    D42R, D42T = S6 + "/STAGE6_DIAGNOSTIC42_RESULT_20261116.txt", S6 + "/d42.tsv"
+    NOTSTABLE = "ABOVE ZERO, MONOANION NOT STABLE"
+    t42 = (root / "STAGE6_DIAGNOSTIC42_RESULT_20261116.txt").read_text()
+    rec42, hdr42 = {}, None
+    for l in (root / "d42.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdr42 is None:
+            hdr42 = f
+            continue
+        rec42[f[2]] = dict(zip(hdr42, f + [""] * (len(hdr42) - len(f))))
+    if any(v["status"] != "measured" for v in rec42.values()):
+        stop("d42.tsv holds a run that is not marked measured")
+    cond42, hdrc = [], None
+    for l in (root / "d42" / "CONDITIONS.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdrc is None:
+            hdrc = f
+            continue
+        if l.strip():
+            cond42.append(dict(zip(hdrc, f)))
+    rel31n = sorted("n%02d_q%s" % (int(r[1]), r[2]) for r in f3 if r[3] == "RELIABLE" and r[0] == "B")
+    if any(r[3] == "RELIABLE" and r[0] != "B" for r in f3) or rel31n != sorted(c["condition"] for c in cond42) or len(rec42) != 2 * len(cond42):
+        stop("DIAGNOSTIC 42's conditions are not exactly the RELIABLE conditions of DIAGNOSTIC 31, two states each")
+    s422 = t42[t42.index("R42.2 "):t42.index("R42.3 ")]
+    s425 = t42[t42.index("R42.5 "):t42.index("R42.6 ")]
+    s426 = t42[t42.index("R42.6 "):t42.index("WHAT THIS CANNOT SAY")]
+    k42 = 0
+    # the control: DIAGNOSTIC 40's monoanion input for the bare substrate at the reactant, run again
+    c42 = mono(root / "d42" / "C_bare_R", "plain")
+    if not same_files(root / "d42" / "C_bare_R", root / "d40" / "B_bare_R", ("substrate.xyz", "job.inp")):
+        stop("d42/C_bare_R is not DIAGNOSTIC 40's B_bare_R run again")
+    m = re.search(r"^\s+(-\d+\.\d{8}) Eh\s+D40 (-\d+\.\d{8})\s+differ (\S+)\s+limit (\S+)\s+PASS\s*$", t42, re.M)
+    if not m:
+        stop("DIAGNOSTIC 42's result does not print its control")
+    control("C53.01", "DIAGNOSTIC 42 G42.4, the control C_bare_R: E(monoanion), Eh", c42["E"], float(m.group(1)), D42R, 1e-8, 8)
+    control("C53.02", "DIAGNOSTIC 42 G42.4, the control against DIAGNOSTIC 40's B_bare_R as read here, Eh", c42["E"], vde40[("bare", "R")]["mo"]["E"],
+            S6 + "/d40/B_bare_R/job.out", float(m.group(4)), 8)
+    ctl42 = {st: run(root / "d31" / ("ctl_%s" % st))["E"] for st in ("R", "TS")}
+    m = re.search(r"^\s+(\d+\.\d{4}) kcal/mol\s+D31 (\d+\.\d{4})\s+differ", t42, re.M)
+    if not m:
+        stop("DIAGNOSTIC 42's result does not print the charge-free barrier")
+    control("C53.03", "DIAGNOSTIC 42 G42.5, the charge-free barrier of d31/ctl_R and d31/ctl_TS, kcal/mol", (ctl42["TS"] - ctl42["R"]) * H, float(m.group(1)), D42R, 6e-5, 4)
+
+    def near42(d):
+        """The shortest distance from a point charge to a substrate atom, Angstrom, from the run's own pc.pc and substrate.xyz."""
+        ls = (Path(d) / "pc.pc").read_text().split("\n")
+        pts = [tuple(float(x) for x in l.split()[1:4]) for l in ls[1:1 + int(ls[0].split()[0])]]
+        ats = read_xyz_rows(Path(d) / "substrate.xyz")
+        return min(math.sqrt((p[0] - a[1]) ** 2 + (p[1] - a[2]) ** 2 + (p[2] - a[3]) ** 2) for p in pts for a in ats)
+
+    v42 = {}
+    for c in cond42:
+        name = c["condition"]
+        for st in ("R", "TS"):
+            rn = "%s_%s" % (name, st)
+            src = root / "d31" / "B" / rn
+            r = rec42[rn]
+            if r["source"] != "d31/B/" + rn or r["condition"] != name or r["state"] != st:
+                stop("d42.tsv does not name d31/B/%s as the source of %s" % (rn, rn))
+            mo = mono(root / "d42" / rn, "pc")
+            di = run(src)
+            if di is None or not di["norm"] or di["notconv"] or di["chmult"] != (["-2"], ["1"]):
+                stop("%s is not a normally terminated, converged dianion run" % src)
+            if not same_files(root / "d42" / rn, src, ("substrate.xyz", "pc.pc")):
+                stop("d42/%s and d31/B/%s do not hold the same geometry and charges, byte for byte" % (rn, rn))
+            if state_of(mo) != st or state_of(di) != st or mo["level"][:4] != di["level"][:4] or mo["level"][4] != di["level"][4] \
+                    or mo["level"][:2] != ("CAM-B3LYP", "DEF2-SVPD"):
+                stop("d42/%s and its source are not CAM-B3LYP/def2-SVPD on frame 42436's %s geometry" % (rn, st))
+            if not mo["stab"]["ran"] or mo["stab"]["first"] is None or mo["stab"]["last"] is None:
+                stop("d42/%s carries no readable stability analysis" % rn)
+            v = (mo["E"] - di["E"]) * EV
+            word = "METASTABLE" if v <= 0 else ("BOUND" if mo["stab"]["last"] == "STABLE" else NOTSTABLE)
+            if r["word"] != word or r["stab_first"] != mo["stab"]["first"] or r["stab_last"] != mo["stab"]["last"]:
+                stop("%s: d42.tsv says %s, %s/%s; read here %s, %s/%s" % (rn, r["word"], r["stab_first"], r["stab_last"], word, mo["stab"]["first"], mo["stab"]["last"]))
+            q, _rep = charges_of(root / "d42" / rn)
+            if len(q) != int(c["n"]) or abs(sum(q) - float(c["sum_q_e"])) > 5e-7 or c["class"] != ("H" if sum(q) > -5e-7 else "N") \
+                    or any(abs(abs(x) - float(c["q_e"])) > 1e-9 for x in q):
+                stop("d42/CONDITIONS.tsv does not describe the charges of %s" % rn)
+            for what, mine, rec, tol, nd in (("E(monoanion), Eh", mo["E"], float(r["E_mono_Eh"]), 1e-8, 8), ("E(dianion), Eh", di["E"], float(r["E_di_Eh"]), 1e-8, 8),
+                                             ("detachment energy, eV", v, float(r["VDE_eV"]), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(r["S2"]), 1e-6, 6)):
+                k42 += 1
+                control("C54.%03d" % k42, "DIAGNOSTIC 42, %s %s, %s (d42.tsv)" % (name, st, what), mine, rec, D42T, tol, nd)
+            m = re.search(r"^\s+" + re.escape(name) + r"\s+" + st + r"\s+(\d+)\s+(\d\.\d\d)\s+([+-]\d\.\d{4})\s+([HN])\s+([+-]\d+\.\d{4})\s+(\d\.\d{6})\s+(\w+)/(\w+)"
+                          r"\s+(yes|no)\s+(yes|no)\s+(\d+)\s+(BOUND|METASTABLE)\s*$", s422, re.M)
+            if not m:
+                stop("DIAGNOSTIC 42's result does not print %s %s in R42.2 as a measured BOUND or METASTABLE row" % (name, st))
+            if (m.group(12), m.group(7), m.group(8), m.group(4), int(m.group(1)), int(m.group(11))) != (word, mo["stab"]["first"], mo["stab"]["last"], c["class"], len(q), len(q)) \
+                    or (m.group(9) == "yes" or m.group(10) == "yes") != mo["shifted"] or abs(float(m.group(3)) - sum(q)) > 5e-5:
+                stop("%s: DIAGNOSTIC 42's R42.2 and the raw output do not give one reading" % rn)
+            for what, mine, rec, tol, nd in (("detachment energy, eV", v, float(m.group(5)), 6e-5, 4), ("<S**2> of the monoanion", mo["s2"], float(m.group(6)), 1e-6, 6)):
+                k42 += 1
+                control("C54.%03d" % k42, "DIAGNOSTIC 42 R42.2, %s %s, %s" % (name, st, what), mine, rec, D42R, tol, nd)
+            v42[(name, st)] = dict(v=v, word=word, E=di["E"], mo=mo, q=q, near=near42(root / "d42" / rn), rn=rn)
+    k42 = 0
+    for c in cond42:
+        name = c["condition"]
+        x = {st: v42[(name, st)] for st in ("R", "TS")}
+        dde = ((x["TS"]["E"] - ctl42["TS"]) - (x["R"]["E"] - ctl42["R"])) * H
+        words = [x[st]["word"] for st in ("R", "TS")]
+        reach = "APPLIES" if "METASTABLE" in words else ("does not reach" if words == ["BOUND", "BOUND"] else None)
+        if reach is None:
+            stop("%s is neither METASTABLE at a state nor BOUND at both: this script has no reading for it" % name)
+        m = re.search(r"^\s+" + re.escape(name) + r"\s+([HN])\s+([+-]\d\.\d{4})\s+([+-]\d+\.\d{4})\s+(BOUND|METASTABLE)\s+(BOUND|METASTABLE)\s+(APPLIES|does not reach)\s*$", s426, re.M)
+        if not m or (m.group(4), m.group(5), m.group(6)) != (words[0], words[1], reach):
+            stop("DIAGNOSTIC 42's R42.6 does not give %s the reading formed here" % name)
+        k42 += 1
+        control("C55.%02d" % k42, "DIAGNOSTIC 42 R42.6, %s: ddE from the committed dianion outputs of DIAGNOSTIC 31, kcal/mol" % name, dde, float(m.group(3)), D42R, 6e-5, 4)
+        m5 = re.search(r"^\s+" + re.escape(name) + r"\s+([+-]\d\.\d{4})\s+(\d+)\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s*$", s425, re.M)
+        if not m5:
+            stop("DIAGNOSTIC 42's result does not print %s in R42.5" % name)
+        for j, st in enumerate(("R", "TS")):
+            k42 += 1
+            control("C55.%02d" % k42, "DIAGNOSTIC 42 R42.5, %s %s: detachment energy minus the bare substrate's at the same state, eV" % (name, st),
+                    x[st]["v"] - vde40[("bare", st)]["v"], float(m5.group(3 + j)), D42R, 6e-5, 4)
+            if abs(float(rec42[x[st]["rn"]]["ddE_kcal"]) - dde) > 6e-5 or abs(float(rec42[x[st]["rn"]]["dVDE_vs_bare_eV"]) - (x[st]["v"] - vde40[("bare", st)]["v"])) > 6e-5:
+                stop("d42.tsv does not carry the ddE or the change from the bare substrate formed here for %s %s" % (name, st))
+        c.update(dde=dde, reach=reach, both=(words == ["BOUND", "BOUND"]), sumq=sum(x["R"]["q"]), nq=len(x["R"]["q"]))
+    # the committed result's list of the conditions RELIABLE in D31 and BOUND at both states here, and its verdict on H9
+    listed = re.findall(r"^\s+(n\d\d_q0\.\d\d)\s+ddE\s+([+-]\d+\.\d{4}) kcal/mol", s426, re.M)
+    if sorted(n for n, _d in listed) != sorted(c["condition"] for c in cond42 if c["both"]) or any(abs(float(d) - next(c["dde"] for c in cond42 if c["condition"] == n)) > 6e-5 for n, d in listed):
+        stop("DIAGNOSTIC 42's list of the conditions BOUND at both states is not the one formed here")
+    H42 = [c for c in cond42 if c["class"] == "H"]
+    N42 = [c for c in cond42 if c["class"] == "N"]
+    verdict42 = "H9 IS NOT FALSIFIED BY THESE %d CONDITIONS." % len(H42) if all(c["both"] for c in H42) else "H9 IS FALSIFIED."
+    if verdict42 not in t42 or ("H9 IS FALSIFIED." in t42) == all(c["both"] for c in H42):
+        stop("DIAGNOSTIC 42's verdict on H9 is not the one the raw outputs give here")
+    order42 = sorted(cond42, key=lambda c: (-c["sumq"], c["nq"], c["q_e"]))
+    t14 = []
+    for c in order42:
+        for st in ("R", "TS"):
+            x = v42[(c["condition"], st)]
+            mo = x["mo"]
+            t14.append((c["condition"], st, x["rn"], "d31/B/" + x["rn"], c["nq"], c["n_positive"], c["n_negative"], c["q_e"], "%+.4f" % c["sumq"], c["class"],
+                        "%.3f" % x["near"], fmt(mo["E"], 8), fmt(x["E"], 8), "%+.4f" % x["v"], x["word"], fmt(mo["s2"], 6), mo["stab"]["first"], mo["stab"]["last"],
+                        "yes" if mo["shifted"] else "no", "%+.4f" % (x["v"] - vde40[("bare", st)]["v"]), "%+.4f" % c["dde"], c["reach"], "RELIABLE"))
+    write_tsv(out / "T14_d42_conditions.tsv",
+              ["T14. DIAGNOSTIC 42: the detachment energy with the charges of each of the 13 conditions DIAGNOSTIC 31 calls RELIABLE,",
+               "CAM-B3LYP-D3BJ/def2-SVPD, frame 42436, both states, with the stability analysis on the monoanion.  In order of the sum of the charges.",
+               "VDE = E(monoanion) - E(dianion) at the same geometry with the same external charges, eV at %.12f eV per Eh." % EV,
+               "word: METASTABLE if VDE is at or below zero; BOUND if it is above zero and the monoanion's last stability analysis is STABLE",
+               "(DIAGNOSTIC 42's rule, fixed before any output existed).  Where VDE is negative its SIGN is the reading and its size is not (D42.4).",
+               "class: H, the charges sum to zero or more (the class hypothesis H9 is about); N, they sum to less than zero.",
+               "E_mono: %s/d42/<run>/job.out.  E_di: the committed dianion run named in source, through phase2.2/cs6_audit.py read()." % S6,
+               "Controls C54 compare with d42.tsv and with the rows the result prints; C55 the ddE and the change from the bare substrate.",
+               "nearest_A: the shortest distance from a point charge to a substrate atom, from the run's own pc.pc and substrate.xyz (derived).",
+               "dVDE_vs_bare_eV: this row's VDE minus the bare substrate's at the same state (DIAGNOSTIC 40).  REPORTED, NOT INTERPRETED (R42.5).",
+               "ddE_kcal: (E(TS) - E(TS, control)) - (E(R) - E(R, control)) from DIAGNOSTIC 31's committed dianion outputs, control d31/ctl_R and",
+               "d31/ctl_TS.  NOT QUOTABLE: 'no ddE listed here is made quotable by D42' (D42.8); every condition sits inside r_safe (D42.7).",
+               "probe2: APPLIES if a state is METASTABLE (Probe 2: such a ddE 'is not a barrier effect and must not be reported as one');",
+               "'does not reach' if both states are BOUND, at this level and basis.  DIAGNOSTIC 42 withdraws nothing and changes no verdict (D42.1)."],
+              ["condition", "state", "run", "source", "n_charges", "n_positive", "n_negative", "q_e", "sum_q_e", "class", "nearest_A", "E_mono_Eh", "E_di_Eh", "VDE_eV",
+               "word", "S2", "stab_first", "stab_last", "shift", "dVDE_vs_bare_eV", "ddE_kcal", "probe2", "d31_verdict"], t14)
+    # F12, one table for one figure: every detachment energy at the density-functional level, and beside each arrangement its ddE
+    APPL, NOTQ = "a state is METASTABLE: Probe 2's sentence applies", "BOUND at both states; NOT QUOTABLE (D42.8)"
+    f12 = [("A", r[0], "R", r[5], "BOUND" if r[9] > 0 else "METASTABLE", "-", "-", "-", "-") for r in sorted(t12, key=lambda r: r[9])]
+    f12 += [("B", r[0], r[1], r[10], r[11], r[4] if r[0] != "bare" else "0", r[5] if r[0] != "bare" else "-", r[17], APPL if r[0] != "bare" else "-") for r in t13]
+    f12 += [("C", r[0], r[1], r[13], r[14], r[4], r[8], r[20], APPL if r[21] == "APPLIES" else NOTQ) for r in t14]
+    write_tsv(out / "F12_detachment_energy.tsv",
+              ["F12. Detachment energies, E(monoanion) - E(dianion), def2-SVPD, frame 42436, frozen geometries, in vacuo.  Positive means bound.",
+               "Panel A (DIAGNOSTIC 40, part A): the bare dianion at the reactant, one run per functional, no stability analysis (T12_d40_bare_functionals.tsv).",
+               "Panel B (DIAGNOSTIC 40, part B): CAM-B3LYP-D3BJ, the bare substrate and the five arrangements whose lowering the record held quotable,",
+               "both states (T13_d40_arrangements.tsv).  Panel C (DIAGNOSTIC 42): CAM-B3LYP-D3BJ, the 13 conditions DIAGNOSTIC 31 calls RELIABLE, both",
+               "states, in order of the sum of their charges (T14_d42_conditions.tsv).  In B and C every monoanion is stable on its first and last analysis.",
+               "METASTABLE: at or below zero.  Where the value is negative its sign is the reading, not its size.",
+               "ddE_kcal: panel B, the lowering the record quotes for the arrangement; panel C, ddE from DIAGNOSTIC 31's committed dianion outputs.",
+               "ddE_reading: none of these ddE may be quoted as a barrier effect.  Where a state is METASTABLE Probe 2's sentence applies; where both",
+               "states are BOUND the ddE is still NOT QUOTABLE, by D42.8, and every arrangement here sits inside r_safe.  Nothing is withdrawn."],
+              ["panel", "row", "state", "VDE_eV", "word", "n_charges", "sum_q_e", "ddE_kcal", "ddE_reading"], f12)
+    T14N = "figures/T14_d42_conditions.tsv"
+    DV.add("DV380", str(len(list((root / "d42").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d42" % S6, S6 + "/d42")
+    DV.add("DV381", str(len(list((root / "d42").rglob("job.out")))), "count", "number of committed job.out files under %s/d42" % S6, S6 + "/d42")
+    DV.add("DV382", str(len(v42)), "count", "monoanion single points of DIAGNOSTIC 42 with charges present read here: %d conditions, two states" % len(cond42), S6 + "/d42")
+    DV.add("DV383", str(sum(1 for c in H42 if c["both"])), "recomputed from raw outputs",
+           "of the %d conditions whose charges sum to zero or more, those BOUND at both states, CAM-B3LYP-D3BJ/def2-SVPD" % len(H42), T14N)
+    DV.add("DV384", str(sum(1 for c in N42 if c["both"])), "recomputed from raw outputs",
+           "of the %d conditions whose charges sum to less than zero, those BOUND at both states" % len(N42), T14N)
+    DV.add("DV385", str(sum(1 for c in N42 if all(v42[(c["condition"], s)]["word"] == "METASTABLE" for s in ("R", "TS")))), "recomputed from raw outputs",
+           "of those %d, the conditions METASTABLE at both states" % len(N42), T14N)
+    DV.add("DV386", str(sum(1 for c in cond42 if c["both"])), "recomputed from raw outputs",
+           "conditions RELIABLE on four legs in DIAGNOSTIC 31 and BOUND at both states in DIAGNOSTIC 42", T14N)
+    vh = [(v42[(c["condition"], s)]["v"], c["condition"], s) for c in H42 for s in ("R", "TS")]
+    DV.add("DV387", "%+.4f" % min(vh)[0], "recomputed from raw outputs", "smallest detachment energy among the %d states of the conditions whose charges sum to zero or more, eV (%s, %s)"
+           % (len(vh), min(vh)[1], min(vh)[2]), T14N)
+    DV.add("DV388", "%+.4f" % max(vh)[0], "recomputed from raw outputs", "largest detachment energy among those states, eV (%s, %s)" % (max(vh)[1], max(vh)[2]), T14N)
+    vn = [(v42[(c["condition"], s)]["v"], c["condition"], s) for c in N42 for s in ("R", "TS")]
+    vneg = [x for x in vn if x[0] <= 0]
+    vpos = [x for x in vn if x[0] > 0]
+    DV.add("DV389", "%+.4f" % min(vpos)[0], "recomputed from raw outputs", "smallest positive detachment energy among the conditions whose charges sum to less than zero, eV (%s, %s)"
+           % (min(vpos)[1], min(vpos)[2]), T14N)
+    DV.add("DV390", "%+.4f" % max(vpos)[0], "recomputed from raw outputs", "largest positive detachment energy among those conditions, eV (%s, %s)" % (max(vpos)[1], max(vpos)[2]), T14N)
+    DV.add("DV391", "%+.4f" % max(vneg)[0], "recomputed from raw outputs", "the negative detachment energy nearest zero in DIAGNOSTIC 42, eV (%s, %s)" % (max(vneg)[1], max(vneg)[2]), T14N)
+    DV.add("DV392", "%+.4f" % min(vneg)[0], "recomputed from raw outputs", "the most negative detachment energy in DIAGNOSTIC 42, eV (%s, %s)" % (min(vneg)[1], min(vneg)[2]), T14N)
+    DV.add("DV393", str(len(vneg)), "recomputed from raw outputs", "states of DIAGNOSTIC 42 at which the dianion is METASTABLE", T14N)
+    DV.add("DV394", str(sum(1 for x in v42.values() if x["mo"]["stab"]["first"] != "STABLE" or x["mo"]["stab"]["last"] != "STABLE")), "recomputed from raw outputs",
+           "monoanions of DIAGNOSTIC 42 whose first or last stability analysis is not STABLE", T14N)
+    DV.add("DV395", str(sum(1 for x in v42.values() if x["mo"]["shifted"])), "recomputed from raw outputs", "monoanions of DIAGNOSTIC 42 in which TRAH or a level shift was engaged", T14N)
+    s2s = sorted(((x["mo"]["s2"], k) for k, x in v42.items()), reverse=True)
+    DV.add("DV396", fmt(s2s[0][0], 6), "recomputed from raw outputs", "largest <S**2> among the %d monoanions of DIAGNOSTIC 42 (ideal 0.75): %s at %s" % (len(v42), s2s[0][1][0], s2s[0][1][1]), T14N)
+    DV.add("DV397", fmt(s2s[4][0], 6), "derived", "the fifth largest <S**2> among the %d monoanions of DIAGNOSTIC 42: the largest outside the four of %s"
+           % (len(v42), ", ".join("%s %s" % k for _s, k in s2s[:4])), T14N)
+    DV.add("DV398", fmt(max(s for s, k in s2s if k[1] == "R"), 6), "recomputed from raw outputs", "largest <S**2> among the reactant monoanions of DIAGNOSTIC 42", T14N)
+    DV.add("DV399", "%.1e" % abs(c42["E"] - vde40[("bare", "R")]["mo"]["E"]), "recomputed from raw outputs",
+           "|E(d42/C_bare_R) - E(d40/B_bare_R)| from the two raw outputs: DIAGNOSTIC 42's control, Eh", S6 + "/d42")
+    ten = [c for c in cond42 if c["both"]]
+    DV.add("DV400", "%.4f" % max(c["dde"] for c in ten), "recomputed from raw outputs", "the least negative ddE among the conditions BOUND at both states, kcal/mol (%s)"
+           % max(ten, key=lambda c: c["dde"])["condition"], T14N)
+    DV.add("DV401", "%.4f" % min(c["dde"] for c in ten), "recomputed from raw outputs", "the most negative ddE among the conditions BOUND at both states, kcal/mol (%s)"
+           % min(ten, key=lambda c: c["dde"])["condition"], T14N)
+    ten3 = [c for c in ten if c["nq"] * float(c["q_e"]) <= d33b.CONV]
+    DV.add("DV402", "%.4f" % min(c["dde"] for c in ten3), "recomputed from raw outputs",
+           "the most negative ddE among the conditions BOUND at both states that carry at most %.2f e in all, kcal/mol (%s)" % (d33b.CONV, min(ten3, key=lambda c: c["dde"])["condition"]), T14N)
+    DV.add("DV403", str(len(ten) - len(ten3)), "derived", "conditions BOUND at both states that carry more than %.2f e in all (%s)"
+           % (d33b.CONV, ", ".join(c["condition"] for c in ten if c not in ten3)), T14N)
+    nears = [x["near"] for x in v42.values()]
+    DV.add("DV404", "%.3f" % min(nears), "derived", "shortest distance from a point charge to a substrate atom over the %d runs of DIAGNOSTIC 42, Angstrom" % len(nears), T14N)
+    DV.add("DV405", "%.3f" % max(nears), "derived", "the largest of the %d runs' shortest charge-to-atom distances, Angstrom" % len(nears), T14N)
+    # POST HOC, this document's own comparison: how thin the margins are, set against how far the bare substrate's detachment energy
+    # moves between functionals at the same basis and state (DIAGNOSTIC 40, part A).  Nothing was measured with these charges at another level.
+    vb = {r[0]: r[9] for r in t12}
+    DV.add("DV406", "%.4f" % (max(vb.values()) - min(vb.values())), "derived; POST HOC", "largest minus smallest detachment energy of the bare dianion among the eight functionals of T12, reactant, eV", T12N)
+    DV.add("DV407", "%.4f" % (vb["CAM-B3LYP-D3BJ"] - vb["B3LYP-D3BJ"]), "derived; POST HOC", "detachment energy of the bare dianion, reactant: CAM-B3LYP-D3BJ minus B3LYP-D3BJ, eV", T12N)
+    thin = sorted((v42[(c["condition"], s)]["v"], c["condition"], s) for c in ten for s in ("R", "TS") if v42[(c["condition"], s)]["v"] < vb["CAM-B3LYP-D3BJ"] - vb["B3LYP-D3BJ"])
+    DV.add("DV408", str(len(thin)), "derived; POST HOC", "of the %d BOUND states of those conditions, the ones bound by less than DV407 (%s)"
+           % (2 * len(ten), ", ".join("%s %s" % (n, s) for _v, n, s in thin)), T14N + " ; " + T12N)
+    DV.add("DV409", "%+.4f" % thin[-1][0], "derived; POST HOC", "the largest of the detachment energies counted in DV408, eV", T14N)
+    thinc = sorted(set(n for _v, n, _s in thin if sum(1 for _w, m_, _t in thin if m_ == n) == 2))
+    DV.add("DV410", str(len(thinc)), "derived; POST HOC", "conditions with both states counted in DV408 (%s)" % ", ".join(thinc), T14N)
+    DV.add("DV411", str(2 * len(ten)), "derived", "2 x DV386: the states of the conditions BOUND at both states", T14N)
+    # POST HOC: is the change from the bare substrate proportional to the charge where DIAGNOSTIC 31 holds the sites fixed and changes
+    # only the magnitude?  n = 1 is one positive charge at one site; n = 2 is one positive and one negative charge at two sites.
+    def per_e(n, st):
+        cs = sorted((c for c in cond42 if c["nq"] == n), key=lambda c: float(c["q_e"]))
+        ref_pc = [l.split()[1:4] for l in (root / "d42" / (cs[0]["condition"] + "_" + st) / "pc.pc").read_text().split("\n")[1:1 + n]]
+        for c in cs:
+            if [l.split()[1:4] for l in (root / "d42" / (c["condition"] + "_" + st) / "pc.pc").read_text().split("\n")[1:1 + n]] != ref_pc:
+                stop("the n = %d conditions of DIAGNOSTIC 42 do not hold their sites fixed at %s" % (n, st))
+        return [(v42[(c["condition"], st)]["v"] - vde40[("bare", st)]["v"]) / float(c["q_e"]) for c in cs]
+    k = 412
+    for n in (1, 2):
+        for st in ("R", "TS"):
+            pe = per_e(n, st)
+            if len(pe) != 3:
+                stop("DIAGNOSTIC 42 does not hold three magnitudes at n = %d" % n)
+            DV.add("DV%d" % k, "%+.4f" % min(pe), "derived; POST HOC", "n = %d, %s: smallest change in detachment energy from the bare substrate per unit of q, over q = 0.25, 0.50, 0.75, eV per e" % (n, st), T14N)
+            DV.add("DV%d" % (k + 1), "%+.4f" % max(pe), "derived; POST HOC", "n = %d, %s: largest such change per unit of q, eV per e" % (n, st), T14N)
+            k += 2
+    DV.add("DV420", "%.1f" % (100.0 * (max(per_e(1, "R")) / min(per_e(1, "R")) - 1.0)), "derived; POST HOC", "n = 1, R: 100 x (DV413 / DV412 - 1), per cent", T14N)
+    DV.add("DV421", "%.1f" % (100.0 * (max(per_e(1, "TS")) / min(per_e(1, "TS")) - 1.0)), "derived; POST HOC", "n = 1, TS: 100 x (DV415 / DV414 - 1), per cent", T14N)
+    DV.add("DV422", str(len(cond42)), "count", "conditions of DIAGNOSTIC 42", S6 + "/d42/CONDITIONS.tsv")
+    DV.add("DV423", str(len(N42)), "count", "conditions of DIAGNOSTIC 42 whose charges sum to less than zero", S6 + "/d42/CONDITIONS.tsv")
+    DV.add("DV424", str(len(H42)), "count", "conditions of DIAGNOSTIC 42 whose charges sum to zero or more", S6 + "/d42/CONDITIONS.tsv")
+    DV.add("DV425", str(len(H42) - sum(1 for c in H42 if c["nq"] * float(c["q_e"]) > d33b.CONV)), "derived",
+           "of DV424, the conditions that carry at most %.2f e in all" % d33b.CONV, S6 + "/d42/CONDITIONS.tsv")
+    DV.add("DV426", str(sum(1 for c in H42 if c["both"] and c["nq"] * float(c["q_e"]) <= d33b.CONV)), "recomputed from raw outputs", "of DV425, those BOUND at both states", T14N)
+    DV.add("DV427", str(2 * len(arr5)), "derived", "2 x DV367: arrangement-states of DIAGNOSTIC 40's part B with charges present", T13N)
+    DV.add("DV428", str(len(v42) + 2 * len(arr5)), "derived",
+           "DV382 + DV427: arrangement-states with charges present whose detachment energy is measured at CAM-B3LYP-D3BJ/def2-SVPD", T14N + " ; " + T13N)
+    DV.add("DV429", str(len(v42) - 4), "derived", "DV382 - 4: the monoanions of DIAGNOSTIC 42 outside the four with the largest <S**2>", T14N)
     DV.add("DV145", str(len(d31t)), "derived", "DIAGNOSTIC 31 conditions tabulated", "figures/T5_positive_charge_vs_verdict.tsv")
     DV.add("DV146", str(sum(1 for t in d31t if float(t[4]) >= 0.55 and t[6] == "RELIABLE")), "derived",
            "DIAGNOSTIC 31 conditions with largest positive charge at or above +0.55 e that are RELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
@@ -2100,6 +2355,9 @@ F9 = [
     ("N19", "N12", "is the dianion bound? (D40)",
      "METASTABLE at both states for all five quotable arrangements; withdraws nothing",
      S6 + "/STAGE6_DIAGNOSTIC40_RESULT_20261115.txt", "It withdraws nothing and changes no verdict (D40.1):"),
+    ("N20", "N1", "bound with D31's conditions? (D42)",
+     "BOUND at both states for 10 of 13 RELIABLE conditions; H9 not falsified; no ddE made quotable",
+     S6 + "/STAGE6_DIAGNOSTIC42_RESULT_20261116.txt", "H9 IS NOT FALSIFIED BY THESE 8 CONDITIONS."),
 ]
 
 
@@ -2446,8 +2704,8 @@ def draw(out):
                 place(c, depth + 1)
             pos[n] = (depth, sum(pos[c][1] for c in ch) / len(ch))
     place("N0", 0)
-    fig, ax = plt.subplots(figsize=(13.0, 6.6))
-    W, Hh, DX = 3.6, 0.8, 4.0
+    fig, ax = plt.subplots(figsize=(13.0, 8.0))
+    W, Hh, DX = 3.6, 0.86, 4.0
     maxdepth = max(p[0] for p in pos.values())
     tone = {"in use": "#e8eef5", "open": "#fff4d6", "not": "#f2cfc7", "none": "#eeeeee"}
 
@@ -2465,8 +2723,10 @@ def draw(out):
         r = by[n]
         ax.add_patch(FancyBboxPatch((x, -y - Hh / 2), W, Hh, boxstyle="round,pad=0.02,rounding_size=0.08", facecolor=tint(r["status"]),
                                     edgecolor=INK, lw=0.7))
-        ax.text(x + 0.1, -y + 0.17, "\n".join(textwrap.wrap(r["approach"], 40)), fontsize=7.0, va="center", fontweight="bold")
-        ax.text(x + 0.1, -y - 0.2, "\n".join(textwrap.wrap(r["status"], 50)), fontsize=6.4, va="center", color="#333333")
+        tl9, sl9 = textwrap.wrap(r["approach"], 40), textwrap.wrap(r["status"], 50)
+        top9 = -y + Hh / 2 - (0.07 if len(tl9) + len(sl9) > 2 else 0.16)
+        ax.text(x + 0.1, top9, "\n".join(tl9), fontsize=7.0, va="top", fontweight="bold", linespacing=1.05)
+        ax.text(x + 0.1, top9 - 0.205 * len(tl9) - 0.03, "\n".join(sl9), fontsize=6.4, va="top", color="#333333", linespacing=1.05)
         if r["parent"] in pos:
             px, py = pos[r["parent"]]
             ax.plot([px * DX + W, px * DX + W + 0.3, px * DX + W + 0.3, x], [-py, -py, -y, -y], color=INK, lw=0.7)
@@ -2569,58 +2829,117 @@ def draw(out):
     bx.set_title("Test 1: the orbital against the detachment energy")
     fig.tight_layout(rect=(0, 0.075, 1, 1)); save(fig, "F11_two_tests")
 
-    # ---- F12: DIAGNOSTIC 40's detachment energies.  Black, grey and white.  The reading is the side of zero a marker
-    # stands on; the numbers are printed in a column of their own so that no label covers a marker.
+    # ---- F12: every detachment energy the record holds at the density-functional level, in one figure, and beside each
+    # arrangement the barrier change it was measured or computed with.  Black, grey and white.  On the left the reading is the
+    # side of zero a marker stands on.  On the right a solid bar is an arrangement BOUND at both states and a hatched bar one
+    # with a METASTABLE state; neither may be quoted as a barrier effect, and the figure says so in its key.  The numbers are in
+    # the tables the caption names, so that no label covers a marker.
     r12 = read_tsv(out / "F12_detachment_energy.tsv")
-    pa = [r for r in r12 if r["panel"].startswith("A")]
-    pb = [r for r in r12 if r["panel"].startswith("B")]
-    names_b = []
-    for r in pb:
-        if r["row"] not in names_b:
-            names_b.append(r["row"])
-    fig, (bx, ax) = plt.subplots(2, 1, figsize=(9.4, 7.2), gridspec_kw={"height_ratios": [len(names_b) + 1.3, len(pa) + 0.5]}, sharex=True)
-    XL, XR, XV = -2.3, 2.75, 1.55
-    for a_ in (ax, bx):
+    pa = [r for r in r12 if r["panel"] == "A"]
+
+    def rows12(panel):
+        names = []
+        for r in r12:
+            if r["panel"] == panel and r["row"] not in names:
+                names.append(r["row"])
+        return [(n, {r["state"]: r for r in r12 if r["panel"] == panel and r["row"] == n}) for n in names]
+    pb, pc12 = rows12("B"), rows12("C")
+    nh = sum(1 for _n, d in pc12 if float(d["R"]["sum_q_e"]) > -5e-5)
+    GAP = 0.9                                      # the break between the two classes of panel C
+    yb = {n: len(pb) - 1 - i for i, (n, _d) in enumerate(pb)}
+    yc = {n: len(pc12) - 1 - i + (GAP if i < nh else 0.0) for i, (n, _d) in enumerate(pc12)}
+    fig = plt.figure(figsize=(10.8, 12.0))
+    # rows 1 and 3 of the grid are spacers that hold the titles and the axis labels, so that neither runs into a panel
+    gs = fig.add_gridspec(5, 2, width_ratios=[1.75, 1.0], height_ratios=[len(pb) + 0.9, 1.35, len(pc12) + GAP + 1.35, 3.1, len(pa) + 0.4],
+                          hspace=0.0, wspace=0.04, left=0.205, right=0.985, top=0.968, bottom=0.058)
+    b1 = fig.add_subplot(gs[0, 0]); c1 = fig.add_subplot(gs[2, 0], sharex=b1); a1 = fig.add_subplot(gs[4, 0], sharex=b1)
+    b2 = fig.add_subplot(gs[0, 1], sharey=b1); c2 = fig.add_subplot(gs[2, 1], sharey=c1, sharex=b2)
+    k2 = fig.add_subplot(gs[4, 1]); k2.axis("off")
+    XL, XR = -2.15, 3.45
+    for a_ in (a1, b1, c1):
         a_.axvspan(XL, 0, facecolor="#f1f1f1", edgecolor="#c9c9c9", hatch="////", lw=0, zorder=0)
         a_.axvline(0, color=INK, lw=1.0, zorder=2)
         a_.grid(axis="x", color=GRID, lw=0.6, zorder=1); a_.set_axisbelow(True)
         a_.tick_params(axis="y", length=0)
-    nb = len(names_b)
-    for i, n in enumerate(names_b):
-        y = nb - 1 - i
-        v = {r["state"]: float(r["VDE_eV"]) for r in pb if r["row"] == n}
-        bx.plot([v["R"], v["TS"]], [y, y], color=MUTE, lw=0.8, zorder=3)
-        bx.plot([v["R"]], [y], marker="o", ms=7, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
-        bx.plot([v["TS"]], [y], marker="o", ms=7, mfc="white", mec=INK, mew=1.1, ls="none", zorder=4)
-        bx.text(XV, y, ("R %+.4f    TS %+.4f" % (v["R"], v["TS"])).replace("-", MINUS), va="center", ha="left", fontsize=7.8, color=INK)
-    lab_b = []
-    for n in names_b:
-        q = next(r["quoted_ddE_kcal"] for r in pb if r["row"] == n)
-        lab_b.append("bare substrate\nno charges" if n == "bare" else ("%s\nquoted lowering %s kcal/mol" % (n, q)).replace("-0", MINUS + "0").replace("-1", MINUS + "1")
-                     .replace("-3", MINUS + "3").replace("-4", MINUS + "4").replace("-5", MINUS + "5"))
-    bx.set_yticks([nb - 1 - i for i in range(nb)]); bx.set_yticklabels(lab_b, fontsize=7.6)
-    bx.set_ylim(-0.6, nb - 0.5 + 0.95)
-    bx.text(XL + 0.05, nb - 0.5 + 0.82, "METASTABLE: at or below zero", fontsize=8.5, style="italic", va="top", ha="left",
+    for a_ in (b2, c2):
+        a_.axvline(0, color=INK, lw=1.0, zorder=2)
+        a_.grid(axis="x", color=GRID, lw=0.6, zorder=1); a_.set_axisbelow(True)
+        a_.tick_params(axis="y", length=0, labelleft=False)
+        a_.spines["left"].set_visible(False)
+
+    def lab12(n, d):
+        nq, sq = int(d["R"]["n_charges"]), d["R"]["sum_q_e"]
+        if nq == 0:
+            return "bare substrate\nno charges"
+        s = "%+.4f" % float(sq)
+        while s.endswith("0") and len(s.split(".")[1]) > 2:
+            s = s[:-1]
+        s = "0.00" if float(sq) == 0 else s.replace("-", MINUS)
+        return "%s\n%s" % (n, ("1 charge of %s e" % s) if nq == 1 else ("%d charges, sum %s e" % (nq, s)))
+
+    def pair12(ax, bx, y, d):
+        v = {st: float(d[st]["VDE_eV"]) for st in ("R", "TS")}
+        ax.plot([v["R"], v["TS"]], [y, y], color=MUTE, lw=0.8, zorder=3)
+        ax.plot([v["R"]], [y], marker="o", ms=6.6, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
+        ax.plot([v["TS"]], [y], marker="o", ms=6.6, mfc="white", mec=INK, mew=1.1, ls="none", zorder=4)
+        if d["R"]["ddE_kcal"] in ("-", ""):
+            return
+        e = float(d["R"]["ddE_kcal"])
+        if d["R"]["ddE_reading"].startswith("BOUND at both"):
+            bx.barh([y], [e], height=0.46, color=INK, edgecolor=INK, lw=0.8, zorder=3)
+        else:
+            bx.barh([y], [e], height=0.46, color="white", edgecolor=INK, hatch="////", lw=0.8, zorder=3)
+        bx.text(e - 0.35, y, ("%.2f" % e).replace("-", MINUS), va="center", ha="right", fontsize=7.6, color=INK)
+    for n, d in pb:
+        pair12(b1, b2, yb[n], d)
+    for n, d in pc12:
+        pair12(c1, c2, yc[n], d)
+    b1.set_yticks([yb[n] for n, _d in pb]); b1.set_yticklabels([lab12(n, d) for n, d in pb], fontsize=7.4)
+    b1.set_ylim(-0.6, len(pb) - 0.5 + 0.75)
+    c1.set_yticks([yc[n] for n, _d in pc12])
+    c1.set_yticklabels([lab12(n + (" †" if int(d["R"]["n_charges"]) * 0.25 > 2.88 and n.endswith("q0.25") else ""), d) for n, d in pc12], fontsize=7.4)
+    c1.set_ylim(-0.6, len(pc12) - 0.5 + GAP + 0.62)
+    ysep = len(pc12) - nh - 0.5 + GAP / 2.0
+    for a_ in (c1, c2):
+        a_.axhline(ysep, color=INK, lw=0.7, ls=(0, (4, 3)), zorder=2)
+    c1.text(XR - 0.04, ysep + 0.10, "above the line: the charges sum to zero or more (the class H9 is about)", fontsize=7.4, style="italic", va="bottom", ha="right",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2))
+    c1.text(XR - 0.04, ysep - 0.10, "below it: they sum to less than zero", fontsize=7.4, style="italic", va="top", ha="right",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2))
+    b1.text(XL + 0.05, len(pb) - 0.5 + 0.62, "METASTABLE: at or below zero", fontsize=8.2, style="italic", va="top", ha="left",
             bbox=dict(facecolor="white", edgecolor="none", pad=1.5))
-    bx.text(0.05, nb - 0.5 + 0.82, "BOUND: above zero", fontsize=8.5, style="italic", va="top", ha="left")
-    bx.plot([], [], marker="o", ms=7, mfc=INK, mec=INK, ls="none", label="reactant (R)")
-    bx.plot([], [], marker="o", ms=7, mfc="white", mec=INK, mew=1.1, ls="none", label="transition state (TS)")
-    bx.legend(loc="upper right", fontsize=7.6, ncol=1, borderaxespad=0.2)
-    bx.set_title("Part B. With each arrangement's charges present: CAM-B3LYP-D3BJ, both states", loc="left")
+    b1.text(0.05, len(pb) - 0.5 + 0.62, "BOUND: above zero", fontsize=8.2, style="italic", va="top", ha="left")
+    b1.set_title("D40, part B. The bare substrate, and the five arrangements whose lowering the record held quotable", loc="left")
+    c1.set_title("D42. The 13 conditions that D31 calls RELIABLE, in order of the sum of their charges", loc="left")
+    plt.setp(b1.get_xticklabels(), visible=False); plt.setp(b2.get_xticklabels(), visible=False)
+    c1.tick_params(axis="x", labelbottom=True)
     na = len(pa)
     for i, r in enumerate(pa):
         y = na - 1 - i
         v = float(r["VDE_eV"])
-        ax.plot([0, v], [y, y], color=MUTE, lw=0.8, zorder=3)
-        ax.plot([v], [y], marker="o", ms=7, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
-        ax.text(XV, y, ("R %+.4f" % v).replace("-", MINUS), va="center", ha="left", fontsize=7.8, color=INK)
-    ax.set_yticks([na - 1 - i for i in range(na)]); ax.set_yticklabels([r["row"] for r in pa], fontsize=7.8)
-    ax.set_ylim(-0.6, na - 0.4)
-    ax.set_title("Part A. The bare dianion at the reactant, by functional (monoanion not analysed for stability)", loc="left")
-    ax.set_xlim(XL, XR)
-    ax.set_xticks([-2.0, -1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5])
-    ax.set_xlabel("detachment energy, E(monoanion) " + MINUS + " E(dianion), def2-SVPD (eV)\nwhere it is negative, the sign is the reading and the size is not")
-    fig.tight_layout(); save(fig, "F12_detachment_energy")
+        a1.plot([0, v], [y, y], color=MUTE, lw=0.8, zorder=3)
+        a1.plot([v], [y], marker="o", ms=6.6, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
+    a1.set_yticks([na - 1 - i for i in range(na)]); a1.set_yticklabels([r["row"] for r in pa], fontsize=7.6)
+    a1.set_ylim(-0.6, na - 0.4)
+    a1.set_title("D40, part A. The bare dianion at the reactant, by functional", loc="left")
+    a1.set_xlim(XL, XR)
+    a1.set_xticks([-2, -1, 0, 1, 2, 3])
+    a1.set_xlabel("detachment energy, E(monoanion) " + MINUS + " E(dianion), def2-SVPD (eV); these eight monoanions were not analysed for stability", fontsize=8.2)
+    c1.set_xlabel("detachment energy with the charges present, CAM-B3LYP-D3BJ/def2-SVPD (eV)", fontsize=8.2)
+    b2.set_xlim(-19.8, 0.0); b2.set_xticks([-15, -10, -5, 0])
+    c2.set_xlabel("barrier change ddE of the same row (kcal/mol)\nNONE IS QUOTABLE as a barrier effect: see the key", fontsize=8.2)
+    b2.text(-19.6, len(pb) - 0.5 + 0.62, "the lowering the record quotes", fontsize=8.2, style="italic", va="top", ha="left")
+    c2.text(-19.6, len(pc12) - 0.5 + GAP + 0.52, "ddE from D31's committed outputs", fontsize=8.2, style="italic", va="top", ha="left")
+    hs = [plt.Line2D([], [], marker="o", ms=6.6, mfc=INK, mec=INK, ls="none"), plt.Line2D([], [], marker="o", ms=6.6, mfc="white", mec=INK, mew=1.1, ls="none"),
+          Rectangle((0, 0), 1, 1, facecolor="#f1f1f1", edgecolor="#b5b5b5", hatch="////", lw=0.6),
+          Rectangle((0, 0), 1, 1, facecolor=INK, edgecolor=INK), Rectangle((0, 0), 1, 1, facecolor="white", edgecolor=INK, hatch="////", lw=0.8)]
+    ls_ = ["reactant (R)", "transition state (TS)",
+           "METASTABLE side. Where a value is negative,\nits sign is the reading and its size is not",
+           "ddE of an arrangement BOUND at both states.\nNOT QUOTABLE: inside r_safe (D42.7, D42.8)",
+           "ddE of an arrangement with a METASTABLE\nstate. Probe 2: " + "“not a barrier effect”"]
+    k2.legend(hs, ls_, loc="upper left", bbox_to_anchor=(0.02, 0.98), fontsize=7.6, frameon=False, labelspacing=1.0, handlelength=1.8, borderaxespad=0.0)
+    k2.text(0.02, 0.06, "† 5.00 e in all, above the total at which\nD30 found def2-SVPD converged", fontsize=7.4, va="bottom", ha="left", transform=k2.transAxes)
+    save(fig, "F12_detachment_energy")
 
 
 def main():
