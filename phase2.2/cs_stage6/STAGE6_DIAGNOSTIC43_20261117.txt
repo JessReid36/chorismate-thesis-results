@@ -1,0 +1,431 @@
+STAGE 6, DIAGNOSTIC 43
+Bare charges at or beyond r_safe, on the committed grid: do they pass the four legs, does
+the dianion stay bound, and what do designs placed there do to the barrier?
+
+Pre-registered 17 November 2026, before any D43 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+No committed file used the number 43 when this was written.
+It is read under AMENDMENT 5 (stability) and AMENDMENT 6 (binding), and it is the first
+search diagnostic under AMENDMENT 7.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+Every design the record has measured sits inside r_safe. D11 measured r_safe = 3.50 A, at
+B3LYP-D3BJ/ma-def2-SVP, along one axis from one site with one unit charge, and fixed in
+advance what that would mean: "No design measured inside r_safe is interpretable." D33
+says of its own designs "NOTHING HERE ESCAPES r_safe", and D42 of its conditions "EVERY
+ONE OF THE 13 CONDITIONS SITS INSIDE r_safe."
+
+At the corrected level, CAM-B3LYP-D3BJ/def2-SVPD, the record now holds two tests, and
+inside r_safe they pull against each other. A design carrying a positive unit charge is
+UNRELIABLE at every n tested (D31). The five arrangements that passed the four legs and
+had a quotable lowering are METASTABLE at both states (D40). Ten of D31's thirteen
+RELIABLE conditions pass both tests (D42), and all ten are inside r_safe.
+
+No arrangement has been measured at this level with all of its charges at or beyond
+3.50 A. What the record holds there is D12, at B3LYP-D3BJ/ma-def2-SVP: of its 36 sites,
+four lie at or beyond 3.50 A from the nearest atom, and a bare charge of +1 fails D11's
+tolerance at three of them.
+
+   site    D12's d_near   ddE bare   ddE wall   d_shield   D12's verdict
+   396        3.676       +10.0884    +2.0228    +8.0656      FAIL
+   1043       3.720        -0.6715    -0.6089    -0.0627      pass
+   397        3.732        +6.2942    +1.8235    +4.4707      FAIL
+   4          3.732        -0.0075    -1.8457    +1.8382      FAIL
+
+The consolidated write-up, WRITEUP_CONSOLIDATED_20261111.md in its revision of 16
+November 2026, names three hypotheses in its section 11 that this bears on. They are
+quoted here as committed in results c21e34be.
+
+   H3  "Outside r_safe a bare charge is reliable at every magnitude up to one." To be
+       given up if "a unit charge at 3.50 A or beyond fires any leg of the criterion at
+       CAM-B3LYP-D3BJ/def2-SVPD."
+   H2  "Relocation is onto the positive charges: an arrangement with no positive charge
+       does not relocate, at any magnitude up to one." To be given up if "any
+       arrangement with no positive charge fires a leg of the criterion at
+       CAM-B3LYP-D3BJ/def2-SVPD with the stability analysis".
+   H9  that "a RELIABLE arrangement whose charges sum to zero or more keeps it bound",
+       the dianion. D42 did not falsify it on 8 conditions inside r_safe. The write-up
+       says what would still do so: "a RELIABLE arrangement whose charges sum to zero or
+       more that is METASTABLE at either state, at another site, outside r_safe, or
+       among designs an optimiser places".
+
+The record leaves one decision open between two routes: (a) bare charges moved out to
+3.50 A or more, or (b) the present distances with a charge behind a core potential, the
+wall, which is NOT ADOPTED and NOT CALIBRATED. On 17 November 2026 Jessica decided the
+order: route (a) is tried first, and of the wall she wrote "i agree the wall as a fall
+back". D43 is the first step of route (a). It does not take route (a): that needs the
+grid rebuilt, and D43 uses the committed grid as it stands.
+
+It can do so because the committed grid already reaches past 3.50 A. Computed by
+cs6_d43_prepare.py from sites_f42436.tsv and the two committed geometries: 616 of the
+2626 sites lie at or beyond 3.50 A from every substrate atom at both states. The
+farthest lies at 4.023 A and 3 lie beyond 4.00 A. 371 of the 616 admit both +1.00 e and
+-1.00 e. So "at or beyond r_safe" means, on this grid, a shell between 3.50 and about
+4.0 A.
+
+--------------------------------------------------------------------------------
+2. THE CONVENTIONS, ALL TAKEN FROM THE RECORD
+--------------------------------------------------------------------------------
+OUTER SITE. A site of sites_f42436.tsv whose distance to every one of the 24 substrate
+atoms, hydrogens included, is at least 3.50 A at the reactant and at the transition
+state, with the geometries of d33a/sp_42436_R and d33a/sp_42436_TS.
+
+THE FOUR LEGS. The committed classifier phase2.2/cs6_audit.py at its committed
+thresholds, D_LW 0.25 e, R_DIP 2.0, GAP_ABS 1.0 eV and R_GAP 0.5, read at read time and
+not transcribed, on each dianion run against d31's charge-free control at the same
+state, with the rules D33.3 and AMENDMENT 5 settled:
+   - stability is judged on the LAST analysis of the run. A first solution that was
+     unstable and then corrected is recorded and is not a flag.
+   - the gap is withheld in a run that engaged TRAH or a level shift, by the markers of
+     cs6_d33b.py.
+   - the dipole leg is applied: there is no ECP centre in any run here.
+A state is FLAGGED if the Loewdin rise reaches D_LW, or the dipole ratio reaches R_DIP,
+or the gap is below GAP_ABS and below R_GAP of the control's, or the last stability
+analysis is UNSTABLE, or the SCF did not converge (D31.3: "NOT CONVERGING IS A RESULT,
+NOT A BROKEN JOB.").
+
+   RELIABLE       no flag at either state, and at both the gap was readable and the
+                  stability analysis was read
+   UNRELIABLE     a flag at either state; the result names each
+   INCONCLUSIVE   no flag, and a gap withheld or a stability analysis not read at one
+                  state or both
+   NOT CLASSIFIED no flag, and a state NOT MEASURED
+
+THE FIFTH LEG, by AMENDMENT 6. VDE = E(monoanion) - E(dianion) at the same state with
+the same point charges, both energies from D43's own runs, each the last FINAL SINGLE
+POINT ENERGY of its output, at 27.211386245988 eV per Eh.
+
+   BOUND        VDE above zero, and the monoanion's last stability analysis STABLE
+   METASTABLE   VDE at or below zero
+   "ABOVE ZERO, MONOANION NOT STABLE" is reported with its number and is not BOUND.
+
+A condition PASSES THE FIFTH LEG if it is BOUND at both states.
+
+ddE = (E(TS) - E(TS, control)) - (E(R) - E(R, control)) on the dianion, with d31/ctl_R
+and d31/ctl_TS as the control, at 627.5094740631 kcal/mol per Eh. Negative lowers the
+barrier.
+
+THE FIRST-ORDER VALUE of a condition is the sum over its charges of a_i q_i, with a_i the
+row of A_f42436_d33a.tsv for the site: the matrix D33 stage A measured at this level.
+The committed score adds L_i, the classical Lennard-Jones term of a sphere at the site.
+The charges of D43 are bare point charges and carry no such term in the calculation; the
+score is listed because the record's ratios were formed with it.
+
+--------------------------------------------------------------------------------
+3. WHAT IS RUN
+--------------------------------------------------------------------------------
+74 single points on frame 42436, CAM-B3LYP-D3BJ/def2-SVPD, with the stability analysis.
+Bare point charges throughout: no wall, no Lennard-Jones term, no continuum.
+
+THE TWO CONTROLS, first.
+   C_ctl_R    D31's committed charge-free dianion input at the reactant,
+              d31/ctl_R/job.inp, byte for byte. Its committed energy is -836.31486034 Eh.
+   C_bare_R   D40's committed monoanion input for the bare substrate at the reactant,
+              d40/B_bare_R/job.inp, byte for byte. Its committed energy is
+              -836.26897688 Eh.
+
+THE 18 CONDITIONS. Each is one point-charge file run four times: the dianion ("di") and
+the monoanion ("mo"), at the reactant and at the transition state. EVERY DIANION INPUT IS
+THE COMMITTED CHARGED INPUT OF D31, d31/B/n01_q0.25_R/job.inp, BYTE FOR BYTE. EVERY
+MONOANION INPUT IS THAT FILE WITH ITS CHARGE-AND-MULTIPLICITY LINE CHANGED FROM "-2 1" TO
+"-1 2" AND NOTHING ELSE TOUCHED. A run directory is <condition>_<di|mo>_<R|TS>.
+
+PART B, THE DESIGNS, 6 conditions, 24 runs.
+   THE RULE is D33.2's, unchanged but for two things. D33.2: "take the committed greedy
+   pipeline of cs_opt_milp.py - per-site best admissible value of a_i q + L_i, ascending,
+   selected greedily subject to the committed r_min = 3.25 A - with a_i^new in place of
+   the committed a_i, and put |q_i| = q exactly at each selected site at whichever
+   admissible sign is better there."
+      First, only OUTER SITES are walked.
+      Second, a site whose better sign is negative is passed over once n/2 negative
+      charges, rounded down, have been taken. All charges of a design carry one
+      magnitude, so this is exactly the condition that they sum to zero or more. It is H9
+      used as a rule of selection. H9 is not established, and R43.7 tests it on what
+      this rule selects.
+   The rule as cs6_d43_prepare.py holds it is first run on the whole grid without these
+   two things, and must give back the six committed designs of designs_d33b.tsv, site
+   for site and charge for charge, each score within 1e-5 kcal/mol, before it is used.
+
+   THE LADDER is D33.2's own (n, q), kept where the total lies inside the 2.88 e that
+   D33.3 takes from D30: 3 x 0.75, 5 x 0.50 and 11 x 0.25, which D33 ran bare, and
+   2 x 1.00, which D33 ran behind a wall and D43 runs bare. To these are added 2 x 0.50
+   and 2 x 0.75, so that one pair of sites carries three magnitudes.
+
+   condition     sites, in the order selected, with the sign of each charge
+   B_n02_q0.50   557-  1124+
+   B_n02_q0.75   557-  1124+
+   B_n02_q1.00   557-  1124+
+   B_n03_q0.75   557-  1124+  1073+
+   B_n05_q0.50   557-  1124+  534-  1073+  1107+
+   B_n11_q0.25   557-  1124+  534-  1073+  1107+  1359+  1421-  417-  1460-  1005+  1052+
+
+   condition      sum e    total e   first order   score     nearest atom, R / TS
+   B_n02_q0.50    +0.00     1.00       -5.2489     -5.1677     3.529 / 3.578 A
+   B_n02_q0.75    +0.00     1.50       -7.8733     -7.7922     3.529 / 3.578 A
+   B_n02_q1.00    +0.00     2.00      -10.4978    -10.4166     3.529 / 3.578 A
+   B_n03_q0.75    +0.75     2.25      -10.8937    -10.7988     3.529 / 3.578 A
+   B_n05_q0.50    +0.50     2.50      -11.4376    -11.2922     3.529 / 3.578 A
+   B_n11_q0.25    +0.25     2.75       -7.9140     -7.8063     3.518 / 3.504 A
+
+   First order and score are in kcal/mol and are the optimiser's own objective. They
+   are not measurements.
+
+PART A, SINGLE CHARGES, 12 conditions, 48 runs. One charge of +1.00 e and one of
+-1.00 e, at each of six outer sites that admit both.
+   THE TWO SITES THE DESIGNS LEAN ON. Among the outer sites that admit both +1.00 e and
+   -1.00 e, the one with the most negative a_i, site 1124, where a positive charge lowers
+   the first-order barrier most; and the one with the most positive a_i, site 557, where
+   a negative charge does. Both are in every design above.
+   THE FOUR SITES OF D12. The sites of D12's frozen sample of 36 that are outer sites:
+   4, 396, 397 and 1043. They were chosen on 27 October 2026 for another question and
+   are the table of section 1.
+
+   site    a_i, kcal/mol per e   nearest atom, R / TS    conditions
+   1124        -5.1174             3.678 / 3.578 A       A_s1124_p100  A_s1124_m100
+   557         +5.3803             3.529 / 3.748 A       A_s0557_p100  A_s0557_m100
+   4           -0.9774             3.732 / 3.808 A       A_s0004_p100  A_s0004_m100
+   396         +3.2410             3.676 / 3.791 A       A_s0396_p100  A_s0396_m100
+   397         +2.6772             3.732 / 3.918 A       A_s0397_p100  A_s0397_m100
+   1043        -0.5657             3.720 / 3.716 A       A_s1043_p100  A_s1043_m100
+
+   "p100" is +1.00 e and "m100" is -1.00 e.
+
+d43/CONDITIONS.tsv and d43/SITES.tsv hold all of this with every digit, and
+d43/SOURCES.sha256 holds the sha256 of each committed file the selection read. They were
+written by cs6_d43_prepare.py before any output existed.
+
+ORDER. The two controls; the 6 designs of part B, each as di R, di TS, mo R, mo TS; the 6
+charges of +1.00 e of part A; the 6 charges of -1.00 e. A run that fails does not stop
+the runs after it. One job, cm_d43, 8 cores, 48 GB, walltime 24:00:00, no -q.
+
+HOW LONG. From the committed PBS logs (derived): of D31's 60 charged dianion runs, 26
+took under 8 minutes, 4.9 on average, and 34 took over 15, 30.6 on average, up to 54.5;
+D42's 26 monoanion runs took 6.3 to 18.4 minutes, 9.9 on average. On those figures the
+74 runs take about 9 hours if no dianion run is slow and about 25 hours if every one
+is. THE JOB MAY THEREFORE REACH ITS WALLTIME. run.pbs is restartable: submitted again,
+it skips every run that ended normally. The harvest refuses a job whose log does not
+reach its last line, which is a job that was cut short, unless it is told to go on.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R43.1  THE CONTROLS. C_ctl_R beside d31/ctl_R's committed energy and C_bare_R beside
+       D40's; the charge-free barrier of d31/ctl_R and d31/ctl_TS; the bare substrate's
+       detachment energy at each state from the committed outputs.
+R43.2  THE FOUR LEGS. For each of the 18 conditions at each state: the Loewdin rise,
+       the dipole ratio, the gap or that it was withheld, the first and last stability
+       verdicts, whether TRAH or a level shift was engaged, the number of point charges
+       ORCA says it read, and each flag by name. Then the word of section 2 for the
+       condition.
+R43.3  THE FIFTH LEG. For each condition at each state: the detachment energy, with
+       its two energies in d43.tsv, <S**2> of the monoanion, its first and last
+       stability verdicts, and the word of section 2. Then whether the condition passes
+       the fifth leg. The detachment energy minus the bare substrate's at the same state
+       is listed beside it. Reported, not interpreted.
+R43.4  THE BARRIER CHANGE BESIDE THE TWO TESTS. For each condition: ddE, the first-order
+       value, the score, ddE minus the first-order value, and their ratio; the word on
+       four legs; and, by the rule of D40's R40.7, whether Probe 2's sentence applies to
+       the ddE (a state is METASTABLE) or does not reach it (both states BOUND).
+R43.5  THE TEST OF H3, on the 12 conditions of part A.
+       H3 IS FALSIFIED if any of the 12 is UNRELIABLE. The result names each one, its
+       state and its flags.
+       H3 IS NOT FALSIFIED BY THESE 12 CONDITIONS if all 12 are RELIABLE.
+       THE TEST IS INCOMPLETE if none is UNRELIABLE and at least one is INCONCLUSIVE or
+       NOT CLASSIFIED. A falsification by any measured state stands whether or not the
+       test is complete.
+       The count is given for the 6 positive charges and for the 6 negative ones.
+R43.6  THE TEST OF H2, on the 6 conditions of part A at -1.00 e, which are the
+       arrangements here with no positive charge. FALSIFIED, NOT FALSIFIED BY THESE 6
+       CONDITIONS, or INCOMPLETE, by the same three rules. Beside it, the sign-swapped
+       pairs the record lacks at this level: for each of the 6 sites, the word and the
+       larger Loewdin rise at +1.00 e and at -1.00 e.
+R43.7  THE TEST OF H9, on the 12 conditions whose charges sum to zero or more: the 6
+       designs and the 6 charges of +1.00 e. H9 speaks of RELIABLE arrangements, so its
+       test is on those of the 12 that are RELIABLE.
+       H9 IS FALSIFIED if any of them is METASTABLE at either state.
+       H9 IS NOT FALSIFIED BY THESE k CONDITIONS if k of the 12 are RELIABLE, k is at
+       least 1, and all k are BOUND at both states.
+       H9 IS NOT TESTED if none of the 12 is RELIABLE.
+       THE TEST IS INCOMPLETE if no RELIABLE one is METASTABLE at either state and at
+       least one RELIABLE one has a state NOT MEASURED or "ABOVE ZERO, MONOANION NOT
+       STABLE".
+       The count is given for the designs and for the single charges. The words of the
+       conditions that are not RELIABLE, and of the 6 at -1.00 e, are in the table of
+       R43.3; H9 neither predicts nor forbids either word for them.
+R43.8  THE SURVIVORS OF THE SEARCH. A design of part B is a SURVIVOR if it is RELIABLE
+       on four legs and passes the fifth. Every design here has its total inside 2.88 e
+       and every charge at or beyond 3.50 A, by the gates. The survivors are listed with
+       their ddE. If there are none, the result says so in those words. A single charge
+       of part A that is RELIABLE and passes the fifth leg is listed apart: D11.4 says
+       "one charge at one site is not a design".
+R43.9  FIRST ORDER AT EACH SITE OF PART A. For each of the 6 sites: a_i; ddE at +1.00 e
+       and at -1.00 e; half their difference, which is the part of the response that is
+       odd in the charge and is what a_i predicts; and half their sum, which is the part
+       that is even in the charge and that the first-order objective leaves out.
+       Reported, not interpreted. Where either condition has a METASTABLE state the
+       result says so beside the row.
+R43.10 ONE PAIR AT THREE MAGNITUDES, AND ITS TWO CHARGES ONE AT A TIME. For B_n02 at
+       0.50, 0.75 and 1.00 e: ddE divided by the magnitude, and the change in detachment
+       energy from the bare substrate divided by the magnitude, at each state. And for
+       the pair at 1.00 e: its ddE beside the sum of the ddE of A_s0557_m100 and
+       A_s1124_p100, and the same for the change in detachment energy at each state.
+       Reported, not interpreted. Nothing is fitted.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+G43.1  Every file listed in d43/INPUT_CHECKSUMS.sha256 has the sha256 listed there.
+       Every substrate.xyz is byte-identical by sha256 to d33a/sp_42436_{R,TS}'s. Every
+       dianion input is byte-identical to d31/B/n01_q0.25_R/job.inp, and every monoanion
+       input differs from it in exactly one line, the charge-and-multiplicity line. The
+       two control inputs are byte-identical to their committed sources. The four
+       point-charge files of a condition are byte-identical to one another.
+G43.2  The reader repeats the selection of section 3 from the committed files, by the
+       functions of cs6_d43_prepare.py, and it gives the 18 conditions of
+       d43/CONDITIONS.tsv and the sites of d43/SITES.tsv: the reproduction of D33 stage
+       B's six designs, D12's four sites, the two sites of most negative and most
+       positive a_i, and the six designs.
+       Every point-charge file holds the sites and charges CONDITIONS.tsv lists, at the
+       coordinates of sites_f42436.tsv, each charge inside the range its site admits.
+G43.3  Every charge of every point-charge file lies at least 3.50 A from every substrate
+       atom at both states, recomputed by the reader. Every design of part B has charges
+       of one magnitude that sum to zero or more, at most n/2 of them negative, a total
+       of at most 2.88 e, and no two charges closer than 3.25 A.
+G43.4  CONTROLS. C_ctl_R reproduces -836.31486034 Eh and C_bare_R reproduces
+       -836.26897688 Eh, each to within 1e-6 Eh.
+G43.5  CONTROLS, COMMITTED. d31/ctl_R/job.out and d31/ctl_TS/job.out are the files D33
+       pinned,
+          2f5148d27e932aad2280f0ea7960bdf32fafdf5d769d9efe8911fef0ccadf3f2
+          5a650d9ef9d41ff957af9018aa65b9d597dc584148aab78144b976b4a6ba1f80
+       and give a charge-free barrier of 26.8248 kcal/mol to within 5e-5. With
+       d40/B_bare_R and d40/B_bare_TS they give D40's +1.2486 eV and +0.7681 eV.
+G43.6  Every file listed in d43/SOURCES.sha256 has the sha256 listed there; no committed
+       file under d31, d33a or d40 differs from HEAD; the pre-registration the reader is
+       given is the committed one; and AMENDMENT 6 and the four committed outputs the
+       reader reads, of d31/ctl_R, d31/ctl_TS, d40/B_bare_R and d40/B_bare_TS, are the
+       files at the commit this document is committed on.
+G43.7  Every dianion run that is read reports the number of basis functions of its
+       control.
+
+       A FAILURE OF G43.1 TO G43.7 STOPS THE DIAGNOSTIC. Nothing else is readable.
+
+G43.8  PER RUN. A run is read only if it terminates normally, converges its SCF,
+       reports 118 electrons for a dianion and 117 for a monoanion, and says it read as
+       many point charges as its pc.pc holds. A dianion run whose output says the SCF did
+       not converge is a flag, by section 2. Any other run that fails this is reported
+       NOT MEASURED with ORCA's own words, and is not dropped. No keyword is changed to
+       make a run work; that needs a dated amendment.
+G43.9  A detachment energy is formed only where the dianion and the monoanion of that
+       state are both read. A ddE is formed only where both dianion states are read. It
+       is formed, and printed with the word beside it, for a condition that is
+       UNRELIABLE, as D33's result did.
+
+--------------------------------------------------------------------------------
+6. WHAT FOLLOWS FROM EACH OUTCOME, DECIDED NOW
+--------------------------------------------------------------------------------
+F1  THE SETUP IS SUSPECT. If all 18 conditions are UNRELIABLE, the six with no positive
+    charge among them, nothing is concluded. The record's three arrangements without a
+    positive charge at this level, D34's, are its three RELIABLE ones, so the inputs and
+    the reader are diagnosed first.
+F2  THE PROTOCOL DID NOT REACH THEM. If more than a quarter of the 72 charged runs are
+    NOT MEASURED or did not converge, that is the primary result, and each test above
+    says INCOMPLETE where it is.
+F3  NO SURVIVOR, AND THE FOUR LEGS ARE WHY: no design of part B is RELIABLE. Then bare
+    charges on the outer sites of this grid give no design that passes the four legs at
+    these (n, q), and part A says whether one charge alone already fails. What Jessica
+    decided on 17 November 2026 then applies: the wall is the fallback. Before any
+    walled run it needs a dated amendment for route (b), a parameter set that is
+    validated, which the argon set in use is not, and a pre-registration. D43 is none
+    of these.
+F4  NO SURVIVOR, AND THE FIFTH LEG IS WHY: at least one design is RELIABLE, and every
+    RELIABLE design is METASTABLE at a state. Then H9 is falsified where it was used,
+    and a rule on the sum of the charges is not a condition for binding. The wall is
+    not the step this outcome names: the write-up's search found no detachment energy
+    of a walled design in the record, so nothing found there says what a wall does to
+    binding. The step it names is the test of H11, which needs the electrostatic
+    potential of the bare monoanion at the grid sites.
+F5  SURVIVORS. Each goes to the cross-check of AMENDMENT 7, under a pre-registration
+    written before any cross-check output exists. Until then no ddE of a survivor is
+    quoted as more than a working-level number.
+F6  WHETHER TO MOVE THE SURFACE FURTHER OUT is not decided by D43 under any outcome. It
+    measures nothing beyond 4.02 A.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D43.1  IT MAKES NO ddE QUOTABLE AS MORE THAN A WORKING-LEVEL NUMBER, and it withdraws
+       nothing and changes no verdict. What a survivor may be called after the
+       cross-check is a dated document and a decision for Jessica (AMENDMENT 7, A7.4).
+D43.2  IT DOES NOT RE-MEASURE r_safe. The 3.50 A is D11's, at B3LYP-D3BJ/ma-def2-SVP, on
+       one axis, and D11 read it against the wall. D43 reads the four legs and binding
+       at sites that lie at or beyond that distance. It does not show that 3.50 A is the
+       right distance at this level, and passing the legs out there is not D11's test.
+       D12.1 found that "Nearest-atom distance does not determine the environment."
+D43.3  IT DOES NOT TAKE ROUTE (a) AND DOES NOT ADOPT THE WALL. The grid is not rebuilt.
+       The sites used are the ones Stage 5 placed for other reasons that happen to lie
+       far enough out.
+D43.4  NOT FALSIFIED IS NOT ESTABLISHED. H3 is tested at six sites of 616 and at one
+       magnitude, 1.00 e, where it speaks of every magnitude up to one; D29 found that no
+       function of the charges orders relocation. H2 is tested on six single charges. H9
+       is tested on six designs that all share two sites, so they are not six
+       independent tests, and on six single positive charges.
+D43.5  THE SIX SITES OF PART A ARE NOT A SAMPLE OF THE SHELL. Four are D12's and two
+       were taken for the size of a_i.
+D43.6  PART B IS NOT AN OPTIMISATION. D33.6 said of its own six: "THE GREEDY IS NOT THE
+       MILP." and "SIX DESIGNS ON ONE GRID AND ONE FRAME IS NOT AN OPTIMISATION." Both
+       hold here.
+D43.7  ONE FUNCTIONAL AND ONE BASIS. Every total is inside the 2.88 e at which D30 found
+       def2-SVPD converged, and D30 found that on another arrangement.
+D43.8  THE DETACHMENT ENERGIES are vertical, in vacuo, and differences of unrestricted
+       Kohn-Sham solutions. Spin contamination is reported and not corrected. Where one
+       is negative its sign is the reading and its size is not (D40.4).
+D43.9  ONE FRAME, FROZEN GEOMETRIES, IN VACUO, NO CONTINUUM. D31.8 said it of its own
+       numbers and it holds of these: "No barrier reported from this diagnostic is a
+       prediction of a physical barrier."
+D43.10 THE CHARGES ARE BARE POINT CHARGES. They stand for no residue. The refined
+       representation, the wall, is not in any run here.
+D43.11 It adopts no level of theory and says nothing about D39.
+D43.12 NOTHING HERE IS SHAPED. H3, H2 and H9 were written before this document, by the
+       author of this document, and a result that falsifies one is reported as plainly
+       as one that does not, in the same table, by rules fixed before any output
+       exists. Nothing in the reading is turned toward a lower barrier: the asymmetries
+       of section 2 can only take a RELIABLE or a BOUND away.
+
+--------------------------------------------------------------------------------
+8. WHAT WAS KNOWN WHEN THIS WAS WRITTEN
+--------------------------------------------------------------------------------
+Known: the results of D11, D12, D31 to D34, D40 and D42; the first-order values and
+scores of the 18 conditions, which are the optimiser's objective and are printed in
+section 3; and the distances and counts of section 1.
+Also known, and said here so that nothing looks chosen afterwards: while the ladder was
+being settled the same rule was run on the outer sites for n = 1, 2, 3, 4, 6 and 10 at
+q = 0.25, 0.50, 0.75 and 1.00, with every charge positive, with one negative charge
+alone, with exactly half of each sign and with no limit on the sign, and for contrast
+on the whole grid; their first-order scores were seen. No energy was computed for any
+of them. A seventh site was considered for part A, the outer site where the bare
+reactant's own potential is most negative, site 1407, and was left out to keep the job
+near one walltime.
+The reader was tested before this was committed, on outputs that are not D43's: committed
+outputs of D31, D33 stage B, D40 and D42, copied into D43's run directories. Every
+number seen that way is one of those diagnostics' own.
+Expected, not known: that a single charge of -1.00 e makes the dianion METASTABLE.
+Probe 2 found -2.1005 eV with -1.0 e at site 1690, at B3LYP-D3BJ/ma-def2-SVP and inside
+r_safe. The runs are made all the same, and their result is read by the same rule.
+Not known: the energy of any run of D43, and so every verdict, every detachment energy
+and every ddE at or beyond 3.50 A at this level. No such run exists in the record.
+
+--------------------------------------------------------------------------------
+9. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d43/         74 run directories, run.pbs, CONDITIONS.tsv,
+                                   SITES.tsv, SOURCES.sha256, INPUT_CHECKSUMS.sha256
+                                   (224 files checksummed)
+   phase2.2/cs6_d43_prepare.py     writes them from the committed files, and refuses to
+                                   finish unless G43.1 to G43.3 hold of what it wrote
+   phase2.2/cs6_d43.py             the reader. It is committed with this document,
+                                   before the job is submitted, and reports only the
+                                   readings of section 4 under the gates of section 5.
+   phase2.2/cs6_d43_harvest.sh     brings the outputs home, keeps them as physical
+                                   files and runs the reader
