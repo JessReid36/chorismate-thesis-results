@@ -9,7 +9,7 @@ What it does, in order:
      phase2.2/cs6_d33b.py (the stability block and the level-shift markers) and phase2.2/cs6_analyse.py
      (the bare / (MM) / (QM/MM) energy convention) - so that every number here is read the way the
      record reads it;
-  2. writes one .tsv per figure (F1 .. F12) and per table (T3 .. T14), plus controls.tsv (quantities recomputed from raw outputs
+  2. writes one .tsv per figure (F1 .. F13) and per table (T3 .. T15), plus controls.tsv (quantities recomputed from raw outputs
      beside the value the record prints) and derived.tsv (every derived number the write-up quotes, with
      its arithmetic and the files its inputs came from);
   3. unless --tsv-only, draws each figure from its own .tsv as .svg and .png.
@@ -1944,6 +1944,300 @@ def build(res, code, out):
     DV.add("DV428", str(len(v42) + 2 * len(arr5)), "derived",
            "DV382 + DV427: arrangement-states with charges present whose detachment energy is measured at CAM-B3LYP-D3BJ/def2-SVPD", T14N + " ; " + T13N)
     DV.add("DV429", str(len(v42) - 4), "derived", "DV382 - 4: the monoanions of DIAGNOSTIC 42 outside the four with the largest <S**2>", T14N)
+    # ============================ DIAGNOSTIC 43: bare charges at or beyond r_safe, on the committed grid ====================
+    # The first search diagnostic under AMENDMENT 7, read under AMENDMENT 5 (stability on the last analysis) and AMENDMENT 6
+    # (binding, the fifth leg).  Every number below is formed here from the raw outputs of d43/ and of the two committed
+    # controls of DIAGNOSTIC 31, and is then held against d43.tsv and against the rows the committed result prints.
+    #    four legs : the dianion against d31/ctl_<state>, by the committed thresholds of cs6_audit.py (verdict4 above)
+    #    fifth leg : VDE = E(monoanion) - E(dianion), the two runs of d43/ at the same state with the same charges
+    #    ddE       : (E(TS) - E(TS, control)) - (E(R) - E(R, control)) on the dianion
+    #    first     : the sum of a_i q_i with the matrix of D33 stage A (a_new above); it is the optimiser's objective and
+    #                is not a measurement
+    D43R, D43T, D43P = S6 + "/STAGE6_DIAGNOSTIC43_RESULT_20261117.txt", S6 + "/d43.tsv", S6 + "/STAGE6_DIAGNOSTIC43_20261117.txt"
+    t43 = (root / "STAGE6_DIAGNOSTIC43_RESULT_20261117.txt").read_text()
+    rec43, hdr43 = {}, None
+    for l in (root / "d43.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdr43 is None:
+            hdr43 = f
+            continue
+        if l.strip():
+            r = dict(zip(hdr43, f + [""] * (len(hdr43) - len(f))))
+            rec43[(r["condition"], r["state"])] = r
+    if any(v["di_status"] != "measured" or v["mo_status"] != "measured" for v in rec43.values()):
+        stop("d43.tsv holds a run that is not marked measured")
+    cond43, hdrc = [], None
+    for l in (root / "d43" / "CONDITIONS.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdrc is None:
+            hdrc = f
+            continue
+        if l.strip():
+            cond43.append(dict(zip(hdrc, f)))
+    site43, hdrs = {}, None
+    for l in (root / "d43" / "SITES.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdrs is None:
+            hdrs = f
+            continue
+        if l.strip():
+            site43[int(f[0])] = dict(zip(hdrs, f))
+    if len(rec43) != 2 * len(cond43) or sorted(set(k[0] for k in rec43)) != sorted(c["condition"] for c in cond43):
+        stop("d43.tsv does not hold exactly the conditions of d43/CONDITIONS.tsv, two states each")
+
+    def sec43(a, b):
+        i, j = t43.index("\n" + a), t43.index("\n" + b)
+        if j <= i:
+            stop("DIAGNOSTIC 43's result does not hold %s before %s" % (a, b))
+        return t43[i:j]
+    s431, s432, s433, s434 = sec43("R43.1 ", "R43.2 "), sec43("R43.2 ", "R43.3 "), sec43("R43.3 ", "R43.4 "), sec43("R43.4 ", "R43.5 ")
+    s438 = sec43("R43.8 ", "R43.9 ")
+    # ---- the controls
+    cc43, cb43 = run(root / "d43" / "C_ctl_R"), mono(root / "d43" / "C_bare_R", "plain")
+    if cc43 is None or not cc43["norm"] or cc43["notconv"] or cc43["npc"] or cc43["chmult"] != (["-2"], ["1"]):
+        stop("d43/C_ctl_R is not a normally terminated, converged, charge-free dianion run")
+    if not same_files(root / "d43" / "C_ctl_R", root / "d31" / "ctl_R", ("substrate.xyz", "job.inp")):
+        stop("d43/C_ctl_R is not DIAGNOSTIC 31's ctl_R run again")
+    if not same_files(root / "d43" / "C_bare_R", root / "d40" / "B_bare_R", ("substrate.xyz", "job.inp")):
+        stop("d43/C_bare_R is not DIAGNOSTIC 40's B_bare_R run again")
+    m = re.findall(r"^\s+(-\d+\.\d{8}) Eh\s+committed (-\d+\.\d{8})\s+differ (\S+)\s+limit (\S+)\s+PASS\s*$", s431, re.M)
+    if len(m) != 2:
+        stop("DIAGNOSTIC 43's result does not print its two controls")
+    ctl43 = {st: run(root / "d31" / ("ctl_%s" % st)) for st in ("R", "TS")}
+    control("C56.01", "DIAGNOSTIC 43 G43.4, the control C_ctl_R: E(dianion), Eh", cc43["E"], float(m[0][0]), D43R, 1e-8, 8)
+    control("C56.02", "DIAGNOSTIC 43 G43.4, C_ctl_R against DIAGNOSTIC 31's ctl_R as read here, Eh", cc43["E"], ctl43["R"]["E"], S6 + "/d31/ctl_R/job.out", float(m[0][3]), 8)
+    control("C56.03", "DIAGNOSTIC 43 G43.4, the control C_bare_R: E(monoanion), Eh", cb43["E"], float(m[1][0]), D43R, 1e-8, 8)
+    control("C56.04", "DIAGNOSTIC 43 G43.4, C_bare_R against DIAGNOSTIC 40's B_bare_R as read here, Eh", cb43["E"], vde40[("bare", "R")]["mo"]["E"],
+            S6 + "/d40/B_bare_R/job.out", float(m[1][3]), 8)
+    m = re.search(r"^\s+(\d+\.\d{4}) kcal/mol\s+D31 (\d+\.\d{4})\s+differ", s431, re.M)
+    if not m:
+        stop("DIAGNOSTIC 43's result does not print the charge-free barrier")
+    control("C56.05", "DIAGNOSTIC 43 G43.5, the charge-free barrier of d31/ctl_R and d31/ctl_TS, kcal/mol", (ctl43["TS"]["E"] - ctl43["R"]["E"]) * H, float(m.group(1)), D43R, 6e-5, 4)
+    m = re.search(r"^\s+([+-]\d\.\d{4}) eV at the reactant and ([+-]\d\.\d{4}) eV at the transition state, as D40 has them", s431, re.M)
+    if not m:
+        stop("DIAGNOSTIC 43's result does not print the bare substrate's detachment energy")
+    for j, st in enumerate(("R", "TS")):
+        control("C56.%02d" % (6 + j), "DIAGNOSTIC 43 G43.5, the bare substrate's detachment energy at %s, eV" % st, vde40[("bare", st)]["v"], float(m.group(1 + j)), D43R, 6e-5, 4)
+    # ---- every run
+    v43, k43 = {}, 0
+    for c in cond43:
+        name = c["condition"]
+        sites = [int(x) for x in c["sites"].split(",")]
+        qs = [float(x) for x in c["charges"].split(",")]
+        for st in ("R", "TS"):
+            dd, md = root / "d43" / ("%s_di_%s" % (name, st)), root / "d43" / ("%s_mo_%s" % (name, st))
+            r = rec43[(name, st)]
+            if r["di_run"] != dd.name or r["mo_run"] != md.name:
+                stop("d43.tsv does not name %s and %s as the runs of %s %s" % (dd.name, md.name, name, st))
+            di, mo = run(dd), mono(md, "pc")
+            if di is None or not di["norm"] or di["notconv"] or di["chmult"] != (["-2"], ["1"]):
+                stop("%s is not a normally terminated, converged dianion run" % dd)
+            if not same_files(dd, md, ("substrate.xyz", "pc.pc")) or not same_files(dd, root / "d33a" / ("sp_42436_%s" % st), ("substrate.xyz",)):
+                stop("%s and %s do not hold frame 42436's %s geometry and one set of charges, byte for byte" % (dd.name, md.name, st))
+            if state_of(di) != st or state_of(mo) != st or di["level"][:2] != ("CAM-B3LYP", "DEF2-SVPD") or mo["level"][:4] != di["level"][:4] or mo["level"][4] != di["level"][4]:
+                stop("%s and %s are not CAM-B3LYP/def2-SVPD on frame 42436's %s geometry" % (dd.name, md.name, st))
+            for x, d_ in ((di, dd), (mo, md)):
+                if not x["stab"]["ran"] or x["stab"]["first"] is None or x["stab"]["last"] is None:
+                    stop("%s carries no readable stability analysis" % d_)
+            q, _rep = charges_of(dd)
+            pl = (dd / "pc.pc").read_text().split("\n")
+            xyz = [tuple(float(y) for y in l.split()[1:4]) for l in pl[1:1 + len(q)]]
+            if len(q) != len(qs) or di["npc"] != len(q) or any(abs(a_ - b_) > 5e-7 for a_, b_ in zip(q, qs)) \
+                    or any(max(abs(p[i] - float(site43[s][ax])) for i, ax in enumerate(("x", "y", "z"))) > 5e-6 for p, s in zip(xyz, sites)):
+                stop("%s does not hold the sites and charges d43/CONDITIONS.tsv lists for %s" % (dd.name, name))
+            ctl = ctl43[st]
+            lg = dict(rise=di["maxlw"] - ctl["maxlw"], dip=di["dip"] / ctl["dip"], shifted=di["shifted"], gap=di["gap"], cgap=ctl["gap"], stab=di["stab"])
+            v = (mo["E"] - di["E"]) * EV
+            word = "METASTABLE" if v <= 0 else ("BOUND" if mo["stab"]["last"] == "STABLE" else NOTSTABLE)
+            near = near42(dd)
+            if (r["word"], r["di_stab_first"], r["di_stab_last"], r["mo_stab_first"], r["mo_stab_last"]) != (word, di["stab"]["first"], di["stab"]["last"], mo["stab"]["first"], mo["stab"]["last"]) \
+                    or (r["di_TRAH"] == "yes" or r["di_level_shift"] == "yes") != di["shifted"] or (r["mo_TRAH"] == "yes" or r["mo_level_shift"] == "yes") != mo["shifted"] \
+                    or int(r["di_charges_read"]) != len(q) or r["gap_read"] != ("no" if di["shifted"] else "yes") or r["flags"].strip() not in ("", "none"):
+                stop("%s %s: d43.tsv and the raw outputs do not give one reading" % (name, st))
+            for what, mine, rec, tol, nd in (("E(dianion), Eh", di["E"], float(r["E_di_Eh"]), 1e-8, 8), ("E(monoanion), Eh", mo["E"], float(r["E_mo_Eh"]), 1e-8, 8),
+                                             ("Loewdin rise, e", lg["rise"], float(r["lowdin_rise_e"]), 6e-5, 4), ("dipole ratio", lg["dip"], float(r["dipole_ratio"]), 6e-5, 4),
+                                             ("gap, eV", lg["gap"], float(r["gap_eV"]), 6e-5, 4), ("detachment energy, eV", v, float(r["VDE_eV"]), 6e-5, 4),
+                                             ("<S**2> of the monoanion", mo["s2"], float(r["S2"]), 1e-6, 6), ("nearest atom, A", near, float(r["nearest_A"]), 6e-5, 4),
+                                             ("detachment energy minus the bare substrate's, eV", v - vde40[("bare", st)]["v"], float(r["dVDE_vs_bare_eV"]), 6e-5, 4)):
+                k43 += 1
+                control("C57.%03d" % k43, "DIAGNOSTIC 43, %s %s, %s (d43.tsv)" % (name, st, what), mine, rec, D43T, tol, nd)
+            m = re.search(r"^\s+" + re.escape(name) + r"\s+" + st + r"\s+([+-]\d\.\d{4})\s+(\d+\.\d\d)\s+(\d+\.\d{4})\s+(\w+)/(\w+)\s+(yes|no)\s+(yes|no)\s+(\d+)\s+none\s*$", s432, re.M)
+            if not m or (m.group(4), m.group(5)) != (di["stab"]["first"], di["stab"]["last"]) or (m.group(6) == "yes" or m.group(7) == "yes") != di["shifted"] or int(m.group(8)) != len(q):
+                stop("DIAGNOSTIC 43's R43.2 does not print %s %s as read here, with no flag" % (name, st))
+            for what, mine, rec, tol, nd in (("Loewdin rise, e", lg["rise"], float(m.group(1)), 6e-5, 4), ("dipole ratio", lg["dip"], float(m.group(2)), 6e-3, 2), ("gap, eV", lg["gap"], float(m.group(3)), 6e-5, 4)):
+                k43 += 1
+                control("C57.%03d" % k43, "DIAGNOSTIC 43 R43.2, %s %s, %s" % (name, st, what), mine, rec, D43R, tol, nd)
+            m = re.search(r"^\s+" + re.escape(name) + r"\s+" + st + r"\s+([+-]\d\.\d{4})\s+([+-]\d\.\d{4})\s+(\d\.\d{6})\s+(\w+)/(\w+)\s+(yes|no)\s+(yes|no)\s+(\d+)\s+(BOUND|METASTABLE)\s*$", s433, re.M)
+            if not m or (m.group(4), m.group(5), m.group(9)) != (mo["stab"]["first"], mo["stab"]["last"], word) or (m.group(6) == "yes" or m.group(7) == "yes") != mo["shifted"]:
+                stop("DIAGNOSTIC 43's R43.3 does not print %s %s as read here" % (name, st))
+            for what, mine, rec, tol, nd in (("detachment energy, eV", v, float(m.group(1)), 6e-5, 4), ("detachment energy minus the bare substrate's, eV", v - vde40[("bare", st)]["v"], float(m.group(2)), 6e-5, 4),
+                                             ("<S**2> of the monoanion", mo["s2"], float(m.group(3)), 1e-6, 6)):
+                k43 += 1
+                control("C57.%03d" % k43, "DIAGNOSTIC 43 R43.3, %s %s, %s" % (name, st, what), mine, rec, D43R, tol, nd)
+            v43[(name, st)] = dict(v=v, word=word, di=di, mo=mo, lg=lg, near=near, q=q)
+    k43 = 0
+    for c in cond43:
+        name = c["condition"]
+        x = {st: v43[(name, st)] for st in ("R", "TS")}
+        four = verdict4({st: x[st]["lg"] for st in ("R", "TS")})
+        words = [x[st]["word"] for st in ("R", "TS")]
+        fifth = "PASSED" if words == ["BOUND", "BOUND"] else ("NOT PASSED: METASTABLE" if "METASTABLE" in words else None)
+        reach = "APPLIES" if "METASTABLE" in words else ("does not reach" if words == ["BOUND", "BOUND"] else None)
+        if fifth is None:
+            stop("%s is neither METASTABLE at a state nor BOUND at both: this script has no reading for it" % name)
+        dde = ((x["TS"]["di"]["E"] - ctl43["TS"]["E"]) - (x["R"]["di"]["E"] - ctl43["R"]["E"])) * H
+        first = sum(a_new[int(s)] * float(q_) for s, q_ in zip(c["sites"].split(","), c["charges"].split(",")))
+        score = first + float(c["L_kcal"])
+        if any(abs(a_new[s] - float(site43[s]["a_kcal_per_e"])) > 5e-7 for s in site43):
+            stop("d43/SITES.tsv does not carry the a_i of A_f42436_d33a.tsv")
+        m = re.search(r"^\s+" + re.escape(name) + r"\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+(-?\d+\.\d\d)\s+(\w+)\s+(APPLIES|does not reach)\s*$", s434, re.M)
+        if not m or (m.group(6), m.group(7)) != (four, reach):
+            stop("DIAGNOSTIC 43's R43.4 does not give %s the reading formed here" % name)
+        for what, mine, rec, tol, nd in (("ddE, kcal/mol", dde, float(m.group(1)), 6e-5, 4), ("first-order value, kcal/mol", first, float(m.group(2)), 6e-5, 4),
+                                         ("score, kcal/mol", score, float(m.group(3)), 6e-5, 4), ("ddE minus first order, kcal/mol", dde - first, float(m.group(4)), 6e-5, 4),
+                                         ("ddE over first order", dde / first, float(m.group(5)), 6e-3, 2)):
+            k43 += 1
+            control("C58.%03d" % k43, "DIAGNOSTIC 43 R43.4, %s: %s" % (name, what), mine, rec, D43R, tol, nd)
+        for st in ("R", "TS"):
+            r = rec43[(name, st)]
+            if (r["four_legs"], r["fifth_leg"], r["probe2_sentence"]) != (four, fifth, reach) or abs(float(r["ddE_kcal"]) - dde) > 6e-5 or abs(float(r["first_order_kcal"]) - first) > 6e-5 \
+                    or abs(float(r["score_kcal"]) - score) > 6e-5 or abs(float(c["first_order_kcal"]) - first) > 6e-7:
+                stop("d43.tsv or d43/CONDITIONS.tsv does not carry the words, the ddE or the first-order value formed here for %s %s" % (name, st))
+        surv = c["part"] == "B" and four == "RELIABLE" and fifth == "PASSED"
+        if (rec43[(name, "R")]["survivor"] == "yes") != surv or bool(re.search(r"^\s+" + re.escape(name) + r"\s.*\sSURVIVOR\s*$", s438, re.M)) != surv:
+            stop("DIAGNOSTIC 43's list of survivors does not agree with the reading formed here for %s" % name)
+        qv = [float(q_) for q_ in c["charges"].split(",")]
+        c.update(four=four, fifth=fifth, reach=reach, dde=dde, first=first, score=score, surv=surv, both=(words == ["BOUND", "BOUND"]), sumq=sum(qv), nq=len(qv), tot=sum(abs(q_) for q_ in qv))
+    B43 = [c for c in cond43 if c["part"] == "B"]
+    AP43 = [c for c in cond43 if c["part"] == "A" and c["sumq"] > 0]
+    AM43 = [c for c in cond43 if c["part"] == "A" and c["sumq"] < 0]
+    if len(B43) + len(AP43) + len(AM43) != len(cond43) or len(AP43) != len(AM43) or any(c["nq"] != 1 or abs(abs(c["sumq"]) - 1.0) > 5e-7 for c in AP43 + AM43):
+        stop("DIAGNOSTIC 43's conditions are not designs and single charges of +1.00 e and -1.00 e")
+    # the three verdicts the committed result prints, formed again from the readings above
+    H3ok = all(c["four"] == "RELIABLE" for c in AP43 + AM43)
+    H2ok = all(c["four"] == "RELIABLE" for c in AM43)
+    H9set = [c for c in cond43 if c["sumq"] > -5e-7 and c["four"] == "RELIABLE"]
+    H9ok = all(c["both"] for c in H9set)
+    for ok, yes in ((H3ok, "H3 IS NOT FALSIFIED BY THESE %d CONDITIONS." % len(AP43 + AM43)), (H2ok, "H2 IS NOT FALSIFIED BY THESE %d CONDITIONS." % len(AM43)),
+                    (H9ok, "H9 IS NOT FALSIFIED BY THESE %d CONDITIONS." % len(H9set))):
+        if not ok or yes not in t43:
+            stop("DIAGNOSTIC 43's verdicts on H3, H2 and H9 are not the ones the raw outputs give here: %s" % yes)
+    order43 = B43 + sorted(AP43, key=lambda c: c["dde"]) + sorted(AM43, key=lambda c: c["dde"])
+    t15 = []
+    for c in order43:
+        for st in ("R", "TS"):
+            x = v43[(c["condition"], st)]
+            di, mo, lg = x["di"], x["mo"], x["lg"]
+            t15.append((c["condition"], c["part"], st, c["nq"], c["sites"], c["charges"], "%+.4f" % c["sumq"], "%.4f" % c["tot"], "%.3f" % x["near"],
+                        fmt(di["E"], 8), "%+.4f" % lg["rise"], "%.4f" % lg["dip"], "%.4f" % lg["gap"], di["stab"]["first"], di["stab"]["last"], "yes" if di["shifted"] else "no", c["four"],
+                        fmt(mo["E"], 8), "%+.4f" % x["v"], x["word"], fmt(mo["s2"], 6), mo["stab"]["first"], mo["stab"]["last"], "yes" if mo["shifted"] else "no",
+                        "%+.4f" % (x["v"] - vde40[("bare", st)]["v"]), c["fifth"], "%+.4f" % c["dde"], "%+.4f" % c["first"], "%+.4f" % (c["dde"] - c["first"]), c["reach"],
+                        "SURVIVOR" if c["surv"] else "-"))
+    write_tsv(out / "T15_d43_conditions.tsv",
+              ["T15. DIAGNOSTIC 43: bare point charges at or beyond r_safe (3.50 A from every substrate atom at both states), on the committed grid.",
+               "CAM-B3LYP-D3BJ/def2-SVPD with the stability analysis, frame 42436, frozen geometries, in vacuo.  Part B: six designs placed by the",
+               "rule of D33.2 on the outer sites.  Part A: one charge of +1.00 e and one of -1.00 e at each of six outer sites.",
+               "Four legs on the dianion against d31/ctl_<state>: rise (flag at %.2f e), dipole ratio (flag at %.1f), gap (flag below %.1f eV and" % (audit.D_LW, audit.R_DIP, audit.GAP_ABS),
+               "below %.1f of the control's), stability on the LAST analysis (AMENDMENT 5).  Fifth leg (AMENDMENT 6): VDE = E(monoanion) - E(dianion)," % audit.R_GAP,
+               "the two runs of d43/ at the same state with the same charges, eV at %.12f eV per Eh.  BOUND: above zero with the monoanion's last" % EV,
+               "analysis STABLE.  METASTABLE: at or below zero; there the SIGN is the reading and the size is not.",
+               "ddE_kcal: (E(TS) - E(TS, control)) - (E(R) - E(R, control)) on the dianion.  first_order_kcal: the sum of a_i q_i with",
+               "A_f42436_d33a.tsv; it is the optimiser's objective and NOT a measurement.",
+               "probe2: APPLIES if a state is METASTABLE (Probe 2: such a ddE 'is not a barrier effect and must not be reported as one').",
+               "SURVIVOR: a design of part B that is RELIABLE on four legs and passes the fifth.  AMENDMENT 7: 'A NUMBER AT THE WORKING LEVEL IS A",
+               "NUMBER AT THE WORKING LEVEL'; no ddE of a survivor is quoted as more than that until it has been through the cross-check (D44).",
+               "Controls C56 are DIAGNOSTIC 43's own controls; C57 compare every run with d43.tsv and with the rows the result prints; C58 the ddE."],
+              ["condition", "part", "state", "n_charges", "sites", "charges_e", "sum_q_e", "total_abs_q_e", "nearest_A", "E_di_Eh", "lowdin_rise_e", "dipole_ratio", "gap_eV",
+               "di_stab_first", "di_stab_last", "di_shift", "four_legs", "E_mo_Eh", "VDE_eV", "word", "S2", "mo_stab_first", "mo_stab_last", "mo_shift", "dVDE_vs_bare_eV",
+               "fifth_leg", "ddE_kcal", "first_order_kcal", "ddE_minus_first_kcal", "probe2", "survivor"], t15)
+    WL43, MS43 = "RELIABLE and BOUND at both states: a working-level number (AMENDMENT 7)", "a state is METASTABLE: Probe 2's sentence applies"
+    f13 = []
+    for c in order43:
+        for st in ("R", "TS"):
+            x = v43[(c["condition"], st)]
+            f13.append(("designs" if c["part"] == "B" else ("single +1.00 e" if c["sumq"] > 0 else "single -1.00 e"), c["condition"], st, "%+.4f" % x["v"], x["word"], c["nq"],
+                        "%+.4f" % c["sumq"], "%+.4f" % c["dde"], "%+.4f" % c["first"], c["four"], c["fifth"], "SURVIVOR" if c["surv"] else "-", MS43 if c["reach"] == "APPLIES" else WL43))
+    write_tsv(out / "F13_outer_sites.tsv",
+              ["F13. DIAGNOSTIC 43: bare point charges at or beyond r_safe.  CAM-B3LYP-D3BJ/def2-SVPD, frame 42436, frozen geometries, in vacuo.",
+               "VDE_eV: E(monoanion) - E(dianion) with the charges present; positive means bound.  ddE_kcal: the barrier change on the dianion.",
+               "first_order_kcal: the sum of a_i q_i, the optimiser's objective, not a measurement.  Every condition is RELIABLE on four legs.",
+               "ddE_reading: where a state is METASTABLE Probe 2's sentence applies and the ddE is not a barrier effect.  Where both states are",
+               "BOUND the ddE is a number at the working level and no more (AMENDMENT 7, D43.1).  All numbers: T15_d43_conditions.tsv."],
+              ["group", "row", "state", "VDE_eV", "word", "n_charges", "sum_q_e", "ddE_kcal", "first_order_kcal", "four_legs", "fifth_leg", "survivor", "ddE_reading"], f13)
+    T15N = "figures/T15_d43_conditions.tsv"
+    S43 = [c for c in B43 if c["surv"]]
+    DV.add("DV430", str(len(list((root / "d43").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d43" % S6, S6 + "/d43")
+    DV.add("DV431", str(len(list((root / "d43").rglob("job.out")))), "count", "number of committed job.out files under %s/d43" % S6, S6 + "/d43")
+    DV.add("DV432", str(len(cond43)), "count", "conditions of DIAGNOSTIC 43", S6 + "/d43/CONDITIONS.tsv")
+    DV.add("DV433", str(len(v43)), "count", "dianion single points of DIAGNOSTIC 43 with charges present read here, and as many monoanion ones: %d conditions, two states" % len(cond43), S6 + "/d43")
+    DV.add("DV434", str(sum(1 for c in cond43 if c["four"] == "RELIABLE")), "recomputed from raw outputs", "conditions of DIAGNOSTIC 43 RELIABLE on four legs, of %d" % len(cond43), T15N)
+    DV.add("DV435", str(len(B43)), "count", "designs of part B of DIAGNOSTIC 43", S6 + "/d43/CONDITIONS.tsv")
+    DV.add("DV436", str(len(S43)), "recomputed from raw outputs", "designs of part B RELIABLE on four legs and BOUND at both states: the survivors of the search", T15N)
+    DV.add("DV437", str(len(AP43)), "count", "single charges of +1.00 e in part A of DIAGNOSTIC 43, and as many of -1.00 e at the same sites", S6 + "/d43/CONDITIONS.tsv")
+    DV.add("DV438", str(sum(1 for c in AP43 if c["both"])), "recomputed from raw outputs", "single charges of +1.00 e with the dianion BOUND at both states, of %d" % len(AP43), T15N)
+    DV.add("DV439", str(sum(1 for c in AM43 if all(v43[(c["condition"], s)]["word"] == "METASTABLE" for s in ("R", "TS")))), "recomputed from raw outputs",
+           "single charges of -1.00 e with the dianion METASTABLE at both states, of %d" % len(AM43), T15N)
+    DV.add("DV440", str(sum(1 for c in cond43 if c["both"])), "recomputed from raw outputs", "conditions of DIAGNOSTIC 43 with the dianion BOUND at both states", T15N)
+    nears43 = [x["near"] for x in v43.values()]
+    DV.add("DV441", "%.3f" % min(nears43), "derived", "shortest distance from a point charge to a substrate atom over the %d condition-states of DIAGNOSTIC 43, Angstrom" % len(nears43), T15N)
+    DV.add("DV442", "%.3f" % max(nears43), "derived", "the largest of those %d shortest charge-to-atom distances, Angstrom" % len(nears43), T15N)
+    rb = [(v43[(c["condition"], s)]["lg"]["rise"], c["condition"], s) for c in B43 for s in ("R", "TS")]
+    gb = [(v43[(c["condition"], s)]["lg"]["gap"], c["condition"], s) for c in B43 for s in ("R", "TS")]
+    DV.add("DV443", "%+.4f" % max(rb)[0], "recomputed from raw outputs", "largest Loewdin rise among the %d states of the designs, e (%s, %s); the flag is at %.2f" % (len(rb), max(rb)[1], max(rb)[2], audit.D_LW), T15N)
+    DV.add("DV444", "%.4f" % min(gb)[0], "recomputed from raw outputs", "smallest gap among the %d states of the designs, eV (%s, %s); the flag needs it below %.1f" % (len(gb), min(gb)[1], min(gb)[2], audit.GAP_ABS), T15N)
+    ra = [(v43[(c["condition"], s)]["lg"]["rise"], c["condition"], s) for c in AP43 + AM43 for s in ("R", "TS")]
+    DV.add("DV445", "%+.4f" % max(ra)[0], "recomputed from raw outputs", "largest Loewdin rise among the %d states of the single charges, e (%s, %s)" % (len(ra), max(ra)[1], max(ra)[2]), T15N)
+    vs = [(v43[(c["condition"], s)]["v"], c["condition"], s) for c in S43 for s in ("R", "TS")]
+    DV.add("DV446", "%+.4f" % min(vs)[0], "recomputed from raw outputs", "smallest detachment energy among the %d states of the survivors, eV (%s, %s)" % (len(vs), min(vs)[1], min(vs)[2]), T15N)
+    DV.add("DV447", "%+.4f" % max(vs)[0], "recomputed from raw outputs", "largest detachment energy among those states, eV (%s, %s)" % (max(vs)[1], max(vs)[2]), T15N)
+    DV.add("DV448", "%.4f" % max(c["dde"] for c in S43), "recomputed from raw outputs", "the least negative ddE among the survivors, kcal/mol (%s); a working-level number" % max(S43, key=lambda c: c["dde"])["condition"], T15N)
+    DV.add("DV449", "%.4f" % min(c["dde"] for c in S43), "recomputed from raw outputs", "the most negative ddE among the survivors, kcal/mol (%s); a working-level number" % min(S43, key=lambda c: c["dde"])["condition"], T15N)
+    DV.add("DV450", "%.2f" % min(c["dde"] / c["first"] for c in B43), "derived", "smallest ddE over first-order value among the %d designs (%s)" % (len(B43), min(B43, key=lambda c: c["dde"] / c["first"])["condition"]), T15N)
+    DV.add("DV451", "%.2f" % max(c["dde"] / c["first"] for c in B43), "derived", "largest ddE over first-order value among the designs (%s)" % max(B43, key=lambda c: c["dde"] / c["first"])["condition"], T15N)
+    DV.add("DV452", str(sum(1 for c in B43 if c["dde"] < c["first"])), "derived", "designs whose ddE is more negative than their first-order value, of %d" % len(B43), T15N)
+    vp = [(v43[(c["condition"], s)]["v"], c["condition"], s) for c in AP43 for s in ("R", "TS")]
+    vm = [(v43[(c["condition"], s)]["v"], c["condition"], s) for c in AM43 for s in ("R", "TS")]
+    DV.add("DV453", "%+.4f" % min(vp)[0], "recomputed from raw outputs", "smallest detachment energy among the %d states with one charge of +1.00 e, eV (%s, %s)" % (len(vp), min(vp)[1], min(vp)[2]), T15N)
+    DV.add("DV454", "%+.4f" % max(vp)[0], "recomputed from raw outputs", "largest detachment energy among those states, eV (%s, %s)" % (max(vp)[1], max(vp)[2]), T15N)
+    DV.add("DV455", "%+.4f" % max(vm)[0], "recomputed from raw outputs", "the detachment energy nearest zero among the %d states with one charge of -1.00 e, eV (%s, %s); the sign is the reading" % (len(vm), max(vm)[1], max(vm)[2]), T15N)
+    DV.add("DV456", "%+.4f" % min(vm)[0], "recomputed from raw outputs", "the most negative detachment energy among those states, eV (%s, %s); the sign is the reading" % (min(vm)[1], min(vm)[2]), T15N)
+    fu = sorted(k for k, x in v43.items() if x["di"]["stab"]["first"] == "UNSTABLE" and x["di"]["stab"]["last"] == "STABLE")
+    DV.add("DV457", str(len(fu)), "recomputed from raw outputs", "dianion runs of DIAGNOSTIC 43 whose first solution was unstable and whose last analysis is STABLE (%s)" % ", ".join("%s %s" % k for k in fu), T15N)
+    DV.add("DV458", str(sum(1 for x in v43.values() if x["di"]["stab"]["last"] != "STABLE")), "recomputed from raw outputs", "dianion runs of DIAGNOSTIC 43 whose last stability analysis is not STABLE", T15N)
+    DV.add("DV459", str(sum(1 for x in v43.values() if x["mo"]["stab"]["first"] != "STABLE" or x["mo"]["stab"]["last"] != "STABLE")), "recomputed from raw outputs",
+           "monoanions of DIAGNOSTIC 43 whose first or last stability analysis is not STABLE", T15N)
+    DV.add("DV460", str(sum(1 for x in v43.values() if x["di"]["shifted"])), "recomputed from raw outputs", "dianion runs of DIAGNOSTIC 43 in which TRAH or a level shift was engaged", T15N)
+    DV.add("DV461", str(sum(1 for x in v43.values() if x["mo"]["shifted"])), "recomputed from raw outputs", "monoanions of DIAGNOSTIC 43 in which TRAH or a level shift was engaged", T15N)
+    s2s43 = sorted(((x["mo"]["s2"], k) for k, x in v43.items()), reverse=True)
+    DV.add("DV462", fmt(s2s43[0][0], 6), "recomputed from raw outputs", "largest <S**2> among the %d monoanions of DIAGNOSTIC 43 (ideal 0.75): %s at %s" % (len(v43), s2s43[0][1][0], s2s43[0][1][1]), T15N)
+    DV.add("DV463", fmt(max(x["mo"]["s2"] for k, x in v43.items() if any(c["condition"] == k[0] for c in S43)), 6), "recomputed from raw outputs", "largest <S**2> among the monoanions of the survivors", T15N)
+    DV.add("DV464", "%.4f" % max(c["tot"] for c in B43), "derived", "largest sum of |q| among the designs, e (%s); DIAGNOSTIC 30 found def2-SVPD converged to %.2f e" % (max(B43, key=lambda c: c["tot"])["condition"], d33b.CONV), S6 + "/d43/CONDITIONS.tsv")
+    DV.add("DV465", str(len(set(s for c in B43 for s in c["sites"].split(",")))), "derived", "distinct sites used by the %d designs" % len(B43), S6 + "/d43/CONDITIONS.tsv")
+    DV.add("DV466", str(len(set.intersection(*[set(c["sites"].split(",")) for c in B43]))), "derived", "sites that every one of the %d designs uses (%s)"
+           % (len(B43), ", ".join(sorted(set.intersection(*[set(c["sites"].split(",")) for c in B43]), key=int))), S6 + "/d43/CONDITIONS.tsv")
+    # the record's arrangements with a four-leg pass and a detachment energy at the working level, before and after DIAGNOSTIC 43
+    DV.add("DV467", str(len(arr5) + len(cond42)), "derived", "DV367 + DV422: arrangements that passed the four legs and had a detachment energy before DIAGNOSTIC 43 (AMENDMENT 6, A6.1)", T13N + " ; " + T14N)
+    DV.add("DV468", str(len(arr5) + sum(1 for c in cond42 if not c["both"])), "derived", "of DV467, those with a METASTABLE state: the five of DIAGNOSTIC 40 and DV385 of DIAGNOSTIC 42", T13N + " ; " + T14N)
+    # DIAGNOSTIC 44 is pre-registered and has no output: only its committed inputs are counted
+    DV.add("DV469", str(len(list((root / "d44").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d44" % S6, S6 + "/d44")
+    DV.add("DV470", str(len(list((root / "d44").rglob("job.out")))), "count", "number of committed job.out files under %s/d44: DIAGNOSTIC 44 has no output in the record" % S6, S6 + "/d44")
+    lev44 = [l.split("\t") for l in (root / "d44" / "LEVELS.tsv").read_text().splitlines()[1:] if l.strip()]
+    DV.add("DV471", str(len(lev44)), "count", "levels of DIAGNOSTIC 44 (%s)" % ", ".join(x[0] for x in lev44), S6 + "/d44/LEVELS.tsv")
+    c44l = (root / "d44" / "CONDITIONS.tsv").read_text().splitlines()
+    if c44l[0].split("\t")[0] != "design" or lev44 == [] or (root / "d44" / "LEVELS.tsv").read_text().splitlines()[0].split("\t")[-1] != "runs":
+        stop("d44/CONDITIONS.tsv or d44/LEVELS.tsv does not have the columns this script reads")
+    d44des = sorted(l.split("\t")[0] for l in c44l[1:] if l.strip())
+    if d44des != sorted(c["condition"] for c in S43):
+        stop("the designs of d44/CONDITIONS.tsv are not the survivors of DIAGNOSTIC 43 formed here")
+    for l in c44l[1:]:
+        f = l.split("\t")
+        if l.strip() and sha(root / f[7]) != f[8]:
+            stop("d44/CONDITIONS.tsv: %s is not the point-charge file it lists" % f[7])
+    DV.add("DV472", str(len(d44des)), "count", "designs of DIAGNOSTIC 44: the survivors of DIAGNOSTIC 43", S6 + "/d44/CONDITIONS.tsv")
+    n44 = sum(int(x[-1]) for x in lev44)
+    if n44 != len(list((root / "d44").rglob("job.inp"))):
+        stop("d44/LEVELS.tsv does not account for every committed input of DIAGNOSTIC 44")
+    DV.add("DV473", str(n44), "derived", "single points of DIAGNOSTIC 44: the sum of the runs of its %d levels (%s)" % (len(lev44), " + ".join(x[-1] for x in lev44)), S6 + "/d44/LEVELS.tsv")
     DV.add("DV145", str(len(d31t)), "derived", "DIAGNOSTIC 31 conditions tabulated", "figures/T5_positive_charge_vs_verdict.tsv")
     DV.add("DV146", str(sum(1 for t in d31t if float(t[4]) >= 0.55 and t[6] == "RELIABLE")), "derived",
            "DIAGNOSTIC 31 conditions with largest positive charge at or above +0.55 e that are RELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
@@ -2311,8 +2605,8 @@ F9 = [
      S6 + "/STAGE6_DIAGNOSTIC33_20261109.txt", "Stage 6's relaxed half has no committed\n   result"),
     ("N1", "N0", "bare point charges", "inside r_safe: not interpretable",
      S6 + "/standoff/DIAGNOSTIC11_RESULT.txt", "No design measured inside r_safe is interpretable."),
-    ("N2", "N1", "move the charges out past r_safe (route a)", "open; D12 says it does not help",
-     S6 + "/sitescan/DIAGNOSTIC12_RESULT.txt", "Moving the grid outward does not help,"),
+    ("N2", "N1", "move the charges out past r_safe (route a)", "tried first, by Jessica's decision of 17 November 2026; not taken: the grid is not rebuilt",
+     S6 + "/STAGE6_DIAGNOSTIC43_20261117.txt", "On 17 November 2026 Jessica decided the order: route (a) is tried first"),
     ("N3", "N1", "cap the charge magnitude", "PARTIAL; envelope is in (n, q), not a cap",
      S6 + "/qscale/DIAGNOSTIC13_RESULT.txt", "A single cap cannot be"),
     ("N4", "N1", "scalar budget on the charges", "ruled out; budget withdrawn",
@@ -2358,6 +2652,18 @@ F9 = [
     ("N20", "N1", "bound with D31's conditions? (D42)",
      "BOUND at both states for 10 of 13 RELIABLE conditions; H9 not falsified; no ddE made quotable",
      S6 + "/STAGE6_DIAGNOSTIC42_RESULT_20261116.txt", "H9 IS NOT FALSIFIED BY THESE 8 CONDITIONS."),
+    ("N21", "N2", "bare charges on the outer sites of the committed grid (D43)",
+     "18 of 18 conditions RELIABLE; six designs BOUND at both states: SURVIVORS, working-level numbers only",
+     S6 + "/STAGE6_DIAGNOSTIC43_RESULT_20261117.txt", "each ddE above is a working-level number and is quoted as no more than that."),
+    ("N23", "N20", "binding as the fifth leg (Amendment 6)",
+     "adopted for what comes after; not retrospective",
+     S6 + "/STAGE6_AMENDMENT6_20261117.txt", "A fifth leg, BINDING, is added to the four."),
+    ("N24", "N13", "working level and five cross-check levels (Amendment 7)",
+     "named before any design reached them; no production level adopted",
+     S6 + "/STAGE6_AMENDMENT7_20261117.txt", "IT DOES NOT ADOPT A PRODUCTION LEVEL OF THEORY."),
+    ("N22", "N24", "the six survivors at the five levels (D44)",
+     "pre-registered; no output in the record",
+     S6 + "/STAGE6_DIAGNOSTIC44_20261118.txt", "Pre-registered 18 November 2026, before any D44 output exists."),
 ]
 
 
@@ -2875,7 +3181,8 @@ def draw(out):
         while s.endswith("0") and len(s.split(".")[1]) > 2:
             s = s[:-1]
         s = "0.00" if float(sq) == 0 else s.replace("-", MINUS)
-        return "%s\n%s" % (n, ("1 charge of %s e" % s) if nq == 1 else ("%d charges, sum %s e" % (nq, s)))
+        unit12 = "sphere" if n.startswith("ADD-") else "charge"
+        return "%s\n%s" % (n, ("1 %s of %s e" % (unit12, s)) if nq == 1 else ("%d charges, sum %s e" % (nq, s)))
 
     def pair12(ax, bx, y, d):
         v = {st: float(d[st]["VDE_eV"]) for st in ("R", "TS")}
@@ -2940,6 +3247,91 @@ def draw(out):
     k2.legend(hs, ls_, loc="upper left", bbox_to_anchor=(0.02, 0.98), fontsize=7.6, frameon=False, labelspacing=1.0, handlelength=1.8, borderaxespad=0.0)
     k2.text(0.02, 0.06, "† 5.00 e in all, above the total at which\nD30 found def2-SVPD converged", fontsize=7.4, va="bottom", ha="left", transform=k2.transAxes)
     save(fig, "F12_detachment_energy")
+
+    # ---- F13: DIAGNOSTIC 43, bare charges at or beyond r_safe.  The grammar is Figure F12's, so the two read as a pair: on the
+    # left the detachment energy at each state, and the reading is the side of zero a marker stands on; on the right the barrier
+    # change of the same row.  A solid bar is a condition RELIABLE on four legs and BOUND at both states, which AMENDMENT 7 lets
+    # this document quote as a working-level number and no more; a hatched bar is one with a METASTABLE state.  The diamond is the
+    # first-order value, the optimiser's objective, which is not a measurement.  Black, grey and white.
+    r13 = read_tsv(out / "F13_outer_sites.tsv")
+    g13 = []
+    for r in r13:
+        if not g13 or g13[-1][0] != r["group"]:
+            g13.append((r["group"], []))
+        if not g13[-1][1] or g13[-1][1][-1][0] != r["row"]:
+            g13[-1][1].append((r["row"], {}))
+        g13[-1][1][-1][1][r["state"]] = r
+    GAP13 = 1.7
+    y13, head13, y = {}, [], 0.0
+    for g, rows in g13:
+        head13.append((g, y + 0.68))
+        for n, _d in rows:
+            y13[n] = y
+            y -= 1.0
+        y -= GAP13
+    ylo13, yhi13 = y + GAP13 + 0.4, 1.95
+    fig = plt.figure(figsize=(10.8, 10.7))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.45, 1.0], height_ratios=[yhi13 - ylo13, 4.3], hspace=0.10, wspace=0.04, left=0.215, right=0.985, top=0.985, bottom=0.01)
+    a1 = fig.add_subplot(gs[0, 0]); a2 = fig.add_subplot(gs[0, 1], sharey=a1)
+    k13 = fig.add_subplot(gs[1, :]); k13.axis("off")
+    XL, XR = -2.45, 3.95
+    a1.axvspan(XL, 0, facecolor="#f1f1f1", edgecolor="#c9c9c9", hatch="////", lw=0, zorder=0)
+    for a_ in (a1, a2):
+        a_.axvline(0, color=INK, lw=1.0, zorder=2)
+        a_.grid(axis="x", color=GRID, lw=0.6, zorder=1); a_.set_axisbelow(True)
+        a_.tick_params(axis="y", length=0)
+    a2.tick_params(axis="y", labelleft=False)
+    a2.spines["left"].set_visible(False)
+    labs13 = []
+    allx = []
+    for g, rows in g13:
+        for n, d in rows:
+            yy = y13[n]
+            v = {st: float(d[st]["VDE_eV"]) for st in ("R", "TS")}
+            a1.plot([v["R"], v["TS"]], [yy, yy], color=MUTE, lw=0.8, zorder=3)
+            a1.plot([v["R"]], [yy], marker="o", ms=6.6, mfc=INK, mec=INK, mew=1.0, ls="none", zorder=5)
+            a1.plot([v["TS"]], [yy], marker="o", ms=6.6, mfc="white", mec=INK, mew=1.1, ls="none", zorder=4)
+            e, f1 = float(d["R"]["ddE_kcal"]), float(d["R"]["first_order_kcal"])
+            allx += [e, f1]
+            if d["R"]["ddE_reading"].startswith("RELIABLE and BOUND"):
+                a2.barh([yy], [e], height=0.46, color=INK, edgecolor=INK, lw=0.8, zorder=3)
+            else:
+                a2.barh([yy], [e], height=0.46, color="white", edgecolor=INK, hatch="////", lw=0.8, zorder=3)
+            a2.plot([f1], [yy], marker="D", ms=5.0, mfc="white", mec=INK, mew=1.0, ls="none", zorder=6)
+            if e < 0:                              # the number stands clear of the bar's end and of the diamond, whichever is further out
+                a2.text(min(e - 0.45, f1 - 0.85), yy, ("%.2f" % e).replace("-", MINUS), va="center", ha="right", fontsize=7.6, color=INK)
+            else:
+                a2.text(max(e + 0.45, f1 + 0.85), yy, "+%.2f" % e, va="center", ha="left", fontsize=7.6, color=INK)
+            nq = int(d["R"]["n_charges"])
+            if nq == 1:
+                labs13.append("%s\n1 charge of %s e at site %d" % (n, ("%+.2f" % float(d["R"]["sum_q_e"])).replace("-", MINUS), int(n[3:7])))
+            else:
+                sq = float(d["R"]["sum_q_e"])
+                labs13.append("%s\n%d charges, sum %s e" % (n, nq, "0.00" if abs(sq) < 5e-5 else ("%+.2f" % sq).replace("-", MINUS)))
+    a1.set_yticks([y13[n] for _g, rows in g13 for n, _d in rows]); a1.set_yticklabels(labs13, fontsize=7.4)
+    a1.set_ylim(ylo13, yhi13)
+    a1.set_xlim(XL, XR); a1.set_xticks([-2, -1, 0, 1, 2, 3])
+    a2.set_xlim(min(allx) - 3.6, max(allx) + 3.3)
+    title13 = {"designs": "Six designs on the outer sites (part B), each a SURVIVOR of the search",
+               "single +1.00 e": "One charge of +1.00 e at each of six outer sites (part A)",
+               "single -1.00 e": "One charge of " + MINUS + "1.00 e at the same six sites (part A)"}
+    for g, yh in head13:
+        a1.text(XL + 0.06, yh, title13[g], fontsize=8.6, fontweight="bold", va="bottom", ha="left", bbox=dict(facecolor="white", edgecolor="none", pad=1.6), zorder=7)
+    a1.text(XL + 0.06, yhi13 - 0.08, "METASTABLE: at or below zero", fontsize=8.2, style="italic", va="top", ha="left", bbox=dict(facecolor="white", edgecolor="none", pad=1.5), zorder=7)
+    a1.text(0.06, yhi13 - 0.08, "BOUND: above zero", fontsize=8.2, style="italic", va="top", ha="left", zorder=7)
+    a1.set_xlabel("detachment energy with the charges present, CAM-B3LYP-D3BJ/def2-SVPD (eV)", fontsize=8.2)
+    a2.set_xlabel("barrier change ddE of the same row (kcal/mol)\nworking-level numbers: see the key", fontsize=8.2)
+    hs = [plt.Line2D([], [], marker="o", ms=6.6, mfc=INK, mec=INK, ls="none"), plt.Line2D([], [], marker="o", ms=6.6, mfc="white", mec=INK, mew=1.1, ls="none"),
+          Rectangle((0, 0), 1, 1, facecolor="#f1f1f1", edgecolor="#b5b5b5", hatch="////", lw=0.6),
+          Rectangle((0, 0), 1, 1, facecolor=INK, edgecolor=INK), Rectangle((0, 0), 1, 1, facecolor="white", edgecolor=INK, hatch="////", lw=0.8),
+          plt.Line2D([], [], marker="D", ms=5.0, mfc="white", mec=INK, mew=1.0, ls="none")]
+    ls_ = ["reactant (R)", "transition state (TS)",
+           "METASTABLE side. Where a value is negative,\nits sign is the reading and its size is not",
+           "ddE of a condition RELIABLE on four legs and BOUND at both states.\nA number at the working level and no more (Amendment 7)",
+           "ddE of a condition with a METASTABLE state.\nProbe 2: " + "“not a barrier effect”",
+           "first-order value, the sum of a_i q_i: the optimiser's\nobjective, not a measurement"]
+    k13.legend(hs, ls_, loc="upper left", bbox_to_anchor=(0.0, 0.74), fontsize=7.8, frameon=False, labelspacing=1.0, handlelength=1.8, borderaxespad=0.0, ncol=2, columnspacing=3.0)
+    save(fig, "F13_outer_sites")
 
 
 def main():
