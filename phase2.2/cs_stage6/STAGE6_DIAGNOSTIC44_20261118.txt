@@ -1,0 +1,463 @@
+STAGE 6, DIAGNOSTIC 44
+The cross-check of AMENDMENT 7: the six survivors of D43 at five further levels. Do they
+pass the four legs there, does the dianion stay bound, and does the barrier change agree?
+
+Pre-registered 18 November 2026, before any D44 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+A search of the tracked file names and of the text files of both repositories found none
+that uses the number 44.
+It is read under AMENDMENT 5 (stability), AMENDMENT 6 (binding) and AMENDMENT 7, and it is
+the pre-registration A7.3 requires of the cross-check.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D43's result, committed in results 36116c36, lists six survivors of the search: designs
+of bare charges at or beyond 3.50 A that are RELIABLE on four legs and BOUND at both
+states at the working level, CAM-B3LYP-D3BJ/def2-SVPD. Its R43.8 prints them:
+
+   design         n   sum e  total e   ddE kcal/mol   first order
+   B_n02_q0.50    2   +0.00   1.00       -5.4190        -5.2489
+   B_n02_q0.75    2   +0.00   1.50       -8.3173        -7.8733
+   B_n02_q1.00    2   +0.00   2.00      -11.7348       -10.4978
+   B_n03_q0.75    3   +0.75   2.25      -14.2516       -10.8937
+   B_n05_q0.50    5   +0.50   2.50      -15.3124       -11.4376
+   B_n11_q0.25   11   +0.25   2.75       -9.6049        -7.9140
+
+and says of them: "each ddE above is a working-level number and is quoted as no more than
+that. A survivor goes to the cross-check of AMENDMENT 7, under a pre-registration written
+before any cross-check output exists (F5)."
+
+AMENDMENT 7, A7.2: "No ddE of a survivor is quoted as more than a working-level number
+until it has been through A7.3." A7.3 names five levels, says what is measured at each,
+and leaves four things to this document: "What is added to a method line for the point
+charges, the monoanion and the stability analysis, which of the four legs can be read at
+a double hybrid, and the tolerance within which a survivor's ddE must agree across the
+levels, are fixed by the pre-registration of the cross-check, before any of its outputs
+exists. That pre-registration may not change a method line." Section 2 fixes them.
+
+On 17 November 2026, with D43's result reported to her, Jessica was asked whether the
+cross-check should be built first, and wrote "ok proceed".
+
+Where the survivors sit against the limits at the working level is known, from D43's
+result, and is why the larger basis and the other functionals are a test and not a
+formality. The designs with the largest lowering are the ones nearest the limits:
+   - B_n03_q0.75: its gap falls to 1.6625 eV at the reactant, where the flag needs it
+     below 1.0 eV and the control's is 6.3277; its Loewdin rise is +0.1717 e at the
+     transition state, where the flag is at 0.25.
+   - B_n02_q1.00: its detachment energy at the reactant is +0.2272 eV. AMENDMENT 6 sets
+     no margin, so it is BOUND.
+   - ddE exceeds the first-order value most for B_n03_q0.75 and B_n05_q0.50, by 3.3579
+     and 3.8747 kcal/mol.
+
+--------------------------------------------------------------------------------
+2. THE CONVENTIONS
+--------------------------------------------------------------------------------
+THE FIVE LEVELS are A7.3's, each with the method line of the committed input A7.3 names.
+The key is the name used in the run directories.
+
+   key     level                          method line of              double hybrid
+   CAMTZ   CAM-B3LYP-D3BJ / def2-TZVPD    d37/CAM_TZ_R/job.inp          no
+   PWSV    PWPB95-D3BJ / def2-SVPD        d37/PWPB95_SV_R/job.inp       yes
+   PWTZ    PWPB95-D3BJ / def2-TZVPD       d37/PWPB95_TZ_R/job.inp       yes
+   RDSV    revDSD-PBEP86-D4 / def2-SVPD   d37a1/revDSD_RI_SV_R/job.inp  yes
+   RDTZ    revDSD-PBEP86-D4 / def2-TZVPD  d37a1/revDSD_RI_TZ_R/job.inp  yes
+
+   The %mp2 block of the two revDSD inputs, "%mp2 RI true end", is kept as committed.
+   A double hybrid's energy is not the energy of its self-consistent solution: it adds a
+   perturbative term built on that solution.
+
+WHAT IS ADDED TO A METHOD LINE. Two kinds of input are used, and no keyword appears in
+either that a committed input of this stage does not already hold.
+
+   WITH THE STABILITY ANALYSIS. The committed charged input of the working level,
+   d31/B/n01_q0.25_R/job.inp, with the method line of the level in place of its own and
+   the %mp2 block where the level has one. What that input adds to a method line is the
+   %maxcore and %pal lines, the %scf block with MaxIter 300 and STABPerform true, and the
+   %pointcharges line. ORCA's defaults govern the analysis, as at the working level:
+   where it finds a solution unstable it re-converges from it and analyses again. D43's
+   outputs print it so: "The stability analysis indicates that the wavefunction is
+   unstable" and then "Restart requested: Orbitals will be transformed and reconvergence
+   attempted".
+
+   WITHOUT IT. The committed charge-free input of the level, every line, with the
+   %pointcharges line put before the geometry line. With no charges it is the committed
+   input byte for byte.
+
+   THE MONOANION is always the first kind with the charge-and-multiplicity line "-1 2" in
+   place of "-2 1". AMENDMENT 6: "The monoanion is charge -1, multiplicity 2, and carries
+   the stability analysis."
+
+   A CONTROL is the same input without the %pointcharges line.
+
+AT CAMTZ, a hybrid, every run is of the first kind, as at the working level. The dianion
+run is called di and the monoanion run mo.
+
+AT A DOUBLE HYBRID THE DIANION IS RUN TWICE at each state.
+   di   without the analysis. ITS ENERGY IS THE ONE USED, for ddE and for the detachment
+        energy. It is on the restricted solution, in which every orbital holds a pair of
+        electrons.
+   ds   with the analysis: THE STABILITY SEARCH on the same dianion. Its energy is never
+        used.
+   mo   the monoanion, with the analysis.
+   WHY. The record's comparisons of these functionals with a correlated barrier (D36,
+   D41, D37 Amendment 1), which are the reason A7.3 names them, were made on the
+   restricted solution without the analysis. ORCA follows an unstable solution to one
+   that is no longer restricted, and a perturbative term built on that is another method
+   than the one A7.3 names; no document of the record has measured it against anything.
+   So the energy stays on the restricted solution, and the analysis is run beside it to
+   answer the question the stability leg exists for: whether a lower self-consistent
+   solution with the charge moved was hiding under the one that is used.
+
+WHICH OF THE FOUR LEGS CAN BE READ AT A DOUBLE HYBRID. All four.
+   The Loewdin rise, the dipole ratio and the gap are read on di, against the level's
+   control di. They are of the self-consistent solution, which is the one the
+   perturbative term is built on.
+   The stability leg is read on ds:
+      NOTHING LOWER            its first analysis is STABLE. No flag. Its final energy
+                               must then be di's within 1e-6 Eh; if it is not, the search
+                               did not start from the solution whose energy is used, and
+                               the leg is not read.
+      LOWER, CHARGE IN PLACE   its first analysis is UNSTABLE, ORCA re-converged, and the
+                               last analysis is STABLE. The Loewdin rise, the dipole ratio
+                               and the gap are read again, on the solution it ended on,
+                               against the same control. None is flagged. NOT A FLAG: the
+                               lower solution differs in how the spins are paired and not
+                               in where the charge is, and it is reported with its <S**2>.
+      CHARGE MOVED             the same, and one of the three is flagged on the solution
+                               it ended on. A FLAG.
+      UNSTABLE AT THE END      the last analysis is UNSTABLE. A FLAG, as at any level.
+   This is the rule of AMENDMENT 5 carried to a method with two steps. At the working
+   level a first solution that was unstable and then corrected is not a flag, and the
+   three legs are read on the corrected solution, because it is the one the run ends on.
+   Here they are read on both.
+
+THE FOUR LEGS. The committed classifier phase2.2/cs6_audit.py at its committed thresholds,
+D_LW 0.25 e, R_DIP 2.0, GAP_ABS 1.0 eV and R_GAP 0.5, read at read time and not
+transcribed, on each dianion against the charge-free control of the same level and state,
+with the rules D33.3 and AMENDMENT 5 settled: stability on the LAST analysis; the gap
+withheld in a run that engaged TRAH or a level shift, or whose control did. A state is
+FLAGGED if the Loewdin rise reaches D_LW, or the dipole ratio reaches R_DIP, or the gap is
+below GAP_ABS and below R_GAP of the control's, or the last stability analysis is
+UNSTABLE, or the SCF of di did not converge (D31.3: "NOT CONVERGING IS A RESULT, NOT A
+BROKEN JOB."), or, at a double hybrid, the search says CHARGE MOVED.
+
+   RELIABLE       no flag at either state, and at both the gap was readable and the
+                  stability analysis, or the search, was read
+   UNRELIABLE     a flag at either state; the result names each
+   INCONCLUSIVE   no flag, and at one state or both a gap withheld, or a stability
+                  analysis or search not read, or a search that did not start from the
+                  solution whose energy is used
+   NOT CLASSIFIED no flag, and a state NOT MEASURED or a control that cannot be used
+
+A CONTROL THAT CANNOT BE USED. At CAMTZ: the control di is not measured, or its stability
+analysis was not read, or its last analysis is UNSTABLE. At a double hybrid: the control
+di is not measured, or does not reproduce the committed energy of the same input within
+1e-6 Eh (section 3). The legs that need the control, and ddE, are then not formed at that
+level.
+
+THE FIFTH LEG, by AMENDMENT 6, at each level. VDE = E(mo) - E(di) at the same state with
+the same point charges, each the last FINAL SINGLE POINT ENERGY of its output, at
+27.211386245988 eV per Eh.
+
+   BOUND        VDE above zero, and the monoanion's last stability analysis STABLE
+   METASTABLE   VDE at or below zero
+   "ABOVE ZERO, MONOANION NOT STABLE" is reported with its number and is not BOUND.
+
+A design PASSES THE FIFTH LEG at a level if it is BOUND there at both states.
+
+ddE at a level = (E(TS) - E(TS, control)) - (E(R) - E(R, control)), on di and the level's
+control di, at 627.5094740631 kcal/mol per Eh. Negative lowers the barrier.
+
+THE WORKING-LEVEL ddE of a design is recomputed by the reader from D43's committed outputs
+and must be the number d43.tsv prints.
+
+THE TOLERANCE. The record carries one constant for the uncertainty of method and basis.
+STAGE6_CRITERIA.txt, decided by Jessica on 21 October 2026 for another use: "LOSS MUST BE
+BELOW 15 % OF |ddE(frozen)|." and "15 % is not a new constant: it is the fraction decision
+O6 already requires for the method-and-basis uncertainty". It is used here and no new one
+is made. At a level, with differ = ddE - working:
+
+   WITHIN           |differ| is below 15 % of |working|
+   OUTSIDE          |differ| is 15 % of |working| or more, IN EITHER DIRECTION: a ddE that
+                    is more negative than the working level's by that much is OUTSIDE just
+                    as one that is less negative is
+   NOT ASSESSABLE   |working| is below 3.2 kcal/mol, the floor the same document sets
+                    because a ratio means nothing on a small number. All six working
+                    values are above it; the smallest is 5.4190.
+   NOT FORMED       a state of di is not read, or the level's control cannot be used
+
+   The tolerance is relative, as WORKING_RULES.md guard rail 4 requires. The centre is the
+   working level because the question A7.2 asks is whether the working-level number may be
+   quoted as more than that.
+
+AT A LEVEL a design
+   PASSES   if it is RELIABLE on four legs, passes the fifth leg and its ddE is WITHIN
+   FAILS    if it is UNRELIABLE, or METASTABLE at either state, or its ddE is OUTSIDE
+   is OPEN  otherwise: not established either way
+
+A DESIGN
+   PASSES THE CROSS-CHECK          if it passes at all five levels
+   DOES NOT PASS THE CROSS-CHECK   if it fails at any level
+   otherwise THE CROSS-CHECK IS INCOMPLETE for it
+
+A7.3: "All five are run for every survivor and all five are reported, whichever way they
+come out. None is dropped."
+
+--------------------------------------------------------------------------------
+3. WHAT IS RUN
+--------------------------------------------------------------------------------
+196 single points on frame 42436, with bare point charges: no wall, no Lennard-Jones term,
+no continuum. The geometries are d33a/sp_42436_R and d33a/sp_42436_TS, which are also the
+geometries of the committed inputs A7.3 names. Each design's point-charge file is D43's
+committed file, byte for byte.
+
+   level   runs   controls                              each of the six designs
+   CAMTZ    28    C_ctl (di), C_bare (mo)               di, mo
+   PWSV     42    C_ctl (di), C_ctlS (ds), C_bare (mo)  di, ds, mo
+   PWTZ     42    the same                              the same
+   RDSV     42    the same                              the same
+   RDTZ     42    the same                              the same
+   every one at the reactant and at the transition state
+
+A run directory is <level>_<design>_<di|ds|mo>_<R|TS>, and a control's is
+<level>_<C_ctl|C_ctlS|C_bare>_<R|TS>.
+
+THE CONTROLS.
+   C_ctl    the charge-free dianion. At a double hybrid it is the committed input of the
+            level byte for byte, and its committed energy is the one it must reproduce:
+
+            level   committed input at R and TS   E at R, Eh       E at TS, Eh    barrier
+            PWSV    d37/PWPB95_SV_{R,TS}          -835.98233074   -835.94694777   22.2031
+            PWTZ    d37/PWPB95_TZ_{R,TS}          -836.98868516   -836.95467654   21.3407
+            RDSV    d37a1/revDSD_RI_SV_{R,TS}     -834.95568796   -834.92088148   21.8414
+            RDTZ    d37a1/revDSD_RI_TZ_{R,TS}     -836.09265712   -836.05840150   21.4957
+
+            At CAMTZ it carries the analysis, so it is not the committed input. The
+            committed energies of d37/CAM_TZ_{R,TS}, -837.20938385 and -837.16842778 Eh, a
+            barrier of 25.7003 kcal/mol, are printed beside it. Whether it reproduces them
+            is a reading: its own stability is the condition for using it.
+   C_ctlS   the stability search on the charge-free dianion, at the double hybrids.
+   C_bare   the bare monoanion, which gives the bare substrate's detachment energy at the
+            level.
+
+ORDER, in each job: the controls; then the six designs in D43's order, each as di R,
+di TS, (ds R, ds TS,) mo R, mo TS. A run that fails does not stop the runs after it.
+
+FIVE JOBS, one for each level, side by side: cm_d44_ct (CAMTZ), cm_d44_ps (PWSV),
+cm_d44_pt (PWTZ), cm_d44_rs (RDSV) and cm_d44_rt (RDTZ). Each has 8 cores, 48 GB,
+walltime 24:00:00, no -q, its own job script run_<level>.pbs and its own log.
+
+HOW LONG. Estimated, not measured. From the committed PBS logs (derived): the ten
+committed charge-free runs A7.3 names, which carry no analysis, took 2.3 to 2.8 minutes
+at def2-SVPD and 5.0 to 6.8 at def2-TZVPD; D37's two runs at the working level without
+the analysis took 2.3 and 3.0; D43's 12 dianion runs of the designs, with the analysis,
+took 5.4 minutes on average and its 12 monoanion runs 11.3. ASSUMING the analysis
+multiplies a run by 2.04 and a monoanion by a further 2.10 at every level, as those
+figures give at the working level, the five jobs take about 9.9 hours (CAMTZ), 4.3
+(PWSV), 9.5 (PWTZ), 4.7 (RDSV) and 10.7 (RDTZ). NO RUN OF THE RECORD CARRIES THE ANALYSIS
+AT def2-TZVPD OR AT A DOUBLE HYBRID, so that assumption is untested and a job may reach
+its walltime. Every job script is restartable: submitted again, it skips every run that
+ended normally. The harvest refuses a job whose log does not reach its last line unless
+it is told to go on.
+
+WHAT HAS NO PRECEDENT. Among the inputs under phase2.2/cs_stage6 that git tracks, none
+carries the stability analysis at def2-TZVPD or at a double hybrid, and the only monoanion
+at any of the five levels is d40/A_PWPB95, at PWPB95-D3BJ/def2-SVPD without the analysis.
+Inputs inside archives were not searched. Whether ORCA 6.0.1 runs the analysis at a double
+hybrid is therefore not known. The di runs do not depend on it. If the ds and mo runs of a
+double hybrid fail, that is F4.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R44.1  THE CONTROLS OF EACH LEVEL. C_ctl at each state beside the committed charge-free
+       energy, with their difference and the word REPRODUCES or DIFFERS, and at CAMTZ its
+       first and last stability verdicts; whether the control can be used. C_ctlS at each
+       state: its first and last verdicts, <S**2>, its final energy minus C_ctl's, the
+       Loewdin rise and dipole ratio of the solution it ended on against C_ctl's, and the
+       word of section 2. The charge-free barrier of each level beside the committed one.
+       The bare substrate's detachment energy at each level and state, with the bare
+       monoanion's stability. Reported, not interpreted.
+R44.2  THE FOUR LEGS AT EACH LEVEL. For each design at each state: the Loewdin rise, the
+       dipole ratio, the gap or that it was withheld, whether TRAH or a level shift was
+       engaged, the number of point charges ORCA says it read, and each flag by name. At
+       CAMTZ the first and last stability verdicts. At a double hybrid, for ds: its first
+       and last verdicts, <S**2>, the Loewdin rise and dipole ratio of the solution it
+       ended on, its final energy minus di's, and the word of section 2. Then the word on
+       four legs for the design at each level.
+R44.3  THE FIFTH LEG AT EACH LEVEL. For each design at each state: the detachment energy,
+       with its two energies in d44.tsv, the detachment energy minus the bare substrate's
+       at the same level and state, <S**2> of the monoanion, its first and last stability
+       verdicts, and the word of section 2. Then whether the design passes the fifth leg
+       at each level.
+R44.4  THE BARRIER CHANGE AT EACH LEVEL, BESIDE THE WORKING LEVEL. For each design at each
+       level: ddE, the working-level ddE, their difference, its size as a fraction of the
+       working-level value, and the word of the tolerance; beside it the word on four
+       legs and the fifth leg.
+R44.5  THE CROSS-CHECK OF EACH DESIGN. PASSES, FAILS or OPEN at each level, and the word
+       of section 2 for the design, with every reason a level is not PASSES. The count of
+       designs under each word. What a design that passes may be called is not said.
+R44.6  THE SIX LEVELS SIDE BY SIDE. For each design: its ddE at the working level and at
+       the five; the smallest, the largest and their difference, where all five are
+       formed; the smaller detachment energy of its two states at each level; and the
+       differences of ddE between the larger basis and the smaller with the same
+       functional, and between each double hybrid and CAM-B3LYP in the same basis.
+       Reported, not interpreted. Nothing is fitted, extrapolated or averaged.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+G44.1  Every file listed in d44/INPUT_CHECKSUMS.sha256 has the sha256 listed there. Every
+       substrate.xyz is byte-identical by sha256 to d33a/sp_42436_{R,TS}'s. Every input,
+       built again by the reader from the committed files by the functions of
+       cs6_d44_prepare.py, is the file that ran, and its method line is line 1 of the
+       committed input A7.3 names for its level and state. Every control without the
+       analysis is that committed input byte for byte. Every point-charge file is D43's
+       committed file of its design, byte for byte, and no control holds one.
+G44.2  The five levels are those of A7.3 in its order. The six designs are the rows of
+       the committed d43.tsv that say survivor, each a design of part B that is RELIABLE
+       and passes the fifth leg there. d44/CONDITIONS.tsv, d44/LEVELS.tsv and the five
+       job scripts are what the committed files give.
+G44.3  Every file listed in d44/SOURCES.sha256 has the sha256 listed there; no committed
+       file under d31, d33a, d37, d37a1, d40 or d43 differs from HEAD; the
+       pre-registration the reader is given is the committed one; and every file of
+       SOURCES.sha256, AMENDMENTS 6 and 7, STAGE6_CRITERIA.txt and D43's result and table
+       among them, is the file at the commit this document is committed on.
+G44.4  THE WORKING LEVEL. The ddE and the two detachment energies of each design,
+       recomputed from D43's committed outputs with d31/ctl_R and d31/ctl_TS, are the
+       numbers d43.tsv prints. The ten committed charge-free outputs of the five levels
+       are readable.
+G44.5  The sentences this document quotes from STAGE6_CRITERIA.txt, from AMENDMENT 7 and
+       from Probe 2's result are in those files, and the 15 % and the 3.2 kcal/mol the
+       reader uses are the ones those sentences state.
+G44.6  The input ORCA prints at the top of every output that exists is the committed
+       input in the same run directory.
+G44.7  Every dianion run that is read, di or ds, reports the number of basis functions of
+       the committed charge-free output of its level.
+
+       A FAILURE OF G44.1 TO G44.7 STOPS THE DIAGNOSTIC. Nothing else is readable.
+
+G44.8  PER RUN. A run is read only if it terminates normally, converges its SCF, reports
+       118 electrons for a dianion and 117 for a monoanion, and says it read as many
+       point charges as its pc.pc holds. A di whose output says the SCF did not converge
+       is a flag, by section 2. Any other run that fails this is reported NOT MEASURED
+       with ORCA's own words, and is not dropped. No keyword is changed to make a run
+       work; that needs a dated amendment.
+G44.9  A detachment energy is formed only where di and mo of that state are both read. A
+       ddE is formed only where di is read at both states and the level's control can be
+       used. It is formed, and printed with the words beside it, for a design that is
+       UNRELIABLE or not BOUND at that level, as D33's and D43's results did.
+
+--------------------------------------------------------------------------------
+6. WHAT FOLLOWS FROM EACH OUTCOME, DECIDED NOW
+--------------------------------------------------------------------------------
+F1  A DESIGN PASSES THE CROSS-CHECK. Its six values of ddE, the working level's and the
+    five, may be quoted together, each with its level, and R44.6 prints their range. That
+    is all D44 gives it. A7.4: "WHAT A SURVIVOR THAT PASSES THE CROSS-CHECK MAY BE CALLED.
+    That is a dated document of its own and a decision for Jessica."
+F2  A DESIGN DOES NOT PASS. The result names the level and the reason. The design stays a
+    survivor of the search at the working level and nothing more, and no ddE of it is
+    quoted as more than a working-level number. No level is dropped and none is added to
+    find one at which it passes: A7.3 allows a sixth "only by a dated amendment written
+    before any output at it exists".
+F3  THE CROSS-CHECK IS INCOMPLETE FOR A DESIGN. The cause is diagnosed first. A job that
+    was cut short is submitted again as it is. Anything else that would change an input
+    is a dated amendment, written before the run is repeated.
+F4  A LEVEL DID NOT RUN. If none of the charged runs of a level is measured, or none of
+    the ds and mo runs of a double hybrid is, as when ORCA does not run the analysis
+    there, that is the primary result for the level. Its di runs, if they ran, still give
+    a ddE, which is printed; the stability leg and the fifth leg are then not established
+    there and every design is INCOMPLETE. What is added to the method line for the
+    analysis at a double hybrid is then the subject of a dated amendment, and A7.3
+    stands: "None is dropped."
+F5  THE RESTRICTED SOLUTION OF THE BARE SUBSTRATE IS UNSTABLE AT A DOUBLE HYBRID, that
+    is, C_ctlS finds a lower solution. Then the charge-free barriers of D37 and of D37
+    Amendment 1 at that level, and the comparisons of D36 and D41 that rest on them, were
+    made on a solution the analysis does not find to be the lowest. D44 reports it and
+    reads the level all the same, by section 2, which was fixed before the result was
+    known. What it means for those comparisons is not decided here.
+F6  A DESIGN FAILS AT CAMTZ ALONE. CAMTZ differs from the working level in the basis and
+    in nothing else, so that failure is the basis's. D43.7 said of its own designs: "Every
+    total is inside the 2.88 e at which D30 found def2-SVPD converged, and D30 found that
+    on another arrangement." Whether the working level's basis is then enough for a search
+    is not decided here.
+F7  THE PRODUCTION LEVEL OF THEORY is not decided by D44 under any outcome (A7.4).
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D44.1  IT ADOPTS NO PRODUCTION LEVEL OF THEORY and does not say which benchmark is nearer
+       the truth. It names no design.
+D44.2  ONE FRAME, FROZEN GEOMETRIES, IN VACUO, NO CONTINUUM. D31.8 said it of its own
+       numbers and it holds of these: "No barrier reported from this diagnostic is a
+       prediction of a physical barrier."
+D44.3  THE CHARGES ARE BARE POINT CHARGES. They stand for no residue. The refined
+       representation, the wall, is not in any run here.
+D44.4  THREE FUNCTIONALS IN TWO BASIS SETS ARE NOT INDEPENDENT TESTS. The working level
+       and CAMTZ share a functional. A7.4 says of whether a functional's error on the
+       barrier cancels in ddE: "Nothing in the record measures it. Agreement of three
+       functionals is not that measurement."
+D44.5  THE TOLERANCE WAS NOT MADE FOR THIS. It is the record's one constant for method
+       and basis, fixed on 21 October 2026 for the loss of a design on relaxation. It was
+       taken up here with D43's six numbers known and no number of D44 in existence. Other
+       forms were thought of before it was found in the record, an absolute figure and
+       other percentages; none was set against any number, and the record's constant was
+       taken because it is the record's.
+D44.6  AT A DOUBLE HYBRID the energy is on the restricted solution whether or not the
+       search finds that solution stable. The three legs read a self-consistent density
+       and not one relaxed with the perturbative term. The monoanion is an unrestricted
+       reference: its spin contamination is reported and not corrected, and a
+       contaminated reference can raise its perturbative energy and so the detachment
+       energy. No threshold on <S**2> is set, because the record holds none.
+D44.7  THE SIX DESIGNS SHARE TWO SITES and were placed by a greedy rule on one grid. D43.6
+       holds: they are not an optimisation.
+D44.8  THE DETACHMENT ENERGIES are vertical and in vacuo. Where one is negative its sign
+       is the reading and its size is not (D40.4).
+D44.9  It does not re-measure r_safe, does not take route (a) and does not adopt the wall.
+D44.10 NOTHING HERE IS SHAPED. The tolerance is symmetric. Every level is reported
+       whichever way it comes out. The rule for the stability search at a double hybrid
+       was written before any double hybrid had been run with the analysis in this
+       project, and section 8 says what was expected of it.
+
+--------------------------------------------------------------------------------
+8. WHAT WAS KNOWN WHEN THIS WAS WRITTEN
+--------------------------------------------------------------------------------
+Known: every number of D43's result, among them the six working-level values of ddE and
+the margins of section 1; the results of D36, D37, D37 Amendment 1 and D41, among them the
+ten committed charge-free energies of section 3; and the run times of section 3.
+Known, and the reason the double hybrids are run as section 2 says: the fraction of exact
+exchange in the self-consistent step is printed by the committed outputs as 0.19 for
+CAM-B3LYP (d31/ctl_R, with its range separation), 0.50 for PWPB95 (d37/PWPB95_SV_R) and
+0.69 for revDSD-PBEP86-D4 (d37a1/revDSD_RI_SV_R). At the working level the charge-free
+transition state is STABLE, and 6 of D43's 12 single-charge runs at the transition state
+had a first solution that was unstable and was corrected; the one whose <S**2> was looked
+up, A_s0557_p100, ended at 0.109130.
+EXPECTED, NOT KNOWN: that with more exact exchange the restricted solution at the
+transition state may be UNSTABLE at the double hybrids, for the designs and perhaps for
+the bare substrate, in the way that breaks the pairing of spins and moves no charge. If
+that is what happens, section 2 reads it as LOWER, CHARGE IN PLACE and F5 applies. The
+runs are made all the same and are read by the same rule whichever way they come out.
+Also known: an outside report, not verified here, that ORCA 6.0.0 ends in an error after
+the analysis when it is told not to re-converge. That keyword is not used.
+The reader was tested before this was committed, on outputs that are not D44's: committed
+outputs of D31, D33 stage B, D37, D40 and D43, copied into D44's run directories and
+altered where a test needed it. Every number seen that way is one of those diagnostics'
+own or was made up for the test.
+Not known: the energy of any run of D44. None of the six designs has been run at any of
+the five levels, and no run of D44 exists.
+
+--------------------------------------------------------------------------------
+9. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d44/         196 run directories, five job scripts run_<level>.pbs,
+                                   CONDITIONS.tsv, LEVELS.tsv, SOURCES.sha256,
+                                   INPUT_CHECKSUMS.sha256 (568 files checksummed)
+   phase2.2/cs6_d44_prepare.py     writes them from the committed files, and refuses to
+                                   finish unless G44.1 and G44.2 hold of what it wrote
+   phase2.2/cs6_d44.py             the reader. It is committed with this document, before
+                                   any job is submitted, and reports only the readings of
+                                   section 4 under the gates of section 5. It writes the
+                                   result, d44.tsv and d44_controls.tsv.
+   phase2.2/cs6_d44_harvest.sh     brings the outputs home, keeps them as physical files
+                                   and runs the reader

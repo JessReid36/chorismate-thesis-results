@@ -1,0 +1,75 @@
+#!/bin/bash
+#PBS -N cm_d44_ps
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d44/run_PWSV.pbs.out
+# Stage 6 DIAGNOSTIC 44: the cross-check of AMENDMENT 7 on the six survivors of D43.
+# This job is one of five, one for each level. Its level is PWPB95-D3BJ/def2-SVPD.
+# Order: the six controls with no charges: the dianion without the stability analysis (C_ctl),
+#   the dianion with it (C_ctlS) and the monoanion (C_bare), each at the reactant and at the
+#   transition state; then each of the six designs as di R, di TS, ds R, ds TS, mo R, mo TS.
+# A run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable:
+#   submitted again, it skips every run that ended normally.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d44
+cd "$W" || exit 1
+if ! mkdir .running_PWSV 2>/dev/null; then echo "FAIL: another job holds .running_PWSV in $W"; exit 1; fi
+trap 'rmdir "$W/.running_PWSV" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run PWSV_C_ctl_R
+run PWSV_C_ctl_TS
+run PWSV_C_ctlS_R
+run PWSV_C_ctlS_TS
+run PWSV_C_bare_R
+run PWSV_C_bare_TS
+run PWSV_B_n02_q0.50_di_R
+run PWSV_B_n02_q0.50_di_TS
+run PWSV_B_n02_q0.50_ds_R
+run PWSV_B_n02_q0.50_ds_TS
+run PWSV_B_n02_q0.50_mo_R
+run PWSV_B_n02_q0.50_mo_TS
+run PWSV_B_n02_q0.75_di_R
+run PWSV_B_n02_q0.75_di_TS
+run PWSV_B_n02_q0.75_ds_R
+run PWSV_B_n02_q0.75_ds_TS
+run PWSV_B_n02_q0.75_mo_R
+run PWSV_B_n02_q0.75_mo_TS
+run PWSV_B_n02_q1.00_di_R
+run PWSV_B_n02_q1.00_di_TS
+run PWSV_B_n02_q1.00_ds_R
+run PWSV_B_n02_q1.00_ds_TS
+run PWSV_B_n02_q1.00_mo_R
+run PWSV_B_n02_q1.00_mo_TS
+run PWSV_B_n03_q0.75_di_R
+run PWSV_B_n03_q0.75_di_TS
+run PWSV_B_n03_q0.75_ds_R
+run PWSV_B_n03_q0.75_ds_TS
+run PWSV_B_n03_q0.75_mo_R
+run PWSV_B_n03_q0.75_mo_TS
+run PWSV_B_n05_q0.50_di_R
+run PWSV_B_n05_q0.50_di_TS
+run PWSV_B_n05_q0.50_ds_R
+run PWSV_B_n05_q0.50_ds_TS
+run PWSV_B_n05_q0.50_mo_R
+run PWSV_B_n05_q0.50_mo_TS
+run PWSV_B_n11_q0.25_di_R
+run PWSV_B_n11_q0.25_di_TS
+run PWSV_B_n11_q0.25_ds_R
+run PWSV_B_n11_q0.25_ds_TS
+run PWSV_B_n11_q0.25_mo_R
+run PWSV_B_n11_q0.25_mo_TS
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' PWSV_*/job.out 2>/dev/null | wc -l) of 42"
