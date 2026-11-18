@@ -1,0 +1,347 @@
+STAGE 6, DIAGNOSTIC 45
+The approximations of the coupled-cluster benchmark, measured: the triples, the PNO
+threshold and the basis set, on the bare substrate of frame 42436.
+
+Pre-registered 18 November 2026, before any D45 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+A search of the tracked file names and of the text files of both repositories found no
+diagnostic that uses the number 45. The directories standoff/d450_* are a distance of
+4.50 A and not a diagnostic.
+It is read beside AMENDMENT 8, which is committed with it.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+Every comparison of a functional with a correlated barrier in this record rests on two
+numbers: D36's DLPNO-CCSD(T) barrier at def2-TZVPD, "THE BARRIER IS 23.8603 kcal/mol.",
+and D41's at def2-SVPD, "THE BARRIER AT def2-SVPD IS 22.8968 kcal/mol." The documents
+that give them say what was not measured.
+
+   The PNO threshold. D36's result: "TightPNO was requested; the residual PNO error is
+   not measured here." D41.4: "DLPNO is an approximation; TightPNO is requested and its
+   residual error is not measured."
+   The basis set. D36's result: "23.8603 is a reference for comparison at this basis and
+   must not be quoted as the true in vacuo barrier." D41's result: "THE CORRELATED BARRIER
+   SHIFTS BY +0.9635 kcal/mol from def2-SVPD to def2-TZVPD." D41.5: "Two basis sets do not
+   make an extrapolation, and none is attempted."
+   The triples. No document of the record says which treatment of the triples the
+   benchmark used. The four committed outputs say it themselves: each prints a time under
+   "Total time for T0" and "Total time for Iterative (T)    ...     0.000 sec". The
+   benchmark's triples are the non-iterative ones. ORCA 6.0's manual lists the keyword
+   that was used, DLPNO-CCSD(T), as "DLPNO-CCSD with perturbative triple excitations" and
+   a second one, DLPNO-CCSD(T1), as "DLPNO-CCSD with iterative perturbative triple
+   excitations".
+
+AMENDMENT 7 left this open, A7.4: "WHICH BENCHMARK IS NEARER THE TRUTH." It also said
+what no agreement among functionals can stand in for: "Nothing in the record measures it.
+Agreement of three functionals is not that measurement."
+
+On 18 November 2026 Jessica was shown the three things above as shortfalls of the
+benchmark against what the literature asks of a reference, with the cost of each, asked
+that the choice not be the easiest one but a balance of accuracy, standard and cost, and
+agreed to these checks: "okay yes you can proceed". The papers that are the reason for
+each check are named here as the reason and not as evidence for any number:
+   - the triples: Guo, Riplinger, Becker, Liakos, Minenkov, Cavallo and Neese, J. Chem.
+     Phys. 2018, 148, 011101, which introduces the iterative treatment (T1) beside the
+     non-iterative one (T0);
+   - the PNO threshold: Altun, Neese and Bistoni, J. Chem. Theory Comput. 2020, 16, 6142,
+     for the two-point formula from TCutPNO 1e-6 and 1e-7; and Gray and Herbert, J. Chem.
+     Phys. 2024, 161, 054114, for the warning that with diffuse basis functions the
+     behaviour of DLPNO energies with the threshold has to be looked at and not assumed.
+
+D45 measures the three on the bare barrier. It measures nothing with charges: that is
+DIAGNOSTIC 46, which AMENDMENT 8 describes.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+Fourteen single points, each at the reactant (R) and the transition state (TS) of frame
+42436, on d33a's committed geometries. No charges, no MM region, no wall. Every input is
+the committed input of the def2-SVPD benchmark, d38/N/job.inp, which d41/T/job.inp
+repeats byte for byte,
+
+   ! DLPNO-CCSD(T) def2-SVPD AutoAux TightSCF TightPNO
+   %maxcore 6000, %pal nprocs 16, %scf MaxIter 300, charge -2, multiplicity 1
+
+with ONE thing changed:
+
+   runs             what is changed
+   T1_R, T1_TS      DLPNO-CCSD(T) becomes DLPNO-CCSD(T1)
+   P6_R, P6_TS      a block  %mdci / TCutPNO 1e-6 / end  is added
+   P8_R, P8_TS      a block  %mdci / TCutPNO 1e-8 / end  is added
+   M_SV_R, M_SV_TS  the method line becomes  ! RI-MP2 def2-SVPD AutoAux TightSCF
+   M_TZ_R, M_TZ_TS  the same with def2-TZVPD
+   M_TP_R, M_TP_TS  the same with def2-TZVPPD
+   M_QZ_R, M_QZ_TS  the same with def2-QZVPPD
+
+The MP2 method line is the committed one with the method and the basis set changed and
+TightPNO, which belongs to the DLPNO method, taken off. TightPNO stays in the P6 and P8
+inputs, so its other thresholds stay; only TCutPNO is changed in the input, and whatever
+ORCA derives from it is printed (R45.1).
+
+THE COMMITTED LEGS ARE NOT RUN AGAIN. The series of the PNO threshold has the committed
+runs as its middle point, 1e-7: d38/N (R) and d41/T (TS). The triples are compared with
+the same two. The coupled-cluster barrier at def2-TZVPD is d36a2/B_R and B_TS.
+
+WHY THESE BASIS SETS. def2-SVPD and def2-TZVPD are the record's two. def2-TZVPPD and
+def2-QZVPPD are the triple-zeta and quadruple-zeta sets of the same family with the same
+diffuse functions: a pair one step apart, which is what a two-point extrapolation needs.
+The basis functions of the dianion number 402 and 682 in the first two, by the committed
+outputs. In the last two they number 746 and 1290 by a count from the basis set
+definitions (the basis_set_exchange library); that count is not from a committed file,
+and the reader prints what ORCA reports.
+
+WHY MP2 FOR THE BASIS SET. A coupled-cluster run at def2-QZVPPD was costed and is not
+made: the committed def2-TZVPD legs took 4 h 08 and 6 h 42 on 16 cores with 240 GB asked
+for and up to 80 GB of scratch, at 682 functions, and the cost grows steeply with the
+number of functions. The standard way round it is used instead: the dependence on the
+basis set is measured with a cheaper correlated method and added to the coupled-cluster
+number. What that assumes is said in section 3 and tested as far as the record allows.
+
+THE ORDER. M_SV, M_TZ, M_TP, P6, T1, M_QZ, P8, each R then TS: the cheap and the certain
+first, so that a job that is cut short has lost the least.
+
+RESOURCES. One job, cm_d45, 16 cores, 120 GB, walltime 48:00:00, no -q. The job script is
+D41's, for fourteen runs: it works in node-local scratch, copies each output home as the
+run ends, samples the scratch in use every 60 s while ORCA is running, and removes the
+scratch of a run when the run has ended. It can be submitted again as it is: it skips
+every run that ended normally. A run that fails does not stop the runs after it.
+   Scratch. The def2-SVPD benchmark needed 31 to 46 GB (D38 Erratum 1; D41, R41.6). What
+   a tighter threshold needs is not measured. 250 GB is asked for and 120 GB is the least
+   a location may offer; D41 found 1541 GB free where it ran. Those figures are not
+   defended as sufficient. If a run fails on a write, that is a measurement of the
+   footprint and not a failure of the method.
+   Time. ESTIMATES, none of them measured: the MP2 runs a few minutes to an hour each at
+   the first three basis sets and 3 to 8 hours each at def2-QZVPPD; P6 about an hour
+   each or less; T1 2 to 4 hours each; P8 4 to 10 hours each. The sum is between about
+   one day and about two. The three longest kinds of run have never been made in this
+   project, and a job that reaches its walltime is submitted again as it is.
+
+--------------------------------------------------------------------------------
+3. THE CONVENTIONS
+--------------------------------------------------------------------------------
+A BARRIER is E(TS) minus E(R) at 627.5094740631 kcal/mol per Eh, on the last FINAL SINGLE
+POINT ENERGY of each output, with its parts as ORCA prints them: for a coupled-cluster
+run E(0), E(CORR)(corrected), the triples correction and E(CCSD(T)); for an MP2 run the
+SCF total energy, the RI-MP2 correlation energy and the MP2 total energy.
+
+   b6, b7, b8   the DLPNO-CCSD(T) barrier at def2-SVPD at TCutPNO 1e-6, 1e-7 and 1e-8.
+                b7 is the committed 22.8968.
+   d67, d78     b7 - b6 and b8 - b7.
+
+THE SAME REFERENCE. Every new def2-SVPD run, and the MP2 run at def2-TZVPD, starts from a
+Hartree-Fock calculation that a committed run has already made. A new run is used only if
+its Hartree-Fock energy is within 1e-6 Eh of the committed run's at the same basis set
+and state. That figure is the one D44 uses for an input that repeats a committed one. It
+is a test that two runs are the same calculation and not a tolerance on a result.
+
+THE TRIPLES. T1 minus T0 on the barrier is the barrier of the T1 runs minus b7. It is
+reported with the part of it that is the triples' own. No threshold is set on it,
+because the record holds none.
+
+THE PNO SERIES. With both differences formed,
+
+   CONVERGING        |d78| is smaller than |d67|
+   NOT CONVERGING    |d78| is |d67| or larger
+   NOT ESTABLISHED   b6 or b8 is not formed
+
+   The rule has no number in it. It asks one thing: does the second tightening move the
+   barrier less than the first. It is blunt on purpose, and it does not pass by itself
+   when the differences are small (WORKING_RULES.md, guard rail 4): two small differences
+   of which the second is the larger read NOT CONVERGING. If that happens the numbers are
+   printed and what is made of them is a dated amendment that says it was written with
+   them in view. Whether the two steps go the same way, and whether the correlation
+   energy recovered at each state is larger in size at each tighter threshold, are
+   reported beside the word.
+
+   THE TWO-POINT ESTIMATE is b6 + 1.5 x (b7 - b6), the formula of Altun, Neese and
+   Bistoni with their factor for the pair 1e-6 and 1e-7. It is an ESTIMATE. b8 is a
+   measurement, and the two are printed side by side.
+
+THE BASIS SET. The MP2 barrier at each of the four basis sets and the steps between them
+are measurements. THE EXTRAPOLATION uses the two formulas of ORCA 6.0's manual for its
+automatic extrapolation, on def2-TZVPPD (X = 3) and def2-QZVPPD (Y = 4):
+
+   SCF            E(X) = E(inf) + A exp(-alpha sqrt(X))             alpha = 7.88
+   correlation    E(inf) = (X^beta E(X) - Y^beta E(Y)) / (X^beta - Y^beta)   beta = 2.97
+
+   The manual gives those two exponents for def2-TZVPP and def2-QZVPP. THE SETS USED HERE
+   CARRY DIFFUSE FUNCTIONS AND THE EXPONENTS WERE NOT MADE FOR THEM. The extrapolated
+   barrier is an ESTIMATE on that ground alone, and the step it adds beyond def2-QZVPPD
+   is printed so that its size can be seen.
+
+   THE PREMISE of adding an MP2 basis step to a coupled-cluster barrier is that CCSD(T)
+   minus MP2 does not depend on the basis set. The record allows one test of it: that
+   difference at def2-SVPD and at def2-TZVPD, and its change. It is reported.
+
+THE COMPOSITES. Two sums are printed, and both are ESTIMATES:
+
+   COMPOSITE A   23.8603 + (T1 minus T0) + d78 + (MP2/def2-QZVPPD - MP2/def2-TZVPD)
+   COMPOSITE B   23.8603 + (T1 minus T0) + 0.5 x d67 + (MP2 extrapolated - MP2/def2-TZVPD)
+
+   A adds only steps that were measured. B replaces two of them with the extrapolated
+   forms the literature uses. Each adds corrections measured one at a time, two of them
+   at the smaller basis set and one at MP2; whether they add is not measured. By
+   WORKING_RULES.md, guard rail 6, an estimate never carries a conclusion. Neither
+   replaces D36's number.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R45.1  WHAT RAN. For each run: the number of basis functions ORCA reports, whether it is
+       measured, TCutPNO as ORCA prints it, the time ORCA prints for T0 and for the
+       iterative (T), and the run time; every reason a run is not measured; and every
+       line of ORCA's DLPNO SETTINGS block that is not in the committed run's block.
+R45.2  THE SAME REFERENCE. For each run that has a committed counterpart, its Hartree-Fock
+       energy minus the committed one, and the word REPRODUCES or DIFFERS. For each new
+       coupled-cluster run, its E(CCSD) minus the committed leg's.
+R45.3  THE TRIPLES. At each state the committed (T0) correction beside the (T1) one; the
+       barrier with each; T1 minus T0 on the barrier and the triples' own part of it; the
+       triples' part of the barrier in each treatment.
+R45.4  THE PNO THRESHOLD. At 1e-6, 1e-7 and 1e-8: both energies and the barrier with its
+       three parts; d67 and d78; the two-point estimate and b8 minus it; the word of
+       section 3; whether the two steps go the same way; whether the correlation energy
+       recovered is larger in size at each tighter threshold, at each state.
+R45.5  THE BASIS SET AT MP2. At each of the four basis sets the barrier and its two parts;
+       the steps between them, beside the committed coupled-cluster step of +0.9635; the
+       extrapolated barrier and what it adds to def2-QZVPPD; CCSD(T) minus MP2 at
+       def2-SVPD and def2-TZVPD and its change.
+R45.6  D36'S BARRIER WITH THE CORRECTIONS BESIDE IT. Each correction of section 3 on its
+       own line with its label, measured or ESTIMATE, and the two composites.
+R45.7  THE NINE FUNCTIONALS. Each committed def2-TZVPD barrier (d37.tsv, d37a1.tsv) minus
+       D36's 23.8603, minus composite A and minus composite B, and the order by distance
+       under each. The first is the record's. The other two are differences from
+       estimates: reported, not interpreted.
+R45.8  WHERE IT RAN: for each submission of the job the node, the scratch location, the
+       space free when it was chosen, and whether the job reached its last line; for
+       each run the maximum of the scratch sampled while ORCA ran and ORCA's exit status.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+A failure of G45.1 to G45.4 stops the reader and nothing is written.
+
+G45.1  Every file listed in d45/INPUT_CHECKSUMS.sha256 has the sha256 listed there, the
+       list is exactly the files of the diagnostic, and every input, RUNS.tsv and run.pbs
+       are what cs6_d45_prepare.py writes when the reader runs it again on the committed
+       files.
+G45.2  Every file listed in d45/SOURCES.sha256 has the sha256 listed there, and no
+       committed file under d33a, d36a2, d38 or d41 is modified.
+G45.3  THE COMMITTED LEGS. d38/N, d41/T, d36a2/B_R and d36a2/B_TS end normally with a
+       converged SCF and 118 electrons, their parts add up to their E(CCSD(T)) within
+       2e-9 Eh, each prints TCutPNO: 1.000e-07, a time for T0 and 0.000 sec for the
+       iterative (T), and they give 22.8968 and 23.8603 kcal/mol, +0.9635 apart. The two
+       legs of each basis set print one DLPNO SETTINGS block and one number of basis
+       functions. d37.tsv and d37a1.tsv give nine functionals at def2-TZVPD, and
+       CAM-B3LYP-D3BJ's barrier minus D36's is the +1.8400 that AMENDMENT 7 prints.
+G45.4  The nine sentences this document quotes from D36's result, D41 and its result, and
+       AMENDMENT 7 are in those documents word for word, and in this one.
+
+G45.5  PER RUN. A run is measured only if it terminates normally, converges its SCF,
+       reports 118 electrons, ran on the committed coordinates of its state, prints as
+       the input it ran the committed input beside it, reports the number of basis
+       functions of the committed runs where its basis set is one of theirs, and passes
+       the test of the same reference where it has a committed counterpart; and
+       - a coupled-cluster run: prints every part of a CCSD(T) energy, each label with
+         one value; the parts add up within 2e-9 Eh; its last FINAL SINGLE POINT ENERGY is
+         its E(CCSD(T)); it prints TCutPNO as asked, which for a T1 run is the committed
+         1.000e-07, and TCutPairs, TCutMKN and TCutDO as the committed run prints them;
+         a T1 run prints a time above zero for the iterative (T); a P6 or P8 run prints
+         a time for T0 and 0.000 sec for the iterative (T);
+       - an MP2 run: prints an SCF total energy, an RI-MP2 correlation energy and an MP2
+         total energy that add up within 2e-9 Eh; its last FINAL SINGLE POINT ENERGY is
+         that total; and it correlates orbitals 16 to 58, which is the frozen core of the
+         benchmark, 32 electrons.
+       A run that is not measured is NOT READ, or NOT RUN if it left no output, with
+       every reason. A reading that needs it is NOT FORMED. Nothing else stops.
+
+--------------------------------------------------------------------------------
+6. WHAT FOLLOWS FROM EACH OUTCOME, DECIDED NOW
+--------------------------------------------------------------------------------
+F1  THE PNO SERIES IS CONVERGING. DIAGNOSTIC 46 may be submitted once this result is
+    committed, as AMENDMENT 8, A8.6, says.
+F2  THE PNO SERIES IS NOT CONVERGING, OR NOT ESTABLISHED. D46 is not submitted. What is
+    done about it is a dated amendment, written first, and a decision for Jessica. A
+    series that is erratic for the bare barrier is a reason to doubt the same method's
+    barrier change before spending a day and a half of the machine on it.
+F3  A RUN IS NOT MEASURED. The cause is diagnosed first. A job that was cut short is
+    submitted again as it is. Anything that would change an input is a dated amendment,
+    written before the run is repeated. If the reader cannot find a line in a real
+    output of a kind it has never seen (section 8), the reader is corrected by a dated
+    erratum that names the line; the readings and the rules of this document do not
+    change.
+F4  A HARTREE-FOCK ENERGY DOES NOT REPRODUCE. That run is not used. Two runs that should
+    be one calculation and are not is a finding about the runs and is reported.
+F5  THE COMMITTED NUMBERS STAND WHATEVER THE CORRECTIONS ARE. D36's 23.8603 and D41's
+    22.8968 are not edited. A composite is an estimate. The list of cross-check levels in
+    A7.3 was drawn at 3 kcal/mol from D36's number "WITH ALL NINE NUMBERS KNOWN" and
+    "for nothing else"; it is not redrawn on a composite, and no functional is added to
+    it or dropped from it here.
+F6  A CORRECTION IS LARGE. It is printed at its size. No threshold on the triples or on
+    the basis step is set here, because the record holds none and one chosen now would
+    be chosen with nothing to choose it by. What a large correction means for how the
+    benchmark may be used is a dated document. D46 measures the same two approximations
+    on the barrier change, where AMENDMENT 8 does set a limit.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D45.1  ONE FRAME, FROZEN GEOMETRIES, IN VACUO, NO CHARGES. It is not the experimental
+       number and not a prediction of a physical barrier (E7.11; D36.2, D36.3).
+D45.2  IT NAMES NO DESIGN, SAYS NOTHING ABOUT ddE AND ADOPTS NO LEVEL OF THEORY.
+D45.3  (T1) IS STILL A PERTURBATIVE, LOCAL TREATMENT OF THE TRIPLES. Nothing here
+       measures the error of CCSD(T) itself, and no excitation beyond the triples is
+       run. The T1 diagnostics of D36 and D41 are the record's only statement on that.
+D45.4  THE TRIPLES AND THE PNO THRESHOLD ARE CHECKED AT def2-SVPD ONLY, and they are
+       carried to def2-TZVPD in a composite as if they were the same there. TCutPairs,
+       TCutMKN and TCutDO are not varied.
+D45.5  MP2 IS USED FOR ITS DEPENDENCE ON THE BASIS SET AND FOR NOTHING ELSE. Its barrier
+       is not a result. The two exponents were made for def2-TZVPP and def2-QZVPP,
+       without diffuse functions.
+D45.6  THE AUXILIARY BASIS IS AutoAux AND THE CORE IS FROZEN IN EVERY RUN, as in the
+       benchmark. Neither error is measured, and no relativistic or core correction is
+       made.
+D45.7  A COMPOSITE IS AN ESTIMATE AND NEVER CARRIES A CONCLUSION.
+D45.8  NOTHING HERE IS SHAPED TOWARD AN OUTCOME. Every reading is printed whichever way it
+       comes out, a correction that raises the benchmark as one that lowers it.
+
+--------------------------------------------------------------------------------
+8. WHAT WAS KNOWN WHEN THIS WAS WRITTEN
+--------------------------------------------------------------------------------
+Known: the results of D36, D37, D37 Amendment 1, D38 and D41, so every committed number
+above, among them the nine functionals' distances from D36's barrier. So it is known
+which functionals a correction of either sign would bring nearer to the benchmark. No
+correction is known, in size or in sign.
+Known of D44: what AMENDMENT 8, A8.8, lists, and no energy.
+NOT KNOWN: the energy of any run of D45. None exists.
+
+WHAT HAS NO PRECEDENT IN THE RECORD. No committed output is a DLPNO-CCSD(T1) run, a run
+at a TCutPNO other than 1e-7, or a pure RI-MP2 run. The reader's patterns for the lines
+of such outputs were written from the committed non-iterative outputs and from the
+double hybrid d37/PWPB95_SV_R, whose output prints the lines of ORCA's RI-MP2 step.
+Whether ORCA 6.0.1 accepts the three changed inputs, and how long and how much scratch
+they take, is not known. The keywords are the manual's.
+
+The reader was tested before this was committed, on outputs that are not D45's:
+committed outputs of d38/N, d41/T and d36a2, copied into D45's run directories and
+altered where a test needed it, with the lines of an RI-MP2 step written in the form in
+which d37/PWPB95_SV_R prints them. Every number seen that way is one of those
+diagnostics' own or was made up for the test. The job script was tried with a stand-in
+for ORCA: once with too little scratch, where it refused and left nothing behind but its
+log; once through to the end; once with a run made to fail, where the runs after it went
+on; and once cut short and submitted again, where it skipped the runs that had ended.
+
+--------------------------------------------------------------------------------
+9. FILES
+--------------------------------------------------------------------------------
+   phase2.2/cs_stage6/d45/         14 run directories, run.pbs, RUNS.tsv, SOURCES.sha256,
+                                   INPUT_CHECKSUMS.sha256 (31 files checksummed)
+   phase2.2/cs6_d45_prepare.py     writes them from the committed files, and refuses to
+                                   finish unless each input is the committed one with
+                                   the one change of section 2
+   phase2.2/cs6_d45.py             the reader. It is committed with this document, before
+                                   the job is submitted, and reports only the readings
+                                   of section 4 under the gates of section 5. It writes
+                                   the result, d45.tsv and d45_barriers.tsv.
+   phase2.2/cs6_d45_harvest.sh     brings the outputs home, keeps them as physical files
+                                   and runs the reader

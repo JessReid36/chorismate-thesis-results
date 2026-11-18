@@ -1,0 +1,139 @@
+#!/bin/bash
+#PBS -N cm_d45
+#PBS -l select=1:ncpus=16:mem=120gb
+#PBS -l walltime=48:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d45/run.pbs.out
+# Stage 6 DIAGNOSTIC 45: the approximations of the coupled-cluster benchmark, measured.
+#   Fourteen single points on the bare substrate of frame 42436, one after another, in the
+#   order of RUNS.tsv: the cheap and the certain first.
+# No -q: the allocation is automatic. The longest runs here have never been made, so the
+#   walltime is 48:00:00 and not 24 hours. Restartable: submitted again, it skips every run
+#   that ended normally. A run that fails does not stop the ones after it.
+#
+# SCRATCH. This is DIAGNOSTIC 41's script. Every run is made in node-local scratch and its
+#   text output is copied home; nothing is computed in /home. The def2-SVPD benchmark needed
+#   31 to 46 GB of scratch (D38 Erratum 1, D41). What a tighter PNO threshold needs is not
+#   measured, so 250 GB is asked for and 120 GB is the least a candidate may offer.
+#   The peak is sampled every 60 s WHILE ORCA runs. Scratch is removed after each run.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+H=/home/18660916/system_development/phase2.2/cs_stage6/d45
+P="$H/PROGRESS.txt"
+PK="$H/.peak_mb"
+RUNS="M_SV_R M_SV_TS M_TZ_R M_TZ_TS M_TP_R M_TP_TS P6_R P6_TS T1_R T1_TS M_QZ_R M_QZ_TS P8_R P8_TS"
+
+cd "$H" || exit 1
+if mkdir .running 2>/dev/null; then :; else
+  echo "FAIL: another job holds .running in $H"; exit 1
+fi
+
+MARK="d45.${PBS_JOBID:-nojobid}"
+WANT_GB=250
+MIN_GB=120
+S=""
+AVAIL=""
+SMARGIN=""
+
+pick() {
+  for c in /scratch-small-local/18660916 /scratch/18660916 "${TMPDIR:-}"; do
+    if [ -z "$c" ]; then continue; fi
+    t="$c/$MARK"
+    if mkdir -p "$t" 2>/dev/null; then :; else
+      echo "   candidate $c  mkdir failed"; continue; fi
+    if echo ok > "$t/.probe" 2>/dev/null; then :; else
+      echo "   candidate $c  created but not writable"; rmdir "$t" 2>/dev/null; continue; fi
+    rm -f "$t/.probe"
+    a=$(df -P -BG "$t" 2>/dev/null | awk 'NR==2{sub(/G$/,"",$4); print $4}')
+    case "${a:-}" in
+      ''|*[!0-9]*) echo "   candidate $c  free space unreadable"; rmdir "$t" 2>/dev/null; continue ;;
+    esac
+    if [ "$a" -ge "$1" ]; then S="$t"; AVAIL="$a"; return 0; fi
+    echo "   candidate $c  ${a}G free, under the ${1}G asked for"
+    rmdir "$t" 2>/dev/null       # a refused candidate is left as it was found
+  done
+  return 1
+}
+
+cleanup() {
+  kill "${WATCH:-}" 2>/dev/null
+  if [ -n "$S" ] && [ -d "$S" ]; then
+    for r in $RUNS; do
+      if [ -f "$S/$r/job.out" ] && [ -d "$H/$r" ]; then
+        cp -f "$S/$r/job.out" "$H/$r/job.out" 2>/dev/null
+      fi
+    done
+    echo "scratch at exit: $(du -sh "$S" 2>/dev/null | cut -f1)"
+    case "$S" in
+      */d45.*) rm -rf "$S" ;;
+      *) echo "REFUSING to remove an unexpected scratch path: $S" ;;
+    esac
+  fi
+  rmdir "$H/.running" 2>/dev/null
+}
+trap cleanup EXIT
+
+echo "host=$(hostname) start=$(date) jobid=${PBS_JOBID:-none}"
+echo "cores=$(nproc) ; memory:"; free -g | head -2
+
+echo "choosing scratch, in order of preference:"
+if pick "$WANT_GB"; then
+  SMARGIN="full"
+elif pick "$MIN_GB"; then
+  SMARGIN="REDUCED"
+  echo "   NOTE: reduced margin. What the tighter PNO threshold needs is not measured."
+else
+  echo "FAIL: no candidate on $(hostname) is writable with at least ${MIN_GB}G free."
+  echo "      Nothing is wrong with the calculation. Resubmit and PBS will usually"
+  echo "      place the job on another node."
+  exit 1
+fi
+echo "R45.8 scratch=$S avail=${AVAIL}G margin=$SMARGIN"
+echo 0 > "$PK"
+
+printf '%s  d45 on %s, scratch %s, %sG free, sampling every %ds\n' \
+  "$(date '+%F %T')" "$(hostname)" "$S" "$AVAIL" 60 >> "$P"
+
+# The watcher carries the maximum it sees while ORCA is running and writes it to $PK, because
+# a measurement taken after ORCA returns records the residue (D38's result, Erratum 1). It is
+# set back to zero before each run, so each run has its own maximum.
+( sleep 20
+  while [ -d "$S" ]; do
+    u=$(du -sm "$S" 2>/dev/null | cut -f1)
+    case "${u:-}" in
+      ''|*[!0-9]*) u=0 ;;
+    esac
+    M=$(cat "$PK" 2>/dev/null || echo 0)
+    case "${M:-}" in
+      ''|*[!0-9]*) M=0 ;;
+    esac
+    if [ "$u" -gt "$M" ]; then echo "$u" > "$PK"; fi
+    printf '%s  used=%sM  running=%s\n' "$(date '+%F %T')" "$u" "$(ls "$S" 2>/dev/null | tr '\n' ' ')" >> "$P"
+    sleep 60
+  done ) &
+WATCH=$!
+
+for r in $RUNS; do
+  if [ -s "$H/$r/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$H/$r/job.out"; then
+    echo "$r done before"; continue
+  fi
+  echo 0 > "$PK"
+  mkdir -p "$S/$r" || { echo "$r scratch directory could not be made"; continue; }
+  cp -p "$H/$r/job.inp" "$H/$r/substrate.xyz" "$S/$r/" || { echo "$r inputs could not be copied to scratch"; continue; }
+  ( cd "$S/$r" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null )
+  rc=$?
+  cp -f "$S/$r/job.out" "$H/$r/job.out" 2>/dev/null
+  if [ -f "$S/$r/job.property.txt" ]; then cp -f "$S/$r/job.property.txt" "$H/$r/job.property.txt"; fi
+  echo "$r orca_exit=$rc normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$H/$r/job.out") peak_mb=$(cat "$PK" 2>/dev/null || echo 0) $(date)"
+  printf '%s  %s orca_exit=%s\n' "$(date '+%F %T')" "$r" "$rc" >> "$P"
+  case "$S" in
+    */d45.*) rm -rf "$S/$r" ;;
+    *) echo "REFUSING to remove an unexpected scratch path: $S/$r" ;;
+  esac
+done
+echo "end=$(date)"
+echo "finished: $(grep -l 'ORCA TERMINATED NORMALLY' "$H"/*/job.out 2>/dev/null | wc -l) of 14"
