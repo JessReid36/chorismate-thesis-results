@@ -1,0 +1,35 @@
+❯ ssh 18660916@hpc "P=/home/18660916/system_development/phase2.2/cs_stage6/d44; [ -d \$P ] || { echo 'PEEK2: the D44 folder is not on hpc1. Send this to Claude.'; exit 1; }; Q=\$(qstat -u 18660916) || { echo 'PEEK2: the queue could not be read. Run PEEK2 again.'; exit 1; }; echo \"PEEK2 at \$(date). UNOFFICIAL: this is not the committed reader.\"; for x in CAMTZ:cm_d44_ct RDTZ:cm_d44_rt; do L=\${x%%:*}; J=\${x##*:}; if echo \"\$Q\" | grep -qw \$J; then echo \"LEVEL \$L is still in the queue: skipped\"; continue; fi; if [ -s \$P/run_\$L.pbs.out ]; then echo \"LEVEL \$L log_last_line=\$(tail -n 1 \$P/run_\$L.pbs.out)\"; else echo \"LEVEL \$L has no job log: skipped\"; continue; fi; for d in \$P/\${L}_*; do f=\$d/job.out; r=\$(basename \$d); if [ -s \$f ] && grep -q 'ORCA TERMINATED NORMALLY' \$f; then e=\$(grep 'FINAL SINGLE POINT ENERGY' \$f | tail -n 1 | awk '{print \$5}'); v=\$(grep -E 'The stability analysis (indicates|shows) that the wavefunction is' \$f | tail -n 1 | awk '{print \$NF}'); u=\$(grep -c 'that the wavefunction is unstable' \$f); c=\$(grep -c 'SCF CONVERGED AFTER' \$f); echo \"RUN \$r normal E=\$e last_stability=\${v:-none} unstable_verdicts=\$u scf_converged=\$c\"; elif [ -s \$f ]; then echo \"RUN \$r NOT_NORMAL\"; else echo \"RUN \$r NO_OUTPUT\"; fi; done; done; echo 'PEEK2 DONE: this only looked and changed nothing. UNOFFICIAL: nothing here is the result of D44. Next: send this printout to Claude.'"
+PEEK2 at Thu Nov 19 06:40:49 SAST 2026. UNOFFICIAL: this is not the committed reader.
+LEVEL CAMTZ log_last_line=finished: 27 of 28
+RUN CAMTZ_B_n02_q0.50_di_R normal E=-837.197682404037 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.50_di_TS normal E=-837.165298278854 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.50_mo_R normal E=-837.170717289148 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.50_mo_TS normal E=-837.132373602940 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.75_di_R normal E=-837.253144689634 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n02_q0.75_di_TS normal E=-837.169026427307 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.75_mo_R normal E=-837.179975332614 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q0.75_mo_TS normal E=-837.141495158231 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q1.00_di_R normal E=-837.408951496429 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n02_q1.00_di_TS normal E=-837.346823400706 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n02_q1.00_mo_R normal E=-837.265085344113 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n02_q1.00_mo_TS normal E=-837.218007391185 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n03_q0.75_di_R normal E=-837.552482422285 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n03_q0.75_di_TS normal E=-837.512634165114 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n03_q0.75_mo_R NOT_NORMAL
+RUN CAMTZ_B_n03_q0.75_mo_TS normal E=-837.309756269439 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n05_q0.50_di_R normal E=-837.444048168323 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n05_q0.50_di_TS normal E=-837.411374007747 last_stability=stable unstable_verdicts=1 scf_converged=2
+RUN CAMTZ_B_n05_q0.50_mo_R normal E=-837.255340183539 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n05_q0.50_mo_TS normal E=-837.222007155655 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n11_q0.25_di_R normal E=-837.242877153389 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n11_q0.25_di_TS normal E=-837.217077242653 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n11_q0.25_mo_R normal E=-837.226091153466 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_B_n11_q0.25_mo_TS normal E=-837.187264022671 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_C_bare_R normal E=-837.166433895509 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_C_bare_TS normal E=-837.143098961519 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_C_ctl_R normal E=-837.209383854533 last_stability=stable unstable_verdicts=0 scf_converged=1
+RUN CAMTZ_C_ctl_TS normal E=-837.168427778950 last_stability=stable unstable_verdicts=0 scf_converged=1
+LEVEL RDTZ is still in the queue: skipped
+PEEK2 DONE: this only looked and changed nothing. UNOFFICIAL: nothing here is the result of D44. Next: send this printout to Claude.
+~/Downloads                                                             took 5s
+❯ 
