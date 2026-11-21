@@ -1,0 +1,136 @@
+~/Downloads
+❯ ^[[200~python3 -c '
+import hashlib, os, re, subprocess, sys, time
+R = "/home/jess/Desktop/chorismate-thesis-results"
+M = "/media/jess"
+print("ARCHCHECK at " + time.strftime("%a %d %b %Y %H:%M:%S"))
+def stop(msg):
+    print("ARCHCHECK STOPPED: " + msg + " Nothing was changed. Send Claude everything printed above.")
+    sys.exit(1)
+if not os.path.isdir(M):
+    stop("there is no /media/jess, so the hard drive is not plugged in.")
+drives = [os.path.join(M, d) for d in sorted(os.listdir(M)) if os.path.isdir(os.path.join(M, d)) and os.stat(os.path.join(M, d)).st_dev != os.stat(M).st_dev]
+if len(drives) != 1:
+    stop("expected exactly one drive under /media/jess and found %d." % len(drives))
+D = drives[0]
+A = os.path.join(D, "chorismate-hpc-archive")
+if not os.path.isdir(A):
+    stop("there is no chorismate-hpc-archive on " + D + ".")
+fs = [l.split()[2] for l in open("/proc/mounts") if l.split()[1].replace("\\040", " ") == D]
+st = os.statvfs(D)
+print("1. The drive: %s (%s), %d MB free" % (D, fs[-1] if fs else "?", st.f_bavail * st.f_frsize // 1048576))
+print("   the old archive folder on the Desktop: " + ("STILL THERE" if os.path.lexists("/home/jess/Desktop/chorismate-hpc-archive") else "gone, as it should be"))
+print("   attempt_3_final_analysis: on the drive " + ("yes" if os.path.isdir(os.path.join(D, "attempt_3_final_analysis")) else "NO") + "; in Downloads " + ("STILL THERE" if os.path.lexists("/home/jess/Downloads/attempt_3_final_analysis") else "gone, as it should be"))
+print("   left-over folder moved_from_pc_20261120 on the drive: " + ("yes (not needed; you can delete it in the file manager)" if os.path.exists(os.path.join(D, "moved_from_pc_20261120")) else "no"))
+head = subprocess.run(["git", "-C", R, "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE).stdout.decode().strip()
+dirty = subprocess.run(["git", "-C", R, "status", "--porcelain", "--untracked-files=all"], stdout=subprocess.PIPE).stdout.decode().strip()
+print("2. The results repository: at %s, %s" % (head, "clean" if not dirty else "NOT CLEAN"))
+recs = []
+for r, ds, fs_ in os.walk(R):
+    if ".git" in ds:
+        ds.remove(".git")
+    if "PC_ARCHIVES.tsv" in fs_:
+        for l in open(os.path.join(r, "PC_ARCHIVES.tsv")):
+            f = l.rstrip("\n").split("\t")
+            if l.startswith(chr(35)) or len(f) < 3:
+                continue
+            k = [i for i, x in enumerate(f) if re.fullmatch("[0-9a-f]{64}", x)]
+            if len(k) != 1 or k[0] < 2:
+                stop("a line of " + os.path.join(r, "PC_ARCHIVES.tsv") + " could not be read.")
+            recs.append((os.path.relpath(r, R), f[k[0] - 2], int(f[k[0] - 1]), f[k[0]]))
+print("   records of archives in it: %d, in %d files named PC_ARCHIVES.tsv" % (len(recs), len(set(x[0] for x in recs))))
+arcs, other_n, other_b = [], 0, 0
+for r, ds, fs_ in os.walk(A):
+    for f in fs_:
+        p = os.path.join(r, f)
+        if f.endswith(".tar.xz"):
+            arcs.append(p)
+        else:
+            other_n += 1
+            other_b += os.path.getsize(p)
+tot = sum(os.path.getsize(p) for p in arcs)
+print("3. On the drive: %d archives (.tar.xz), %d MB; %d other files, %d MB" % (len(arcs), tot // 1048576, other_n, other_b // 1048576))
+~/Downloads                                                                    
+❯ >....                                                                         
+print("4. The %d records against the drive:" % len(recs))
+print("   the same file, at the recorded place: %d" % ok)
+print("   the same file, under another name: %d" % len(moved))
+for src, rel, where in moved:
+    print("      %s records %s; it is %s" % (src, rel, where))
+print("   NOT matched: %d" % len(bad))
+for b in bad:
+    print("      " + b)
+extra = sorted(os.path.relpath(p, A) for p in arcs if p not in used)
+print("5. Archives on the drive that no record names: %d" % len(extra))
+for e in extra[:12]:
+    print("      %s  %d MB" % (e, os.path.getsize(os.path.join(A, e)) // 1048576))
+if len(extra) > 12:
+    print("      ... and %d more" % (len(extra) - 12))
+d44 = [x for x in recs if x[1].endswith("hpc_all_files_d44.tar.xz")]
+print("6. D44: " + ("its archive on the drive is the committed one, sha256 %s..." % d44[0][3][:16] if d44 and os.path.join(A, d44[0][1]) in used else "ITS ARCHIVE IS NOT MATCHED"))
+print("ARCHCHECK DONE: this only read and changed nothing. Next: CLEANPC, if line 6 says the D44 archive is the committed one. If it does not, stop and send this printout to Claude.")
+'
+ARCHCHECK at Fri 20 Nov 2026 22:04:13
+1. The drive: /media/jess/KIOXIA (exfat), 889258 MB free
+   the old archive folder on the Desktop: gone, as it should be
+   attempt_3_final_analysis: on the drive yes; in Downloads gone, as it should be
+   left-over folder moved_from_pc_20261120 on the drive: yes (not needed; you can delete it in the file manager)
+2. The results repository: at 4bd02c33, clean
+   records of archives in it: 61, in 24 files named PC_ARCHIVES.tsv
+3. On the drive: 61 archives (.tar.xz), 14887 MB; 5246 other files, 3835 MB
+   reading every archive to take its sha256 (this is the slow part) ...
+   ... 25 % read after 0 min
+   ... 50 % read after 0 min
+   ... 75 % read after 0 min
+   ... 100 % read after 0 min
+4. The 61 records against the drive:
+   the same file, at the recorded place: 57
+   the same file, under another name: 4
+      phase2.2/cs_stage6/negatives records phase2.2/cs_stage6/negatives/hpc_all_files_$NAME.tar.xz; it is phase2.2/cs_stage6/negatives/hpc_all_files_negatives.tar.xz
+      phase2.2/cs_stage6/d17 records phase2.2/cs_stage6/d17/hpc_all_files_$NAME.tar.xz; it is phase2.2/cs_stage6/d17/hpc_all_files_d17.tar.xz
+      phase2.2/cs_stage6/d16 records phase2.2/cs_stage6/d16/hpc_all_files_$NAME.tar.xz; it is phase2.2/cs_stage6/d16/hpc_all_files_d16.tar.xz
+      phase2.2/cs_stage6/negatives_armA records phase2.2/cs_stage6/negatives_armA/hpc_all_files_$NAME.tar.xz; it is phase2.2/cs_stage6/negatives_armA/hpc_all_files_negatives_armA.tar.xz
+   NOT matched: 0
+5. Archives on the drive that no record names: 0
+6. D44: its archive on the drive is the committed one, sha256 13d9a5ec1d5e5a43...
+ARCHCHECK DONE: this only read and changed nothing. Next: CLEANPC, if line 6 says the D44 archive is the committed one. If it does not, stop and send this printout to Claude.
+~/Downloads                                                            took 53s
+❯ >....                                                                         
+(a few minutes, prints nothing) ..."
+[ "$(sha256sum "$F" | cut -c1-64)" = 13d9a5ec1d5e5a4380dff7286a3ebf5f1ca360eaaf5f4eff9acb6d28e9b17988 ] || stop "the D44 archive on the drive is not the committed file."
+echo "   $(date +%H:%M) the D44 archive on the drive is the committed file, and the D44 result is on GitHub"
+touch /home/jess/Downloads/cs_d44_harvest_work/DRIVE_ARCHIVE_VERIFIED_20261120 || stop "could not write the marker for CLEANHPC."
+if [ -d "$X" ] && [ ! -L "$X" ]; then
+  echo "   the unpacked check copy takes $(du -s -BM "$X" | cut -f1)"
+  chmod -R u+w -- /home/jess/Downloads/cs_d44_harvest_work/x 2>/dev/null
+  rm -rf -- /home/jess/Downloads/cs_d44_harvest_work/x
+  if [ -e "$X" ]; then echo; echo "CLEANPC STOPPED: the check copy could not be removed completely. Send Claude everything printed above."; exit 1; fi
+  echo "   removed from this PC: $X"
+else
+  echo "   the unpacked check copy is already gone"
+fi
+echo "   free on this PC now: $(df --output=avail -BM /home/jess/Downloads | tail -n 1 | tr -dc 0-9) MB"
+echo "CLEANPC DONE: the check copy is off this PC, and the archive on the drive was checked first. Next: CLEANHPC."
+'
+CLEANPC at Fri Nov 20 10:06:31 PM SAST 2026
+   22:06 reading the D44 archive on the drive to take its sha256 (a few minutes, prints nothing) ...
+   22:06 the D44 archive on the drive is the committed file, and the D44 result is on GitHub
+   the unpacked check copy takes 20008M
+   removed from this PC: /home/jess/Downloads/cs_d44_harvest_work/x
+   free on this PC now: 28176 MB
+CLEANPC DONE: the check copy is off this PC, and the archive on the drive was checked first. Next: CLEANHPC.
+~/Downloads                                                            took 28s
+❯ >....                                                                         
+ 'CLEANHPC STOPPED: the list of scratch and wavefunction files is not the 9045 of the committed inventory. Nothing was deleted.'; exit 1; }; while read -r h p; do if [ -e \"\$p\" ]; then echo \"\$h  \$p\"; fi; done < \$L > \$E; n=\$(wc -l < \$E); echo \"   scratch and wavefunction files still on hpc1: \$n of 9045\"; if [ \$n -gt 0 ]; then echo '   checking each of them against the committed manifest (about ten minutes, prints nothing) ...'; nice -n 19 sha256sum -c --quiet \$E || { echo 'CLEANHPC STOPPED: a file no longer matches the committed manifest. Nothing was deleted.'; exit 1; }; cut -c67- \$E | xargs -d '\n' rm -f --; echo \"   deleted \$n files, every one checked against the manifest first\"; fi; A=\$W/hpc_all_files_d44.tar.xz; if [ -e \$A ]; then echo '   checking the archive on hpc1 (a few minutes) ...'; if [ \"\$(nice -n 19 sha256sum \$A | cut -c1-64)\" = 13d9a5ec1d5e5a4380dff7286a3ebf5f1ca360eaaf5f4eff9acb6d28e9b17988 ]; then rm -f -- \$A; echo '   deleted the archive on hpc1; the same file is on your drive'; else echo 'CLEANHPC STOPPED: the archive on hpc1 is not the committed file. It was left.'; exit 1; fi; else echo '   the archive on hpc1 is already gone'; fi; echo \"   files left in d44 on hpc1: \$(find . -type f | wc -l) (968 expected: the inputs and the text outputs, all in the repository)\"; echo \"   d44 on hpc1 now takes \$(du -sh . | cut -f1)\"; echo \"   the shared disk: \$(df -h /home/18660916 | tail -n 1)\"; echo 'CLEANHPC DONE: the scratch files, the wavefunctions and the archive of D44 are off hpc1. Next: send Claude the printouts of ARCHCHECK, CLEANPC and CLEANHPC.'" || echo "CLEANHPC STOPPED: if nothing is printed above, run CLEANPC first. If hpc1 could not be reached, run CLEANHPC again; it carries on where it stopped. Otherwise send Claude everything printed above."
+CLEANHPC at Fri Nov 20 22:07:59 SAST 2026
+   scratch and wavefunction files still on hpc1: 9045 of 9045
+   checking each of them against the committed manifest (about ten minutes, prints nothing) ...
+   deleted 9045 files, every one checked against the manifest first
+   checking the archive on hpc1 (a few minutes) ...
+   deleted the archive on hpc1; the same file is on your drive
+   files left in d44 on hpc1: 968 (968 expected: the inputs and the text outputs, all in the repository)
+   d44 on hpc1 now takes 23M
+   the shared disk: comp047.hpc:/home3   62T   54T  8.5T  87% /home
+CLEANHPC DONE: the scratch files, the wavefunctions and the archive of D44 are off hpc1. Next: send Claude the printouts of ARCHCHECK, CLEANPC and CLEANHPC.
+~/Downloads                                                        took 17m 18s
+❯ 
