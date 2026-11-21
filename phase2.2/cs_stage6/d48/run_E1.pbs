@@ -1,0 +1,50 @@
+#!/bin/bash
+#PBS -N cm_d48_e1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d48/run_E1.pbs.out
+# Stage 6 DIAGNOSTIC 48: is the estimate S of DIAGNOSTIC 47 a rule?
+# This job is one of 7. It makes 20 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable:
+#   submitted again, it skips every run that ended normally.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d48
+cd "$W" || exit 1
+if ! mkdir .running_E1 2>/dev/null; then echo "FAIL: another job holds .running_E1 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_E1" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && timeout -k 10 900 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run ONE_CAM_p025
+run ONE_CAM_p040
+run ONE_CAM_p045
+run ONE_CAM_p050
+run ONE_CAM_p055
+run ONE_CAM_p060
+run ONE_CAM_p065
+run ONE_CAM_p070
+run ONE_CAM_p075
+run ONE_CAM_p100
+run ONE_HF_p025
+run ONE_HF_p040
+run ONE_HF_p045
+run ONE_HF_p050
+run ONE_HF_p055
+run ONE_HF_p060
+run ONE_HF_p065
+run ONE_HF_p070
+run ONE_HF_p075
+run ONE_HF_p100
+echo "end=$(date)"
+n=0; for r in ONE_CAM_p025 ONE_CAM_p040 ONE_CAM_p045 ONE_CAM_p050 ONE_CAM_p055 ONE_CAM_p060 ONE_CAM_p065 ONE_CAM_p070 ONE_CAM_p075 ONE_CAM_p100 ONE_HF_p025 ONE_HF_p040 ONE_HF_p045 ONE_HF_p050 ONE_HF_p055 ONE_HF_p060 ONE_HF_p065 ONE_HF_p070 ONE_HF_p075 ONE_HF_p100; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 20"

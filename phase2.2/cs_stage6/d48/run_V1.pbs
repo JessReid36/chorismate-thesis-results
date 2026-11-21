@@ -1,0 +1,39 @@
+#!/bin/bash
+#PBS -N cm_d48_v1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d48/run_V1.pbs.out
+# Stage 6 DIAGNOSTIC 48: is the estimate S of DIAGNOSTIC 47 a rule?
+# This job is one of 7. It makes 9 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable:
+#   submitted again, it skips every run that ended normally.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d48
+cd "$W" || exit 1
+if ! mkdir .running_V1 2>/dev/null; then echo "FAIL: another job holds .running_V1 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_V1" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run V1_C_ctl_R
+run CAMTZ_P_s1124_p060_s1107_m060_di_R
+run CAMTZ_P_s1124_p060_s1107_m060_mo_R
+run CAMTZ_P_s1124_p060_s1107_m060_di_TS
+run CAMTZ_P_s1124_p060_s1107_m060_mo_TS
+run CAMTZ_P_s1124_p065_s1107_m065_di_R
+run CAMTZ_P_s1124_p065_s1107_m065_mo_R
+run CAMTZ_P_s1124_p065_s1107_m065_di_TS
+run CAMTZ_P_s1124_p065_s1107_m065_mo_TS
+echo "end=$(date)"
+n=0; for r in V1_C_ctl_R CAMTZ_P_s1124_p060_s1107_m060_di_R CAMTZ_P_s1124_p060_s1107_m060_mo_R CAMTZ_P_s1124_p060_s1107_m060_di_TS CAMTZ_P_s1124_p060_s1107_m060_mo_TS CAMTZ_P_s1124_p065_s1107_m065_di_R CAMTZ_P_s1124_p065_s1107_m065_mo_R CAMTZ_P_s1124_p065_s1107_m065_di_TS CAMTZ_P_s1124_p065_s1107_m065_mo_TS; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 9"
