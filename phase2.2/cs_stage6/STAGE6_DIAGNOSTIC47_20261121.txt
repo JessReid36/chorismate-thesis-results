@@ -1,0 +1,404 @@
+STAGE 6, DIAGNOSTIC 47
+A preliminary: when does a bare positive charge take electrons from the substrate - its size, its
+place, its distance, and the reach of the basis set?
+
+Pre-registered 21 November 2026, before any D47 output exists.
+This document is never edited. Changes go in a dated amendment or erratum.
+No committed file used the number 47 when this was written. A measurement with this number was built
+on 20 November 2026 (bundle cs_d47_20261120) and WITHDRAWN on 21 November before anything of it was
+committed; section 1 says why. This document replaces it and takes nothing from it on trust.
+It is read under AMENDMENT 5 (stability) and AMENDMENT 9. It rebuilds no grid, runs no search, and
+opens or closes no size and no distance. It decides what the next measurement should be.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D44 ran the six survivors of D43 in the larger basis set: "Of the 6 designs. Pass the cross-check:
+0. Do not pass: 4. Incomplete: 2." At CAM-B3LYP-D3BJ/def2-TZVPD four are UNRELIABLE and two are
+RELIABLE (d44.tsv). AMENDMENT 9 puts next: "The safe surface is measured, the grid is rebuilt and a
+search is run on it, each under its own pre-registration."
+
+A measurement of that surface was built on 20 November: 382 runs, most of them single charges of
+0.25 e walked in by chemical group. On 21 November Jessica asked for it to be assessed before it
+ran: "okay critically assess the whole approach. think how we might address design to adress the
+issues before we run such a long job." And: "i do think do the walk out from almost each atom might
+be necessary becuase its neighboring atoms might impact its personal distance. but perhaps we do
+preliminary tests first". After the assessment: "ok go build". This is that preliminary.
+
+WHAT THE ASSESSMENT RESTS ON, AND WHAT KIND OF EVIDENCE IT IS. On 21 November, after D44's official
+result, Claude read the Loewdin charges in D44's COMMITTED outputs at CAMTZ against the committed
+control. It is a reading after the fact, made with no reader committed beforehand. R47.8 makes the
+same reading again under this pre-registration. What it showed, to three decimals:
+
+   design        most negative change of a Loewdin charge, e   four legs at CAMTZ (d44.tsv)
+                 at R          at TS
+   B_n02_q0.50   O3  -0.032    O3  -0.052    RELIABLE
+   B_n02_q0.75   O3  -0.888    O3  -0.163    UNRELIABLE
+   B_n02_q1.00   O3  -1.726    O3  -1.642    UNRELIABLE
+   B_n03_q0.75   O3  -1.704    O3  -1.643    UNRELIABLE
+   B_n05_q0.50   O3  -1.712    O3  -1.670    UNRELIABLE
+   B_n11_q0.25   O3  -0.044    O3  -0.079    RELIABLE
+
+   In all twelve runs the atom is O3, the ether oxygen, which is the substrate atom nearest the
+   positive charge at site 1124. In the four designs D44 finds UNRELIABLE its charge falls by
+   0.89 to 1.73 e at R and by 0.16 to 1.67 e at TS; in the two it finds RELIABLE, by 0.03 to 0.08
+   e. Every one of the six designs holds a positive charge at site 1124. So D44's four failures
+   are, on this reading, one event at one site, and D44 does not say what a positive charge does
+   anywhere else.
+
+AN IDEA THAT WOULD EXPLAIN IT, NOT YET TESTED. A bare positive point charge q binds one electron by
+13.6 q^2 eV if the basis set can describe an electron sitting at the charge. The dianion holds its
+least bound electron by about 1 eV (the committed bare detachment energies are +1.2486 eV at R and
++0.7681 eV at TS at the working level). If that is what happens, then:
+   - the SIZE of a positive charge, and the pull of other positive charges near it, decide whether
+     electrons leave the substrate;
+   - DISTANCE helps mainly because an atom-centred basis set cannot put an electron far from the
+     atoms, so a distance found safe in one basis set is safe in that basis set;
+   - a single positive charge may hold where the same charge among others does not.
+   A crude form of the estimate S of section 2, with the monoanion's potential taken from Loewdin
+   charges, put the four flagged designs between -2.2 and -9.6 eV and the two others between -0.1
+   and +0.5 eV. That was computed after the fact on six designs that share one site. It is the
+   reason for this preliminary and is evidence of nothing.
+
+If the idea is right, walking a charge out from every atom would map the reach of def2-TZVPD at
+great cost. If it is wrong, that walk is the measurement to make, as Jessica says. So before either:
+
+   PART A   Is D44's failure the doing of ONE positive charge, and from what size?
+   PART B   Is site 1124 a special case?
+   PART C   Does distance rescue a charge that is flagged where it stands?
+   PART D1  If the basis set is given functions AT the charge, does a charge that distance had
+            rescued take electrons after all? And does S say beforehand which charges do?
+   PART D2  Do the two designs that pass in def2-TZVPD still pass one basis step up?
+   PART E   The potentials of the dianion and the monoanion at every committed site, in both basis
+            sets, from which S and the first-order coefficients are formed.
+
+--------------------------------------------------------------------------------
+2. THE CONVENTIONS
+--------------------------------------------------------------------------------
+THE FOUR LEVELS. The key is the name used in the run directories.
+
+   key      level                                    what it is, and its inputs
+   CAMSV    CAM-B3LYP-D3BJ / def2-SVPD               the working level. Every input is a committed
+                                                     input that has already run, byte for byte:
+                                                     d31/B/n01_q0.25_R/job.inp with a charge,
+                                                     d31/ctl_R/job.inp and d40/B_bare_R/job.inp without
+   CAMTZ    CAM-B3LYP-D3BJ / def2-TZVPD              the larger basis set of A9.4. Committed inputs,
+                                                     byte for byte: d44/CAMTZ_B_n02_q0.50_di_R/job.inp,
+                                                     d44/CAMTZ_C_ctl_R/job.inp, d44/CAMTZ_C_bare_R/job.inp
+   CAMTZG   CAMTZ with a GHOST ATOM at the charge    the committed CAMTZ input with its last line
+                                                     replaced by the committed geometry written out
+                                                     and one line after it, "H: x y z": the def2-TZVPD
+                                                     functions of a hydrogen atom, with no nucleus and
+                                                     no electron, 0.01 A beyond the charge on the line
+                                                     of part C. NEW IN THIS RECORD: no input of this
+                                                     form has run before
+   CAMQZ    CAM-B3LYP-D3BJ / def2-QZVPPD             one basis step above CAMTZ: the committed CAMTZ
+                                                     input with def2-TZVPD changed to def2-QZVPPD and
+                                                     nothing else. d45 ran this basis set with RI-MP2;
+                                                     with this functional it is new in this record
+
+   Every input carries the stability analysis. Every run is the DIANION. The geometries are
+   d33a/sp_42436_R and d33a/sp_42436_TS. No monoanion with a charge is run, so THE FIFTH LEG IS NOT
+   READ in this diagnostic.
+
+THE CONTROL A RUN IS READ AGAINST is charge-free, of the same level and state:
+   CAMSV, CAMTZ   the COMMITTED control: d31/ctl_R, d31/ctl_TS; d44/CAMTZ_C_ctl_R, d44/CAMTZ_C_ctl_TS
+   CAMTZG         this diagnostic's own control with the same ghost centre and no charge
+   CAMQZ          this diagnostic's own control at CAMQZ
+   A control of this diagnostic can be used if it is measured and its last stability analysis is
+   STABLE; otherwise the runs read against it are NOT READ.
+
+EACH JOB BUT Q1 RUNS A PLAIN CONTROL FIRST, a committed charge-free dianion input of CAMSV or CAMTZ
+at the reactant. If it is not measured, or its last stability analysis is not STABLE, or its energy
+differs from the committed one by more than 1e-6 Eh, every run of that job is NOT READ.
+
+THE LEGS, on each run with a charge. The committed classifier phase2.2/cs6_audit.py at its committed
+thresholds, D_LW 0.25 e, R_DIP 2.0, GAP_ABS 1.0 eV and R_GAP 0.5, read at read time, against the
+run's control, with the rules D33.3 and AMENDMENT 5 settled: stability on the LAST analysis; the gap
+withheld in a run that engaged TRAH or a level shift, or whose control did. A run whose SCF did not
+converge is flagged (D31.3).
+
+   FLAGGED        the Loewdin rise reaches D_LW, or the dipole ratio reaches R_DIP, or the gap is
+                  below GAP_ABS and below R_GAP of the control's, or the last stability analysis is
+                  UNSTABLE, or the SCF did not converge
+   NOT FLAGGED    none of those, the gap readable and the stability analysis read
+   HELD           none of those, and the gap withheld or an analysis not read
+   NOT READ       the run's job or its control cannot be used
+   NOT MEASURED   no readable output
+
+   For a condition run at BOTH states at a level (part A at CAMSV and CAMTZ, part D2 at CAMQZ), the
+   four-leg word of D43 and D44: UNRELIABLE if either run is FLAGGED; else NOT CLASSIFIED if either
+   is NOT MEASURED or NOT READ; else INCONCLUSIVE if either is HELD; else RELIABLE.
+
+WHERE THE CHARGE WENT, on each run with a charge: the Loewdin charge of each of the 24 substrate
+atoms minus the control's; the atom with the most negative change, that change, and that atom's
+distance to the nearest positive point charge; and the sum over the 24 atoms minus the control's.
+Reported; it is not a leg and changes no word.
+
+AT CAMTZG ONLY, ONE MORE READING, NEW IN THIS RECORD. The legs were written for electrons that stay
+on the substrate's atoms. With functions at the charge an electron can leave the atoms altogether,
+and the legs may or may not catch that: the sum of the 24 atoms' Loewdin charges then rises above
+the control's by what has left. So, for a CAMTZG run with a charge:
+   LEFT THE ATOMS   that sum is above its control's by D_LW (0.25 e) or more. The committed
+                    threshold, used here on a quantity it was not written for.
+   TOOK ELECTRONS   the SCF converged and either a leg fires or the run LEFT THE ATOMS
+   DID NOT TAKE     the run is NOT FLAGGED and did not leave the atoms
+   not decided      anything else (HELD without leaving the atoms, SCF not converged, NOT READ,
+                    NOT MEASURED)
+   This reading is used in R47.6 and section 6 only. It is not part of A9.4 and classifies no
+   design.
+
+ddE at a level = (E(TS) - E(TS, control)) - (E(R) - E(R, control)), at 627.5094740631 kcal/mol per
+Eh, where both states are run. THE AGREEMENT of two levels is D44's: STAGE6_CRITERIA.txt, "LOSS MUST
+BE BELOW 15 % OF |ddE(frozen)|." WITHIN if the difference is below 15 % of the reference ddE in
+size; OUTSIDE if it is 15 % or more; NOT ASSESSABLE if the reference ddE is below 3.2 kcal/mol in
+size; NOT FORMED if either is not formed.
+
+THE MAPS. orca_vpot, as D33a ran it, at the 2626 committed sites and the three points of part C, on
+the charge-free dianion and monoanion of CAMSV and CAMTZ at R and TS. A map is used only if its run
+gives back the committed energy within 1e-6 Eh (and, for the dianion, its last stability analysis
+is STABLE) and its points are those of d47/points.xyz. V is in Eh per e. From the maps:
+
+   a   = (V_dianion,TS - V_dianion,R) x 627.5094740631        the first-order coefficient, as D33a
+   v   = (V_monoanion - V_dianion) x 27.211386245988          eV per e: the first-order change of the
+                                                              detachment energy per unit charge there
+   and, for a positive charge q_i at point i among charges q_j, at a level and state,
+   S_i = VDE_bare + SUM_j q_j v_j - 27.211386245988 x [ V_monoanion(i) + SUM_(j not i) q_j / r_ij ]
+         - 13.605693122994 x q_i^2                            eV, r_ij in bohr at 0.5291772083 A
+   where VDE_bare is the committed detachment energy of the bare substrate at that level and state.
+   The first two terms are what holds the electron on the dianion with the charges present, to
+   first order. The bracket is the potential the monoanion and the other charges make at charge i.
+   The last term is the energy with which a point charge q_i binds one electron in a complete basis.
+   S of an arrangement is the smallest S_i over its positive charges. The size at which S of one
+   positive charge alone is zero is the positive root of the same expression set to zero.
+
+   S IS AN ESTIMATE AND DECIDES NOTHING HERE. It is one electron, nothing relaxed, first order, and
+   it treats the charge as a nucleus. It is written down now so that it can be wrong: at each CAMTZG
+   run, S formed from the CAMTZ maps PREDICTS
+      DID NOT TAKE     if S is +0.5 eV or more at that state
+      TOOK ELECTRONS   if S is -0.5 eV or less
+      nothing          between them, or where a map is missing
+   and the result sets each prediction beside what the run did.
+
+--------------------------------------------------------------------------------
+3. WHAT IS RUN
+--------------------------------------------------------------------------------
+57 dianion single points and eight maps, in 5 jobs. 15 conditions.
+
+PART A, THE SIZE LADDER. Site 1124 is the outer site with the most negative committed coefficient
+among the 371 that lie at or beyond 3.50 A at both states and admit both +1.00 and -1.00 e
+(D43's rule; the script stops unless the rule gives 1124). One positive charge of 0.25, 0.50, 0.75
+and 1.00 e, at R and TS, at CAMSV and CAMTZ. The condition at 1.00 e is D43's A_s1124_p100 with
+D43's point-charge file; its CAMSV runs are made again and set beside D43's committed energies.
+
+PART B, OTHER SURROUNDINGS. Among the same outer sites, the one with the most negative coefficient
+whose nearest substrate atom, over R and TS, is a carboxylate oxygen; the one whose nearest atom is
+a hydrogen; the one whose nearest atom is a carbon. At each, +0.50 and +1.00 e, AT THE REACTANT
+ONLY, at CAMSV and CAMTZ.
+
+PART C, THE WALK OUT. A line drawn as D11 drew its axis, from the substrate atom nearest the site
+through the site; here the nearest atom is taken over both states (O3 at TS, for site 1124), and
+the rungs are set by clearance and not by distance along the line: the first point on it whose
+distance to every substrate atom at R and TS reaches 5.00, 7.00 and 9.00 A. At each, +1.00 e, AT THE
+REACTANT ONLY, at CAMSV and CAMTZ.
+
+PART D1, FUNCTIONS AT THE CHARGE (CAMTZG). +0.50 e at site 1124 at R and TS; +0.75 e at site 1124 at
+R; +1.00 e at the 9.00 A point at R. Each beside its own control: the same ghost centre, no charge.
+
+PART D2, ONE BASIS STEP UP (CAMQZ). B_n11_q0.25 and B_n02_q0.50, the two designs D44 finds RELIABLE at
+CAMTZ, with D43's committed point-charge files, at R and TS, and the charge-free control at R and TS.
+
+   condition              part  what                                        charge     nearest atom        first order   levels and states
+   A_s1124_p025           A     site 1124                                   +0.25 e    O3 at TS, 3.578 A   -1.2794       CAMSV R,TS; CAMTZ R,TS
+   A_s1124_p050           A     site 1124                                   +0.50 e    O3 at TS, 3.578 A   -2.5587       CAMSV R,TS; CAMTZ R,TS; CAMTZG R,TS
+   A_s1124_p075           A     site 1124                                   +0.75 e    O3 at TS, 3.578 A   -3.8381       CAMSV R,TS; CAMTZ R,TS; CAMTZG R
+   A_s1124_p100           A     site 1124                                   +1.00 e    O3 at TS, 3.578 A   -5.1174       CAMSV R,TS; CAMTZ R,TS
+   A_s1068_p050           B     site 1068 (carboxylate O)                   +0.50 e    O2 at R, 3.592 A    -1.8317       CAMSV R; CAMTZ R
+   A_s1068_p100           B     site 1068 (carboxylate O)                   +1.00 e    O2 at R, 3.592 A    -3.6634       CAMSV R; CAMTZ R
+   A_s1137_p050           B     site 1137 (hydrogen)                        +0.50 e    H3 at R, 3.540 A    -2.4962       CAMSV R; CAMTZ R
+   A_s1137_p100           B     site 1137 (hydrogen)                        +1.00 e    H3 at R, 3.540 A    -4.9925       CAMSV R; CAMTZ R
+   A_s1079_p050           B     site 1079 (carbon)                          +0.50 e    C2 at TS, 3.993 A   -1.0509       CAMSV R; CAMTZ R
+   A_s1079_p100           B     site 1079 (carbon)                          +1.00 e    C2 at TS, 3.993 A   -2.1018       CAMSV R; CAMTZ R
+   L_s1124_r500_p100      C     line of site 1124, clearance 5.00 A         +1.00 e    H3 at R, 5.000 A    -             CAMSV R; CAMTZ R
+   L_s1124_r700_p100      C     line of site 1124, clearance 7.00 A         +1.00 e    H3 at R, 7.000 A    -             CAMSV R; CAMTZ R
+   L_s1124_r900_p100      C     line of site 1124, clearance 9.00 A         +1.00 e    H3 at R, 9.000 A    -             CAMSV R; CAMTZ R; CAMTZG R
+   B_n11_q0.25            D2    D43 design, 11 charges                      -          -                   -             CAMQZ R,TS
+   B_n02_q0.50            D2    D43 design, 2 charges                       -          -                   -             CAMQZ R,TS
+
+PART E, THE MAPS. Jobs S1 and T1 begin with the four charge-free controls of their level (dianion
+and monoanion, R and TS), each a committed input, each followed by orca_vpot at the 2629 points of
+d47/points.xyz. Its first 2626 points are those of d33a/points.xyz, line for line.
+
+THE JOBS. 8 cores, 48 GB, walltime 24:00:00, no -q, as D43 and D44. A run that fails does not stop
+the runs after it; a job submitted again skips every run that ended normally.
+
+   job   PBS name     runs   what it runs, in order
+   S1    cm_d47_s1    21     the four CAMSV controls with their maps; then every CAMSV run of parts A, B and C
+   T1    cm_d47_t1    12     the four CAMTZ controls with their maps; then part A at CAMTZ
+   T2    cm_d47_t2    10     a plain CAMTZ control; part B at +0.50 e; part C from 9.00 A inward; part B at +1.00 e
+   G1    cm_d47_g1     8     a plain CAMTZ control; the three ghost controls; then part D1, the smallest charge first
+   Q1    cm_d47_q1     6     at R: the CAMQZ control, B_n11_q0.25, B_n02_q0.50; then the same at TS
+
+   Within T2 and G1 the runs expected to be quick come first. Within Q1 everything at R comes
+   before anything at TS.
+
+d47/CONDITIONS.tsv, RUNS.tsv and LEVELS.tsv hold all of this with every digit; d47/SOURCES.sha256
+the sha256 of each committed file read. They were written by cs6_d47_prepare.py before any output.
+
+HOW LONG. Derived from committed logs: a charge-free dianion with the stability analysis ran 4.7
+minutes at CAMSV (d31/ctl_R, 402 basis functions) and 17.0 at CAMTZ (d44/CAMTZ_C_ctl_R, 682); the
+charge-free monoanion 13.6 (d40/B_bare_R) and 39.3 (d44/CAMTZ_C_bare_R). With one charge at CAMSV,
+D43's 24 dianion runs took 4.2 to 13.7 minutes. At CAMTZ, D44's dianion runs took 7.6 to 17.7
+minutes in the two designs that are RELIABLE there and 19.2 to 130.8 in the four that are
+UNRELIABLE. def2-QZVPPD has 1290 basis functions (d45/M_QZ_R).
+ESTIMATE on those figures: S1 about 3 hours; T1 about 8; T2 from 3 to 12, by how many of its runs
+are flagged; G1 from 2 to 6; Q1 perhaps 8 to 15, by a scaling that is a guess. About 25 to 45 hours
+of one node in all. Any of these may be wrong; a job that reaches its walltime is submitted again.
+
+--------------------------------------------------------------------------------
+4. READINGS, FIXED IN ADVANCE
+--------------------------------------------------------------------------------
+R47.1  THE CONTROLS. Every control: its energy, the committed energy of the same input where there
+       is one, the difference, the stability verdicts, the number of basis functions, and whether
+       its map was read. Which jobs are read. The committed bare detachment energies. For each
+       ghost control, its energy minus the committed CAMTZ control's and the sum of the Loewdin
+       charges of the 24 atoms. D43's committed energies of A_s1124_p100 beside this diagnostic's.
+R47.2  EVERY RUN WITH A CHARGE: the Loewdin rise, the dipole ratio, the gap or that it was withheld,
+       the stability verdicts, where the charge went, each flag by name, and the word of section 2.
+R47.3  PART A. For each size: the word of each run and the four-leg word at CAMSV and at CAMTZ, ddE
+       at both, the first-order value, their agreement, and S at both states. Then the largest size
+       such that it and every smaller size is RELIABLE at CAMTZ, and the smallest size UNRELIABLE.
+R47.4  PART B. For each site and size: the word at the reactant at CAMSV and CAMTZ, and S.
+R47.5  PART C. For each clearance: the word at the reactant at CAMSV and CAMTZ, and S.
+R47.6  PART D1. For each CAMTZG run: S, what S predicted, the run's word, the charge that left the
+       24 atoms, what the run did by the reading of section 2 (TOOK ELECTRONS, DID NOT TAKE, not
+       decided), whether the prediction was borne out, and the word of the same charge at CAMTZ
+       without the ghost centre. The counts.
+R47.7  PART D2. For each design: the word of each run and the four-leg word at CAMQZ; ddE at the
+       working level and at CAMTZ as committed in d44.tsv and at CAMQZ as formed here; the agreement
+       of CAMQZ with each; and S.
+R47.8  THE MAPS. The dianion's map at CAMSV against the committed map of d33a, and the coefficient
+       from it against A_f42436_d33a.tsv. The coefficient at CAMTZ against the committed one over
+       the 2626 sites: the largest and root-mean-square difference; of the sites whose committed
+       |a| is 1 kcal/mol per e or more, how many lie within 15 % and how many change sign; the ten
+       sites of largest committed |a| with both values. At each level and state: the range of v,
+       and the range over the sites that admit a positive charge of the size at which S of one
+       charge alone is zero. Then the six designs of D43: S from the CAMTZ maps at each state, the
+       reading of where the charge went made on D44's committed outputs, and D44's committed word;
+       and in how many of the six the sign of S goes with that word. That last is a comparison
+       after the fact and tests nothing.
+
+--------------------------------------------------------------------------------
+5. GATES
+--------------------------------------------------------------------------------
+G47.1  Every file listed in d47/INPUT_CHECKSUMS.sha256 has the sha256 listed there, and it lists
+       159 files. Every job.inp is the input the committed files give by the rules of section 2,
+       formed again by the reader. Every substrate.xyz is d33a's. Every point-charge file holds the
+       charges of its condition. No control holds a point-charge file.
+G47.2  The reader repeats the selection of section 3 from the committed files, by the functions of
+       cs6_d47_prepare.py, and it gives d47/CONDITIONS.tsv, RUNS.tsv, LEVELS.tsv, points.xyz and the
+       5 job scripts.
+G47.3  Every file of d47/SOURCES.sha256 has the sha256 listed there. No committed file under d31,
+       d33a, d37, d40, d43 or d44, and none this diagnostic reads, differs from HEAD. The
+       pre-registration given to the reader is this file as committed, and every source is the file
+       at the commit this file was committed on.
+G47.4  The committed controls of CAMSV and CAMTZ are readable and each dianion control's last
+       stability analysis is STABLE. The committed maps of d33a are readable at the committed
+       points. D43's committed outputs of A_s1124_p100 are readable.
+G47.5  Every sentence the result quotes is in the document it is quoted from, and the tolerance of
+       15 % and its floor of 3.2 kcal/mol are STAGE6_CRITERIA.txt's.
+G47.6  Every output that exists prints, as the input it ran, the committed input beside it.
+G47.7  Every dianion run that is read reports the number of basis functions of its control.
+A FAILURE OF G47.1 TO G47.7 STOPS THE DIAGNOSTIC. Nothing else is readable.
+
+A job or a control of this diagnostic that cannot be used, and a map that cannot be read, are not
+gates: section 2 says what follows.
+
+--------------------------------------------------------------------------------
+6. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+--------------------------------------------------------------------------------
+D47 opens and closes nothing. r_safe, AMENDMENT 9 and D44's result stand whatever it shows. A9.4
+stays the test of every design: "A design is a SURVIVOR OF THE SEARCH, and nothing more, only if it
+passes the five legs at the working level AND, at CAM-B3LYP-D3BJ/def2-TZVPD, is RELIABLE on four
+legs, passes the fifth leg, and has a ddE that is WITHIN the tolerance of its ddE at the working
+level."
+
+PART A.
+   A size is UNRELIABLE at CAMTZ and every smaller size is RELIABLE: at site 1124 one positive
+      charge of that size is enough, and D44's failures at that size and above are not only the
+      doing of charges together.
+   Every size is RELIABLE at CAMTZ: one charge alone does not do it at site 1124; D44's failures
+      need the other charges, and what is measured next must be arrangements.
+   The pattern is neither (a smaller size UNRELIABLE and a larger one RELIABLE, or words that are
+      not RELIABLE or UNRELIABLE): nothing is concluded from part A.
+PART B, read at the size or sizes that part A finds FLAGGED at the reactant at CAMTZ.
+   FLAGGED at all three other sites too: site 1124 is not a special case at that size.
+   NOT FLAGGED at one or more: where the charge sits matters at that size, beyond its distance (all
+      four sites lie between 3.5 and 4.0 A from their nearest atom). A measurement site by site, or
+      atom by atom as Jessica proposes, is then the next step for that size.
+PARTS C AND D1 TOGETHER, for +1.00 e.
+   NOT FLAGGED at 9.00 A at CAMTZ and TOOK ELECTRONS there at CAMTZG: distance took the charge out
+      of the reach of def2-TZVPD and did nothing else. A safe distance is then a statement about a
+      basis set, and no walk out is made for a size that behaves so.
+   NOT FLAGGED at 9.00 A at CAMTZ and DID NOT TAKE at CAMTZG: distance protects that charge even
+      when the basis set can put an electron at it. S is then wrong there, and the walk out, atom
+      by atom, is the next step.
+   FLAGGED at 9.00 A at CAMTZ: distance does not rescue +1.00 e within 9 A even in def2-TZVPD.
+   Anything else: not decided.
+PART D1, THE PREDICTIONS.
+   Every prediction made is borne out: S may be put forward, in a pre-registration of its own, as a
+      rule to be tested on more sites and on arrangements. Nothing is built on it before that.
+   One is not borne out: S is not put forward as a rule. The result says which.
+PART D2.
+   Both designs RELIABLE at CAMQZ with ddE WITHIN of the working level's: they hold one step up.
+   Either UNRELIABLE, or OUTSIDE: passing in def2-TZVPD is not the end of the matter for that
+      design. If that is so for both, no design of this record is shown to hold beyond def2-TZVPD,
+      and the wall, which the record keeps as the fall-back, comes to Jessica for decision.
+   Otherwise: not decided.
+THE MAPS decide nothing. They are the material for whatever comes next.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D47.1  It is a preliminary on one frame, with few conditions. It fixes no distance, no size and no
+       rule. It names no design.
+D47.2  Parts B and C, and part D1 but for +0.50 e, are run at the reactant only. NOT FLAGGED
+       at the reactant says nothing of the transition state, where the bare substrate holds its
+       electron less strongly.
+D47.3  The fifth leg is not read. Negative charges are not run at all: their limit is the electron
+       staying bound, and the maps give its first-order coefficient v at every site.
+D47.4  The ghost centre carries the def2-TZVPD functions of hydrogen. They describe an electron
+       bound to a charge of 0.75 or 1.00 e well, one bound to 0.50 e less well, and one bound to
+       0.25 e hardly at all. No CAMTZG run is made at 0.25 e, and a CAMTZG run that DID NOT TAKE at
+       0.50 e is weaker evidence than one that TOOK ELECTRONS at 0.75 e. Loewdin charges divide the
+       electrons among centres by a convention; with diffuse functions on a centre 3.6 A from the
+       atoms that division is less sharp than between atoms, which is why LEFT THE ATOMS is set at
+       the committed 0.25 e and not lower.
+D47.5  CAMTZG and the CAM-B3LYP inputs of CAMQZ have not run before in this record. If ORCA refuses
+       one, its job ends quickly, the other jobs are unaffected, and the part it carried is NOT
+       MEASURED until a dated note says how it is run. orca_vpot has run in this record on the
+       dianion at the working level only (D33a); on the monoanion, and at CAMTZ, it is new here. A
+       map that is not written stops no run: S and v are then not formed where it is missing.
+D47.6  S is an estimate (section 2). Where it is borne out, that is at the points run.
+D47.7  CAMQZ is one step. A design that holds there is not shown to hold in every basis set, and
+       the idea of section 1 says a bare charge that binds an electron more strongly than the
+       dianion does is safe in no basis set that can describe it.
+D47.8  In vacuo, frozen geometries, bare point charges that stand for no chemical group.
+
+--------------------------------------------------------------------------------
+8. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, AND WHAT CLAUDE EXPECTS
+--------------------------------------------------------------------------------
+No output of D47 exists. Known: every committed result, and the reading of D44's committed outputs
+set out in section 1. The sites of part B, the points of part C and the conditions of part D1 were
+fixed by the rules of section 3 before any of them was run anywhere.
+
+CLAUDE'S EXPECTATIONS, written down so that they can be held against the result. They are
+expectations and not results.
+   Part A: 0.25 and 0.50 e RELIABLE at CAMTZ; 0.75 and 1.00 e UNRELIABLE. All four RELIABLE at CAMSV.
+   Part B: +1.00 e FLAGGED at CAMTZ at the other three sites as well; +0.50 e not.
+   Part C: +1.00 e NOT FLAGGED at CAMTZ at 9.00 A; at 5.00 and 7.00 A not known.
+   Part D1: +0.50 e at site 1124 DID NOT TAKE; +0.75 e TOOK ELECTRONS; +1.00 e at 9.00 A TOOK
+            ELECTRONS.
+   Part D2: not known. The crude estimate puts both designs close to zero.
+If the result is as expected, that is not a strong test of anything but part D1's third line and
+part D2, which is why they are in it.
