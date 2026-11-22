@@ -1,0 +1,311 @@
+STAGE 6 - DIAGNOSTIC 50 - PRE-REGISTRATION
+Functions at a charge that can hold an electron at 0.25 e
+================================================================================
+Written 22 November 2026, after D49's result (results commit 6baebbca) and before any run of D50.
+Jessica, 22 November 2026, 07:37: "so are we testing the distances now to place the grid? or not
+yet". Claude answered not yet, and offered a calibration of new functions and then the test of the
+distances by chemical group at +0.25 and -0.25 e, as one pre-registration. Jessica, 07:39: "ok".
+Claude then split the two: this document is the first step alone, with the new functions also tried
+on the substrate, and the test by chemical group follows as the next diagnostic, built on what this
+one measures. The reason is in section 1. Jessica had not answered that when this was written;
+committing this document is her yes. No committed file used the number 50 for a diagnostic.
+
+It adopts no rule and opens or closes no size, no distance and no design. AMENDMENT 9, A9.4 and the
+results of D44, D47, D48 and D49 stand whatever it shows.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D47 and D48 asked whether a positive point charge takes electrons from the substrate by placing
+basis functions at the charge: the def2-TZVPD functions of a hydrogen atom with no nucleus (a ghost
+atom). D49 measured what those nine functions can hold, with one electron and a bare charge q. Its
+result: "B at or below zero: CAM at 0.25 e. These functions do not hold an electron at a charge of
+that size." At 0.50 e they fall short of a complete basis by 0.37 eV. D49's pre-registration had
+fixed what follows for the one design of +0.25 and -0.25 e that passes A9.4: "B_n11_q0.25: NOT A
+TEST OF CAPTURE or A WEAK TEST: its run with functions showed nothing, or little, beyond A9.4."
+
+Jessica decided on 20 November to start with charges of +0.25 and -0.25 e. So whether a
+charge of 0.25 e takes electrons has to be tested with functions that can hold one at that size, and
+the record has none. D50 finds them and tries them.
+
+Why this is not run together with the test by chemical group. That test is some tens of node-hours
+and its inputs must be committed before anything is read. D48 was built that way, with its
+calibration beside its main runs: the calibration stopped in ORCA, and the functions turned out not
+to test 0.25 e. The functions below have never run in ORCA in this record. D50 costs a few
+node-hours and measures them first.
+
+One more reason part G holds the design. D48's table gives two estimates for B_n11_q0.25 at the
+reactant: S, +1.49 eV, which predicts DID NOT TAKE, and S with D44's measured detachment energy in
+place of the first-order one (S_m), -0.39 eV, which lies inside the band where nothing is predicted.
+With D48's functions the run could not show which is right. With functions that hold an electron at
+0.25 e it can.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+106 runs in three jobs, written by cs6_d50_prepare.py from committed files through the committed
+cs6_d48_prepare.py (conditions, ghost centres, input lines and S are D48's and D47's).
+
+THE FUNCTIONS. The def2-TZVPD functions of hydrogen stay as they are. Diffuse functions are added
+under the ghost atom, one s and one p function at each exponent:
+   set X2   0.035 and 0.012            17 functions at a charge
+   set X3   0.035, 0.012 and 0.004     21 functions at a charge
+The exponents continue the hydrogen set (its most diffuse s function is 0.103) downward by a factor
+of about three each. They were chosen by a calculation, not by a run: for one electron and a charge
+at the centre of s functions the energy can be computed exactly, and the same calculation gives
+D49's ten measured Hartree-Fock energies of variant Z to 0.0000000001 hartree. What it gives for
+the two sets is in EXPECTED_HF.tsv and, as a shortfall against 13.6057 q^2 in eV, here:
+
+   q, e                  0.10   0.15   0.20   0.25   0.30   0.40   0.50   0.60   0.75   1.00
+   def2-TZVPD hydrogen   2.651  2.204  1.808  1.462  1.162  0.693  0.376  0.180  0.043  0.005
+   set X2                0.132  0.060  0.022  0.006  0.001  0.000  0.000  0.001  0.001  0.005
+   set X3                0.013  0.001  0.000  0.000  0.000  0.000  0.000  0.001  0.001  0.005
+
+These are Claude's computed expectations, for the charge at the centre. They are not measurements.
+
+THE AUXILIARY BASIS. The runs with the functional fit the electron density with an auxiliary basis
+(def2/J). def2/J was not made for functions this diffuse, so three treatments of the ghost atom's
+auxiliary basis are run, and no other atom's is touched:
+   A   ORCA's own generated auxiliary basis (AutoAux) for the ghost atom
+   E   def2/J with even-tempered s, p and d functions added: exponents doubling from twice the
+       smallest added exponent up to 0.2 (X2: 0.024 to 0.192; X3: 0.008 to 0.128)
+   J   def2/J left as it is
+Hartree-Fock uses no auxiliary basis.
+
+PART C, one electron (job K1, 80 runs, one core each, each stopped after 900 seconds). The input is
+D49's variant N, which ended normally in all twenty of its runs, with the added functions written
+under the ghost atom: one electron, the functions, a bare charge q 0.01 A from their centre. Sizes
+0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 0.60, 0.75 and 1.00 e. For each set: Hartree-Fock (HF),
+and the functional of the runs (CAM) with each of A, E and J. For CAM, set X2, treatment A:
+
+      ! UKS CAM-B3LYP def2-TZVPD def2/J RIJCOSX TightSCF
+      %maxcore 3000
+      %scf
+        MaxIter 300
+        Guess HCore
+      end
+      %elprop
+        Dipole false
+      end
+      %pointcharges "pc.pc"
+      * xyz -1 2
+      H: 0.010000 0.000000 0.000000
+        AddGTO
+          S 1
+          1 0.035000 1.0
+          S 1
+          1 0.012000 1.0
+          P 1
+          1 0.035000 1.0
+          P 1
+          1 0.012000 1.0
+        end
+        NewAuxJGTO
+          "AutoAux"
+        end
+      *
+
+with a point-charge file beside it that holds the one charge at the origin.
+
+PART G, the dianion (jobs G1 and G2, 13 runs each, 8 cores). CAM-B3LYP-D3BJ/def2-TZVPD, the level
+of A9.4, with set X2 under a ghost atom 0.01 A beyond each positive charge, as D47 and D48 placed
+theirs. Treatments A, E and J, at R and TS.
+   G1   +0.25 e at site 1124 (A_s1124_p025): the outer site with the most negative coefficient,
+        where every design of D43 holds a positive charge. S is +3.02 eV at R and +2.64 eV at TS:
+        predicted DID NOT TAKE.
+   G2   the design B_n11_q0.25: six charges of +0.25 e and five of -0.25 e, the functions at the
+        six. S is +1.49 eV at R and +1.02 eV at TS: predicted DID NOT TAKE.
+Each has a control with the same functions at the same centres and no charge, and each job runs the
+plain committed control first. 26 runs: 2 plain controls, 12 controls with functions, 12 with
+charges.
+The job scripts are D48's committed run_E1.pbs (K1) and run_A1.pbs (G1, G2) with their names and
+their runs changed and nothing else.
+
+NOT RUN BEFORE. Writing functions under one atom of the coordinate block is in ORCA's manual; so is
+asking for AutoAux for one atom. Neither has been written under a ghost atom in this record, and
+none of it could be tried where this was written. That is a pointer and not part of the record.
+Whether ORCA accepts each form is what the job shows; a form it refuses fails in seconds.
+
+HOW LONG, AN ESTIMATE. D49's 40 runs of one electron took under three minutes (its committed log);
+80 runs: under ten minutes. In D48 a run with functions at the charge took 4 to 21 minutes where it
+did not take electrons and 16 to 61 where it did, and a plain control 6 to 8 (its committed
+outputs). G1 and G2: one and a half to four hours each, more if runs take electrons.
+
+--------------------------------------------------------------------------------
+3. THE READINGS
+--------------------------------------------------------------------------------
+27.211386245988 eV per hartree, 13.605693122994 eV per Rydberg, 627.5094740631 kcal/mol per hartree.
+
+A RUN OF ONE ELECTRON IS MEASURED if the committed reader of outputs, cs6_d40.py, reads it as D49's
+reader read its runs: it ends normally, its SCF converged, it reports one electron, one final energy
+and one point charge. Otherwise it is NOT MEASURED, or DID NOT CONVERGE.
+
+B is minus the energy of the one electron, eV. Exact, in a complete basis, is 13.605693122994 q^2.
+ADEQUATE, for a set, a treatment and a size: the HF run and the CAM run with that treatment are both
+measured and each holds within 0.05 eV of exact. NOT ADEQUATE: both measured and one does not.
+
+A RUN OF THE DIANION is read as D48 read its runs, by the committed classifier (cs6_audit.py) and
+the committed reading of stability: the four legs against a control, at D_LW 0.25 e, R_DIP 2.0,
+GAP_ABS 1.0 eV, R_GAP 0.5, stability on the last analysis. LEFT THE ATOMS: the 24 atoms' Loewdin
+charges sum to 0.25 e or more above the control's. D47's reading, as D48 used it: "TOOK ELECTRONS
+the SCF converged and either a leg fires or the run LEFT THE ATOMS". DID NOT TAKE: measured, no leg
+fires, none withheld, and it did not leave the atoms. Otherwise not decided. D48's mark beside it:
+ONTO THE FUNCTIONS if it took electrons and left the atoms, A LEG ONLY if a leg fired and it did
+not.
+A run with charges is read against the control with the same functions, the same treatment and no
+charge, and is NOT READ if that control is not measured or not STABLE, or if its job's plain control
+does not give back the committed energy to 0.000001 hartree.
+
+R50.1  Each of the 80 runs of one electron: status, energy, and the basis functions and auxiliary
+       functions ORCA reports.
+R50.2  WHAT THE SETS HOLD. For each set and size: exact, B(HF), the value computed for this
+       document, B(CAM) with A, E and J, and the word ADEQUATE or not for each treatment. Beside
+       it: HF measured against computed, with a note where they differ by more than 0.005 eV, and
+       CAM minus HF for each treatment.
+R50.3  THE RULE. For a set, the treatment is the first in the order A, E, J that is ADEQUATE at
+       every size from 0.25 e up. THE FUNCTIONS FOR THE CAPTURE TEST are set X2 with its treatment
+       if the rule gives it one, otherwise set X3 with its treatment, otherwise NONE. Also
+       reported: from which size up each set and treatment is adequate without a break.
+R50.4  THE DIANION WITH THE FUNCTIONS AND NO CHARGE. Each control with functions is read against the
+       plain committed control of its state, by the three legs that do not divide the density among
+       atoms: the dipole, the gap and the stability. THE CONTROL HOLDS if it is measured, none of
+       the three fires and none is withheld; DOES NOT HOLD if one fires or its SCF does not
+       converge. The Loewdin charges are reported beside that word and are not part of it (D50.5):
+       the charge missing from the 24 atoms and the charge given to the ghost atoms, with a line
+       naming each control that holds while its functions are given 0.25 e or more. Also reported:
+       the gap, the highest occupied orbital energy, and its energy against the plain control and
+       against D48's control with the def2-TZVPD functions at the same centres.
+R50.5  THE DIANION WITH THE FUNCTIONS AND THE CHARGES. For each run: TOOK ELECTRONS or DID NOT TAKE,
+       ONTO THE FUNCTIONS or A LEG ONLY, the charge that left, S, what S predicts and whether that
+       is borne out. Beside it, for description: 'gain', the energy the functions add when the
+       charges are there beyond what they add without them (the run minus its control, minus the
+       committed run of the same charges without functions minus the plain control); the same for
+       D48's functions on the design; and ddE with the functions against ddE of the committed runs
+       without them.
+R50.6  THE TREATMENTS ON THE DIANION. For each run made with A, E and J: its energy with A and with
+       E against J, what each did, and whether the three give the same word.
+
+--------------------------------------------------------------------------------
+4. THE GATES: the reader stops, and writes nothing, if one fails
+--------------------------------------------------------------------------------
+G50.1  Every file of d50 is the one listed in d50/INPUT_CHECKSUMS.sha256 (208 files) and is the
+       file cs6_d50_prepare.py forms again from the committed files.
+G50.2  The files of d50/SOURCES.sha256 (93) are the ones listed.
+G50.3  No file under d31, d33a, d37, d40, d43, d44, d47, d48 or d49, and no committed table or
+       document the reader names, differs from the committed one. The pre-registration given to
+       the reader is the committed one.
+G50.4  The sentences this document quotes from D47 and D49 are in their documents.
+G50.5  Every output that exists prints, as the input it ran, the committed input beside it.
+G50.6  Every measured run reports the basis functions its input asks for: 17 or 21 for one
+       electron; for the dianion 682, and 17 more for each ghost atom.
+G50.7  S of the two conditions, formed again here, is the S that d47.tsv and d48.tsv hold.
+G50.8  The committed controls, and the committed outputs set beside the runs, are readable.
+A run that is not measured is not a gate. The number of auxiliary functions is reported, with a note
+where it is not the number expected; it is not a gate.
+
+--------------------------------------------------------------------------------
+5. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+--------------------------------------------------------------------------------
+D50 adopts nothing. A9.4 and the results of D44, D47, D48 and D49 stand whatever it shows.
+   ORCA REFUSES THE FORM (no run with added functions ends normally): D50 measures nothing and says
+      only that. The functions are then written another way, under a short pre-registration of
+      its own. Nothing else is built before that.
+   HF DIFFERS FROM THE COMPUTED VALUE by more than 0.005 eV at a size: the result says so. The
+      functions ORCA used are then not the ones intended, and no set is taken forward until the
+      difference is understood.
+   THE RULE GIVES SET X2 A TREATMENT: that set with that treatment is what the next diagnostic
+      places at each positive charge, provided the control holds with it (below). Part G runs all
+      three treatments so that whichever the rule names has been tried on the dianion.
+   THE RULE GIVES X2 NONE AND X3 ONE: X3 with its treatment. X3 has not been tried on the dianion,
+      so the next diagnostic runs its controls first and alone.
+   THE RULE GIVES NONE: there are no functions for the test. The result shows whether the functions
+      fall short (HF) or the way the functional is computed does (CAM against HF: the auxiliary
+      basis or the integration grid), and the next step mends that one.
+   THE CONTROL DOES NOT HOLD with a treatment: with these functions present and no charge, the
+      dianion in vacuo does not stay as it was. A run with charges read against such a control
+      tests nothing. If it holds with no treatment, functions this diffuse cannot serve as a
+      test of capture on this dianion, and that goes to Jessica and her supervisor as a finding
+      about the model before anything else is built.
+   THE CONTROL HOLDS AND ITS FUNCTIONS ARE GIVEN 0.25 e OR MORE by the Loewdin charges: no leg shows
+      that electrons moved; the way of dividing the density has. The runs with charges are still
+      read against that control, as fixed above. But a sum of Loewdin charges is then too blunt a
+      measure to carry the next diagnostic alone, and its pre-registration fixes a second measure
+      that does not divide the density (the gain and the gap of R50.5) before it is run.
+   +0.25 e AT SITE 1124 DID NOT TAKE at R and TS, the control holds, and the set is adequate with
+      that treatment: it is the first test of capture at 0.25 e in this record. One site and one
+      charge; it opens nothing.
+   +0.25 e AT SITE 1124 TOOK ELECTRONS, ONTO THE FUNCTIONS, at either state: S fails for a single
+      charge, at +2.6 eV or more. No design of bare positive charges of 0.25 e is then supported by
+      this record, the test by chemical group is not built, and the wall, which AMENDMENT 9 records
+      as the fall-back and does not adopt, comes forward. It goes to Jessica and her supervisor
+      first.
+   B_n11_q0.25 DID NOT TAKE at R and TS, the control holds, and the set is adequate with that
+      treatment: the design holds in the test D48 could not make, and S is borne out where S_m
+      left it open. It adopts nothing; the design stands where A9.4 leaves it with that said.
+   B_n11_q0.25 TOOK ELECTRONS, ONTO THE FUNCTIONS, at either state, while the single charge did
+      not: the one design of this size that passes A9.4 does not hold when the basis can hold an
+      electron at its charges, and what fails is charges together. The next diagnostic then puts
+      charges together first, the search is not run at 0.25 e before a rule for arrangements
+      exists, and S is not that rule (by D48, S is not put forward for arrangements until the cause
+      of its one failure is found).
+   A LEG ONLY, in any run: reported, and set aside from the two outcomes above as D48 set it aside.
+      If the gap leg alone fires, the electrons have not moved but an empty level at a charge lies
+      close above the highest occupied one; the result gives the gap.
+   THE TREATMENTS GIVE DIFFERENT WORDS for the same run: the auxiliary basis decides the
+      outcome. The run with the treatment the rule finds adequate is the one read; if the rule
+      finds none adequate, none is.
+   ddE WITH THE FUNCTIONS AGAINST ddE WITHOUT: reported. Nothing is decided on it here.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D50.1  One electron and a bare charge say what the functions hold. They do not say what a run of
+       the dianion does. The p functions are not tested by part C at all.
+D50.2  Part G is one site and one design, at R and TS, one frame, frozen geometries, in vacuo, bare
+       point charges. It is not the test of the inner sites, of the chemical groups, of negative
+       charges or of charges placed together. That is the next diagnostic.
+D50.3  A run that DID NOT TAKE with these functions is a test of capture at 0.25 e only if R50.3
+       finds the set adequate with the treatment that run used.
+D50.4  S is an estimate. D48 found that it does not separate what its runs did. S_m is formed after
+       the fact and predicts nothing.
+D50.5  The Loewdin charge of a diffuse function is a way of dividing the density, not a count of
+       electrons that moved. That is why each run with charges is read against a control with the
+       same functions, and why that control's own word rests on the dipole, the gap and the
+       stability and not on its Loewdin charges. For the runs with charges the reading is D48's,
+       Loewdin sum included, so that they can be set beside D48's; with six diffuse centres that
+       sum may answer to polarisation as well as to capture, and R50.5 gives the gain and the gap
+       beside it for that reason.
+D50.6  No form of these inputs has run in ORCA before in this record. If none ends normally, D50
+       measures nothing.
+D50.7  The fifth leg (the monoanion) is not run. Functions that hold an electron at a positive
+       charge say nothing about what a negative charge does to the last electron.
+
+--------------------------------------------------------------------------------
+7. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, AND WHAT CLAUDE EXPECTS
+--------------------------------------------------------------------------------
+D49's and D48's results were known in full. Read this morning from committed outputs, for this
+design: the plain control's highest occupied orbital lies at -0.54 eV (R) and -0.32 eV (TS); D48's
+run of B_n11_q0.25 with the def2-TZVPD functions has a gap of 1.62 eV at R and 2.30 eV at TS
+(d48.tsv) against 5.7 and 5.1 eV in the controls. The computed energies of section 2 are known. No
+run of D50 exists; the rehearsal of the reader was made on invented outputs.
+
+Claude expects, and states it so that it can be held against the result:
+   ORCA accepts the added functions under a ghost atom: likely, not sure. Treatment A: less sure.
+   HF within 0.005 eV of the computed values at every size.
+   Set X2 ADEQUATE at HF from 0.20 e up, set X3 from 0.10 e up.
+   CAM with A and with E within 0.03 eV of HF. CAM with J holds too much, because an auxiliary basis
+      that cannot follow a diffuse density makes the electron's own repulsion too small; by how
+      much is not known, and J may be NOT ADEQUATE.
+   The rule gives set X2 treatment A.
+   The control holds with every treatment, and its energy falls by less than 0.05 eV against the
+      plain control. How much the Loewdin charges give functions this diffuse is NOT KNOWN: a few
+      hundredths of an electron at one centre, perhaps a tenth or more over six.
+   +0.25 e at site 1124: DID NOT TAKE at R and TS.
+   B_n11_q0.25 at TS: DID NOT TAKE. At R: NOT KNOWN. S says it does not; S_m, and a gap of 1.62 eV
+      that functions holding 1.45 eV more may close, say it may. Claude puts it near even, with A
+      LEG ONLY (the gap leg) the likeliest way for it to be read TOOK ELECTRONS.
+   The three treatments give the same word for every run.
+
+Files: this document; d50/ (the 106 run folders, RUNS.tsv, CONDITIONS.tsv, FUNCTIONS.tsv,
+EXPECTED_HF.tsv, SOURCES.sha256, INPUT_CHECKSUMS.sha256, run_K1.pbs, run_G1.pbs, run_G2.pbs).
+Written by cs6_d50_prepare.py; read by cs6_d50.py, committed with this document.

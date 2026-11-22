@@ -1,0 +1,110 @@
+#!/bin/bash
+#PBS -N cm_d50_k1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d50/run_K1.pbs.out
+# Stage 6 DIAGNOSTIC 50: functions at a charge that can hold an electron at 0.25 e.
+# This job is one of 3. It makes 80 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable:
+#   submitted again, it skips every run that ended normally.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d50
+cd "$W" || exit 1
+if ! mkdir .running_K1 2>/dev/null; then echo "FAIL: another job holds .running_K1 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_K1" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && timeout -k 10 900 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run ONE_HF_X2_p010
+run ONE_HF_X2_p015
+run ONE_HF_X2_p020
+run ONE_HF_X2_p025
+run ONE_HF_X2_p030
+run ONE_HF_X2_p040
+run ONE_HF_X2_p050
+run ONE_HF_X2_p060
+run ONE_HF_X2_p075
+run ONE_HF_X2_p100
+run ONE_CAM_X2A_p010
+run ONE_CAM_X2A_p015
+run ONE_CAM_X2A_p020
+run ONE_CAM_X2A_p025
+run ONE_CAM_X2A_p030
+run ONE_CAM_X2A_p040
+run ONE_CAM_X2A_p050
+run ONE_CAM_X2A_p060
+run ONE_CAM_X2A_p075
+run ONE_CAM_X2A_p100
+run ONE_CAM_X2E_p010
+run ONE_CAM_X2E_p015
+run ONE_CAM_X2E_p020
+run ONE_CAM_X2E_p025
+run ONE_CAM_X2E_p030
+run ONE_CAM_X2E_p040
+run ONE_CAM_X2E_p050
+run ONE_CAM_X2E_p060
+run ONE_CAM_X2E_p075
+run ONE_CAM_X2E_p100
+run ONE_CAM_X2J_p010
+run ONE_CAM_X2J_p015
+run ONE_CAM_X2J_p020
+run ONE_CAM_X2J_p025
+run ONE_CAM_X2J_p030
+run ONE_CAM_X2J_p040
+run ONE_CAM_X2J_p050
+run ONE_CAM_X2J_p060
+run ONE_CAM_X2J_p075
+run ONE_CAM_X2J_p100
+run ONE_HF_X3_p010
+run ONE_HF_X3_p015
+run ONE_HF_X3_p020
+run ONE_HF_X3_p025
+run ONE_HF_X3_p030
+run ONE_HF_X3_p040
+run ONE_HF_X3_p050
+run ONE_HF_X3_p060
+run ONE_HF_X3_p075
+run ONE_HF_X3_p100
+run ONE_CAM_X3A_p010
+run ONE_CAM_X3A_p015
+run ONE_CAM_X3A_p020
+run ONE_CAM_X3A_p025
+run ONE_CAM_X3A_p030
+run ONE_CAM_X3A_p040
+run ONE_CAM_X3A_p050
+run ONE_CAM_X3A_p060
+run ONE_CAM_X3A_p075
+run ONE_CAM_X3A_p100
+run ONE_CAM_X3E_p010
+run ONE_CAM_X3E_p015
+run ONE_CAM_X3E_p020
+run ONE_CAM_X3E_p025
+run ONE_CAM_X3E_p030
+run ONE_CAM_X3E_p040
+run ONE_CAM_X3E_p050
+run ONE_CAM_X3E_p060
+run ONE_CAM_X3E_p075
+run ONE_CAM_X3E_p100
+run ONE_CAM_X3J_p010
+run ONE_CAM_X3J_p015
+run ONE_CAM_X3J_p020
+run ONE_CAM_X3J_p025
+run ONE_CAM_X3J_p030
+run ONE_CAM_X3J_p040
+run ONE_CAM_X3J_p050
+run ONE_CAM_X3J_p060
+run ONE_CAM_X3J_p075
+run ONE_CAM_X3J_p100
+echo "end=$(date)"
+n=0; for r in ONE_HF_X2_p010 ONE_HF_X2_p015 ONE_HF_X2_p020 ONE_HF_X2_p025 ONE_HF_X2_p030 ONE_HF_X2_p040 ONE_HF_X2_p050 ONE_HF_X2_p060 ONE_HF_X2_p075 ONE_HF_X2_p100 ONE_CAM_X2A_p010 ONE_CAM_X2A_p015 ONE_CAM_X2A_p020 ONE_CAM_X2A_p025 ONE_CAM_X2A_p030 ONE_CAM_X2A_p040 ONE_CAM_X2A_p050 ONE_CAM_X2A_p060 ONE_CAM_X2A_p075 ONE_CAM_X2A_p100 ONE_CAM_X2E_p010 ONE_CAM_X2E_p015 ONE_CAM_X2E_p020 ONE_CAM_X2E_p025 ONE_CAM_X2E_p030 ONE_CAM_X2E_p040 ONE_CAM_X2E_p050 ONE_CAM_X2E_p060 ONE_CAM_X2E_p075 ONE_CAM_X2E_p100 ONE_CAM_X2J_p010 ONE_CAM_X2J_p015 ONE_CAM_X2J_p020 ONE_CAM_X2J_p025 ONE_CAM_X2J_p030 ONE_CAM_X2J_p040 ONE_CAM_X2J_p050 ONE_CAM_X2J_p060 ONE_CAM_X2J_p075 ONE_CAM_X2J_p100 ONE_HF_X3_p010 ONE_HF_X3_p015 ONE_HF_X3_p020 ONE_HF_X3_p025 ONE_HF_X3_p030 ONE_HF_X3_p040 ONE_HF_X3_p050 ONE_HF_X3_p060 ONE_HF_X3_p075 ONE_HF_X3_p100 ONE_CAM_X3A_p010 ONE_CAM_X3A_p015 ONE_CAM_X3A_p020 ONE_CAM_X3A_p025 ONE_CAM_X3A_p030 ONE_CAM_X3A_p040 ONE_CAM_X3A_p050 ONE_CAM_X3A_p060 ONE_CAM_X3A_p075 ONE_CAM_X3A_p100 ONE_CAM_X3E_p010 ONE_CAM_X3E_p015 ONE_CAM_X3E_p020 ONE_CAM_X3E_p025 ONE_CAM_X3E_p030 ONE_CAM_X3E_p040 ONE_CAM_X3E_p050 ONE_CAM_X3E_p060 ONE_CAM_X3E_p075 ONE_CAM_X3E_p100 ONE_CAM_X3J_p010 ONE_CAM_X3J_p015 ONE_CAM_X3J_p020 ONE_CAM_X3J_p025 ONE_CAM_X3J_p030 ONE_CAM_X3J_p040 ONE_CAM_X3J_p050 ONE_CAM_X3J_p060 ONE_CAM_X3J_p075 ONE_CAM_X3J_p100; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 80"
