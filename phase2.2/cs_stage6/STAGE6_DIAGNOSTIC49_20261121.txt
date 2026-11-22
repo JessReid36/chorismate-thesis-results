@@ -1,0 +1,217 @@
+STAGE 6 - DIAGNOSTIC 49 - PRE-REGISTRATION
+The calibration of DIAGNOSTIC 48, run again so that ORCA ends normally
+================================================================================
+Written 21 November 2026, after D48's result (results commit 31966d77) and before any run of D49.
+On the calibration of D48, Claude offered: "Rerun the 20 with the dipole step switched off, in a new
+folder under its own short pre-registration." Jessica, 21 November 2026: "yes lets do a clean
+version". No committed file used the number 49 for a diagnostic when this was written.
+
+It adopts no rule, opens or closes no size, no distance and no design, and edits nothing of D48.
+D48's own reading of its calibration stays what its result says: "Calibration measured: 0 of 20."
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+D48's part C was to measure what the functions at a charge can bind: one electron, the def2-TZVPD
+functions of a hydrogen atom with no nucleus (a ghost atom), and a bare point charge q 0.01 A from
+their centre, at ten sizes and two levels. All twenty runs converged their SCF and wrote a final
+energy. ORCA then stopped in its property step: the dipole moment it prints by default has a
+nuclear part, there is no nucleus, and the outputs end "ORCA finished by error termination in
+PROPERTIES". D48's committed reader counts a run that does not end normally NOT MEASURED, and D48's
+pre-registration had fixed what follows: "NOT MEASURED at a size: S' is not formed for the
+arrangements that hold that size, and the outcomes above are read on S alone."
+
+Submitting the same job again would run the same inputs to the same end. D48's inputs are committed
+and are not edited. D49 writes new inputs from them, in a new folder, and runs those.
+
+What the calibration is for. D48 defined S' as S with the last term of S, 13.605693122994 x q^2,
+replaced by what these functions bind, and said of it: "S' PREDICTS NOTHING. It is set beside S".
+D48's result leaves three things for it:
+   (a) S did not separate what D48's runs did. Runs took electrons at S up to +0.60 eV and did not
+       at S down to +0.37 eV. Whether the functions account for any of that is what S' shows.
+   (b) Site 1166 carries the smallest charges of part A (0.40 to 0.60 e), where these functions
+       are expected to bind least well.
+   (c) D48, section 6, on the design B_n11_q0.25: "part C says how much that test is worth."
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+D48's twenty systems: HF and CAM, each at ten sizes
+(0.25, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75 and 1.00 e). Each is run in two
+variants: 40 runs, one job (K1, PBS name cm_d49_k1), on one core each, each stopped if it has not
+ended after 900 seconds. The job script is D48's committed run_E1.pbs with its names and its runs
+changed and nothing else. The inputs are written by cs6_d49_prepare.py from D48's committed inputs.
+
+VARIANT N, the D48 input with the dipole moment switched off. Three lines are added to the committed
+input of D48 and nothing else changes: same electron, same functions, same charge, same place. For
+CAM at 0.55 e the input is
+
+      ! UKS CAM-B3LYP def2-TZVPD def2/J RIJCOSX TightSCF
+      %maxcore 3000
+      %scf
+        MaxIter 300
+        Guess HCore
+      end
+      %elprop
+        Dipole false
+      end
+      %pointcharges "pc.pc"
+      * xyz -1 2
+      H: 0.010000 0.000000 0.000000
+      *
+
+with D48's point-charge file beside it.
+
+VARIANT Z, a nucleus in place of the point charge. No point charge and no ghost atom: one hydrogen
+atom whose nuclear charge is set to q on its coordinate line, neutral by ORCA's count, so one
+electron. The functions are the same nine. The charge sits AT their centre and not 0.01 A from it,
+and ORCA has a nucleus for its property step. For HF at 0.25 e the input is
+
+      ! UHF def2-TZVPD TightSCF
+      %maxcore 3000
+      %scf
+        MaxIter 300
+        Guess HCore
+      end
+      * xyz 0 2
+      H 0.000000 0.000000 0.000000 Z = 0.250000
+      *
+
+Neither variant has run in ORCA in this record, and neither could be tried where this was written.
+ORCA's manual describes both keywords (the Dipole keyword of the elprop block; "Z = ..." after an
+atom's coordinates, with values that need not be whole numbers). That is a pointer and not part of
+this record; whether the runs end normally is what the job shows. Two variants are run so that one
+failing does not leave the calibration unmeasured again.
+
+HOW FAR APART THE TWO SHOULD BE, AN ESTIMATE. Moving the charge 0.01 A off the centre of a
+hydrogen-like 1s electron raises the energy by about (2/3) q^4 d^2 hartree with d in bohr: 0.0065 eV
+at 1.00 e, 0.0016 eV at 0.70 e, 0.0004 eV at 0.50 e. So Z should lie below N by no more than that.
+
+HOW LONG, AN ESTIMATE. D48's twenty runs took under four minutes together on hpc1 (its committed
+log). 40 runs: under ten minutes of one node.
+
+--------------------------------------------------------------------------------
+3. THE READINGS
+--------------------------------------------------------------------------------
+27.211386245988 eV per hartree, 13.605693122994 eV per Rydberg, 0.5291772083 A per bohr, as D48.
+
+A RUN IS MEASURED if the committed reader of outputs, cs6_d40.py, reads it as D48's reader read
+D48's calibration: it ends normally, its SCF converged, it reports one electron and one final
+energy, and (variant N) ORCA read one point charge or (variant Z) none. Otherwise it is NOT
+MEASURED, or DID NOT CONVERGE.
+
+B(q), at HF and at CAM, is minus the energy of the one electron, in eV. At each size and level it
+is taken from variant N where that run is measured; otherwise from variant Z where that is
+measured; otherwise it is NOT MEASURED. The result says at each size which variant it is from.
+
+S' of each of D48's 44 runs with a charge is S with 13.605693122994 x q_i^2 replaced by B(CAM) at
+q_i, the smallest over the positive charges, as D48 defines it. S is formed again from the
+committed files by D48's formula and must be the S that d48.tsv holds (gate G49.7). What each run
+did, and how much electron charge left the 24 atoms, are D48's (d48.tsv) and are not read again.
+S' is formed only where B(CAM) is measured at each positive size the arrangement holds.
+
+R49.1  Each of the 40 runs: its status and its energy.
+R49.2  THE CALIBRATION. At each size: 13.6057 q^2, B(HF), B(CAM), the variant each is from, exact
+       minus HF (what the functions lose), CAM minus HF (what the functional adds), exact minus CAM
+       (what S' adds to S). Each size and level at which B is at or below zero, named.
+       Beside it, for comparison: the energies of the two variants and the final energy that D48's
+       own output holds, with Z minus N and N minus D48's. D48's outputs did not end normally;
+       their energies are set beside and are not measured values of D48.
+R49.3  S' beside S for each of D48's 44 runs, with what the run did and the charge that left.
+R49.4  WHETHER S' SEPARATES what D48's runs did, as D48 defines it (the largest value at which a run
+       TOOK ELECTRONS below the smallest at which a run DID NOT TAKE), with the two numbers and, if
+       it does not, the runs between them; and the same for S over the same runs. Runs that D48
+       marks A LEG ONLY are set aside, as in D48; its result has none.
+R49.5  HOW WELL S AND S' ORDER THE CHARGE THAT LEFT. Spearman's rank correlation between the
+       estimate and the electron charge that left the 24 atoms, for S and for S', over the runs of
+       part A (one positive charge) and over all the runs. -1 is a perfect order. No threshold
+       enters it.
+R49.6  WHAT THE TEST OF B_n11_q0.25 WITH FUNCTIONS WAS WORTH, from B(CAM) at 0.25 e:
+          NOT A TEST OF CAPTURE   B at or below zero: the functions hold no electron at 0.25 e
+          A WEAK TEST             B above zero and below half of 13.6057 x 0.25^2
+          A TEST AS IT STANDS     B at half of it or more
+          NOT KNOWN               B not measured
+
+--------------------------------------------------------------------------------
+4. THE GATES: the reader stops, and writes nothing, if one fails
+--------------------------------------------------------------------------------
+G49.1  Every file of d49 is the one listed in d49/INPUT_CHECKSUMS.sha256 (63 files) and is the
+       file cs6_d49_prepare.py forms again from the committed files of D48. No run folder holds a
+       geometry file, and no folder of variant Z a point-charge file.
+G49.2  The files of d49/SOURCES.sha256 (68) and of d48/SOURCES.sha256 are the ones listed.
+G49.3  No file under d31, d33a, d37, d40, d43, d44, d47 or d48, and no table or document of D48,
+       differs from the committed one. The pre-registration given to the reader is the committed
+       one.
+G49.4  The sentences this document quotes from D48 are in D48's documents.
+G49.5  Every output that exists prints, as the input it ran, the committed input beside it.
+G49.6  Every measured run reports nine basis functions.
+G49.7  S of each of D48's 44 runs, formed again here, is the S that d48.tsv holds (to 0.00006 eV).
+A run that is not measured is not a gate.
+
+--------------------------------------------------------------------------------
+5. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+--------------------------------------------------------------------------------
+D49 adopts nothing. D48's result, AMENDMENT 9 and A9.4 stand whatever it shows.
+   BOTH VARIANTS NOT MEASURED at a size: B is not measured there and S' is not formed for the
+      arrangements that hold it. If that is every size, D49 says only that. The final energies in
+      D48's outputs may then be read in a dated note, labelled as read after the fact from outputs
+      that did not end normally.
+   B TAKEN FROM VARIANT Z at a size: the result says so. Where both variants are measured, Z minus N
+      says how much that matters; more than 0.02 eV at any size and the two are not treated as one
+      calibration: S' from Z is then labelled as the charge at the centre.
+   N DIFFERS FROM THE FINAL ENERGY IN D48'S OUTPUT by more than 0.000001 hartree at a size: the
+      result says so. The inputs differ by the dipole switch alone, and no difference is expected.
+   S' SEPARATES what D48's runs did, where S did not: the functions and the functional account for
+      what S left unordered. It is then S', and not S, that describes what a run with these
+      functions shows. A threshold on either is proposed only in a pre-registration of its own,
+      which says which of the two it tests and tests it on conditions not yet run.
+   S' DOES NOT SEPARATE them: what S left unordered is not the functions alone. The runs between
+      the two numbers are listed, and R49.5 says whether S' orders the runs better than S or not.
+   THE PAIR +0.60/-0.60 e AT THE TRANSITION STATE, the one prediction of S that failed: its S' is
+      reported. D48 found that the detachment energy does not account for it. If its S' lies at or
+      above the smallest S' at which a run did not take, the calibration does not account for it
+      either, and the cause stays open: S is not put forward for arrangements, as D48 says.
+   B_n11_q0.25: NOT A TEST OF CAPTURE or A WEAK TEST: its run with functions showed nothing, or
+      little, beyond A9.4. The design stands where A9.4 leaves it, no better and no worse.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D49.1  S' is formed after D48's result was known. It predicts nothing and D49 tests nothing. A
+       separation found now is a description of 44 runs, not a rule.
+D49.2  B is what these nine functions bind. It says what D48's runs with functions could show. It
+       does not say what a complete basis would bind, which is 13.6057 q^2 and is what S uses.
+D49.3  Variant Z has the charge at the centre of the functions and not 0.01 A from it.
+D49.4  One electron and a bare charge: no substrate, no other charge, nothing relaxed.
+D49.5  The final energies in D48's outputs are set beside for comparison. D48's reading of its
+       calibration stays NOT MEASURED.
+D49.6  Neither input has run in ORCA before in this record. If neither ends normally, D49 measures
+       nothing.
+
+--------------------------------------------------------------------------------
+7. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, AND WHAT CLAUDE EXPECTS
+--------------------------------------------------------------------------------
+D48's result was known in full. Its table shows, read after the fact, that the electron charge
+that left the atoms rises as S falls, and that three of the four sites of part A lie near one
+curve while site 1166 lies apart near the threshold. The rehearsal of this reader formed R49.5 for
+S on that table, so those two numbers are known: -0.94 over part A and -0.93 over all the runs.
+
+Three of D48's twenty final energies were seen, in a printout Jessica made on hpc1 on 21 November
+2026 at 17:42 to find why the job had failed: CAM at 0.25 e, +0.0219876991 hartree; HF at 0.25 e,
++0.0224665888; HF at 1.00 e, -0.4997055052. They are not measured values of D48. So B at 0.25 e is
+expected at or below zero, and B at 1.00 e within 0.01 eV of exact. The other seventeen have not
+been read by Claude: the rehearsal of this reader was made on invented energies, and the column of
+D48's energies was not looked at.
+
+Claude expects, and states it so that it can be held against the result:
+   Variant Z ends normally. Variant N: likely, not sure.
+   B below 13.6057 q^2 at every size, by a few tenths of an eV at 0.40 to 0.50 e and by little from
+      0.60 e up. S' is then above S everywhere, most at the small sizes.
+   S' orders the runs of part A better than S (R49.5), site 1166 falling in with the others.
+   The largest S' at which a run took electrons lies above +0.5 eV: the runs take a quarter of an
+      electron while the estimate is still well above zero.
+   The pair at the transition state is not accounted for by the calibration.
+   B_n11_q0.25: NOT A TEST OF CAPTURE.
+
+Files: this document; d49/ (the 40 run folders, RUNS.tsv, SOURCES.sha256, INPUT_CHECKSUMS.sha256,
+run_K1.pbs). Written by cs6_d49_prepare.py; read by cs6_d49.py, committed with this document.

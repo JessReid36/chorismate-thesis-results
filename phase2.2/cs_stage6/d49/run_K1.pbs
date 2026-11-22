@@ -1,0 +1,70 @@
+#!/bin/bash
+#PBS -N cm_d49_k1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d49/run_K1.pbs.out
+# Stage 6 DIAGNOSTIC 49: the calibration of DIAGNOSTIC 48, run again so that ORCA ends normally.
+# This is the only job. It makes 40 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. Restartable:
+#   submitted again, it skips every run that ended normally.
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d49
+cd "$W" || exit 1
+if ! mkdir .running_K1 2>/dev/null; then echo "FAIL: another job holds .running_K1 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_K1" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -s "$d/job.out" ] && grep -q "ORCA TERMINATED NORMALLY" "$d/job.out"; then echo "$1 done before"
+  else ( cd "$d" && timeout -k 10 900 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run ONE_CAM_p025_N
+run ONE_CAM_p040_N
+run ONE_CAM_p045_N
+run ONE_CAM_p050_N
+run ONE_CAM_p055_N
+run ONE_CAM_p060_N
+run ONE_CAM_p065_N
+run ONE_CAM_p070_N
+run ONE_CAM_p075_N
+run ONE_CAM_p100_N
+run ONE_HF_p025_N
+run ONE_HF_p040_N
+run ONE_HF_p045_N
+run ONE_HF_p050_N
+run ONE_HF_p055_N
+run ONE_HF_p060_N
+run ONE_HF_p065_N
+run ONE_HF_p070_N
+run ONE_HF_p075_N
+run ONE_HF_p100_N
+run ONE_CAM_p025_Z
+run ONE_CAM_p040_Z
+run ONE_CAM_p045_Z
+run ONE_CAM_p050_Z
+run ONE_CAM_p055_Z
+run ONE_CAM_p060_Z
+run ONE_CAM_p065_Z
+run ONE_CAM_p070_Z
+run ONE_CAM_p075_Z
+run ONE_CAM_p100_Z
+run ONE_HF_p025_Z
+run ONE_HF_p040_Z
+run ONE_HF_p045_Z
+run ONE_HF_p050_Z
+run ONE_HF_p055_Z
+run ONE_HF_p060_Z
+run ONE_HF_p065_Z
+run ONE_HF_p070_Z
+run ONE_HF_p075_Z
+run ONE_HF_p100_Z
+echo "end=$(date)"
+n=0; for r in ONE_CAM_p025_N ONE_CAM_p040_N ONE_CAM_p045_N ONE_CAM_p050_N ONE_CAM_p055_N ONE_CAM_p060_N ONE_CAM_p065_N ONE_CAM_p070_N ONE_CAM_p075_N ONE_CAM_p100_N ONE_HF_p025_N ONE_HF_p040_N ONE_HF_p045_N ONE_HF_p050_N ONE_HF_p055_N ONE_HF_p060_N ONE_HF_p065_N ONE_HF_p070_N ONE_HF_p075_N ONE_HF_p100_N ONE_CAM_p025_Z ONE_CAM_p040_Z ONE_CAM_p045_Z ONE_CAM_p050_Z ONE_CAM_p055_Z ONE_CAM_p060_Z ONE_CAM_p065_Z ONE_CAM_p070_Z ONE_CAM_p075_Z ONE_CAM_p100_Z ONE_HF_p025_Z ONE_HF_p040_Z ONE_HF_p045_Z ONE_HF_p050_Z ONE_HF_p055_Z ONE_HF_p060_Z ONE_HF_p065_Z ONE_HF_p070_Z ONE_HF_p075_Z ONE_HF_p100_Z; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 40"
