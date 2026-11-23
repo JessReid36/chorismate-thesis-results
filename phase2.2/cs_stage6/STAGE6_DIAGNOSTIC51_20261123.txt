@@ -1,0 +1,351 @@
+STAGE 6 - DIAGNOSTIC 51 - PRE-REGISTRATION
+The calibration of D50 done again, with the integration grid measured
+================================================================================
+Written 23 November 2026, after D50's result (results commit bd2095f5) and D50 NOTE 1 (results
+commit 6e0f1c42), and before any run of D51. Claude told Jessica that morning that D50's word NONE
+had two causes and that its own rule was badly made, and sketched what should come next. Jessica,
+23 November 2026, 09:53: "okay yes and also adress those other issues you listed ie the poorly
+designed test and none issue". Claude then looked into it (section 1) and proposed this diagnostic
+as the first of two steps. Jessica, 10:25: "yes draft." No committed file used the number 51 for a
+diagnostic.
+
+It adopts no rule and opens or closes no size, no distance and no design. D50's result stands as it
+was committed, its word NONE included. AMENDMENT 9, A9.4 and the results of D44, D47, D48, D49 and
+D50 stand whatever this shows.
+
+THIS DOCUMENT, ITS RULE AND WHAT IT EXPECTS WERE WRITTEN WITH D50'S RESULT KNOWN, and after Claude
+had computed the same calibration in a second program. Section 7 gives what is expected, in
+numbers. What D51 adds is the measurement in ORCA, the program that the runs of the dianion use.
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+WHAT D50 SAID. Its rule (R50.3) asked that Hartree-Fock and the functional each hold one electron
+at a bare charge within 0.05 eV of the exact value, at every size from 0.25 e up. Its result:
+"THE FUNCTIONS FOR THE CAPTURE TEST: NONE. No set has a treatment that is adequate at every size
+from 0.25 e up." Its pre-registration had fixed what follows: "THE RULE GIVES NONE: there are no
+functions for the test. The result shows whether the functions fall short (HF) or the way the
+functional is computed does (CAM against HF: the auxiliary basis or the integration grid), and
+the next step mends that one."
+
+WHAT THE RESULT SHOWS OF THAT. The functions do not fall short: Hartree-Fock lies within 0.008 eV
+of exact from 0.25 e up in set X2 (R50.2). The auxiliary basis is not it: treatments A and E, with
+74 and 47 auxiliary functions, give the same value to 0.00002 eV at all twenty sizes
+(d50_calibration.tsv). The grid was not varied in D50. Claude's report of the result to Jessica
+said so and read what remained as the functional's own error. That was half of it.
+
+WHAT WAS READ AFTERWARDS IN D50'S COMMITTED OUTPUTS (DERIVED, post hoc; D50's reader did not read
+this line). ORCA prints how many electrons its integration grid of the functional adds up to,
+N(Total). There is one electron. With treatment A:
+
+   q, e      0.10    0.15    0.20    0.25    0.30    0.40    0.50    0.60    0.75    1.00
+   set X2    0.7957  0.8405  0.8831  0.9203  0.9498  0.9848  0.9970  0.9998  1.0001  1.0000
+   set X3    0.5691  0.7231  0.8332  0.9021  0.9441  0.9845  0.9970  0.9998  1.0001  1.0000
+
+Treatment E prints the same counts. So on a lone ghost atom ORCA's default grid (DefGrid2: 3586
+points on that atom) does not reach the outer part of so diffuse an electron below about 0.5 e. In
+D49, with the def2-TZVPD functions alone, every count is 1.0000.
+
+In D50's runs of the dianion, where the grids of 24 atoms and of the ghost atoms overlap, the
+count falls short of 118 electrons by 0.0002 to 0.0005 in 22 outputs, the plain controls among
+them, and by 0.0082 in the two runs that took electrons (B_n11_q0.25 at R, treatments A and E).
+
+WHAT CLAUDE COMPUTED (in PySCF 2.15.1, a second program; exact integrals, no RI and no COSX; a
+grid that counts the whole electron. COMPUTED BY CLAUDE: not ORCA, not a measurement and not part
+of the record. The script is cs6_d51_expect_pyscf.py, its numbers cs6_d51_expected.py, both
+committed with this document.) Its Hartree-Fock values are ORCA's committed ones to 0.000005 eV at
+all twenty (set, size). With the functional, B in eV:
+
+   q, e   exact     the functional      set X2: D50's ORCA value   set X3: D50's ORCA value
+                    itself minus exact  minus the full-grid value  minus the full-grid value
+   0.10   0.1361    +0.0320             -0.1079                    -0.1646
+   0.15   0.3061    +0.0402             -0.0813                    -0.1150
+   0.20   0.5442    +0.0472             -0.0568                    -0.0729
+   0.25   0.8504    +0.0532             -0.0363                    -0.0424
+   0.30   1.2245    +0.0580             -0.0211                    -0.0229
+   0.40   2.1769    +0.0633             -0.0053                    -0.0053
+   0.50   3.4014    +0.0620             -0.0008                    -0.0008
+   0.60   4.8980    +0.0539             +0.0000                    +0.0000
+   0.75   7.6532    +0.0312             +0.0000                    +0.0000
+   1.00   13.6057   -0.0246             +0.0000                    -0.0000
+
+So D50's word has two causes, and they have opposite signs.
+   THE FUNCTIONAL. CAM-B3LYP itself holds one electron at a bare charge 0.05 to 0.06 eV too
+   strongly from 0.20 to 0.60 e, in a complete basis on a full grid. No functions and no grid
+   change that. This is what D50's rule met at 0.40, 0.50 and 0.60 e, where ORCA's values are
+   right to 0.006 eV.
+   THE GRID. Below 0.40 e ORCA's values are too low, by 0.02 to 0.04 eV at 0.25 and 0.30 e,
+   because part of the electron is not counted. D50's word ADEQUATE at 0.20, 0.25 and 0.30 e came
+   from the two errors cancelling. With the full-grid values D50's own rule would have read
+   NOT ADEQUATE at 0.30 e as well.
+
+A model of ORCA's radial grid, built as ORCA's manual describes it and fitted to ONE number (the
+count of set X2 at 0.25 e), gives back D50's twenty energies with treatment A to 0.0005 or 0.0013
+eV at worst (two models, section 7) and its twenty counts to 0.025. So the grid of the functional
+accounts for what D50's outputs print. The manual (ORCA 6.0, section 7.3, read on the web on 23
+November 2026: a pointer, not part of the record) gives the number of radial points of an atom as
+15 x IntAcc - 40 + b x ROW; IntAcc is 4.388 for the default grid and 4.959 for DefGrid3.
+
+WHAT WAS WRONG WITH D50'S RULE. It held one number, the functional's value in the set, against the
+exact value, and so asked three things at once: whether the functions can hold the electron,
+whether ORCA's grid adds the functional up rightly, and how far the functional itself lies from
+exact. The third is a property of the working level that no functions mend, and the second was
+not looked at. Claude wrote that rule. D51 reads the three apart (section 3).
+
+WHY ONE ELECTRON ONLY, AND NO RUN OF THE DIANION HERE. The pre-registration of D50 sends its two
+outcomes to two things: this one, and "The next diagnostic then puts charges together first". That
+one is some sixty runs of the dianion, ten minutes to an hour each. They should not rest on a grid
+setting that ORCA has not been seen to take, or on functions whose word is NONE. D51 is minutes of
+one job and settles both first.
+
+--------------------------------------------------------------------------------
+2. WHAT IS RUN
+--------------------------------------------------------------------------------
+200 runs in one job (K1), written by cs6_d51_prepare.py from committed files through the committed
+cs6_d50_prepare.py. Every run: one electron, a ghost hydrogen atom 0.01 A from a bare point charge
+q, carrying set X2 (def2-TZVPD hydrogen and an s and a p function at each of 0.035 and 0.012; 17
+functions) or set X3 (also 0.004; 21 functions), at the ten sizes of D50: 0.10, 0.15, 0.20, 0.25,
+0.30, 0.40, 0.50, 0.60, 0.75 and 1.00 e. For each set and size:
+
+   HF     D50's committed Hartree-Fock input, byte for byte.
+   g2     D50's committed input with the functional and auxiliary treatment A, byte for byte.
+          ORCA's default grid.
+   g3     g2 with the keyword DefGrid3.
+   i08    g2 with IntAcc 8 for the grid of the functional.
+   i12    the same with IntAcc 12.
+   i20    the same with IntAcc 20.
+   i40    the same with IntAcc 40.
+   c40    i40 with the three grids of the exchange (COSX) at IntAcc 40 as well.
+   n2     the functional with no RI and no COSX (the keyword NORI in place of def2/J RIJCOSX, and
+          no auxiliary block under the ghost atom); ORCA's default grid.
+   n40    n2 with IntAcc 40.
+
+THE LADDER is g2, g3, i08, i12, i20, i40: the same run with more and more radial points in the
+grid of the functional and nothing else changed. c40, n2 and n40 stand beside it.
+
+Each input is D50's with at most one line changed and one block added. The block, here for c40,
+stands before the line of the point charges:
+
+      %method
+        IntAcc 40.0
+        IntAccX 40.0, 40.0, 40.0
+      end
+
+and the first line of n40 is
+
+      ! UKS CAM-B3LYP def2-TZVPD NORI TightSCF
+
+The prepare script refuses unless what it forms without a change is the committed input of D50 for
+all forty (set, size, HF or g2). Treatments E and J are not run again: E equals A (above), and J
+is NOT ADEQUATE at 0.25 e in D50 for a reason of its own. No run of the dianion is made.
+
+Whether ORCA takes IntAcc 40, three values of IntAccX, or NORI with these inputs has not been
+tried where this was written. A form it refuses fails in seconds and is reported.
+
+THE JOB is D48's committed run_E1.pbs with its names and its runs changed and nothing else, as
+D50's run_K1.pbs was: 8 cores and 48 GB asked, each run stopped after 900 seconds. HOW LONG, AN
+ESTIMATE: D50's 80 runs of this kind took 8 minutes (its committed log). 200 runs, some on grids
+some twenty times larger: under an hour.
+
+IF THE JOB IS CUT SHORT it is collected as it stands, and the runs that did not finish are NOT
+MEASURED. It is not submitted again: a run made a second time would start from the orbitals its
+first attempt left behind and not from its own starting guess (D50 NOTE 1, N1.6).
+
+--------------------------------------------------------------------------------
+3. THE READINGS
+--------------------------------------------------------------------------------
+27.211386245988 eV per hartree, 13.605693122994 eV per Rydberg.
+
+A RUN IS MEASURED if the committed reader of outputs, cs6_d40.py, reads it as D50's reader read
+its runs of one electron: it ends normally, its SCF converged, it reports one electron, one final
+energy and one point charge. Otherwise it is NOT MEASURED, or DID NOT CONVERGE. A rung that asks
+for an IntAcc is NOT AS ASKED, and is not used, if the IntAcc ORCA prints for that grid is not the
+one asked for to 0.0015.
+
+B is minus the energy of the one electron, eV. Exact, in a complete basis, is 13.605693122994 q^2.
+THE COUNT of a run is the last N(Total) ORCA prints: the electrons its grid of the functional adds
+up to. It should be 1.
+
+R51.1  THE RUNS. For Hartree-Fock and for each rung: how many of its 20 runs are measured, the
+       IntAcc ORCA prints, the number of grid points; every run that is not measured, and why.
+R51.2  DOES THE CLUSTER GIVE D50'S NUMBERS AGAIN? The 20 Hartree-Fock runs and the 20 runs of
+       rung g2 are D50's inputs byte for byte. Each energy against the committed energy of the
+       same input in d50: THE SAME if within 0.000001 hartree. If all 40 are the same the rule
+       below is applied. If not, the result says so, prints the ladder, and applies no rule.
+R51.3  THE LADDER. For each set and size: the count and B on each rung, with what Claude's two
+       models of the grid gave beforehand and the full-grid value set beside them.
+R51.4  THE GRID AT EACH SIZE. THE TOP is rung i40 if it is measured, otherwise i20. THE NEXT is
+       the rung of the ladder below the top. CONVERGED if both are measured and their B agree to
+       0.005 eV; NOT CONVERGED if they do not; not decided otherwise. THE LOWEST RUNG THAT SERVES:
+       the first rung of the ladder whose B, and that of every rung above it up to the top, lies
+       within 0.005 eV of the top one.
+R51.5  THE FUNCTIONS. For each set and size: Hartree-Fock against exact; ADEQUATE if within 0.05
+       eV. Hartree-Fock is exact for one electron and uses no grid, so this reads the functions
+       alone. It is D50's own test for Hartree-Fock.
+R51.6  THE FUNCTIONS FOR THE FUNCTIONAL. Where the grid is CONVERGED in both sets: B with the
+       functional in set X2 minus B in set X3, each on its top rung. HOLDS if within 0.05 eV;
+       DOES NOT HOLD if not; not decided where a grid is not converged.
+R51.7  THE RULE. Set X2 is ADEQUATE at a size if R51.2 gave D50's energies again, its
+       Hartree-Fock value is ADEQUATE (R51.5) and the functional HOLDS (R51.6). NOT ADEQUATE if
+       Hartree-Fock is NOT ADEQUATE or the functional DOES NOT HOLD. Otherwise not decided.
+          THE FUNCTIONS FOR THE CAPTURE TEST: SET X2 with auxiliary treatment A if X2 is ADEQUATE
+          at every size from 0.25 e up; NONE if it is NOT ADEQUATE at one of them; NOT DECIDED
+          otherwise.
+          THE GRID FOR A GHOST ATOM: the highest of the lowest rungs that serve (R51.4) over the
+          sizes from 0.25 e up in set X2; none of the ladder if at one of them no rung serves.
+R51.8  THE FUNCTIONAL AGAINST EXACT, reported and not part of the rule: B in set X3 on rung n40
+       and on the top rung, minus exact, at each size, with what Claude computed for a complete
+       basis beside it.
+R51.9  WHAT RI AND COSX ADD: i40 minus n40, c40 minus i40 and g2 minus n2 at each set and size.
+
+The tolerances. 0.05 eV is D50's. 0.005 eV, for the grid, is a tenth of it. Set beside the
+smallest B the rule uses, 0.85 eV at 0.25 e, they are 6 per cent and 0.6 per cent.
+
+WHY THE GRID IS READ BY B AND NOT BY THE COUNT. The far tail of the electron adds little to the
+energy. By Claude's models a count within 0.001 of 1 is not reached at 0.25 e in set X3 on any
+rung here, while B on the two highest rungs agrees to 0.003 eV. The count is printed beside every
+B so that both can be seen.
+
+--------------------------------------------------------------------------------
+4. THE GATES: the reader stops, and writes nothing, if one fails
+--------------------------------------------------------------------------------
+G51.1  Every file of d51 is the one listed in d51/INPUT_CHECKSUMS.sha256 (405 files) and is the
+       file cs6_d51_prepare.py forms again from the committed files.
+G51.2  The files of d51/SOURCES.sha256 (125) are the ones listed.
+G51.3  No file under d48, d49 or d50, and no committed table or document the reader names,
+       differs from the committed one. The pre-registration given to the reader is the
+       committed one.
+G51.4  The sentences this document quotes from D50 are in D50's documents.
+G51.5  Every output that exists prints, as the input it ran, the committed input beside it.
+G51.6  Every measured run reports the basis functions its input asks for: 17 or 21.
+G51.7  D50's forty committed outputs that the runs are set beside are readable.
+A run that is not measured is not a gate.
+
+--------------------------------------------------------------------------------
+5. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+--------------------------------------------------------------------------------
+D51 adopts nothing. D50's result stands whatever it shows.
+   D50'S ENERGIES ARE NOT GIVEN AGAIN (R51.2): something in ORCA or on hpc1 is not as it was on
+      22 November. Nothing is built on the ladder before that is understood.
+   ORCA REFUSES A RUNG: reported. If i40 is refused the top is i20. If i20 is refused too, the
+      grid is not decided at any size and the rule gives NOT DECIDED; the grid is then extended
+      another way, under a short pre-registration of its own.
+   THE GRID IS NOT CONVERGED at a size from 0.25 e up: IntAcc does not reach far enough on a lone
+      ghost atom. The same: another way, under its own pre-registration. No run of the dianion is
+      built on a rung of this ladder.
+   THE RULE GIVES SET X2 AND A RUNG: the next diagnostic places set X2 with treatment A at each
+      positive charge and gives each ghost atom the IntAcc of that rung. That the setting serves
+      on the dianion is not shown here: the next pre-registration reads the count of every run
+      of the dianion and says beforehand how far it may lie from the number of electrons.
+   THE RULE GIVES NONE BY THE FUNCTIONS (Hartree-Fock NOT ADEQUATE at a size from 0.25 e up): it
+      contradicts D50's Hartree-Fock runs of the same inputs, so R51.2 will have failed first.
+   THE RULE GIVES NONE BECAUSE THE FUNCTIONAL DOES NOT HOLD IN X2 WHAT IT HOLDS IN X3: set X2 is
+      too small for this functional at that size, and X3 has no larger set beside it here. A
+      larger set is then measured before any run of the dianion.
+   THE FUNCTIONAL AGAINST EXACT (R51.8): reported. Whatever it is, it is the working level's own
+      error for one electron at one centre and not a fault of the functions. The next
+      pre-registration states it as a limit: a run that takes electrons with a gain in energy
+      not larger than a few times that error is not settled at this level alone.
+   RI OR COSX ADD MORE THAN 0.005 eV at a size from 0.25 e up (R51.9): the ladder with RI and COSX
+      and the rungs without are then not the same thing, and the next pre-registration says which
+      it follows and why.
+   THE COUNTS OR THE ENERGIES LIE FAR FROM CLAUDE'S MODELS: the model of the grid is wrong or ORCA
+      does not build its grid as its manual says. The measured ladder stands; the model is not
+      used again.
+
+--------------------------------------------------------------------------------
+6. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+D51.1  One electron and a bare charge say what the functions, the grid and the functional do for
+       one electron at one centre. They do not say what a run of the dianion does. The p
+       functions are not tested at all.
+D51.2  The grid of a lone ghost atom is not the grid of a molecule. A rung that serves here is
+       the setting to try on the ghost atoms of the dianion. In D50's dianion runs the default
+       grid already missed far less than here (section 1).
+D51.3  The rule's third reading holds set X2 against set X3, not against a complete basis. By
+       Claude's computation X3 lies within 0.0003 eV of a complete basis from 0.20 to 0.40 e
+       with this functional, and within 0.008 eV at every size from 0.20 e up (the most at 1.00
+       e, where the def2-TZVPD functions near the centre are the limit, in both sets alike).
+       That is not a measurement. What the two sets share, the third reading cannot see; R51.5,
+       Hartree-Fock against exact, does.
+D51.4  The functional's error for one electron at one centre is not its error for an electron
+       shared among several charges, nor for the last electron of the dianion.
+D51.5  It does not test D50's finding on the dianion. By section 1 the grid's fault makes an
+       electron at the charges look less bound than the functional has it, so it works against
+       capture; what a larger grid changes in those numbers is NOT KNOWN. Nor does it turn D50's
+       run of +0.25 e at site 1124 into a test of capture. D50.3: "A run that DID NOT TAKE with
+       these functions is a test of capture at 0.25 e only if R50.3 finds the set adequate with
+       the treatment that run used." R50.3 gave NONE, and that stands.
+D51.6  Nothing here was computed with a wall, a second functional, or more than one charge.
+
+--------------------------------------------------------------------------------
+7. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, AND WHAT CLAUDE EXPECTS
+--------------------------------------------------------------------------------
+D50's result and every committed output of D50 were known, and section 1 was computed. No run of
+D51 exists; the rehearsal of the reader was made on invented outputs.
+
+THE TWO MODELS OF THE GRID. Radial points by ORCA's manual, 26 or 31 of them at IntAcc 4.388 (the
+manual does not give b) and 15 more for each unit of IntAcc; one length fitted to the count of set
+X2 at 0.25 e in D50 (0.9558 and 0.9145 bohr). Over D50's twenty runs with treatment A the models
+lie from D50's energies by 0.0005 and 0.0013 eV at worst. What they give for the ladder, as model
+26 / model 31:
+
+   SET X2, the count
+   q, e      g2            g3            i08           i12           i20           i40
+   0.20      0.883/0.883   0.911/0.906   0.968/0.960   0.987/0.982   0.996/0.994   1.000/0.999
+   0.25      0.920/0.920   0.940/0.937   0.979/0.974   0.992/0.988   0.998/0.996   1.000/0.999
+   0.30      0.950/0.950   0.963/0.961   0.987/0.984   0.995/0.993   0.999/0.998   1.000/1.000
+   0.40      0.985/0.985   0.990/0.989   0.997/0.996   0.999/0.998   1.000/0.999   1.000/1.000
+   SET X2, B minus the full-grid value, eV
+   0.20      -0.057/-0.056 -0.039/-0.042 -0.011/-0.015 -0.004/-0.006 -0.001/-0.002 -0.000/-0.000
+   0.25      -0.036/-0.036 -0.025/-0.027 -0.007/-0.009 -0.002/-0.004 -0.001/-0.001 -0.000/-0.000
+   0.30      -0.021/-0.021 -0.014/-0.015 -0.004/-0.005 -0.001/-0.002 -0.000/-0.001 -0.000/-0.000
+   0.40      -0.005/-0.005 -0.003/-0.004 -0.001/-0.001 -0.000/-0.000 -0.000/-0.000 +0.000/+0.000
+
+   SET X3, the count
+   q, e      g2            g3            i08           i12           i20           i40
+   0.20      0.834/0.834   0.865/0.860   0.926/0.917   0.949/0.942   0.965/0.959   0.978/0.973
+   0.25      0.902/0.902   0.923/0.920   0.963/0.957   0.977/0.973   0.986/0.983   0.992/0.990
+   0.30      0.945/0.944   0.958/0.956   0.983/0.979   0.991/0.988   0.995/0.994   0.998/0.997
+   0.40      0.985/0.985   0.990/0.989   0.997/0.996   0.999/0.998   1.000/0.999   1.000/1.000
+   SET X3, B minus the full-grid value, eV
+   0.20      -0.073/-0.073 -0.057/-0.059 -0.028/-0.032 -0.017/-0.020 -0.010/-0.012 -0.005/-0.007
+   0.25      -0.042/-0.042 -0.031/-0.033 -0.013/-0.015 -0.007/-0.009 -0.004/-0.005 -0.002/-0.002
+   0.30      -0.023/-0.023 -0.016/-0.017 -0.006/-0.007 -0.003/-0.004 -0.001/-0.002 -0.000/-0.001
+   0.40      -0.005/-0.005 -0.003/-0.004 -0.001/-0.001 -0.000/-0.000 -0.000/-0.000 +0.000/+0.000
+
+All ten sizes are in d51/EXPECTED.tsv. Applying the readings of section 3 to these numbers:
+
+   MODEL 26. The grid is CONVERGED in X2 at 10 of 10 sizes and in X3 at 8 of 10 (not at 0.10,
+      0.15 e). At 0.25 e the top minus the next is +0.0005 eV in X2 and +0.0020 eV in X3, and
+      X2 minus X3 is -0.0076 eV. The lowest rung that serves in X2, from 0.25 to 1.00 e: i12,
+      i08, g3, g2, g2, g2, g2. X2 by the rule: ADEQUATE at 0.20, 0.25, 0.30, 0.40, 0.50, 0.60,
+      0.75, 1.00 e; NOT ADEQUATE at 0.10, 0.15 e. THE FUNCTIONS FOR THE CAPTURE TEST: SET X2.
+      THE GRID FOR A GHOST ATOM: rung i12.
+   MODEL 31. The grid is CONVERGED in X2 at 10 of 10 sizes and in X3 at 7 of 10 (not at 0.10,
+      0.15, 0.20 e). At 0.25 e the top minus the next is +0.0009 eV in X2 and +0.0025 eV in
+      X3, and X2 minus X3 is -0.0072 eV. The lowest rung that serves in X2, from 0.25 to 1.00
+      e: i12, i12, g3, g2, g2, g2, g2. X2 by the rule: ADEQUATE at 0.25, 0.30, 0.40, 0.50,
+      0.60, 0.75, 1.00 e; NOT ADEQUATE at 0.10, 0.15 e; not decided at 0.20 e. THE FUNCTIONS
+      FOR THE CAPTURE TEST: SET X2. THE GRID FOR A GHOST ATOM: rung i12.
+
+Claude expects, and states it so that it can be held against the result:
+   ORCA takes IntAcc 8, 12 and 20: likely. IntAcc 40: less sure. Three values of IntAccX: not
+      sure. NORI: likely.
+   The Hartree-Fock runs and rung g2 give D50's energies again at all 40.
+   The counts and energies of the ladder lie between the two models or close to them.
+   The grid is CONVERGED at every size from 0.25 e up in both sets, and NOT CONVERGED in set X3
+      at 0.10 e.
+   The functional HOLDS in X2 what it holds in X3 at every size from 0.25 e up, by 0.008 eV at
+      0.25 e and less above.
+   The rule gives SET X2 with treatment A, and rung i12 for a ghost atom.
+   The functional lies from exact by about +0.05 eV at 0.25 e, +0.06 eV from 0.30 to 0.50 e,
+      +0.05 at 0.60, +0.03 at 0.75 and -0.03 at 1.00 e.
+   RI and COSX add less than 0.001 eV on the default COSX grids from 0.50 e up. Below that it is
+      NOT KNOWN: the COSX grids are no larger than the default grid of the functional, and what
+      they miss of a diffuse electron has not been computed. The model reproduces D50 without it.
+
+Files: this document; d51/ (the 200 run folders, RUNS.tsv, RUNGS.tsv, EXPECTED.tsv,
+SOURCES.sha256, INPUT_CHECKSUMS.sha256, run_K1.pbs). Written by cs6_d51_prepare.py; read by
+cs6_d51.py; expectations by cs6_d51_expect_pyscf.py in cs6_d51_expected.py; all four committed
+with this document, with cs6_d51_harvest.sh.
