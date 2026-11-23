@@ -1,0 +1,38 @@
+#!/bin/bash
+#PBS -N cm_d53_k6
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d53/run_K6.pbs.out
+# Stage 6 DIAGNOSTIC 53: charges of 0.25 e together, on the dianion, at two levels.
+# Job K6 of 9: the working functional, without the functions, at TS. It makes 8 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. No run is made twice:
+#   submitted again, it makes only the runs whose folder holds no output yet (D44 NOTE 3).
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d53
+cd "$W" || exit 1
+if ! mkdir .running_K6 2>/dev/null; then echo "FAIL: another job holds .running_K6 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_K6" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -e "$d/job.out" ]; then echo "$1 has an output already: not run again"
+  else ( cd "$d" && timeout -k 10 9000 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run DI6_CAM_GN_TS
+run DI6_CAM_N_s1_TS
+run DI6_CAM_N_pc_TS
+run DI6_CAM_N_pf_TS
+run DI6_CAM_N_t3_TS
+run DI6_CAM_N_f4_TS
+run DI6_CAM_N_x6_TS
+run DI6_CAM_N_d11_TS
+echo "end=$(date)"
+n=0; for r in DI6_CAM_GN_TS DI6_CAM_N_s1_TS DI6_CAM_N_pc_TS DI6_CAM_N_pf_TS DI6_CAM_N_t3_TS DI6_CAM_N_f4_TS DI6_CAM_N_x6_TS DI6_CAM_N_d11_TS; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 8"
