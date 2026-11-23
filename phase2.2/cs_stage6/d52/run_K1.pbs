@@ -1,0 +1,134 @@
+#!/bin/bash
+#PBS -N cm_d52_k1
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d52/run_K1.pbs.out
+# Stage 6 DIAGNOSTIC 52: charges together, one electron first.
+# This job is the only one. It makes 104 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. No run is made twice:
+#   submitted again, it makes only the runs whose folder holds no output yet (D44 NOTE 3).
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d52
+cd "$W" || exit 1
+if ! mkdir .running_K1 2>/dev/null; then echo "FAIL: another job holds .running_K1 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_K1" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -e "$d/job.out" ]; then echo "$1 has an output already: not run again"
+  else ( cd "$d" && timeout -k 10 3600 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run ONE6_HF_X2_s1
+run ONE6_HF_X2_pc
+run ONE6_HF_X2_pf
+run ONE6_HF_X2_t3
+run ONE6_HF_X2_f4
+run ONE6_HF_X2_x6
+run ONE6_HF_X3_s1
+run ONE6_HF_X3_pc
+run ONE6_HF_X3_pf
+run ONE6_HF_X3_t3
+run ONE6_HF_X3_f4
+run ONE6_HF_X3_x6
+run ONE6_CAM_X2_i12_s1
+run ONE6_CAM_X2_i12_pc
+run ONE6_CAM_X2_i12_pf
+run ONE6_CAM_X2_i12_t3
+run ONE6_CAM_X2_i12_f4
+run ONE6_CAM_X2_i12_x6
+run ONE6_CAM_X3_i12_s1
+run ONE6_CAM_X3_i12_pc
+run ONE6_CAM_X3_i12_pf
+run ONE6_CAM_X3_i12_t3
+run ONE6_CAM_X3_i12_f4
+run ONE6_CAM_X3_i12_x6
+run ONE6_CAM_X2_i20_s1
+run ONE6_CAM_X2_i20_pc
+run ONE6_CAM_X2_i20_pf
+run ONE6_CAM_X2_i20_t3
+run ONE6_CAM_X2_i20_f4
+run ONE6_CAM_X2_i20_x6
+run ONE6_CAM_X3_i20_s1
+run ONE6_CAM_X3_i20_pc
+run ONE6_CAM_X3_i20_pf
+run ONE6_CAM_X3_i20_t3
+run ONE6_CAM_X3_i20_f4
+run ONE6_CAM_X3_i20_x6
+run ONE6_CAM_X2_g2_s1
+run ONE6_CAM_X2_z1_s1
+run ONE6_WXV_X2_i12_s1
+run ONE6_WXV_X2_i12_pc
+run ONE6_WXV_X2_i12_pf
+run ONE6_WXV_X2_i12_t3
+run ONE6_WXV_X2_i12_f4
+run ONE6_WXV_X2_i12_x6
+run ONE6_WXV_X2_i20_s1
+run ONE6_WXV_X2_i20_pc
+run ONE6_WXV_X2_i20_pf
+run ONE6_WXV_X2_i20_t3
+run ONE6_WXV_X2_i20_f4
+run ONE6_WXV_X2_i20_x6
+run ONE6_WXV_X3_i20_s1
+run ONE6_WXV_X3_i20_pc
+run ONE6_WXV_X3_i20_pf
+run ONE6_WXV_X3_i20_t3
+run ONE6_WXV_X3_i20_f4
+run ONE6_WXV_X3_i20_x6
+run ONE6_WMV_X2_i12_s1
+run ONE6_WMV_X2_i12_pc
+run ONE6_WMV_X2_i12_pf
+run ONE6_WMV_X2_i12_t3
+run ONE6_WMV_X2_i12_f4
+run ONE6_WMV_X2_i12_x6
+run ONE6_WMV_X2_i20_s1
+run ONE6_WMV_X2_i20_pc
+run ONE6_WMV_X2_i20_pf
+run ONE6_WMV_X2_i20_t3
+run ONE6_WMV_X2_i20_f4
+run ONE6_WMV_X2_i20_x6
+run ONE6_WMV_X3_i20_s1
+run ONE6_WMV_X3_i20_pc
+run ONE6_WMV_X3_i20_pf
+run ONE6_WMV_X3_i20_t3
+run ONE6_WMV_X3_i20_f4
+run ONE6_WMV_X3_i20_x6
+run ONE6_RDS_X2_i12_s1
+run ONE6_RDS_X2_i12_pc
+run ONE6_RDS_X2_i12_pf
+run ONE6_RDS_X2_i12_t3
+run ONE6_RDS_X2_i12_f4
+run ONE6_RDS_X2_i12_x6
+run ONE6_RDS_X2_i20_s1
+run ONE6_RDS_X2_i20_pc
+run ONE6_RDS_X2_i20_pf
+run ONE6_RDS_X2_i20_t3
+run ONE6_RDS_X2_i20_f4
+run ONE6_RDS_X2_i20_x6
+run ONE6_RDS_X3_i20_s1
+run ONE6_RDS_X3_i20_pc
+run ONE6_RDS_X3_i20_pf
+run ONE6_RDS_X3_i20_t3
+run ONE6_RDS_X3_i20_f4
+run ONE6_RDS_X3_i20_x6
+run ONE6_CAM_X2_i40_s1
+run ONE6_CAM_X2_i40_pc
+run ONE6_CAM_X2_i40_pf
+run ONE6_CAM_X2_i40_t3
+run ONE6_CAM_X2_i40_f4
+run ONE6_CAM_X2_i40_x6
+run ONE6_CAM_X3_i40_s1
+run ONE6_CAM_X3_i40_pc
+run ONE6_CAM_X3_i40_pf
+run ONE6_CAM_X3_i40_t3
+run ONE6_CAM_X3_i40_f4
+run ONE6_CAM_X3_i40_x6
+echo "end=$(date)"
+n=0; for r in ONE6_HF_X2_s1 ONE6_HF_X2_pc ONE6_HF_X2_pf ONE6_HF_X2_t3 ONE6_HF_X2_f4 ONE6_HF_X2_x6 ONE6_HF_X3_s1 ONE6_HF_X3_pc ONE6_HF_X3_pf ONE6_HF_X3_t3 ONE6_HF_X3_f4 ONE6_HF_X3_x6 ONE6_CAM_X2_i12_s1 ONE6_CAM_X2_i12_pc ONE6_CAM_X2_i12_pf ONE6_CAM_X2_i12_t3 ONE6_CAM_X2_i12_f4 ONE6_CAM_X2_i12_x6 ONE6_CAM_X3_i12_s1 ONE6_CAM_X3_i12_pc ONE6_CAM_X3_i12_pf ONE6_CAM_X3_i12_t3 ONE6_CAM_X3_i12_f4 ONE6_CAM_X3_i12_x6 ONE6_CAM_X2_i20_s1 ONE6_CAM_X2_i20_pc ONE6_CAM_X2_i20_pf ONE6_CAM_X2_i20_t3 ONE6_CAM_X2_i20_f4 ONE6_CAM_X2_i20_x6 ONE6_CAM_X3_i20_s1 ONE6_CAM_X3_i20_pc ONE6_CAM_X3_i20_pf ONE6_CAM_X3_i20_t3 ONE6_CAM_X3_i20_f4 ONE6_CAM_X3_i20_x6 ONE6_CAM_X2_g2_s1 ONE6_CAM_X2_z1_s1 ONE6_WXV_X2_i12_s1 ONE6_WXV_X2_i12_pc ONE6_WXV_X2_i12_pf ONE6_WXV_X2_i12_t3 ONE6_WXV_X2_i12_f4 ONE6_WXV_X2_i12_x6 ONE6_WXV_X2_i20_s1 ONE6_WXV_X2_i20_pc ONE6_WXV_X2_i20_pf ONE6_WXV_X2_i20_t3 ONE6_WXV_X2_i20_f4 ONE6_WXV_X2_i20_x6 ONE6_WXV_X3_i20_s1 ONE6_WXV_X3_i20_pc ONE6_WXV_X3_i20_pf ONE6_WXV_X3_i20_t3 ONE6_WXV_X3_i20_f4 ONE6_WXV_X3_i20_x6 ONE6_WMV_X2_i12_s1 ONE6_WMV_X2_i12_pc ONE6_WMV_X2_i12_pf ONE6_WMV_X2_i12_t3 ONE6_WMV_X2_i12_f4 ONE6_WMV_X2_i12_x6 ONE6_WMV_X2_i20_s1 ONE6_WMV_X2_i20_pc ONE6_WMV_X2_i20_pf ONE6_WMV_X2_i20_t3 ONE6_WMV_X2_i20_f4 ONE6_WMV_X2_i20_x6 ONE6_WMV_X3_i20_s1 ONE6_WMV_X3_i20_pc ONE6_WMV_X3_i20_pf ONE6_WMV_X3_i20_t3 ONE6_WMV_X3_i20_f4 ONE6_WMV_X3_i20_x6 ONE6_RDS_X2_i12_s1 ONE6_RDS_X2_i12_pc ONE6_RDS_X2_i12_pf ONE6_RDS_X2_i12_t3 ONE6_RDS_X2_i12_f4 ONE6_RDS_X2_i12_x6 ONE6_RDS_X2_i20_s1 ONE6_RDS_X2_i20_pc ONE6_RDS_X2_i20_pf ONE6_RDS_X2_i20_t3 ONE6_RDS_X2_i20_f4 ONE6_RDS_X2_i20_x6 ONE6_RDS_X3_i20_s1 ONE6_RDS_X3_i20_pc ONE6_RDS_X3_i20_pf ONE6_RDS_X3_i20_t3 ONE6_RDS_X3_i20_f4 ONE6_RDS_X3_i20_x6 ONE6_CAM_X2_i40_s1 ONE6_CAM_X2_i40_pc ONE6_CAM_X2_i40_pf ONE6_CAM_X2_i40_t3 ONE6_CAM_X2_i40_f4 ONE6_CAM_X2_i40_x6 ONE6_CAM_X3_i40_s1 ONE6_CAM_X3_i40_pc ONE6_CAM_X3_i40_pf ONE6_CAM_X3_i40_t3 ONE6_CAM_X3_i40_f4 ONE6_CAM_X3_i40_x6; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 104"
