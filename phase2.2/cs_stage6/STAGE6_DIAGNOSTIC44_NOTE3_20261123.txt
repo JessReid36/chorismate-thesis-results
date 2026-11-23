@@ -1,0 +1,150 @@
+STAGE 6, DIAGNOSTIC 44 - NOTE 3: four runs of job RDTZ began, on its second submission, from
+the orbitals that their first attempt had left. What D44's result reads from them, and what
+rests on it
+23 November 2026. The note that AMENDMENT 10 lists as owed (A10.6: "Not yet done: a dated note
+on D44."). Written by Claude after D44's result (results 3f6765ac), its NOTES 1 and 2 and
+AMENDMENT 10 (91ce0a75) were committed. It edits nothing, runs nothing and adopts nothing.
+
+Labels. MEASURED: printed in a committed log or output of D44. DERIVED: formed here from
+committed numbers. POST HOC: read after D44's result was known.
+
+
+N3.1  WHY THIS NOTE
+
+D44's pre-registration, of its jobs: "Every job script is restartable: submitted again, it
+skips every run that ended normally." and, in outcome F3: "A job that was cut short is
+submitted again as it is." D44 NOTE 1 records that this was done for job RDTZ: "It was
+submitted again as it was on 19 November 2026". None of the three says what ORCA starts a run
+from when the run is made a second time in its folder. D50 NOTE 1, N1.6, came upon it while
+looking at something else: "ORCA then starts from it." This note says which runs of D44 that
+concerns and what of D44's result rests on them.
+
+
+N3.2  WHAT HAPPENED (MEASURED)
+
+THE FIRST SUBMISSION, run_RDTZ.pbs.out.part1: "host=comp054.hpc start=Wed Nov 18 10:36:55 SAST
+2026". Three monoanion runs ended without ORCA's line of normal termination:
+
+   RDTZ_B_n02_q1.00_mo_R orca_exit=0 normal=0 Wed Nov 18 22:15:01 SAST 2026
+   RDTZ_B_n02_q1.00_mo_TS orca_exit=0 normal=0 Wed Nov 18 22:46:33 SAST 2026
+   RDTZ_B_n03_q0.75_mo_TS orca_exit=0 normal=0 Thu Nov 19 09:52:21 SAST 2026
+
+The last run the log reports is RDTZ_B_n05_q0.50_di_TS, at 10:20:08 on 19 November. The run
+after it in the script is RDTZ_B_n05_q0.50_ds_R, and then: "=>> PBS: job killed: walltime
+86429 exceeded limit 86400". DERIVED from the start and that walltime: the job was killed at
+about 10:37, so that run was cut about 17 minutes after it began.
+
+THE JOB SCRIPT, run_RDTZ.pbs: "Restartable: submitted again, it skips every run that ended
+normally." Its test is ORCA's line of normal termination in the run's job.out. Every other
+run is made again in the same folder, and its job.out is written over.
+
+THE SECOND SUBMISSION, run_RDTZ.pbs.out: "host=comp050.hpc start=Thu Nov 19 10:49:39 SAST
+2026". It made 13 runs. Four of them had been started before:
+
+   RDTZ_B_n02_q1.00_mo_R orca_exit=0 normal=0 Thu Nov 19 16:54:55 SAST 2026
+   RDTZ_B_n02_q1.00_mo_TS orca_exit=0 normal=0 Thu Nov 19 17:13:24 SAST 2026
+   RDTZ_B_n03_q0.75_mo_TS orca_exit=0 normal=0 Thu Nov 19 21:45:29 SAST 2026
+   RDTZ_B_n05_q0.50_ds_R orca_exit=0 normal=1 Thu Nov 19 22:12:43 SAST 2026
+
+WHAT ORCA DID. In each of the four folders the first attempt had left a file of orbitals,
+job.gbw. The inputs neither ask ORCA to read it nor forbid it. Each of the four outputs
+prints "Checking for AutoStart:", "The File: job.gbw exists", "=> Guess is set to MORead" and
+"INITIAL GUESS: MOREAD". The nine other runs of the second submission print "INITIAL GUESS:
+MODEL POTENTIAL".
+
+THE WHOLE STAGE. d44_note3/restarted_runs.py reads every job.out under phase2.2/cs_stage6,
+2229 of them. These four are the only ones that print "The File: job.gbw exists".
+
+THE FIRST ATTEMPTS ARE NOT KEPT. The committed job.out of each of the four is its second
+attempt. D44's README says of the archive on Jessica's PC that it holds the files "as they
+stood on hpc1 after the jobs had ended", so it holds the second attempts too. Of the first
+attempts the record has the log lines above and nothing else.
+
+
+N3.3  WHAT D44'S RESULT READS FROM THE FOUR (MEASURED, d44.tsv)
+
+THE THREE MONOANION RUNS did not end normally the second time either. ORCA's words:
+   RDTZ_B_n02_q1.00_mo_R    "SCF NOT CONVERGED AFTER 1941 CYCLES"
+   RDTZ_B_n02_q1.00_mo_TS   "Stability equations did not converge!"
+   RDTZ_B_n03_q0.75_mo_TS   "SCF NOT CONVERGED AFTER 1811 CYCLES"
+The result has each as NOT MEASURED, and the fifth leg of B_n02_q1.00 and of B_n03_q0.75 at
+RDTZ as "NOT PASSED: NOT MEASURED".
+
+RDTZ_B_n05_q0.50_ds_R ended normally and is read as measured. It is the dianion of
+B_n05_q0.50 at R with the stability analysis. From it the result takes, in R44.2: the search
+UNSTABLE at its first analysis and STABLE at its last, <S**2> 1.264665, a Loewdin rise of
++1.1586 e, a dipole of 5.98 times the control's, an energy +2.69e-03 Eh above the run
+without the analysis, the word CHARGE MOVED, the two flags "the solution the search ended
+on: relocation: Loewdin rise +1.1586 e" and "the solution the search ended on: dipole 5.98x
+control", and one entry under held, "the solution the search ended on: gap withheld".
+
+
+N3.4  WHAT RESTS ON THEM, AND WHAT DOES NOT
+
+Read on the result's own rules. R44.2: "UNRELIABLE: a flag at either state." R44.5: "It FAILS
+if it is UNRELIABLE, or METASTABLE at a state, or its ddE is OUTSIDE." The header: "VDE =
+E(monoanion) - E(dianion)", and R44.4: "ddE = (E(TS) - E(TS, control)) - (E(R) - E(R,
+control)) on the dianion". At a double hybrid the dianion's energy in both is that of the run
+WITHOUT the stability analysis (di); the result says of the other, "the energy used is the
+restricted one".
+
+B_n05_q0.50 AT RDTZ. Its word on four legs is UNRELIABLE and its word at the level is FAILS.
+   - The run without the analysis at R, begun from ORCA's own guess, is flagged by itself:
+     "relocation: Loewdin rise +1.1202 e; dipole 5.38x control". So is the one at TS (+1.0105 e,
+     5.02x). UNRELIABLE therefore does not rest on the restarted run.
+   - DERIVED by the script from E_di, E_mo and E_control alone: ddE -4.7191 kcal/mol and VDE
+     +3.8724 eV at R, +4.4330 eV at TS, the numbers of the table. Its ddE is OUTSIDE, its
+     fifth leg PASSED. None of these uses a number of the restarted run.
+   - WHAT DOES REST ON THE RESTARTED RUN is its own cell of R44.2 as listed in N3.3, and
+     nothing else in the result. AMENDMENT 9, A9.1, quotes this design's flags at RDTZ at R
+     as they "begin", which is the flag of the run without the analysis.
+
+B_n02_q1.00 AND B_n03_q0.75 AT RDTZ. Each FAILS because it is UNRELIABLE and its ddE is
+OUTSIDE, both from runs begun from ORCA's own guess. What the three monoanion runs add is the
+fifth leg's "NOT PASSED: NOT MEASURED". A measured monoanion could have changed that leg and
+could not have changed FAILS.
+
+SO NO WORD OF D44 ON A DESIGN, A LEVEL OR THE CROSS-CHECK RESTS ON A RUN THAT BEGAN FROM
+LEFT-OVER ORBITALS. D44's result, its NOTES 1 and 2 and AMENDMENTS 9 and 10 stand as they are.
+
+
+N3.5  DID THE START CHANGE WHAT THE ONE FINISHED RUN FOUND? (POST HOC)
+
+MEASURED. The first step of a run with the stability analysis is the same SCF as the run
+without it. In RDTZ_B_n05_q0.50_ds_R that first SCF ended after 2 cycles ("SCF CONVERGED
+AFTER 2 CYCLES") at -834.6780772807833 Eh. RDTZ_B_n05_q0.50_di_R, begun from ORCA's own
+guess, ended its SCF at -834.678077280831 Eh. DERIVED: they differ by 4.8e-11 Eh. In the 11
+other pairs of level RDTZ, where both runs began from ORCA's own guess, the two differ by
+8.2e-11 Eh at most (the script's table).
+
+Everything the result reads from the restarted run came after that point and was computed in
+the second attempt: the first analysis, the search (85 cycles), the last analysis ("The
+stability analysis shows that the wavefunction is stable") and the MP2 step.
+
+THE READING. The left-over orbitals were those of the first SCF, already converged when the
+job was cut, and the run went into its stability analysis from a solution of the same energy
+as the one a run from ORCA's own guess reaches. That is an inference from two energies. The
+same energy to 1e-10 Eh is not a proof of the same orbitals, and what the search would have
+ended on from a fresh start has not been measured.
+
+OF THE THREE MONOANION RUNS nothing of the kind can be read. None converged in either attempt
+and the first attempts' outputs are gone, so why each failed the first time is not known.
+
+
+N3.6  WHAT IS DONE FROM HERE
+
+Nothing is run again. No word rests on these runs (N3.4), and for the one that is read the
+evidence of N3.5 is that the start did not matter.
+
+D44's sentence "A job that was cut short is submitted again as it is" is not carried into a
+later pre-registration as it stands. D50 was handled otherwise (D50 NOTE 1, N1.6: collected
+as it stood). Claude's practice from here, which is not a criterion: a pre-registration that
+lets a run be made a second time says what that run starts from, and its job script makes
+it in a folder that holds no file of the earlier attempt.
+
+
+N3.7  KEPT BESIDE THIS NOTE, IN d44_note3/
+
+   restarted_runs.py            the script. It reads committed files only.
+   restarted_runs_output.txt    its printout, on the tree at results 91ce0a75.
+   SHA256SUMS                   the sha256 of the two.
