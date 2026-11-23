@@ -1,0 +1,260 @@
+STAGE 6, DIAGNOSTIC 50 - NOTE 1: job G2 was cut off at its limit of 24 hours and D50 was
+collected as it stood; and what was looked at in D50's outputs before the committed reader
+read them
+23 November 2026. Written after D50's result was committed (results bd2095f5). It edits
+nothing, runs nothing and adopts nothing. It is a record and a disclosure. Claude told Jessica
+on 22 November 2026 that it would be owed if the job was cut off.
+
+
+N1.1  WHY THIS NOTE
+
+D50 has 106 runs in three jobs. Its result reads 104 of them. The other two were not measured:
+the cluster killed job G2 at its limit of 24 hours while its 12th run of 13 was still going,
+and the 13th never started. The job was not submitted again. D50 was collected as it stood.
+
+The result and the files committed with it show that two runs are missing and what the reader
+made of them. They do not say that the collection was made that way by choice, on whose advice
+and when, or that the unfinished output had been looked at the evening before. This note says
+those things.
+
+
+N1.2  WHAT WAS FIXED BEFORE ANY OUTPUT EXISTED
+
+   The pre-registration, STAGE6_DIAGNOSTIC50_20261122.txt: committed in results c61856e9 on
+   22 November 2026 at 08:24:09 +0200. Its sha256 is
+   6e6b688ec54bb58428de6d54bdb25d58591a4db021a40b3be65a4b4d165252cf.
+
+   The reader, phase2.2/cs6_d50.py, and the script that collects, phase2.2/cs6_d50_harvest.sh:
+   committed in code bfb4e484 at the same time. The reader's sha256 is
+   26876e1696fa986ec83ff6f76809fda2b99979d2b93db83351b6bb4386085db0, the one D50's result
+   prints for the reader that read it. The script's is
+   a7e2e675e7d30563bd678f00b572a36554485879904f632d972999838bdce636.
+
+   The three jobs started after both. Line 1 of each log:
+      run_K1.pbs.out   "host=comp049.hpc start=Sun Nov 22 08:25:11 SAST 2026"
+      run_G1.pbs.out   "host=comp039.hpc start=Sun Nov 22 08:25:11 SAST 2026"
+      run_G2.pbs.out   "host=comp056.hpc start=Sun Nov 22 08:25:12 SAST 2026"
+
+   How a run that does not finish is read was fixed there too. The pre-registration, section
+   3, of a run of the dianion: "DID NOT TAKE: measured, no leg fires, none withheld, and it
+   did not leave the atoms. Otherwise not decided." Section 4: "A run that is not measured is
+   not a gate."
+
+   The pre-registration has no sentence on a job that is cut short. Two committed files have.
+   The job script, d50/run_G2.pbs: "Restartable: submitted again, it skips every run that
+   ended normally." The script that collects, in its heading, of its mode "collect anyway":
+   "the same, for jobs that were cut short or never submitted and that are NOT going to be
+   submitted again. The runs that never ran are then reported NOT MEASURED by the reader."
+   So both ways of dealing with a job cut short were written down before any job ran, and
+   which of them is taken was left open.
+
+   The pre-registration's estimate of the time was wrong for this job. Section 2: "G1 and G2:
+   one and a half to four hours each, more if runs take electrons." G1 took 1 hour 7 minutes.
+   G2 was cut at 24 hours.
+
+
+N1.3  WHAT HAPPENED TO JOB G2
+
+From d50/run_G2.pbs.out and the outputs, as committed with the result. The job, number 429915
+on hpc1, asked for 8 cores and 48 GB for 24 hours, and made its runs one after another:
+
+        run                               ended, 22 November   ORCA's total run time
+    1   G2_C_ctl_R                        08:35:52             10 min 36 s
+    2   CAMTZX_G_n11_q0.25_X2A_di_R       08:45:28              9 min 33 s
+    3   CAMTZX_G_n11_q0.25_X2A_di_TS      08:55:14              9 min 44 s
+    4   CAMTZX_B_n11_q0.25_X2A_di_R       09:52:38             57 min 23 s
+    5   CAMTZX_B_n11_q0.25_X2A_di_TS      10:03:02             10 min 22 s
+    6   CAMTZX_G_n11_q0.25_X2E_di_R       10:12:35              9 min 31 s
+    7   CAMTZX_G_n11_q0.25_X2E_di_TS      10:22:31              9 min 53 s
+    8   CAMTZX_B_n11_q0.25_X2E_di_R       11:21:34             59 min  1 s
+    9   CAMTZX_B_n11_q0.25_X2E_di_TS      11:31:45             10 min  9 s
+   10   CAMTZX_G_n11_q0.25_X2J_di_R       11:41:12              9 min 25 s
+   11   CAMTZX_G_n11_q0.25_X2J_di_TS      11:50:55              9 min 41 s
+   12   CAMTZX_B_n11_q0.25_X2J_di_R       not ended: cut off
+   13   CAMTZX_B_n11_q0.25_X2J_di_TS      never started
+
+After the line of run 11 the log holds: "=>> PBS: job killed: walltime 86418 exceeded limit
+86400". It has no line for run 12 or 13, and it does not reach the line the job script writes
+when it ends.
+
+Run 12 is the design B_n11_q0.25 at R with the auxiliary basis of the ghost atoms left as
+def2/J (treatment J). DERIVED from the log: it started when run 11 ended and was killed 86418
+seconds after the job's start, at 08:25:30 on 23 November, so it had run for 20 hours 34
+minutes. Its committed job.out has 6608 lines and the beginning of one more, and holds:
+
+   line  922   "SCF CONVERGED AFTER 30 CYCLES"
+   line  953   "The stability analysis indicates that the wavefunction is unstable"
+   line 6445   "SCF NOT CONVERGED AFTER 5060 CYCLES"
+   line 6466   "SCF CONVERGED AFTER 3 CYCLES"
+   line 6567   "The stability analysis indicates that the wavefunction is unstable"
+   line 6606   "SCF CONVERGED AFTER 17 CYCLES"
+   its last    "Recomputing exchange energy using gridx3"
+
+It has no final energy. Run 13 is the same at TS: its folder holds its two input files and no
+output.
+
+What the reader made of them, in R50.5 of the result:
+   "CAMTZX_B_n11_q0.25_X2J_di_R: DID NOT CONVERGE: did not terminate normally: * SCF NOT
+   CONVERGED AFTER 5060 CYCLES *; has no final energy"
+   "CAMTZX_B_n11_q0.25_X2J_di_TS: NOT MEASURED: produced no output"
+and for both: "not decided".
+
+DID NOT CONVERGE is the reader's word for an output that does not end normally and holds that
+line. ORCA had not stopped: the run went on after that line, and it was the job's limit that
+ended it. Whether the run would have ended, and with what, is NOT KNOWN.
+
+
+N1.4  EVERY LOOK AT D50'S OUTPUTS BEFORE THE COMMITTED READER READ THEM
+
+Each was a block of commands that Jessica ran on her PC and whose printout she sent to Claude.
+All of them only read.
+
+   when                      block    what it printed                              an energy?
+   22 November 14:31 and     W        for each job, how many of its outputs hold   no
+   23 November, shortly               ORCA's line of normal termination; the
+   before H1; perhaps more            queue
+   often
+   22 November 18:03:28      G2LOOK   for the 11 runs of G2 that had ended: the    YES, two of
+                                      time each ended and ORCA's total run time.   an SCF in
+                                      For run 12, then going: the length and age   progress;
+                                      of its output, counts of its SCF lines,      no final
+                                      seven lines found by a search for what a     energy
+                                      stability analysis said and for words such
+                                      as error, its last 30 lines, and the
+                                      newest files in its folder
+   23 November 08:30:42      H1       the plain collection: it found G2 cut        no
+                                      short and stopped at its second step,
+                                      before anything was downloaded
+
+The time of the first W is from Claude's work log; the others are in the printouts.
+
+What G2LOOK showed. That the design at R had taken 57 and 59 minutes with treatments A and E,
+against 9 to 11 minutes for every other run that had ended. That run 12 had by then an output
+of 2551 lines; that one SCF had converged in it; "The stability analysis indicates that the
+wavefunction is unstable"; and that a second SCF was at its steps 87 and 88, with the energies
+-837.223794438477 Eh and -837.223794747033 Eh, falling by about a millionth of a hartree in a
+step. "CAMTZX_B_n11_q0.25_X2J_di_TS: not started".
+
+CHECKED ON 23 NOVEMBER 2026 AGAINST RESULTS bd2095f5: the 11 total run times in the printout
+are, digit for digit, the last line of that kind in the committed job.out of the same run; the
+11 times of ending agree with the committed log to the minute; the two energies are at lines
+2524 and 2548 of the committed job.out of run 12.
+
+NO FINAL ENERGY, NO CHARGE, NO DIPOLE AND NO GAP OF ANY RUN OF D50 WAS SEEN BEFORE THE
+COMMITTED READER RAN. Of jobs K1 and G1 nothing was seen but the counts of W.
+
+The reader ran once, inside the collection that Jessica started on 23 November 2026 at
+08:34:47. The result was committed at 08:54:43 +0200.
+
+
+N1.5  WHAT CLAUDE MADE OF THE LOOK
+
+From Claude's work log of 22 November 2026, 18:10. It is a note in the project's working
+notes and not a committed file. It is quoted here so that it is on the record that Claude
+held this view before the reader ran.
+
+   That run 12 was alive and converging very slowly, and that the job would in the worst case
+   be cut off during it, so that run 13 would never start. An estimate, from 88 steps in
+   about six hours.
+
+   "So it is likely that the committed reader will find B_n11_q0.25 at R did not simply hold;
+   whether it reads TOOK ELECTRONS, and how, is for the reader." This rested on the 57 and 59
+   minutes of N1.4 and on run 12's first solution being unstable: in D47 and D48, runs of
+   that kind were the ones that took electrons.
+
+No energy in the printout was set beside any other number. The one thing computed from it was
+that estimate of time.
+
+
+N1.6  THE CHOICE: COLLECTED AS IT STOOD, NOT SUBMITTED AGAIN
+
+The plain collection, H1, stopped on 23 November 2026 at 08:30:42 and printed: "STOPPED: these
+jobs did not run to their end: G2. To finish them, run block RS: it submits again each job
+that was cut short, and a job skips every run that ended normally." and, further on: "If they
+are NOT going to be run again, tell Claude: the collection can be made as it stands."
+
+Claude advised the second, and not block RS. By its work log it first named that way on 22
+November 2026 at about 14:36, after the W of 14:31, when all that was known was that 11 of 13
+runs had ended and the job was still going. It advised it outright at about 18:10, after the
+look of N1.4 and before the job was cut, and again when H1 stopped. Jessica ran the block for
+it, H1A, at 08:34:47. H1A is H1 with the script's "collect anyway".
+
+The reasons, as given then:
+   Block RS would start the same slow run again, for up to another 24 hours. (By N1.3 that
+   run had by the end gone 20 hours 34 minutes without ending.)
+   Treatment J is the auxiliary basis left as it is. The rule of R50.3 turns to it only if
+   treatments A and E are not adequate, and the design's four runs with A and E had ended.
+
+What the choice rested on that came from the look: that run 12 was still going and was slow.
+The same could have been read from the committed log once the job was cut, but the advice was
+given the evening before, from the look.
+
+What was NOT known when the choice was made: any result of job K1, and so whether treatment J
+is adequate; any energy or word of any run.
+
+NOT LOOKED INTO THEN, and noted now. The cut run left a file of orbitals, job.gbw, in its
+folder on hpc1 (it is in HPC_MANIFEST.sha256), and its input does not tell ORCA to ignore
+such a file. ORCA then starts from it. D44's committed outputs show that on hpc1: of the 13
+runs that its RDTZ job made on its second submission, the four that had been started before
+each print "The File: job.gbw exists" and "INITIAL GUESS: MOREAD", and the nine that had not
+print "INITIAL GUESS: MODEL POTENTIAL". Every output of D50 prints "INITIAL GUESS: HCORE"
+(the 80 of one electron) or "INITIAL GUESS: MODEL POTENTIAL" (the 25 of the dianion). So "the
+same slow run again" was not right: submitted again, run 12 would have started from where
+the cut run stood and not from the starting guess its first attempt began with. That was not
+a reason for the choice. It is a reason why a run made that way would have had to be
+described as such.
+
+The two runs can still be made, under a dated document of their own. This note does not
+propose it and does not rule it out.
+
+
+N1.7  WHAT RESTS ON THE TWO MISSING RUNS, AND WHAT DOES NOT
+
+From the result as committed (results bd2095f5).
+
+   Not touched: R50.1, R50.2 and R50.3, which read job K1, 80 of 80 runs; R50.4, which reads
+   the 12 controls with the functions and no charge, the two with treatment J in job G2 among
+   them; and the 13 runs of job G1.
+
+   Touched, R50.5: "Runs with charges: 12; took electrons 2, did not take 8, not decided 2."
+   For the design, the ddE with treatment J is "not formed".
+
+   Touched, R50.6: "Every treatment is decided in 6 of 8 runs". For the design, at R and at
+   TS: "A minus J: not formed  E minus J: not formed". So the result does not say whether
+   treatment J gives the same word for the design as treatments A and E do.
+
+   The four runs of the design with treatments A and E are runs 4, 5, 8 and 9 of N1.3. They
+   ended normally before run 12 began, and the result reads them as measured. Nothing that
+   the result says of them rests on the two missing runs.
+
+   Read in the same collection, and so not known when the choice of N1.6 was made: R50.2
+   finds treatment J "NOT ADEQUATE" at 0.25 e in both sets of functions. In set X2 the
+   functional with treatment J holds the electron at +1.1310 eV where exact is 0.8504 eV. And
+   the pre-registration, D50.3: "A run that DID NOT TAKE with these functions is a test of
+   capture at 0.25 e only if R50.3 finds the set adequate with the treatment that run used."
+
+
+N1.8  WHAT THE LOOK CANNOT HAVE SHAPED, AND WHAT IT MAY HAVE
+
+It cannot have shaped D50's inputs, readings, words or tolerances: N1.2. The result says so of
+the inputs in its own gates: G50.1, "all 208 files of d50/INPUT_CHECKSUMS.sha256 are the ones
+listed", and G50.5, "every output that exists prints, as the input it ran, the committed
+input beside it." The code repository stood at bfb4e484 from before the jobs until after the
+reader ran; the collection printed: "The code repository is unchanged: the reader and this
+script were committed before any output was read."
+
+It may have shaped two things. The choice of N1.6, and through it that two runs are absent
+from the result. And what Claude expected of the result before the reader ran (N1.5), which
+is to be kept in mind wherever Claude's account of D50 is weighed.
+
+
+N1.9  KEPT BESIDE THIS NOTE, IN d50_note1/
+
+   g2look_20261122_1803.txt     the printout of G2LOOK, as Jessica sent it
+   collect_20261123_0830.txt    her printout of 23 November: W, H1 (stopped), H1A, and the
+                                two blocks that committed and pushed the result
+   G2LOOK.sh, H1A.sh            the two blocks, as given
+   SHA256SUMS                   the sha256 of each of the four
+
+They are not outputs of D50 and are evidence of one thing only: what was looked at, what was
+run to collect, and when.

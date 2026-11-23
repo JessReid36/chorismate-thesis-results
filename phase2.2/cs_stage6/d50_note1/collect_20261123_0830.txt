@@ -1,0 +1,427 @@
+❯ ssh 18660916@hpc "P=/home/18660916/system_development/phase2.2/cs_stage6/d50; Q=\$(qstat -u 18660916) || { echo 'W: the queue could not be read. Run W again.'; exit 1; }; echo \"\$Q\"; echo; q=0; u=0; w=0; for x in K1:cm_d50_k1 G1:cm_d50_g1 G2:cm_d50_g2; do L=\${x%%:*}; J=\${x##*:}; T=0; n=0; for r in \$(grep '^run ' \$P/run_\$L.pbs | cut -d' ' -f2); do T=\$((T+1)); if grep -q 'ORCA TERMINATED NORMALLY' \$P/\$r/job.out 2>/dev/null; then n=\$((n+1)); fi; done; if echo \"\$Q\" | grep -qw \$J; then s='in the queue'; q=\$((q+1)); elif [ -s \$P/run_\$L.pbs.out ]; then s='has left the queue'; elif [ -e \$P/\$(grep -m1 '^run ' \$P/run_\$L.pbs | cut -d' ' -f2)/job.out ] || [ -e \$P/.running_\$L ]; then s='has left the queue and its log is not written yet'; w=\$((w+1)); else s='NOT SUBMITTED'; u=\$((u+1)); fi; echo \"\$L: \$n of \$T runs ended normally; \$s\"; done; if [ \$u -gt 0 ]; then echo \"W: \$u job(s) are not submitted. Run P5 again: it submits only those.\"; elif [ \$q -gt 0 ]; then echo \"W: \$q job(s) still in the queue. That is expected while they run. Run W again later.\"; elif [ \$w -gt 0 ]; then echo 'W: a job has left the queue and its log is not written yet. Run W again in a minute. If it still says so, send this to Claude.'; else echo 'W: no job of D50 is in the queue. Next: H1, with the hard drive plugged in, whatever the counts above are. H1 checks for itself that every job ran to its end.'; fi"
+
+
+K1: 80 of 80 runs ended normally; has left the queue
+G1: 13 of 13 runs ended normally; has left the queue
+G2: 11 of 13 runs ended normally; has left the queue
+W: no job of D50 is in the queue. Next: H1, with the hard drive plugged in, whatever the counts above are. H1 checks for itself that every job ran to its end.
+❯ bash -c '
+set -u
+stop() { echo; echo "H1 STOPPED: $*"; echo "Nothing is committed. Send Claude everything printed above."; exit 1; }
+echo "H1 at $(date)"
+D=""; n=0
+for d in /media/jess/*/; do [ -d "$d" ] || continue; if [ "$(stat -c %d "$d")" != "$(stat -c %d /media/jess)" ] && [ "$(stat -c %d "$d")" != "$(stat -c %d /home/jess/Downloads)" ]; then D="${d%/}"; n=$((n+1)); fi; done
+[ "$n" = 1 ] || stop "expected exactly one drive under /media/jess and found $n. Is the hard drive plugged in?"
+A="$D/chorismate-hpc-archive"
+[ -d "$A/phase2.2/cs_stage6" ] || stop "the HPC archive is not on the hard drive at $A."
+[ ! -e /home/jess/Desktop/chorismate-hpc-archive ] || stop "an archive folder is on the Desktop again. The archive lives on the hard drive."
+echo "   the archive folder for this collection: $A"
+CS6_ARCHIVE="$A" bash /home/jess/Desktop/chorismate-thesis-code/phase2.2/cs6_d50_harvest.sh collect \
+  && echo "H1 DONE: the outputs are read and the archive is on the hard drive. The result is printed above. Nothing is committed yet. Next: send Claude this printout, then H2." \
+  || echo "H1 STOPPED: nothing is committed. Send Claude everything printed above."
+'
+H1 at Mon Nov 23 08:30:42 AM SAST 2026
+   the archive folder for this collection: /media/jess/KIOXIA/chorismate-hpc-archive
+
+== 1. This PC (d50)
+   results c61856e9ea912d2bc9bcb554644ac78620359fc4
+   code    bfb4e4843d35b0c81e6bee402e8707387cd09b72
+   archive folder /media/jess/KIOXIA/chorismate-hpc-archive
+
+== 2. Have the three jobs ended? (plain qstat output from hpc1 follows)
+   | 
+   | (qstat printed nothing: no jobs of yours are queued or running)
+   K1: the log reaches its last line and the lock is gone: the job ran to its end
+   G1: the log reaches its last line and the lock is gone: the job ran to its end
+   G2: the log does not reach its last line, which the job script writes when it ends.
+   G2: so the job was cut short, most likely by its walltime.
+
+STOPPED: these jobs did not run to their end: G2. To finish them, run block RS: it submits again each job that was cut short, and a job skips every run that ended normally. If a job was never submitted, run block P5 again. If they are NOT going to be run again, tell Claude: the collection can be made as it stands.
+Nothing has been committed and nothing has been pushed. Nothing was deleted, here or on hpc1.
+H1 STOPPED: nothing is committed. Send Claude everything printed above.
+❯ bash -c '
+set -u
+stop() { echo; echo "H1A STOPPED: $*"; echo "Nothing is committed. Send Claude everything printed above."; exit 1; }
+echo "H1A at $(date)"
+D=""; n=0
+for d in /media/jess/*/; do [ -d "$d" ] || continue; if [ "$(stat -c %d "$d")" != "$(stat -c %d /media/jess)" ] && [ "$(stat -c %d "$d")" != "$(stat -c %d /home/jess/Downloads)" ]; then D="${d%/}"; n=$((n+1)); fi; done
+[ "$n" = 1 ] || stop "expected exactly one drive under /media/jess and found $n. Is the hard drive plugged in?"
+A="$D/chorismate-hpc-archive"
+[ -d "$A/phase2.2/cs_stage6" ] || stop "the HPC archive is not on the hard drive at $A."
+[ ! -e /home/jess/Desktop/chorismate-hpc-archive ] || stop "an archive folder is on the Desktop again. The archive lives on the hard drive."
+echo "   the archive folder for this collection: $A"
+CS6_ARCHIVE="$A" bash /home/jess/Desktop/chorismate-thesis-code/phase2.2/cs6_d50_harvest.sh collect anyway \
+  && echo "H1A DONE: the outputs are read as they stand and the archive is on the hard drive. Runs that did not finish are NOT MEASURED. The result is printed above. Nothing is committed yet. Next: send Claude this printout, then H2." \
+  || echo "H1A STOPPED: nothing is committed. Send Claude everything printed above."
+'
+H1A at Mon Nov 23 08:34:47 AM SAST 2026
+   the archive folder for this collection: /media/jess/KIOXIA/chorismate-hpc-archive
+
+== 1. This PC (d50)
+   results c61856e9ea912d2bc9bcb554644ac78620359fc4
+   code    bfb4e4843d35b0c81e6bee402e8707387cd09b72
+   archive folder /media/jess/KIOXIA/chorismate-hpc-archive
+
+== 2. Have the three jobs ended? (plain qstat output from hpc1 follows)
+   | 
+   | (qstat printed nothing: no jobs of yours are queued or running)
+   K1: the log reaches its last line and the lock is gone: the job ran to its end
+   G1: the log reaches its last line and the lock is gone: the job ran to its end
+   G2: the log does not reach its last line, which the job script writes when it ends.
+   G2: so the job was cut short, most likely by its walltime.
+   collect anyway: harvesting as it stands. Runs that never ran will be NOT MEASURED.
+
+== 3. On hpc1: the inputs that ran, the manifest and the archive (this can take several minutes)
+   inputs on hpc1 are the committed ones; 1309 files in the manifest; archive of 1310 members
+   d50 takes 1032 MB on hpc1. Room needed: 1532 MB in the archive folder (it has 887666 MB) and 1532 MB in the work folder /home/jess/Downloads/cs_d50_harvest_work (it has 26449 MB)
+
+== 4. Download, and check the copy against hpc1's
+   /media/jess/KIOXIA/chorismate-hpc-archive/phase2.2/cs_stage6/d50/hpc_all_files_d50.tar.xz  507111368 bytes  sha256 b724b64a850d4ef7208df36cfacb3f8084d11b596732aba8ac664c2feef47a18
+
+== 5. Every member of the archive against hpc1's manifest, and against the repository's committed files
+   all 1310 members match the manifest; all 209 committed files of d50 (the 208 checksummed inputs among them) are the ones hpc1 ran
+
+== 6. Place the text outputs and write the records
+   placed 214 files; job.out present for 105 of 106 run(s), normal termination in 104
+   kept in the PC archive only: job.B.24.tmp, job.C0.tmp, job.C1.tmp, job.E.tmp, job.EIJ.tmp, job.FAO0.tmp, job.FAO1.tmp, job.FMO0.tmp, job.FMO1.tmp, job.H.tmp, job.K.tmp, job.K0.tmp, job.K1.tmp, job.P0.tmp, job.P1.tmp, job.PDAT.tmp, job.POLD0.tmp, job.POLD1.tmp, job.S.tmp, job.SC0.gridx1.tmp, job.SC0.gridx2.tmp, job.SC0.gridx3.tmp, job.SC0.gridx_cis.tmp, job.SHARK.KPRSCR.tmp, job.SHARKINP.tmp, job.SINV.grid_cis_factor.tmp, job.SINV.gridx1_factor.tmp, job.SINV.gridx2_factor.tmp, job.SINV.gridx3_factor.tmp, job.SM12.tmp, job.SP12.tmp, job.SQRTVEXT.tmp, job.SQRTVJ.tmp, job.T.tmp, job.V.tmp, job.VAUXJ.tmp, job.VCDJ.tmp, job.VEXT.tmp, job.VM1EXT.tmp, job.VXC0.tmp, job.VXC1.tmp, job.bas0, job.bas1, job.bas2, job.bas3, job.bas4, job.bas5, job.bibtex, job.citations.tmp, job.cpscfdata.tmp.0, job.densities, job.densitiesinfo, job.diisao.tmp.0, job.diise.tmp.0, job.diist.tmp.0, job.en.tmp, job.fxc_cis1.tmp, job.fxc_cis2.tmp, job.fxc_cis3.tmp, job.fxc_cis4.tmp, job.fxc_cis5.tmp, job.fxc_cis6.tmp, job.fxc_cis7.tmp, job.gbw, job.gpot0.tmp, job.gpot1.tmp, job.gpot2.tmp, job.gpot3.tmp, job.gpot4.tmp, job.gpot5.tmp, job.gpot6.tmp, job.gpot7.tmp, job.grho0.tmp, job.grho1.tmp, job.grho2.tmp, job.grho3.tmp, job.grho4.tmp, job.grho5.tmp, job.grho6.tmp, job.grho7.tmp, job.grho_cis1.tmp, job.grho_cis2.tmp, job.grho_cis3.tmp, job.grho_cis4.tmp, job.grho_cis5.tmp, job.grho_cis6.tmp, job.grho_cis7.tmp, job.grid.tmp, job.grid_cis.tmp, job.gridx1.tmp, job.gridx2.tmp, job.gridx3.tmp, job.gridx_cis.tmp, job.hostnames, job.int.tmp, job.opot0.tmp, job.opot1.tmp, job.opot2.tmp, job.opot3.tmp, job.opot4.tmp, job.opot5.tmp, job.opot6.tmp, job.opot7.tmp, job.orho0.tmp, job.orho1.tmp, job.orho2.tmp, job.orho3.tmp, job.orho4.tmp, job.orho5.tmp, job.orho6.tmp, job.orho7.tmp, job.propint.tmp.0, job.shark_grid.tmp, job.soscfv.tmp.0
+
+== 7. Read: the committed reader, cs6_d50.py
+STAGE 6 - DIAGNOSTIC 50 - RESULT
+Functions at a charge that can hold an electron at 0.25 e
+================================================================================================
+
+Read by cs6_d50.py under STAGE6_DIAGNOSTIC50_20261122.txt, which was committed before any job was submitted.
+   results repository at c61856e9ea91; the pre-registration was added by c61856e9ea91
+   reader               cs6_d50.py           sha256 26876e1696fa986ec83ff6f76809fda2b99979d2b93db83351b6bb4386085db0
+   inputs formed again  cs6_d50_prepare.py   sha256 bdbfce5202644a9e2d31c557377d5139007eccc099a38b00225150af2a4b3f82
+   conditions and S     cs6_d48_prepare.py   sha256 c8f88c9367e9b45d60e696aaf40f9c239b29ad373b12dbdf4b8acbe950a1e88b
+   outputs read by      cs6_d40.py           sha256 5f713ea992d95e599514b8d5d89a6d8b11005259554633f5750083b12219ee5d
+   thresholds and legs  cs6_audit.py         sha256 1dda394a134b3c7265df1898c9b5dc507d01c41d73aa5e59274495a1e7005dea
+   stability by         cs6_d33b.py          sha256 c6a8c3958a4e7532c9e28082b6d8f25c51549c0ea70f06fcf95d1370b3cde2f6
+
+Part C: one electron, a bare charge q, the def2-TZVPD functions of hydrogen with diffuse
+functions added. Part G: the dianion of frame 42436 at CAM-B3LYP-D3BJ/def2-TZVPD with set X2 at
+each positive charge. Legs at D_LW 0.25 e, R_DIP 2.0, GAP_ABS 1.0 eV, R_GAP 0.5, stability on
+the last analysis. D50 adopts nothing: it opens and closes no size, no distance and no design.
+
+THE GATES, as they held:
+   G50.1  all 208 files of d50/INPUT_CHECKSUMS.sha256 are the ones listed, and every file of d50 is the
+          one formed again here from the committed files.
+   G50.2  the 93 files of d50/SOURCES.sha256 are the ones listed.
+   G50.3  no file under d31, d33a, d37, d40, d43, d44, d47, d48, d49,
+          and no committed table or document named here, differs from the committed one; the
+          pre-registration given is the committed one.
+   G50.4  the sentences quoted here are in the documents they are quoted from.
+   G50.5  every output that exists prints, as the input it ran, the committed input beside it.
+   G50.6  every measured run reports the number of basis functions its input asks for.
+   G50.7  S of the two conditions, formed again here, is the S that d47.tsv and d48.tsv hold.
+   G50.8  the committed controls and the committed outputs set beside the runs are readable.
+
+================================================================================================
+R50.1  THE RUNS OF ONE ELECTRON
+================================================================================================
+
+   run                  set  level q, e  status            energy, Eh      basis  auxiliary
+   ONE_HF_X2_p010       X2   HF    0.10  measured          -0.0001427370   17     -
+   ONE_HF_X2_p015       X2   HF    0.15  measured          -0.0090328293   17     -
+   ONE_HF_X2_p020       X2   HF    0.20  measured          -0.0191907936   17     -
+   ONE_HF_X2_p025       X2   HF    0.25  measured          -0.0310371249   17     -
+   ONE_HF_X2_p030       X2   HF    0.30  measured          -0.0449658324   17     -
+   ONE_HF_X2_p040       X2   HF    0.40  measured          -0.0799925971   17     -
+   ONE_HF_X2_p050       X2   HF    0.50  measured          -0.1249840204   17     -
+   ONE_HF_X2_p060       X2   HF    0.60  measured          -0.1799653313   17     -
+   ONE_HF_X2_p075       X2   HF    0.75  measured          -0.2811683382   17     -
+   ONE_HF_X2_p100       X2   HF    1.00  measured          -0.4997181896   17     -
+   ONE_CAM_X2A_p010     X2   CAMA  0.10  measured          0.0025177013    17     74
+   ONE_CAM_X2A_p015     X2   CAMA  0.15  measured          -0.0074190903   17     74
+   ONE_CAM_X2A_p020     X2   CAMA  0.20  measured          -0.0186722090   17     74
+   ONE_CAM_X2A_p025     X2   CAMA  0.25  measured          -0.0315316585   17     74
+   ONE_CAM_X2A_p030     X2   CAMA  0.30  measured          -0.0462633000   17     74
+   ONE_CAM_X2A_p040     X2   CAMA  0.40  measured          -0.0821239328   17     74
+   ONE_CAM_X2A_p050     X2   CAMA  0.50  measured          -0.1272301124   17     74
+   ONE_CAM_X2A_p060     X2   CAMA  0.60  measured          -0.1819433833   17     74
+   ONE_CAM_X2A_p075     X2   CAMA  0.75  measured          -0.2823117192   17     74
+   ONE_CAM_X2A_p100     X2   CAMA  1.00  measured          -0.4988076618   17     74
+   ONE_CAM_X2E_p010     X2   CAME  0.10  measured          0.0025177012    17     47
+   ONE_CAM_X2E_p015     X2   CAME  0.15  measured          -0.0074190902   17     47
+   ONE_CAM_X2E_p020     X2   CAME  0.20  measured          -0.0186722083   17     47
+   ONE_CAM_X2E_p025     X2   CAME  0.25  measured          -0.0315316576   17     47
+   ONE_CAM_X2E_p030     X2   CAME  0.30  measured          -0.0462633006   17     47
+   ONE_CAM_X2E_p040     X2   CAME  0.40  measured          -0.0821239445   17     47
+   ONE_CAM_X2E_p050     X2   CAME  0.50  measured          -0.1272301557   17     47
+   ONE_CAM_X2E_p060     X2   CAME  0.60  measured          -0.1819434866   17     47
+   ONE_CAM_X2E_p075     X2   CAME  0.75  measured          -0.2823118937   17     47
+   ONE_CAM_X2E_p100     X2   CAME  1.00  measured          -0.4988080410   17     47
+   ONE_CAM_X2J_p010     X2   CAMJ  0.10  measured          -0.0173032375   17     11
+   ONE_CAM_X2J_p015     X2   CAMJ  0.15  measured          -0.0245173104   17     11
+   ONE_CAM_X2J_p020     X2   CAMJ  0.20  measured          -0.0324474235   17     11
+   ONE_CAM_X2J_p025     X2   CAMJ  0.25  measured          -0.0415624889   17     11
+   ONE_CAM_X2J_p030     X2   CAMJ  0.30  measured          -0.0528560028   17     11
+   ONE_CAM_X2J_p040     X2   CAMJ  0.40  measured          -0.0848267930   17     11
+   ONE_CAM_X2J_p050     X2   CAMJ  0.50  measured          -0.1281467399   17     11
+   ONE_CAM_X2J_p060     X2   CAMJ  0.60  measured          -0.1822082025   17     11
+   ONE_CAM_X2J_p075     X2   CAMJ  0.75  measured          -0.2823414058   17     11
+   ONE_CAM_X2J_p100     X2   CAMJ  1.00  measured          -0.4988085568   17     11
+   ONE_HF_X3_p010       X3   HF    0.10  measured          -0.0045217575   21     -
+   ONE_HF_X3_p015       X3   HF    0.15  measured          -0.0111999297   21     -
+   ONE_HF_X3_p020       X3   HF    0.20  measured          -0.0199985068   21     -
+   ONE_HF_X3_p025       X3   HF    0.25  measured          -0.0312480264   21     -
+   ONE_HF_X3_p030       X3   HF    0.30  measured          -0.0449976799   21     -
+   ONE_HF_X3_p040       X3   HF    0.40  measured          -0.0799931240   21     -
+   ONE_HF_X3_p050       X3   HF    0.50  measured          -0.1249841568   21     -
+   ONE_HF_X3_p060       X3   HF    0.60  measured          -0.1799657983   21     -
+   ONE_HF_X3_p075       X3   HF    0.75  measured          -0.2811687012   21     -
+   ONE_HF_X3_p100       X3   HF    1.00  measured          -0.4997192313   21     -
+   ONE_CAM_X3A_p010     X3   CAMA  0.10  measured          0.0004125477    21     87
+   ONE_CAM_X3A_p015     X3   CAMA  0.15  measured          -0.0083933405   21     87
+   ONE_CAM_X3A_p020     X3   CAMA  0.20  measured          -0.0190463853   21     87
+   ONE_CAM_X3A_p025     X3   CAMA  0.25  measured          -0.0316449168   21     87
+   ONE_CAM_X3A_p030     X3   CAMA  0.30  measured          -0.0462868155   21     87
+   ONE_CAM_X3A_p040     X3   CAMA  0.40  measured          -0.0821231924   21     87
+   ONE_CAM_X3A_p050     X3   CAMA  0.50  measured          -0.1272300554   21     87
+   ONE_CAM_X3A_p060     X3   CAMA  0.60  measured          -0.1819432862   21     87
+   ONE_CAM_X3A_p075     X3   CAMA  0.75  measured          -0.2823121279   21     87
+   ONE_CAM_X3A_p100     X3   CAMA  1.00  measured          -0.4988078481   21     87
+   ONE_CAM_X3E_p010     X3   CAME  0.10  measured          0.0004125455    21     56
+   ONE_CAM_X3E_p015     X3   CAME  0.15  measured          -0.0083933406   21     56
+   ONE_CAM_X3E_p020     X3   CAME  0.20  measured          -0.0190463851   21     56
+   ONE_CAM_X3E_p025     X3   CAME  0.25  measured          -0.0316449171   21     56
+   ONE_CAM_X3E_p030     X3   CAME  0.30  measured          -0.0462868169   21     56
+   ONE_CAM_X3E_p040     X3   CAME  0.40  measured          -0.0821232032   21     56
+   ONE_CAM_X3E_p050     X3   CAME  0.50  measured          -0.1272300990   21     56
+   ONE_CAM_X3E_p060     X3   CAME  0.60  measured          -0.1819433987   21     56
+   ONE_CAM_X3E_p075     X3   CAME  0.75  measured          -0.2823123281   21     56
+   ONE_CAM_X3E_p100     X3   CAME  1.00  measured          -0.4988083941   21     56
+   ONE_CAM_X3J_p010     X3   CAMJ  0.10  measured          -0.0174981419   21     11
+   ONE_CAM_X3J_p015     X3   CAMJ  0.15  measured          -0.0245106622   21     11
+   ONE_CAM_X3J_p020     X3   CAMJ  0.20  measured          -0.0324193578   21     11
+   ONE_CAM_X3J_p025     X3   CAMJ  0.25  measured          -0.0415567888   21     11
+   ONE_CAM_X3J_p030     X3   CAMJ  0.30  measured          -0.0528598079   21     11
+   ONE_CAM_X3J_p040     X3   CAMJ  0.40  measured          -0.0848275388   21     11
+   ONE_CAM_X3J_p050     X3   CAMJ  0.50  measured          -0.1281469685   21     11
+   ONE_CAM_X3J_p060     X3   CAMJ  0.60  measured          -0.1822080339   21     11
+   ONE_CAM_X3J_p075     X3   CAMJ  0.75  measured          -0.2823418691   21     11
+   ONE_CAM_X3J_p100     X3   CAMJ  1.00  measured          -0.4988087485   21     11
+
+   Measured: 80 of 80.
+      HF:                    20 of 20
+      CAM with treatment A:  20 of 20
+      CAM with treatment E:  20 of 20
+      CAM with treatment J:  20 of 20
+================================================================================================
+R50.2  WHAT THE SETS HOLD AT A CHARGE q
+================================================================================================
+
+B is minus the energy of the one electron, eV. Exact, in a complete basis: 13.6057 q^2.
+'computed' is the Hartree-Fock value Claude computed for the pre-registration, with the charge
+at the centre of the functions; the runs have it 0.01 A away. A, E, J: the functional with the
+three treatments of the ghost atom's auxiliary basis. A word under each: ADEQUATE if the HF run
+and that run both hold within 0.05 eV of exact.
+
+SET X2: def2-TZVPD hydrogen and an s and a p function at each of 0.035, 0.012 (17 functions).
+   q, e   exact     B, HF      computed   B, CAM A   B, CAM E   B, CAM J   exact-HF   A            E            J
+   0.10   0.1361    +0.0039    +0.0039    -0.0685    -0.0685    +0.4708    +0.1322    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.15   0.3061    +0.2458    +0.2458    +0.2019    +0.2019    +0.6672    +0.0603    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.20   0.5442    +0.5222    +0.5222    +0.5081    +0.5081    +0.8829    +0.0220    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.25   0.8504    +0.8446    +0.8446    +0.8580    +0.8580    +1.1310    +0.0058    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.30   1.2245    +1.2236    +1.2236    +1.2589    +1.2589    +1.4383    +0.0009    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.40   2.1769    +2.1767    +2.1767    +2.2347    +2.2347    +2.3083    +0.0002    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.50   3.4014    +3.4010    +3.4011    +3.4621    +3.4621    +3.4871    +0.0004    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.60   4.8980    +4.8971    +4.8974    +4.9509    +4.9509    +4.9581    +0.0009    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.75   7.6532    +7.6510    +7.6517    +7.6821    +7.6821    +7.6829    +0.0022    ADEQUATE     ADEQUATE     ADEQUATE
+   1.00   13.6057   +13.5980   +13.6008   +13.5732   +13.5733   +13.5733   +0.0077    ADEQUATE     ADEQUATE     ADEQUATE
+   HF measured against computed: formed at 10 of 10 sizes; the largest difference is 0.00282 eV.
+   CAM A minus HF: formed at 10 of 10 sizes; the largest is -0.0724 eV (0.10 e).
+   CAM E minus HF: formed at 10 of 10 sizes; the largest is -0.0724 eV (0.10 e).
+   CAM J minus HF: formed at 10 of 10 sizes; the largest is +0.4670 eV (0.10 e).
+
+SET X3: def2-TZVPD hydrogen and an s and a p function at each of 0.035, 0.012, 0.004 (21 functions).
+   q, e   exact     B, HF      computed   B, CAM A   B, CAM E   B, CAM J   exact-HF   A            E            J
+   0.10   0.1361    +0.1230    +0.1230    -0.0112    -0.0112    +0.4761    +0.0130    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.15   0.3061    +0.3048    +0.3048    +0.2284    +0.2284    +0.6670    +0.0014    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.20   0.5442    +0.5442    +0.5442    +0.5183    +0.5183    +0.8822    +0.0000    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.25   0.8504    +0.8503    +0.8503    +0.8611    +0.8611    +1.1308    +0.0001    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.30   1.2245    +1.2244    +1.2245    +1.2595    +1.2595    +1.4384    +0.0001    ADEQUATE     ADEQUATE     NOT ADEQUATE
+   0.40   2.1769    +2.1767    +2.1768    +2.2347    +2.2347    +2.3083    +0.0002    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.50   3.4014    +3.4010    +3.4011    +3.4621    +3.4621    +3.4871    +0.0004    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.60   4.8980    +4.8971    +4.8974    +4.9509    +4.9509    +4.9581    +0.0009    NOT ADEQUATE NOT ADEQUATE NOT ADEQUATE
+   0.75   7.6532    +7.6510    +7.6517    +7.6821    +7.6821    +7.6829    +0.0022    ADEQUATE     ADEQUATE     ADEQUATE
+   1.00   13.6057   +13.5981   +13.6009   +13.5733   +13.5733   +13.5733   +0.0076    ADEQUATE     ADEQUATE     ADEQUATE
+   HF measured against computed: formed at 10 of 10 sizes; the largest difference is 0.00282 eV.
+   CAM A minus HF: formed at 10 of 10 sizes; the largest is -0.1343 eV (0.10 e).
+   CAM E minus HF: formed at 10 of 10 sizes; the largest is -0.1343 eV (0.10 e).
+   CAM J minus HF: formed at 10 of 10 sizes; the largest is +0.3622 eV (0.15 e).
+
+================================================================================================
+R50.3  THE FUNCTIONS FOR THE CAPTURE TEST, BY THE RULE
+================================================================================================
+
+The rule, fixed before the runs: for a set, the first treatment in the order A, E, J that is
+ADEQUATE at every size from 0.25 e up. The set is X2 if the rule gives it a treatment, otherwise
+X3.
+
+   X2: NO TREATMENT is adequate at every size from 0.25 e up
+      A  adequate without a break from 0.75 e up; not at 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+      E  adequate without a break from 0.75 e up; not at 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+      J  adequate without a break from 0.75 e up; not at 0.25 e (NOT ADEQUATE), 0.30 e (NOT ADEQUATE), 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+   X3: NO TREATMENT is adequate at every size from 0.25 e up
+      A  adequate without a break from 0.75 e up; not at 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+      E  adequate without a break from 0.75 e up; not at 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+      J  adequate without a break from 0.75 e up; not at 0.25 e (NOT ADEQUATE), 0.30 e (NOT ADEQUATE), 0.40 e (NOT ADEQUATE), 0.50 e (NOT ADEQUATE), 0.60 e (NOT ADEQUATE)
+
+   THE FUNCTIONS FOR THE CAPTURE TEST: NONE. No set has a treatment that is adequate at every size from 0.25 e up.
+
+================================================================================================
+R50.4  THE DIANION WITH THE FUNCTIONS AND NO CHARGE
+================================================================================================
+
+Each control holds set X2 at the ghost centres of its condition and no charge, and is read
+against the plain committed control of its state (d44/CAMTZ_C_ctl). THE CONTROL HOLDS if the
+dipole, the gap and the stability legs do not fire and none is withheld; DOES NOT HOLD if one
+fires. 'left' is the electron charge missing from the 24 atoms' Loewdin charges against that
+control and 'on the functions' the sum of the Loewdin charges ORCA gives the ghost atoms: a way
+of dividing the density, reported beside the word and not part of it. dE: the energy against the
+plain control, and against D48's control with the def2-TZVPD functions of hydrogen at the same
+centres, eV.
+
+   job G1: its plain control reproduces the committed energy (2.96e-12 Eh apart) and is STABLE
+   job G2: its plain control reproduces the committed energy (0.00e+00 Eh apart) and is STABLE
+
+   run                            st status            basis  aux    left, e   on functs  gap, eV  HOMO, eV dE plain  dE D48    stability     the control
+   CAMTZX_G_s1124_X2A_di_R        R  measured          699    946    +0.0376   -0.0376    3.8860   -0.539   -0.0003   -0.0001   STABLE/STABLE HOLDS
+   CAMTZX_G_s1124_X2A_di_TS       TS measured          699    946    +0.0420   -0.0420    3.7138   -0.324   -0.0003   -0.0000   STABLE/STABLE HOLDS
+   CAMTZX_G_s1124_X2E_di_R        R  measured          699    919    +0.0376   -0.0376    3.8859   -0.539   -0.0003   -0.0001   STABLE/STABLE HOLDS
+   CAMTZX_G_s1124_X2E_di_TS       TS measured          699    919    +0.0420   -0.0420    3.7136   -0.324   -0.0003   -0.0000   STABLE/STABLE HOLDS
+   CAMTZX_G_s1124_X2J_di_R        R  measured          699    883    +0.0376   -0.0376    3.8821   -0.540   -0.0006   -0.0004   STABLE/STABLE HOLDS
+   CAMTZX_G_s1124_X2J_di_TS       TS measured          699    883    +0.0420   -0.0420    3.7097   -0.325   -0.0007   -0.0004   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2A_di_R    R  measured          784    1316   +0.1988   -0.1988    3.6909   -0.539   -0.0017   -0.0003   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2A_di_TS   TS measured          784    1316   +0.2112   -0.2112    3.4925   -0.325   -0.0018   -0.0004   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2E_di_R    R  measured          784    1154   +0.1988   -0.1988    3.6909   -0.539   -0.0018   -0.0004   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2E_di_TS   TS measured          784    1154   +0.2112   -0.2112    3.4924   -0.325   -0.0019   -0.0004   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2J_di_R    R  measured          784    938    +0.1990   -0.1990    3.6918   -0.541   -0.0031   -0.0016   STABLE/STABLE HOLDS
+   CAMTZX_G_n11_q0.25_X2J_di_TS   TS measured          784    938    +0.2113   -0.2113    3.4914   -0.327   -0.0031   -0.0017   STABLE/STABLE HOLDS
+
+   The control HOLDS in 12 of 12 runs, DOES NOT HOLD in 0, is not decided in 0.
+   In no control that holds do the Loewdin charges give the functions 0.25 e or more.
+
+================================================================================================
+R50.5  THE DIANION WITH THE FUNCTIONS AND THE CHARGES
+================================================================================================
+
+Each run is read against the control that holds the same functions and no charge, as D48 read
+its runs. S is D47's estimate, formed from the committed maps; it uses 13.6057 q^2 and predicts
+DID NOT TAKE at +0.5 eV or more. 'gain' is the energy the functions add when the charges are
+there beyond what they add without them, eV: (run minus its control) minus (the committed run of
+the same charges without functions minus the plain control).
+
+   run                                st status            left, e   gain, eV  gap, eV  four legs   the run        how                S, eV   S predicts    prediction
+   CAMTZX_A_s1124_p025_X2A_di_R       R  measured          +0.0021   -0.0003   3.7382   NOT FLAGGED DID NOT TAKE   -                  +3.02   DID NOT TAKE  borne out
+   CAMTZX_A_s1124_p025_X2A_di_TS      TS measured          +0.0028   -0.0004   3.5873   NOT FLAGGED DID NOT TAKE   -                  +2.64   DID NOT TAKE  borne out
+   CAMTZX_A_s1124_p025_X2E_di_R       R  measured          +0.0021   -0.0002   3.7382   NOT FLAGGED DID NOT TAKE   -                  +3.02   DID NOT TAKE  borne out
+   CAMTZX_A_s1124_p025_X2E_di_TS      TS measured          +0.0028   -0.0004   3.5872   NOT FLAGGED DID NOT TAKE   -                  +2.64   DID NOT TAKE  borne out
+   CAMTZX_A_s1124_p025_X2J_di_R       R  measured          +0.0021   -0.0002   3.7357   NOT FLAGGED DID NOT TAKE   -                  +3.02   DID NOT TAKE  borne out
+   CAMTZX_A_s1124_p025_X2J_di_TS      TS measured          +0.0028   -0.0004   3.5849   NOT FLAGGED DID NOT TAKE   -                  +2.64   DID NOT TAKE  borne out
+   CAMTZX_B_n11_q0.25_X2A_di_R        R  measured          +0.5205   -0.0898   2.7211   FLAGGED     TOOK ELECTRONS ONTO THE FUNCTIONS +1.49   DID NOT TAKE  NOT BORNE OUT
+   CAMTZX_B_n11_q0.25_X2A_di_TS       TS measured          +0.0392   -0.0057   1.5953   NOT FLAGGED DID NOT TAKE   -                  +1.02   DID NOT TAKE  borne out
+   CAMTZX_B_n11_q0.25_X2E_di_R        R  measured          +0.5205   -0.0898   2.7211   FLAGGED     TOOK ELECTRONS ONTO THE FUNCTIONS +1.49   DID NOT TAKE  NOT BORNE OUT
+   CAMTZX_B_n11_q0.25_X2E_di_TS       TS measured          +0.0392   -0.0057   1.5953   NOT FLAGGED DID NOT TAKE   -                  +1.02   DID NOT TAKE  borne out
+   CAMTZX_B_n11_q0.25_X2J_di_R        R  DID NOT CONVERGE  -         -         -        FLAGGED     not decided    -                  +1.49   DID NOT TAKE  not decided
+   CAMTZX_B_n11_q0.25_X2J_di_TS       TS NOT MEASURED      -         -         -        NOT MEASURED not decided    -                  +1.02   DID NOT TAKE  not decided
+
+   CAMTZX_B_n11_q0.25_X2A_di_R: dipole 2.38x control
+   CAMTZX_B_n11_q0.25_X2A_di_R: held: gap withheld
+   CAMTZX_B_n11_q0.25_X2A_di_R: the ghost centre that gained most is at site 1073: -0.1593 e
+      against its control
+   CAMTZX_B_n11_q0.25_X2E_di_R: dipole 2.38x control
+   CAMTZX_B_n11_q0.25_X2E_di_R: held: gap withheld
+   CAMTZX_B_n11_q0.25_X2E_di_R: the ghost centre that gained most is at site 1073: -0.1593 e
+      against its control
+   CAMTZX_B_n11_q0.25_X2J_di_R: did not converge
+   CAMTZX_B_n11_q0.25_X2J_di_R: DID NOT CONVERGE: did not terminate normally: *        SCF NOT
+      CONVERGED AFTER 5060 CYCLES         *; has no final energy
+   CAMTZX_B_n11_q0.25_X2J_di_TS: NOT MEASURED: produced no output
+
+   A_s1124_p025: site 1124, the site every design of D43 shares
+      ddE with the functions, treatment A: -1.3019 kcal/mol; without functions (committed runs): -1.2991 kcal/mol; difference -0.0029
+      ddE with the functions, treatment E: -1.3019 kcal/mol; without functions (committed runs): -1.2991 kcal/mol; difference -0.0028
+      ddE with the functions, treatment J: -1.3019 kcal/mol; without functions (committed runs): -1.2991 kcal/mol; difference -0.0028
+   B_n11_q0.25: D43 design, RELIABLE in D44 at def2-TZVPD; sites 557,1124,534,1073,1107,1359,1421,417,1460,1005,1052
+      ddE with the functions, treatment A: -7.5715 kcal/mol; without functions (committed runs): -9.5106 kcal/mol; difference +1.9392
+      ddE with the functions, treatment E: -7.5717 kcal/mol; without functions (committed runs): -9.5106 kcal/mol; difference +1.9389
+      ddE with the functions, treatment J: not formed; without functions (committed runs): -9.5106 kcal/mol; difference not formed
+      gain with D48's def2-TZVPD functions at the same centres (committed runs): R -0.0042 eV, TS -0.0044 eV
+
+   Runs with charges: 12; took electrons 2, did not take 8, not decided 2.
+   Predictions of S: borne out 8, NOT borne out 2, none made 0, not decided 2.
+      NOT BORNE OUT: CAMTZX_B_n11_q0.25_X2A_di_R: S +1.49 eV predicted DID NOT TAKE; the run TOOK ELECTRONS, ONTO THE FUNCTIONS.
+      NOT BORNE OUT: CAMTZX_B_n11_q0.25_X2E_di_R: S +1.49 eV predicted DID NOT TAKE; the run TOOK ELECTRONS, ONTO THE FUNCTIONS.
+
+================================================================================================
+R50.6  THE TREATMENTS OF THE AUXILIARY BASIS, ON THE DIANION
+================================================================================================
+
+The same run with each treatment: its energy minus that of treatment J, eV, and what each run
+did.
+
+   control G_s1124          R   A minus J: +0.00030    E minus J: +0.00030     A: HOLDS           E: HOLDS           J: HOLDS
+   control G_s1124          TS  A minus J: +0.00039    E minus J: +0.00037     A: HOLDS           E: HOLDS           J: HOLDS
+   A_s1124_p025             R   A minus J: +0.00029    E minus J: +0.00029     A: DID NOT TAKE    E: DID NOT TAKE    J: DID NOT TAKE
+   A_s1124_p025             TS  A minus J: +0.00038    E minus J: +0.00036     A: DID NOT TAKE    E: DID NOT TAKE    J: DID NOT TAKE
+   control G_n11_q0.25      R   A minus J: +0.00132    E minus J: +0.00125     A: HOLDS           E: HOLDS           J: HOLDS
+   control G_n11_q0.25      TS  A minus J: +0.00136    E minus J: +0.00129     A: HOLDS           E: HOLDS           J: HOLDS
+   B_n11_q0.25              R   A minus J: not formed  E minus J: not formed   A: TOOK ELECTRONS  E: TOOK ELECTRONS  J: not decided
+   B_n11_q0.25              TS  A minus J: not formed  E minus J: not formed   A: DID NOT TAKE    E: DID NOT TAKE    J: not decided
+
+   Every treatment is decided in 6 of 8 runs; the largest energy difference from J is 0.00136 eV.
+   Where every treatment is decided, they give the same word.
+
+================================================================================================
+WHAT THIS CANNOT SAY (section 6 of the pre-registration, in short; its own words govern)
+================================================================================================
+
+   One electron and a bare charge say what the functions hold. They do not say what a run of the
+   dianion does.
+   Part G is one site and one design, at R and TS, one frame, frozen geometries, in vacuo, bare
+   point charges. It is not the test of the inner sites, of the chemical groups or of charges
+   placed together; that is the next diagnostic.
+   A run that DID NOT TAKE with these functions is a test of capture at 0.25 e only if R50.3
+   finds the set adequate with the treatment that run used.
+   S is an estimate. D48 found that S does not separate what its runs did, and D50 adopts
+   nothing: no size, no distance and no design is opened or closed here.
+   The Loewdin charge of a diffuse function is a way of dividing the density, not a count of
+   electrons that moved; the control with the same functions is what each run is read against.
+
+One electron measured: 80 of 80. The functions for the capture test, by the rule: NONE. The control with the functions and no charge: holds in 12 of 12 runs, does not hold in 0. Runs with charges: took electrons 2 of 12 (CAMTZX_B_n11_q0.25_X2A_di_R, CAMTZX_B_n11_q0.25_X2E_di_R), did not take 8, not decided 2. Predictions of S: borne out 8, not borne out 2, not decided 2.
+
+== COLLECTED (d50). Nothing is committed yet.
+   The result is /home/jess/Desktop/chorismate-thesis-results/phase2.2/cs_stage6/STAGE6_DIAGNOSTIC50_RESULT_20261123.txt
+   The commit message that the next step will use is /home/jess/Downloads/cs_d50_harvest_work/commit_message_results.txt
+   The next step is: bash /home/jess/Desktop/chorismate-thesis-code/phase2.2/cs6_d50_harvest.sh commit
+H1A DONE: the outputs are read as they stand and the archive is on the hard drive. Runs that did not finish are NOT MEASURED. The result is printed above. Nothing is committed yet. Next: send Claude this printout, then H2.
+❯ bash ~/Desktop/chorismate-thesis-code/phase2.2/cs6_d50_harvest.sh commit \
+  && echo "H2 DONE: the D50 result is committed in the results repository. Nothing is pushed yet. Next: H3." \
+  || echo "H2 STOPPED: nothing was committed. Send Claude everything printed above."
+
+results committed: bd2095f5 [retained-final] d50 result: functions at a charge that can hold an electron at 0.25 e
+The code repository is unchanged: the reader and this script were committed before any output was read.
+Nothing has been pushed.
+H2 DONE: the D50 result is committed in the results repository. Nothing is pushed yet. Next: H3.
+❯ R=~/Desktop/chorismate-thesis-results && \
+[ -z "$(git -C "$R" status --porcelain --untracked-files=all)" ] && \
+[ "$(git -C "$R" rev-parse HEAD~1)" = "$(git -C "$R" rev-parse origin/main)" ] && \
+git -C "$R" log -1 --format=%s | grep -q "^\[retained-final\] d50 result" && \
+git -C "$R" push origin main && \
+echo "H3 DONE: the D50 result is on GitHub. That is the last block. Tell Claude it is pushed." \
+  || echo "H3 STOPPED: a guard did not pass or the push was refused."
+Enumerating objects: 436, done.
+Counting objects: 100% (435/435), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (331/331), done.
+Writing objects: 100% (332/332), 629.23 KiB | 2.16 MiB/s, done.
+Total 332 (delta 202), reused 1 (delta 1), pack-reused 0
+remote: Resolving deltas: 100% (202/202), completed with 3 local objects.
+To github.com:JessReid36/chorismate-thesis-results.git
+   c61856e9..bd2095f5  main -> main
+H3 DONE: the D50 result is on GitHub. That is the last block. Tell Claude it is pushed.
+~/Downloads                                                                                                                 took 7s
+❯ 
