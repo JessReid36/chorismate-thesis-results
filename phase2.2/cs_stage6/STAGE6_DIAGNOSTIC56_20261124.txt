@@ -1,0 +1,170 @@
+STAGE 6 - DIAGNOSTIC 56 - PRE-REGISTRATION
+The search on the committed grid: designs of at most 0.25 e a site, each measured at two levels
+================================================================================================
+
+24 November 2026. Written by Claude under AMENDMENT 11 and committed with it, before the search
+has been run on the committed coefficients and before any input of d56 exists. Results
+repository at 4471e380d353, code at b127e2ccaa2d.
+
+Jessica, 24 November 2026, 11:41: "okay yes please build that, but ensure you incorperate those
+tests correctly"
+
+--------------------------------------------------------------------------------
+1. WHY
+--------------------------------------------------------------------------------
+The optimiser has never been run on the committed grid, and no design of it has been read by the
+five legs at def2-TZVPD (A11.3). D56 does both. It asks: of the designs the search ranks best at
+first order, which are SURVIVORS by A9.4 (i), and up to how many charges?
+
+--------------------------------------------------------------------------------
+2. THE SEARCH, FIXED NOW
+--------------------------------------------------------------------------------
+The program is the committed cs_opt_milp.py, called by cs6_d56_prepare.py. Nothing below is
+chosen with a design in sight.
+
+   sites and admitted signs   sites_f42436.tsv, as Stage 5 built it (2626 sites)
+   coefficients               A_f42436_d33a.tsv, the working level, one frame; L is zero
+   largest charge at a site   0.25 e (A11.5, item 3); 1488 sites then admit a charge
+   spacing                    3.25 A between any two charges (Stage 5)
+   budget                     set where it cannot bind (A11.5, item 7)
+   sum of the charges         zero or more (A11.5, item 6)
+   numbers of charges         3, 4, 5, 6, 8, 10, 12, 15, 20
+   designs kept at each       3, best first, each with at least one charge more than 1.5 A from
+                              every charge of each better one (decision O7)
+   optimality                 a design is taken only if the solver proves it optimal
+
+The numbers of charges and the three designs at each are Claude's proposal, to keep the cost
+near that of D44; they are Jessica's to change before she commits this. With a linear score and
+a cap every charge goes to +0.25 or -0.25 e unless the rule on the sum holds one back, so the
+designs differ in where the charges stand and in their signs. The score grows with the number of
+charges by construction; that is why each number is read by itself.
+
+THE ORDER OF EVENTS. This document, AMENDMENT 11, the three programs and a11/ are committed and
+pushed. Only then is the search run, by Jessica, from the committed program; it writes d56/ with
+DESIGNS.tsv and every input, and that is committed and pushed before anything is copied to hpc1.
+The reader checks that the designs were committed after this document.
+
+--------------------------------------------------------------------------------
+3. WHAT IS RUN
+--------------------------------------------------------------------------------
+For each of the 27 designs: the dianion and the monoanion with its charges, at R and TS, at the
+working level CAM-B3LYP-D3BJ/def2-SVPD and at CAM-B3LYP-D3BJ/def2-TZVPD (8 runs). The eight
+controls without a charge. 224 runs in 10 jobs: C0 with the controls, and one job for each
+number of charges. Every input is a committed input, unchanged: d31/ctl_R/job.inp,
+d40/B_bare_R/job.inp, d43/B_n11_q0.25_di_R/job.inp, d43/B_n11_q0.25_mo_R/job.inp,
+d44/CAMTZ_B_n02_q0.50_di_R/job.inp, d44/CAMTZ_B_n02_q0.50_mo_R/job.inp,
+d44/CAMTZ_C_bare_R/job.inp, d44/CAMTZ_C_ctl_R/job.inp. The job script is D53's committed one
+with its names, its runs and its caps changed: 8 cores, 48 GB, the limit of 24 hours, no queue
+named, no run made a second time in its folder. The cap of one run is 1800 s at the working
+level and 5000 s at def2-TZVPD; at its caps a job would run 22.7 hours.
+
+ESTIMATE of the cost, not a measurement: 45 to 90 job-hours on 8 cores, 6 to 12 hours by the
+clock if the ten jobs start together. By ORCA's own run times in the committed outputs, D43's
+runs at the working level took 266 to 1030 s and D44's and D53's runs of 0.25 e designs at
+def2-TZVPD 453 to 1416 s. Two of Claude's estimates this week were too low. Disk on hpc1: about
+5 GB.
+
+--------------------------------------------------------------------------------
+4. THE READINGS, FIXED NOW
+--------------------------------------------------------------------------------
+   R56.1  THE RUNS AND THE CONTROLS. A run is measured as D53's reader measures a dianion; a
+          monoanion is read for its energy and its last stability analysis. Each control is said
+          to reproduce the committed run of the same input if its energy lies within 1e-6 Eh of
+          it. The count of electrons (D53's bound, 0.02 e) is reported and is not a leg.
+
+   R56.2  THE FOUR LEGS, at each level, against the control of that level and state, by the
+          committed functions of cs6_d53.py and the committed thresholds of cs6_audit.py, in
+          D43's words: RELIABLE, no flag at either state and the gap and the stability analysis
+          read at both; UNRELIABLE, a flag at either state, where not converging is a flag;
+          INCONCLUSIVE, no flag and a gap withheld or a stability analysis not read; NOT
+          CLASSIFIED, no flag and a state not measured.
+
+   R56.3  THE FIFTH LEG, by AMENDMENT 6, at each level: the detachment energy is the monoanion's
+          energy minus the dianion's with the same charges; BOUND if above zero and the
+          monoanion's last stability analysis is STABLE, METASTABLE if at or below zero. "A
+          design PASSES THE FIFTH LEG if it is BOUND at both states."
+
+   R56.4  ddE AND THE TOLERANCE, by D44's convention: WITHIN if the def2-TZVPD ddE differs from
+          the working-level ddE by less than 15 % of it, OUTSIDE if by 15 % or more in either
+          direction, NOT ASSESSABLE if the working-level ddE is below 3.2 kcal/mol, NOT FORMED
+          if a number is missing. At def2-TZVPD a design PASSES if it is RELIABLE, passes the
+          fifth leg and is WITHIN; FAILS if it is UNRELIABLE, METASTABLE at either state or
+          OUTSIDE; is OPEN otherwise.
+
+   R56.5  THE WORD. A9.4 (i): a design is a SURVIVOR OF THE SEARCH, and nothing more, "only if
+          it passes the five legs at the working level AND, at CAM-B3LYP-D3BJ/def2-TZVPD, is
+          RELIABLE on four legs, passes the fifth leg, and has a ddE that is WITHIN the
+          tolerance of its ddE at the working level." Otherwise it is NOT A SURVIVOR, with FAILS
+          or OPEN beside it. The survivors are listed by their working-level ddE, and for each
+          number of charges the best-ranked survivor is named.
+
+--------------------------------------------------------------------------------
+5. THE GATES. IF ONE FAILS THE READER STOPS AND WRITES NOTHING
+--------------------------------------------------------------------------------
+   G56.1  Every file of d56 is the one formed again from the committed files and the committed
+          DESIGNS.tsv, and every design obeys the rules of section 2.
+
+   G56.2  The files d56/SOURCES.sha256 lists are the committed ones.
+
+   G56.3  No file under d31, d40, d43, d44 or d53, and no committed table or document the reader
+          names, differs from the committed one; the pre-registration given is this one, as
+          committed; the designs were committed after it.
+
+   G56.4  The words quoted from AMENDMENT 6, AMENDMENT 9 and Jessica are in the documents they
+          are quoted from.
+
+   G56.5  Every output that exists prints, as the input it ran, the committed input beside it.
+
+   G56.6  Every measured run reports the basis functions of its level: 402 and 682.
+
+   G56.7  THE READING FUNCTIONS REPRODUCE THE RECORD. Applied to the committed outputs of D43
+          and D44, they give, for each of the six designs at the working level and at CAMTZ, the
+          four-legs word, the fifth-leg word and the ddE of d43.tsv and d44.tsv, and at CAMTZ
+          the agreement and the word at the level. Claude ran this check on 24 November 2026
+          before this was written: all 48 are reproduced.
+
+--------------------------------------------------------------------------------
+6. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+--------------------------------------------------------------------------------
+   (a)  THERE ARE SURVIVORS. At most the ten with the largest lowering go to the runs of A11.5,
+        item 5 (functions at the charges, and the helium wall), under their own pre-
+        registration, then to the cross-check of AMENDMENT 7. No ddE of D56 is quoted as a
+        result.
+
+   (b)  SURVIVORS UP TO SOME NUMBER OF CHARGES AND NONE ABOVE IT. That number is reported as
+        where designs of 0.25 e stop holding on this grid, by these twenty-seven designs. It is
+        not a rule for arrangements.
+
+   (c)  NO DESIGN IS A SURVIVOR. It is reported. No setting of section 2 is changed with this
+        result in hand except by a dated amendment that says what is changed and in which
+        direction.
+
+   (d)  A design is OPEN because a run is not measured. It stays OPEN. No run is made again in
+        its folder.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS CANNOT SAY
+--------------------------------------------------------------------------------
+   One frame, frozen geometries, in vacuo. No barrier here is a prediction of a physical
+   barrier.
+
+   The charges are bare points and stand for no residue. No basis function stands at a charge
+   and no wall is in any run of D56.
+
+   Twenty-seven designs ranked at first order by one set of coefficients. A design the search
+   did not keep is not measured, and the ranking at first order is not the ranking of the
+   measured ddE.
+
+   A SURVIVOR is not a result: the cross-check and the reference have not been run on it.
+
+   The cap of 0.25 e is where the record shows no sign; it is not a measured limit.
+
+--------------------------------------------------------------------------------
+8. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, AND WHAT CLAUDE EXPECTS
+--------------------------------------------------------------------------------
+Known: every committed result to D54, and the counts of A11.2. Not known: any design of the
+search. CLAUDE EXPECTS survivors at the smaller numbers of charges, where the record's runs of
+0.25 e designs (up to eleven charges and 1.5 e of positive charge) show no sign, and is not sure
+of twelve charges and more; and expects the fifth leg to take away designs in which negative
+charges outweigh the positive ones near a carboxylate even though their sum is zero or more. It
+is reported as found, whichever way it comes out.
