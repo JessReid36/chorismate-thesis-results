@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N cm_d54_k2
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d54/run_K2.pbs.out
+# Stage 6 DIAGNOSTIC 54: the design at the second level, from two starts.
+# Job K2 of 2: the capture solution as start at R: the working functional (the control), then Hartree-Fock. It makes 2 runs in the order below; a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. No run is made twice:
+#   submitted again, it makes only the runs whose folder holds no output yet (D44 NOTE 3).
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d54
+cd "$W" || exit 1
+if ! mkdir .running_K2 2>/dev/null; then echo "FAIL: another job holds .running_K2 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_K2" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -e "$d/job.out" ]; then echo "$1 has an output already: not run again"
+  else ( cd "$d" && timeout -k 10 18000 "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run DI7_CAM_S_d11_R
+run DI7_HF_S_d11_R
+echo "end=$(date)"
+n=0; for r in DI7_CAM_S_d11_R DI7_HF_S_d11_R; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 2"
