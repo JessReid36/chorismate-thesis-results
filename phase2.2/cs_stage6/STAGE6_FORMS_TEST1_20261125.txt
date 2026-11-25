@@ -1,0 +1,134 @@
+STAGE 6 - FORMS TEST 1: does ORCA 6.0.1 on hpc1 accept each new form of input that the work
+after D56 needs. PRE-REGISTRATION.
+
+25 November 2026. Claude drafted this text; it takes effect when Jessica commits it, with the
+inputs of forms1/ and the programs cs6_forms1_prepare.py, cs6_forms1.py and
+cs6_forms1_harvest.sh, before any job of it is submitted. It is hers to change before she
+commits it.
+
+It names no design, forms no change of a barrier and adopts nothing. Nothing committed is edited
+by it.
+
+
+1. WHY
+
+AMENDMENT 13, A13.4 item 9: "A short test of the new forms of input on hpc1, which reads no
+number of a design, comes first." Jessica agreed on 25 November to the order that puts it first:
+"ok yes proceed"
+
+The packages that follow need forms of input that have not run on hpc1 at the method of D56: a
+helium wall on a positive charge beside a bare negative one, as A12.4 item 5 places it; the
+published capping block of A12.3 item 5 (a core potential with no core electrons); the walls at
+def2-TZVPD; Na+ and K+, and their functions alone, at CAM-B3LYP-D3BJ at both basis sets; an
+energy with its gradient with bare point charges; and the potential of the control with one
+electron removed at given points, which the map of the hold on the electron of A13.3 (E) needs.
+Each is tried once here, so that a refusal costs a short job and not a diagnostic.
+
+
+2. WHAT IS RUN
+
+The substrate of frame 42436 at R exactly as D56 ran it (d56/SV_C_ctl_R/substrate.xyz), the
+method line of D56 at def2-SVPD (SV) and def2-TZVPD (TZ). The probe stands at site 1954 of
+sites_f42436.tsv and the negative charge of the first run at site 1612: the two cation-layer
+sites at which A_REPORT.txt checked the map by finite differences. NOT AT SITE 1690, which
+DIAGNOSTIC 3 used and D57's measurement against real ions will use: this test reads no number
+there.
+
+The helium block is copied from the committed d23/he_d16_S6-10_wall0_R/job.inp and the neon
+block from the committed additivity/def2-SVP/n10_wall0_R/job.inp. The capping block is the one
+A12.3 item 5 transcribes: "N_core 0, lmax f, one Gaussian for each of s (exponent 1.732,
+coefficient 14.676), p (1.115, 5.1757) and d (1.203, -1.816), f zero"; it is written on a centre
+labelled Na>, as D57 is to write it beside Na+. The ions and their ghosts are written as
+DIAGNOSTIC 3's committed inputs wrote them (pauli/def2-SVPD/M2_Na_R and M4_ghostNa_R), with
+D56's method line. The control with one electron removed is D56's committed
+d56/SV_C_bare_R/job.inp, unchanged, in a new folder; then orca_vpot gives its potential at the
+first five points of d33a/points.xyz, as D33's committed run.pbs ran it.
+
+   run            job  cap s  form
+   SV_wallpos_R   F1   1200  helium wall on a positive charge, a bare negative charge beside it
+                               (%pointcharges)
+   SV_shi_R       F1   1200  the published capping block (N_core 0) on a coreless centre that
+                               carries +1 e, written Na> as D57 will write it
+   SV_Na_R        F1   1200  Na+ as an atom of the calculation
+   SV_K_R         F1   1200  K+ as an atom of the calculation
+   SV_ghostNa_R   F1   1200  the functions of Na with no nucleus and no electrons
+   SV_ghostK_R    F1   1200  the functions of K with no nucleus and no electrons
+   SV_engrad_R    F1   2400  energy and gradient with %pointcharges (expects job.engrad and
+                               job.pcgrad)
+   SV_mono_R      F1   1800  the control with one electron removed, as D56 ran it, then
+                               orca_vpot at five sites
+   TZ_wallHe_R    F2   3000  helium wall carrying +1 e at def2-TZVPD
+   TZ_wallNe_R    F2   3000  neon wall carrying +1 e at def2-TZVPD
+   TZ_shi_R       F2   3000  the published capping block at def2-TZVPD
+   TZ_Na_R        F3   3000  Na+ as an atom at def2-TZVPD
+   TZ_K_R         F3   3000  K+ as an atom at def2-TZVPD
+   TZ_ghostNa_R   F3   3000  the functions of Na alone at def2-TZVPD
+   TZ_ghostK_R    F3   3000  the functions of K alone at def2-TZVPD
+
+Three jobs, each D56's committed run_C0.pbs with its names, runs and caps changed; F1 also
+carries the potential step of D33's committed run.pbs. 8 cores and 48 GB, six hours, no queue
+named. A run that reaches its cap is stopped by it. No run is made a second time in its folder,
+and a job that is cut short is not submitted again.
+
+NOT TESTED HERE. The sphere of the committed charge model (a point charge with the Lennard-Jones
+shell, run as an atom of the force field) has run on hpc1 in an energy with its gradient (d34)
+and in relaxations (relax/), so its form needs no test. A wall in a relaxation, and a wall
+beside a sphere, belong to the pilot's own package, which follows D57's measurement against real
+ions.
+
+
+3. THE READING, FIXED NOW
+
+For each run the reader cs6_forms1.py gives a status: NOT RUN (no output); REFUSED (an output,
+and no SCF begun); ACCEPTED AND ENDED NORMALLY; ACCEPTED, STOPPED AT ITS CAP (the job log gives
+exit 124); ACCEPTED, DID NOT END NORMALLY. Then it checks, from the output, what the form was
+written to do:
+   - the number of electrons: 118 with the dianion alone, a wall or a ghost; 128 with Na+; 136
+     with K+; 117 for the control with one electron removed;
+   - the number of point charges read: 1 in SV_wallpos_R, 2 in SV_engrad_R, none elsewhere;
+   - the centre that carries a core potential: He> in SV_wallpos_R and TZ_wallHe_R, Ne> in
+     TZ_wallNe_R, Na> in the two runs of the capping block, none elsewhere;
+   - the basis functions: the substrate's own (402 at def2-SVPD, 682 at def2-TZVPD, as D56's
+     gate G56.6 has them) where no functions were added, and more than that with an ion or a
+     ghost;
+   - SV_engrad_R: job.engrad holds 24 atoms and 72 gradient values. job.pcgrad is reported and
+     decides nothing;
+   - SV_mono_R: its final energy is within 1e-6 Eh of D56's committed SV_C_bare_R energy in
+     d56.tsv, and vpot.out holds the five points with a potential at each.
+
+THE WORD of each run: WORKS if it ended normally and every check holds; ACCEPTED, NOT FINISHED
+if the SCF began, it did not end normally and the checks that come before the SCF hold (not
+available to SV_engrad_R and SV_mono_R, whose checks need the end: for them it is NOT SETTLED);
+CHECK FAILED if a check does not hold; REFUSED; NOT SETTLED if it did not run.
+
+THE GATES. GF.1 the pre-registration given is this committed document; GF.2 the two programs are
+the committed ones; GF.3 every input of forms1/ is the file the committed cs6_forms1_prepare.py
+forms from the committed files; GF.4 every output that exists echoes the committed input beside
+it. If a gate fails the reader writes nothing.
+
+
+4. WHAT EACH WORD SENDS THE NEXT STEP TO, DECIDED NOW
+
+WORKS: the form is used, as tested, in the packages that follow. ACCEPTED, NOT FINISHED: the
+form may be used, and the package that uses it sets its cap with this run's time in view and
+says so. REFUSED, CHECK FAILED or NOT SETTLED: the form is not used in any later package until a
+dated note says how it is mended and a run shows it. In every case the result is committed, and
+nothing of it is quoted as a number of a design.
+
+
+5. WHAT THIS CANNOT SAY
+
+WORKS says that ORCA did with the input what the input asked. It does not say that a wall
+behaves like a real ion: that is D57's measurement. The energies of these runs are those of one
+probe at one site of one frame; apart from the check of SV_mono_R against D56, none is read and
+none is quoted.
+
+
+6. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, WHAT CLAUDE EXPECTS, AND THE COST
+
+Known: every committed result to D56, D56 NOTE 1 and AMENDMENT 13. CLAUDE EXPECTS every form to
+work, and is least sure of three things: how long the walls take to converge at def2-TZVPD;
+whether ORCA writes job.pcgrad in the form the reader looks for, which decides nothing; and
+whether orca_vpot reads the density of an open-shell run as it read D33's closed-shell ones.
+COST, AN ESTIMATE: three jobs that run side by side; at their caps they would take 3.2, 2.5 and
+3.3 hours; Claude's estimates have been too low. DIRECTION: none on any barrier.
