@@ -1,0 +1,47 @@
+#!/bin/bash
+#PBS -N cm_d57_w5
+#PBS -l select=1:ncpus=8:mem=48gb
+#PBS -l walltime=24:00:00
+#PBS -m ae
+#PBS -M 18660916@sun.ac.za
+#PBS -j oe
+#PBS -o /home/18660916/system_development/phase2.2/cs_stage6/d57/run_W5.pbs.out
+# Stage 6 DIAGNOSTIC 57: D56's best-ranked failed designs behind the wall, and the wall against real ions (AMENDMENT 12).
+# Job W5 of 9. It makes 16 runs in the order below (name, cap in s); a run that fails does not stop the ones after it.
+# No -q: the allocation is automatic and walltime 24:00:00 routes to day. The job script is D56's committed run_C0.pbs
+# with its names, runs and caps changed. No run is made twice:
+#   submitted again, it makes only the runs whose folder holds no output yet (D44 NOTE 3).
+export PATH="/apps/openmpi/4.1.1/bin:$PATH"
+export LD_LIBRARY_PATH="/home/apps2/ORCA/6.0.1/lib:/apps/openmpi/4.1.1/lib:/apps/mambaforge/envs/medaka/lib:${LD_LIBRARY_PATH:-}"
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ORCA=/home/apps2/ORCA/6.0.1
+W=/home/18660916/system_development/phase2.2/cs_stage6/d57
+cd "$W" || exit 1
+if ! mkdir .running_W5 2>/dev/null; then echo "FAIL: another job holds .running_W5 in $W"; exit 1; fi
+trap 'rmdir "$W/.running_W5" 2>/dev/null' EXIT
+echo "host=$(hostname) start=$(date)"
+echo "free memory at start:"; free -g | head -2
+run() {
+  d="$W/$1"
+  if [ -e "$d/job.out" ]; then echo "$1 has an output already: not run again"
+  else ( cd "$d" && timeout -k 10 "$2" "$ORCA/orca" job.inp > job.out 2>&1 </dev/null ); echo "$1 orca_exit=$? normal=$(grep -c 'ORCA TERMINATED NORMALLY' "$d/job.out") $(date)"; fi
+}
+run SV_ZHe_S_n12_k1_di_R 1800
+run SV_ZHe_S_n12_k1_di_TS 1800
+run SV_ZNe_S_n12_k1_di_R 1800
+run SV_ZNe_S_n12_k1_di_TS 1800
+run SV_ZHe_S_n15_k1_di_R 1800
+run SV_ZHe_S_n15_k1_di_TS 1800
+run SV_ZNe_S_n15_k1_di_R 1800
+run SV_ZNe_S_n15_k1_di_TS 1800
+run SV_ZHe_S_n20_k1_di_R 1800
+run SV_ZHe_S_n20_k1_di_TS 1800
+run SV_ZNe_S_n20_k1_di_R 1800
+run SV_ZNe_S_n20_k1_di_TS 1800
+run SV_YHe_S_n20_k1_di_R 1800
+run SV_YHe_S_n20_k1_di_TS 1800
+run SV_YNe_S_n20_k1_di_R 1800
+run SV_YNe_S_n20_k1_di_TS 1800
+echo "end=$(date)"
+n=0; for r in SV_ZHe_S_n12_k1_di_R SV_ZHe_S_n12_k1_di_TS SV_ZNe_S_n12_k1_di_R SV_ZNe_S_n12_k1_di_TS SV_ZHe_S_n15_k1_di_R SV_ZHe_S_n15_k1_di_TS SV_ZNe_S_n15_k1_di_R SV_ZNe_S_n15_k1_di_TS SV_ZHe_S_n20_k1_di_R SV_ZHe_S_n20_k1_di_TS SV_ZNe_S_n20_k1_di_R SV_ZNe_S_n20_k1_di_TS SV_YHe_S_n20_k1_di_R SV_YHe_S_n20_k1_di_TS SV_YNe_S_n20_k1_di_R SV_YNe_S_n20_k1_di_TS; do grep -q 'ORCA TERMINATED NORMALLY' "$W/$r/job.out" 2>/dev/null && n=$((n+1)); done
+echo "finished: $n of 16"
