@@ -1,0 +1,127 @@
+STAGE 6 - DIAGNOSTIC 58: the force each survivor of D56 adds to the substrate, and the
+first-order maps of that force and of the hold on the last electron. PRE-REGISTRATION.
+
+25 November 2026. Claude drafted this text; it takes effect when Jessica commits it, with the
+inputs of d58/ and the programs cs6_d58_prepare.py, cs6_d58.py and cs6_d58_harvest.sh, before
+any job of it is submitted. It is hers to change before she commits it, and the tolerances of
+section 3 are hers in particular.
+
+It names no design a result, changes no word of D56 and adopts nothing. Nothing committed is
+edited by it.
+
+
+1. WHY
+
+AMENDMENT 13, A13.4 item 2: "THE FORCE IS MEASURED FOR EVERY SURVIVOR." Item 3: "THE FORCE MAP
+(F) IS MEASURED AND CHECKED." Item 4: "THE MAP OF THE HOLD ON THE ELECTRON (E) IS FORMED AND
+CHECKED." The forms these runs need were tried by FORMS TEST 1, whose result is committed before
+these inputs are.
+
+
+2. WHAT IS RUN
+
+All at the working level, CAM-B3LYP-D3BJ/def2-SVPD, on frame 42436, in vacuo, with D56's own
+geometries and D56's own point charges. 186 runs in eight jobs; each job makes its runs in order
+under the cap given, and no run is made a second time in its folder.
+
+   - G (38 runs, jobs G1 to G4, cap 3600 s): an energy with its gradient for each of the 18
+     survivors that the committed d56_survivors.tsv names, at R and at TS, with the design's
+     committed pc.pc; and the substrate without charges at R and at TS. The input is FORMS TEST
+     1's SV_engrad_R with D56's charges.
+   - M (144 runs, jobs M1 to M3, cap 900 s): the substrate without charges at R with one of its
+     24 atoms moved 0.01 bohr (0.005292 A) along x, y or z, either way; each run is followed by
+     orca_vpot at the 2626 sites (d33a/points.xyz). The input is D33's committed sp_42436_R; the
+     potential step is D33's committed one.
+   - E (4 runs, job E1, cap 1800 s): D56's committed inputs SV_C_ctl_R, SV_C_ctl_TS, SV_C_bare_R
+     and SV_C_bare_TS, unchanged, each followed by orca_vpot at the 2626 sites.
+
+THE STEP. 0.01 bohr: small enough that the error of a central difference is far below the
+tolerance of section 3, large enough that the noise of a converged density at TightSCF divided
+by twice the step stays below it too. Claude's reasoning, not a measurement; the check of
+section 3 is what decides whether the map holds.
+
+
+3. THE READINGS, FIXED NOW
+
+R58.1 THE RUNS. For each, whether it ended normally, its final energy, and for M and E whether
+orca_vpot gave 2626 potentials. The controls G_C_R, G_C_TS and the four E runs are set against
+D56's committed energies of the same inputs, REPRODUCES within 1e-6 Eh. The potentials of
+E_ctl_R are set against D33's committed sp_42436_R/vpot.out and the largest difference is
+reported.
+
+R58.2 THE GRADIENT EACH SURVIVOR ADDS, at R and at TS: STAGE6_CRITERIA.txt's "G_add(X) = sqrt(
+(1/3N) sum_i |g_i(D) - g_i(0)|^2 )" computed by the committed cs6_analyse.g_add from the
+design's gradient and the control's; the largest single component; and beside them the gradient
+the sphere's Lennard-Jones shell would add at the design's sites, by the derivative of the
+committed cs5_grid.lj_energy, and G_add with it. Reported; it decides nothing, as A13.4 item 2
+has it.
+
+R58.3 THE MAP F. F[i, c] = (V_i(atom moved +) - V_i(atom moved -)) / (2 x step), for site i and
+coordinate c, from the potentials of the M runs. The first-order added gradient of a design is
+the sum over its charges of q_i F[i, :]. THE CHECK, at R, for each of the 18 survivors, against
+the direct added gradient of R58.2 (the design's gradient minus the control's, the charges' part
+alone): the relative RMS, RMS(map - direct) / RMS(direct) over the 72 components, and the
+relative difference of the largest component. THE MAP PASSES if both are at most 0.25 for every
+survivor; FAILS otherwise; NOT FORMED if an M run, its potentials or a direct gradient is
+missing.
+
+R58.4 THE MAP E. E[i] = V(r_i) of the control with one electron removed minus V(r_i) of the
+dianion control, at R and at TS, from the E runs, in eV per e; to first order the energy to
+remove the last electron with a design is VDE0 + sum_i q_i E[i], VDE0 from the E runs. THE
+CHECK: against the 54 energies to remove the electron that D56 measured at the working level for
+its 27 designs at R and TS (committed d56_designs.tsv). THE MAP PASSES if the largest |predicted
+- measured| is at most 0.15 eV; FAILS otherwise; NOT FORMED if a run or its potentials is
+missing or a control does not reproduce D56's.
+
+THE TOLERANCES, AND THEIR DIRECTION. 0.25 for F: D56's measured lowerings were 1.03 to 1.17
+times the first-order score, and a force is expected to stray from first order by about as much
+or more. 0.15 eV for E: between the two basis sets D56's energies to remove the electron for the
+designs of ten and twelve charges differ by 0.06 to 0.07 eV (AMENDMENT 13, A13.1), and a map
+should not be held to less than that twice. Both are Claude's proposal. A looser tolerance makes
+it more likely that a map is used and its rule enters the second search, which acts against a
+lower frozen barrier; a tighter one, the reverse.
+
+THE TABLES. The reader writes d58.tsv (the runs), d58_forces.tsv (R58.2), and, when formed,
+F_f42436_d58.tsv and E_f42436_d58.tsv with the word of each map in their headers.
+
+
+4. THE GATES
+
+GD.1 the pre-registration given is this committed document; GD.2 the programs are the committed
+ones (cs6_d58_prepare.py, cs6_d58.py, cs6_d58_harvest.sh, and the committed cs6_analyse.py,
+cs5_grid.py and cs5_amatrix.py whose functions it uses); GD.3 every input of d58/ is the file
+the committed cs6_d58_prepare.py forms from the committed files; GD.4 every output that exists
+echoes the committed input beside it; GD.5 the committed cs5_grid.lj_energy, with D56's
+geometries, gives the committed L_f42436.tsv within 1e-5 kcal/mol at all 2626 sites; GD.6 the
+analytic gradient of the shell equals the central difference of that function. If a gate fails
+the reader writes nothing.
+
+
+5. WHAT EACH OUTCOME SENDS THE NEXT STEP TO, DECIDED NOW
+
+A map that PASSES may be used by the second search of A13.4 item 6, with a limit or a margin
+that the search's own pre-registration fixes. A map that FAILS or is NOT FORMED is reported and
+not used, and no rule on that quantity enters a search; A13.4 item 6 says what follows if
+neither passes. R58.2 decides nothing. No run is made again in its folder; a run that is not
+measured stays so.
+
+
+6. WHAT THIS CANNOT SAY
+
+One frame, frozen geometries, in vacuo, at the working level. The gradients are of bare charges;
+the shell's part is computed, not run. A map that passes agrees with direct runs on D56's 18
+survivors (F) and 27 designs (E); it is first order, and it is not a measurement of any design
+the second search places. No relaxation is made here.
+
+
+7. WHAT WAS KNOWN WHEN THIS WAS WRITTEN, WHAT CLAUDE EXPECTS, AND THE COST
+
+Known: every committed result to D56, AMENDMENT 13 and its NOTE 1, and FORMS TEST 1's result.
+Not known: any gradient of a D56 design; any potential at a displaced geometry; any potential of
+the control with one electron removed. CLAUDE EXPECTS the map F to pass, the direct gradient
+being somewhat larger than first order as the lowering was, and is less sure of the map E:
+removing an electron changes the substrate more than a charge of 0.25 e does, and the designs of
+twelve charges sit where the first order may be poorest. COST, AN ESTIMATE: G runs of 5 to 20
+minutes, M runs of about 2 minutes and their potentials seconds, by D33's and D34's committed
+logs; eight jobs that run side by side, each of a few hours. Claude's estimates have been too
+low. DIRECTION of the diagnostic itself: none on any barrier.
