@@ -9,7 +9,7 @@ What it does, in order:
      phase2.2/cs6_d33b.py (the stability block and the level-shift markers) and phase2.2/cs6_analyse.py
      (the bare / (MM) / (QM/MM) energy convention) - so that every number here is read the way the
      record reads it;
-  2. writes one .tsv per figure (F1 .. F13) and per table (T3 .. T15), plus controls.tsv (quantities recomputed from raw outputs
+  2. writes one .tsv per figure (F1 .. F13) and per table (T3 .. T18), plus controls.tsv (quantities recomputed from raw outputs
      beside the value the record prints) and derived.tsv (every derived number the write-up quotes, with
      its arithmetic and the files its inputs came from);
   3. unless --tsv-only, draws each figure from its own .tsv as .svg and .png.
@@ -160,11 +160,12 @@ def charges_of(d):
         q = [float(l.split()[0]) for l in ls[1:1 + n]]
         rep = "pc"
     if inp.is_file():
-        e = [float(m.group(2)) for m in re.finditer(r"^\s*(Ne|Ar|He)>\s+(-?\d+\.\d+)\s", inp.read_text(), re.M)]
+        e = [float(m.group(2)) for m in re.finditer(r"^\s*([A-Z][a-z]?)>\s+(-?\d+\.\d+)\s", inp.read_text(), re.M)]
         if e:
             if q:
-                stop("%s carries charges both in pc.pc and on ECP centres" % d)
-            q, rep = e, "wall"
+                q, rep = q + e, "wall+pc"          # D57: walled positive charges on ECP centres, bare negatives in pc.pc
+            else:
+                q, rep = e, "wall"
     return q, rep
 
 
@@ -256,8 +257,19 @@ def build(res, code, out):
         if q:
             continue
         inp = d / "job.inp"
-        if inp.is_file() and re.search(r"^\s*(Ne|Ar|He)>", inp.read_text(), re.M):
+        if inp.is_file() and re.search(r"^\s*[A-Z][a-z]?>", inp.read_text(), re.M):
             continue                               # a wall-only control is not a bare substrate
+        if inp.is_file() and re.search(r"TCutPNO", inp.read_text()):
+            continue                               # D45's PNO thresholds other than TightPNO's are levels of their own
+        if d.relative_to(root).parts[0] == "d45":
+            continue                               # D45 varies the benchmark's own approximations: its fourteen runs are T17's
+        itxt = inp.read_text() if inp.is_file() else ""
+        gx = re.search(r"^\*\s*xyzfile\s+\S+\s+\S+\s+(\S+)", itxt, re.M)
+        gtxt = (d / gx.group(1)).read_text() if gx and (d / gx.group(1)).is_file() else ""
+        if re.search(r"^\s*[A-Z][a-z]?:\s", itxt + "\n" + gtxt, re.M):
+            continue                               # functions with no nucleus (ghost centres) change the basis: not the bare substrate
+        if re.search(r"SpecialGridAtoms", itxt):
+            continue                               # a finer grid at chosen centres (D53) is not the level's own calculation
         c = run(d)
         if c is None or not c["norm"] or c["notconv"] or c["npc"]:
             continue
@@ -266,6 +278,8 @@ def build(res, code, out):
             continue
         if c["nopt"] or c["nfinal"] != 1:
             continue                               # an optimisation's last energy is not at the frozen geometry
+        if c["stab"].get("ran") and c["stab"].get("first") == "UNSTABLE":
+            continue                               # its stability analysis moved it to another solution of the level
         if c["chmult"] != (["-2"], ["1"]):
             continue                               # the pool is the dianion, a closed-shell singlet: a monoanion on the
                                                    # same geometry at the same keywords (D39, D40) is another species
@@ -303,7 +317,13 @@ def build(res, code, out):
                "Only runs that ORCA reports as total charge -2 and multiplicity 1 are pooled: the monoanion single points of",
                "DIAGNOSTICS 39 and 40 stand on the same geometries at the same keyword lines and are not the bare dianion.",
                "revDSD-PBEP86-D4 is DIAGNOSTIC 37 Amendment 1 (keyword revDSD-PBEP86-D4/2021); its two arms ran the same calculation,",
-               "so n_R and n_TS are 2.  DLPNO-CCSD(T)/def2-SVPD is DIAGNOSTIC 41: the reactant is d38/N, the transition state d41/T."],
+               "so they count 2.  D44's controls at revDSD-PBEP86-D4 and PWPB95-D3BJ are the committed charge-free inputs byte for",
+               "byte and add 1 to each.  DLPNO-CCSD(T)/def2-SVPD is DIAGNOSTIC 41: the reactant is d38/N, the transition state d41/T.",
+               "Left out of the pool since the revision of the write-up of 26 November 2026: a run with an ECP centre of any element",
+               "(D57's capped Na> centre), with functions on centres without a nucleus (ghost centres), with a finer grid at chosen",
+               "centres (SpecialGridAtoms), with a PNO threshold set by TCutPNO, any run of DIAGNOSTIC 45 (its fourteen runs vary the",
+               "benchmark's own approximations and are T17's), or whose first stability analysis found the",
+               "solution unstable and moved it to another one (D44's controls at revDSD-PBEP86-D4, D53's Hartree-Fock control)."],
               ["functional", "basis", "dispersion", "solvation", "nbasis", "E_R_Eh", "E_TS_Eh", "barrier_kcal",
                "n_R", "n_TS", "spread_Eh", "HOMO_R_eV", "example_R", "example_TS", "HOMO_TS_eV", "level_shift"], f1)
 
@@ -2218,9 +2238,9 @@ def build(res, code, out):
     # the record's arrangements with a four-leg pass and a detachment energy at the working level, before and after DIAGNOSTIC 43
     DV.add("DV467", str(len(arr5) + len(cond42)), "derived", "DV367 + DV422: arrangements that passed the four legs and had a detachment energy before DIAGNOSTIC 43 (AMENDMENT 6, A6.1)", T13N + " ; " + T14N)
     DV.add("DV468", str(len(arr5) + sum(1 for c in cond42 if not c["both"])), "derived", "of DV467, those with a METASTABLE state: the five of DIAGNOSTIC 40 and DV385 of DIAGNOSTIC 42", T13N + " ; " + T14N)
-    # DIAGNOSTIC 44 is pre-registered and has no output: only its committed inputs are counted
+    # DIAGNOSTIC 44's committed inputs and outputs are counted; its reading follows the checks on its inputs
     DV.add("DV469", str(len(list((root / "d44").rglob("job.inp")))), "count", "number of committed job.inp files under %s/d44" % S6, S6 + "/d44")
-    DV.add("DV470", str(len(list((root / "d44").rglob("job.out")))), "count", "number of committed job.out files under %s/d44: DIAGNOSTIC 44 has no output in the record" % S6, S6 + "/d44")
+    DV.add("DV470", str(len(list((root / "d44").rglob("job.out")))), "count", "number of committed job.out files under %s/d44" % S6, S6 + "/d44")
     lev44 = [l.split("\t") for l in (root / "d44" / "LEVELS.tsv").read_text().splitlines()[1:] if l.strip()]
     DV.add("DV471", str(len(lev44)), "count", "levels of DIAGNOSTIC 44 (%s)" % ", ".join(x[0] for x in lev44), S6 + "/d44/LEVELS.tsv")
     c44l = (root / "d44" / "CONDITIONS.tsv").read_text().splitlines()
@@ -2238,6 +2258,309 @@ def build(res, code, out):
     if n44 != len(list((root / "d44").rglob("job.inp"))):
         stop("d44/LEVELS.tsv does not account for every committed input of DIAGNOSTIC 44")
     DV.add("DV473", str(n44), "derived", "single points of DIAGNOSTIC 44: the sum of the runs of its %d levels (%s)" % (len(lev44), " + ".join(x[-1] for x in lev44)), S6 + "/d44/LEVELS.tsv")
+    # ============================ DIAGNOSTIC 44: the cross-check of D43's six survivors at five levels ===================
+    # Read under AMENDMENT 7 (the levels, the tolerance) with the words of D44's pre-registration.  Formed here from the raw
+    # outputs of d44/ and held against d44.tsv and the rows the committed result prints:
+    #    energies  : the dianion (di) and monoanion (mo) of every measured run, and the ten charge-free controls C_ctl
+    #    three legs: Loewdin rise, dipole ratio and gap of each measured dianion against its level's control
+    #    fifth leg : VDE = E(mo) - E(di), same state, same charges, where both are measured
+    #    ddE       : (E(TS) - E(TS, control)) - (E(R) - E(R, control)) on the dianion, with the controls of the same level
+    #    agreement : |ddE - working| / |working| against 15 %; NOT ASSESSABLE below the floor of 3.2 kcal/mol
+    # The four-leg words of the double-hybrid levels rest on the separate stability searches (ds) and are taken from d44.tsv;
+    # here they are held to the numbers (a RELIABLE state carries no flag; an UNRELIABLE design carries one at a state).
+    # The level and cross-check words are formed again from the words by R44.5's own rule.
+    D44R, D44T, T16N = S6 + "/STAGE6_DIAGNOSTIC44_RESULT_20261120.txt", S6 + "/d44.tsv", "figures/T16_d44_crosscheck.tsv"
+    t44 = (root / "STAGE6_DIAGNOSTIC44_RESULT_20261120.txt").read_text()
+    rec44, hdr44 = {}, None
+    for l in (root / "d44.tsv").read_text().splitlines():
+        f = l.split("\t")
+        if hdr44 is None:
+            hdr44 = f
+            continue
+        if l.strip():
+            r = dict(zip(hdr44, f + [""] * (len(hdr44) - len(f))))
+            rec44[(r["design"], r["level_key"], r["state"])] = r
+    LV44 = [x[0] for x in lev44]
+    if LV44 != ["CAMTZ", "PWSV", "PWTZ", "RDSV", "RDTZ"] or sorted(rec44) != sorted((d_, k_, s_) for d_ in d44des for k_ in LV44 for s_ in ("R", "TS")):
+        stop("d44.tsv does not hold the six designs at the five levels, two states each")
+    work44 = dict((c["condition"], c["dde"]) for c in S43)
+
+    def sec44(a, b):
+        i, j = t44.index("\n" + a), t44.index("\n" + b)
+        if j <= i:
+            stop("DIAGNOSTIC 44's result does not hold %s before %s" % (a, b))
+        return t44[i:j]
+    s444, s445, s446 = sec44("R44.4 ", "R44.5 "), sec44("R44.5 ", "R44.6 "), sec44("R44.6 ", "WHAT THIS CANNOT SAY")
+
+    def plain44(d):
+        """A measured run of D44: normal end, converged, one final energy; returns E and the charge and multiplicity."""
+        t = (d / "job.out").read_text(errors="replace")
+        e = re.findall(r"FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)", t)
+        if "****ORCA TERMINATED NORMALLY****" not in t or "SCF NOT CONVERGED" in t or len(e) != 1:
+            stop("%s is marked measured and is not a normally terminated single point with one final energy" % d)
+        return float(e[0]), (sorted(set(re.findall(CHG, t, re.M))), sorted(set(re.findall(MUL, t, re.M))))
+    ctl44, k44 = {}, 0
+    for k in LV44:
+        for st in ("R", "TS"):
+            c = run(root / "d44" / ("%s_C_ctl_%s" % (k, st)))
+            if c is None or not c["norm"] or c["notconv"] or c["npc"] or c["chmult"] != (["-2"], ["1"]) or state_of(c) != st:
+                stop("d44/%s_C_ctl_%s is not a normally terminated, charge-free dianion run on frame 42436's %s geometry" % (k, st, st))
+            ctl44[(k, st)] = c
+            recs = set(rec44[(d_, k, st)]["E_control_Eh"] for d_ in d44des)
+            if len(recs) != 1:
+                stop("d44.tsv gives level %s %s more than one control energy" % (k, st))
+            k44 += 1
+            control("C59.%03d" % k44, "DIAGNOSTIC 44, the control of %s at %s: E, Eh (d44.tsv)" % (k, st), c["E"], float(recs.pop()), D44T, 1e-8, 8)
+    v44 = {}
+    nmeas = dict(di=0, ds=0, mo=0)
+    for d_ in d44des:
+        for k in LV44:
+            for st in ("R", "TS"):
+                r = rec44[(d_, k, st)]
+                x = dict(di=None, mo=None, v=None, lg=None)
+                if r["ds_status"] == "measured":
+                    nmeas["ds"] += 1
+                if r["di_status"] == "measured":
+                    nmeas["di"] += 1
+                    dd = root / "d44" / r["di_run"]
+                    di = run(dd)
+                    if di is None or not di["norm"] or di["notconv"] or di["chmult"] != (["-2"], ["1"]) or state_of(di) != st:
+                        stop("%s is marked measured and is not a converged dianion run on frame 42436's %s geometry" % (dd, st))
+                    q, _rep = charges_of(dd)
+                    if di["npc"] != len(q) or len(q) != int(r["n"]) or abs(sum(q) - float(r["sum_q_e"])) > 5e-5:
+                        stop("%s does not carry the charges d44.tsv lists" % dd)
+                    ctl = ctl44[(k, st)]
+                    lg = dict(rise=di["maxlw"] - ctl["maxlw"], dip=di["dip"] / ctl["dip"], gap=di["gap"], cgap=ctl["gap"], shifted=di["shifted"])
+                    x["di"], x["lg"] = di, lg
+                    checks = [("E(dianion), Eh", di["E"], float(r["E_di_Eh"]), 1e-8, 8), ("Loewdin rise, e", lg["rise"], float(r["lowdin_rise_e"]), 6e-5, 4),
+                              ("dipole ratio", lg["dip"], float(r["dipole_ratio"]), 6e-5, 4)]
+                    if r["gap_eV"].strip() and lg["gap"] is not None:
+                        checks.append(("gap, eV", lg["gap"], float(r["gap_eV"]), 6e-5, 4))
+                    for what, mine, rec, tol, nd in checks:
+                        k44 += 1
+                        control("C59.%03d" % k44, "DIAGNOSTIC 44, %s %s %s, %s (d44.tsv)" % (d_, k, st, what), mine, rec, D44T, tol, nd)
+                if r["mo_status"] == "measured":
+                    nmeas["mo"] += 1
+                    em, cm = plain44(root / "d44" / r["mo_run"])
+                    if cm != (["-1"], ["2"]) or x["di"] is None:
+                        stop("d44/%s is not a monoanion doublet beside a measured dianion" % r["mo_run"])
+                    x["mo"] = em
+                    x["v"] = (em - x["di"]["E"]) * EV
+                    for what, mine, rec, tol, nd in (("E(monoanion), Eh", em, float(r["E_mo_Eh"]), 1e-8, 8), ("detachment energy, eV", x["v"], float(r["VDE_eV"]), 6e-5, 4)):
+                        k44 += 1
+                        control("C59.%03d" % k44, "DIAGNOSTIC 44, %s %s %s, %s (d44.tsv)" % (d_, k, st, what), mine, rec, D44T, tol, nd)
+                    if r["word"] != ("METASTABLE" if x["v"] <= 0 else r["word"]) or (x["v"] <= 0) != (r["word"] == "METASTABLE"):
+                        stop("d44.tsv's word for %s %s %s does not follow the sign of the detachment energy formed here" % (d_, k, st))
+                elif r["VDE_eV"].strip():
+                    stop("d44.tsv prints a detachment energy for %s %s %s whose monoanion is not measured" % (d_, k, st))
+                v44[(d_, k, st)] = x
+    # the four legs held to the numbers; the agreement, the level and the cross-check formed again
+    T16, cx44, lvw44 = [], {}, {}
+    for d_ in d44des:
+        for k in LV44:
+            rR, rT = rec44[(d_, k, "R")], rec44[(d_, k, "TS")]
+            for a_ in ("four_legs", "fifth_leg", "ddE_kcal", "agreement", "at_this_level", "cross_check"):
+                if rR[a_] != rT[a_]:
+                    stop("d44.tsv gives %s %s two readings of %s at its two states" % (d_, k, a_))
+            four, fifth = rR["four_legs"], rR["fifth_leg"]
+            xs = {st: v44[(d_, k, st)] for st in ("R", "TS")}
+            flags = [st for st in ("R", "TS") if xs[st]["lg"] is not None and (xs[st]["lg"]["rise"] >= audit.D_LW or xs[st]["lg"]["dip"] >= audit.R_DIP
+                     or (xs[st]["lg"]["gap"] is not None and xs[st]["lg"]["cgap"] is not None and xs[st]["lg"]["gap"] < audit.GAP_ABS and xs[st]["lg"]["gap"] < audit.R_GAP * xs[st]["lg"]["cgap"]))]
+            unst = [st for st in ("R", "TS") if "UNSTABLE" in (rec44[(d_, k, st)]["di_stab_last"], rec44[(d_, k, st)]["ds_stab_last"])]
+            if four == "RELIABLE" and (flags or unst):
+                stop("d44.tsv calls %s RELIABLE at %s and a leg is flagged here" % (d_, k))
+            if four == "UNRELIABLE" and not (flags or unst):
+                stop("d44.tsv calls %s UNRELIABLE at %s and no leg is flagged here" % (d_, k))
+            work = work44[d_]
+            if xs["R"]["di"] is not None and xs["TS"]["di"] is not None:
+                dde = ((xs["TS"]["di"]["E"] - ctl44[(k, "TS")]["E"]) - (xs["R"]["di"]["E"] - ctl44[(k, "R")]["E"])) * H
+                frac = abs(dde - work) / abs(work)
+                agree = "NOT ASSESSABLE" if abs(work) < 3.2 else ("WITHIN" if frac < 0.15 else "OUTSIDE")
+                for what, mine, rec, tol, nd in (("ddE, kcal/mol", dde, float(rR["ddE_kcal"]), 6e-5, 4), ("the working ddE, kcal/mol", work, float(rR["ddE_working_kcal"]), 6e-5, 4),
+                                                 ("ddE minus working, kcal/mol", dde - work, float(rR["ddE_minus_working_kcal"]), 6e-5, 4), ("fraction of working", frac, float(rR["fraction_of_working"]), 6e-5, 4)):
+                    k44 += 1
+                    control("C59.%03d" % k44, "DIAGNOSTIC 44, %s %s, %s (d44.tsv)" % (d_, k, what), mine, rec, D44T, tol, nd)
+                m = re.search(r"^\s+" + re.escape(d_) + r"\s+" + k + r"\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+([+-]\d+\.\d{4})\s+(\d+\.\d{3})\s+(WITHIN|OUTSIDE|NOT ASSESSABLE)\s+(\w+)\s+(.+?)\s*$", s444, re.M)
+                if not m or (m.group(5), m.group(6), m.group(7)) != (agree, four, fifth):
+                    stop("DIAGNOSTIC 44's R44.4 does not print %s at %s as formed here" % (d_, k))
+                k44 += 1
+                control("C59.%03d" % k44, "DIAGNOSTIC 44 R44.4, %s %s, ddE, kcal/mol" % (d_, k), dde, float(m.group(1)), D44R, 6e-5, 4)
+            else:
+                dde, frac, agree = None, None, "NOT FORMED"
+                if rR["ddE_kcal"].strip():
+                    stop("d44.tsv prints a ddE for %s at %s and a dianion state is not measured" % (d_, k))
+            if agree != rR["agreement"]:
+                stop("d44.tsv's agreement for %s at %s is not the one formed here" % (d_, k))
+            if four == "RELIABLE" and fifth == "PASSED" and agree == "WITHIN":
+                lv = "PASSES"
+            elif four == "UNRELIABLE" or "METASTABLE" in fifth or agree == "OUTSIDE":
+                lv = "FAILS"
+            else:
+                lv = "OPEN"
+            if lv != rR["at_this_level"]:
+                stop("d44.tsv's word at %s for %s is not R44.5's rule applied to its words" % (k, d_))
+            lvw44[(d_, k)] = lv
+            vR, vT = xs["R"]["v"], xs["TS"]["v"]
+            T16.append((d_, k, four, fifth, fmt(vR, 4) if vR is not None else "-", fmt(vT, 4) if vT is not None else "-",
+                        fmt(dde, 4) if dde is not None else "-", fmt(work, 4), fmt(dde - work, 4) if dde is not None else "-",
+                        ("%.3f" % frac) if frac is not None else "-", agree, lv))
+        ws = [lvw44[(d_, k)] for k in LV44]
+        cx = "PASSES THE CROSS-CHECK" if all(w == "PASSES" for w in ws) else ("DOES NOT PASS THE CROSS-CHECK" if "FAILS" in ws else "THE CROSS-CHECK IS INCOMPLETE")
+        if cx != rec44[(d_, "CAMTZ", "R")]["cross_check"]:
+            stop("d44.tsv's cross-check word for %s is not the one formed here" % d_)
+        m = re.search(r"^\s+" + re.escape(d_) + r"\s+" + r"\s+".join(r"(PASSES|FAILS|OPEN)" for _ in LV44) + r"\s+(.+?)\s*$", s445, re.M)
+        if not m or list(m.groups()[:5]) != ws or m.group(6) != cx.replace("PASSES THE CROSS-CHECK", "PASSES THE CROSS-CHECK"):
+            stop("DIAGNOSTIC 44's R44.5 does not print %s's words as formed here" % d_)
+        cx44[d_] = cx
+    write_tsv(out / "T16_d44_crosscheck.tsv",
+              ["T16. DIAGNOSTIC 44, the cross-check of AMENDMENT 7: DIAGNOSTIC 43's six survivors at five levels, frame 42436, frozen,",
+               "bare point charges, in vacuo.  Formed by make_figures.py from the raw outputs of %s/d44/ and held against d44.tsv and" % S6,
+               "the committed result.  VDE = E(monoanion) - E(dianion), eV (- : not measured).  ddE against the controls of the same level;",
+               "working: the design's ddE at CAM-B3LYP-D3BJ/def2-SVPD (DIAGNOSTIC 43).  agreement: |ddE - working| / |working| below 0.15",
+               "is WITHIN (STAGE6_CRITERIA.txt); below a working |ddE| of 3.2 kcal/mol NOT ASSESSABLE; NOT FORMED where a dianion state is",
+               "not measured.  The four-leg words of the double-hybrid levels rest on their separate stability searches and are d44.tsv's.",
+               "A design PASSES at a level if RELIABLE, the fifth leg PASSED and WITHIN; FAILS if UNRELIABLE, METASTABLE or OUTSIDE; else",
+               "OPEN (R44.5).  The ddE of a level at which the design is UNRELIABLE is printed, as D33 and D43 did; the words beside it govern (R44.4)."],
+              ["design", "level", "four_legs", "fifth_leg", "VDE_R_eV", "VDE_TS_eV", "ddE_kcal", "working_kcal", "differ_kcal", "frac",
+               "agreement", "at_this_level"], T16)
+    DV.add("DV474", str(nmeas["di"]), "recomputed from raw outputs", "dianion runs of DIAGNOSTIC 44 with charges that are measured, of %d" % (len(d44des) * len(LV44) * 2), T16N)
+    DV.add("DV475", str(nmeas["mo"]), "recomputed from raw outputs", "monoanion runs of DIAGNOSTIC 44 that are measured, of %d" % (len(d44des) * len(LV44) * 2), T16N)
+    DV.add("DV476", str(nmeas["ds"]), "count", "stability searches (ds) of DIAGNOSTIC 44 at the four double-hybrid levels marked measured in d44.tsv, of %d" % (len(d44des) * 4 * 2), D44T)
+    DV.add("DV477", str(sum(1 for c in cx44.values() if c == "PASSES THE CROSS-CHECK")), "recomputed from raw outputs", "designs of DIAGNOSTIC 44 that pass the cross-check, of %d" % len(d44des), T16N)
+    DV.add("DV478", str(sum(1 for c in cx44.values() if c == "DOES NOT PASS THE CROSS-CHECK")), "recomputed from raw outputs", "designs of DIAGNOSTIC 44 that do not pass the cross-check", T16N)
+    DV.add("DV479", str(sum(1 for c in cx44.values() if c == "THE CROSS-CHECK IS INCOMPLETE")), "recomputed from raw outputs", "designs of DIAGNOSTIC 44 whose cross-check is incomplete (%s)"
+           % ", ".join(d_ for d_, c in sorted(cx44.items()) if c == "THE CROSS-CHECK IS INCOMPLETE"), T16N)
+    camtz = [t for t in T16 if t[1] == "CAMTZ"]
+    DV.add("DV480", str(sum(1 for t in camtz if t[2] == "UNRELIABLE")), "recomputed from raw outputs", "designs UNRELIABLE on four legs at CAM-B3LYP-D3BJ/def2-TZVPD (%s)"
+           % ", ".join(t[0] for t in camtz if t[2] == "UNRELIABLE"), T16N)
+    for i_, d_ in enumerate(("B_n02_q0.50", "B_n11_q0.25")):
+        t = [x for x in camtz if x[0] == d_][0]
+        DV.add("DV%d" % (481 + i_), t[8], "recomputed from raw outputs", "%s: ddE at CAM-B3LYP-D3BJ/def2-TZVPD minus the working level, kcal/mol" % d_, T16N)
+    rng = [float(t[6]) for t in T16 if t[0] == "B_n11_q0.25" and t[6] != "-"] + [work44["B_n11_q0.25"]]
+    DV.add("DV483", "%.4f" % (max(rng) - min(rng)), "derived", "B_n11_q0.25: the largest less the smallest ddE over the six levels, kcal/mol", T16N)
+    rng = [float(t[6]) for t in T16 if t[0] == "B_n02_q0.50" and t[6] != "-"] + [work44["B_n02_q0.50"]]
+    DV.add("DV484", "%.4f" % (max(rng) - min(rng)), "derived", "B_n02_q0.50: the largest less the smallest ddE over the six levels, kcal/mol", T16N)
+    DV.add("DV485", str(sum(1 for t in T16 if t[10] == "NOT FORMED")), "recomputed from raw outputs", "(design, level) pairs of DIAGNOSTIC 44 whose ddE is not formed", T16N)
+    ow = [abs(float(t[8])) for t in T16 if t[10] == "OUTSIDE"]
+    DV.add("DV486", "%.4f" % min(ow), "derived", "the smallest |ddE - working| among the (design, level) pairs OUTSIDE the tolerance, kcal/mol", T16N)
+    DV.add("DV487", "%.4f" % max(ow), "derived", "the largest |ddE - working| among them, kcal/mol", T16N)
+    # ============================ DIAGNOSTIC 45: the benchmark's approximations, measured =================================
+    # From the raw outputs of d45/ and the committed coupled-cluster outputs of D38 (reactant d38/N) and D41 (transition
+    # state d41/T), which are the committed (T0), TightPNO, def2-SVPD barrier.  Measured: the triples step, the two PNO
+    # steps and the four MP2 barriers.  The extrapolated MP2 barrier and the two composites are ESTIMATES in the result;
+    # the composites are formed again here from D36's barrier and the steps, and the extrapolation is taken as printed.
+    D45R, T17N = S6 + "/STAGE6_DIAGNOSTIC45_RESULT_20261119.txt", "figures/T17_d45_benchmark_steps.tsv"
+    t45 = (root / "STAGE6_DIAGNOSTIC45_RESULT_20261119.txt").read_text()
+
+    def e45(d):
+        t = (d / "job.out").read_text(errors="replace")
+        e = re.findall(r"FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)", t)
+        if "****ORCA TERMINATED NORMALLY****" not in t or len(e) != 1 or (sorted(set(re.findall(CHG, t, re.M))), sorted(set(re.findall(MUL, t, re.M)))) != (["-2"], ["1"]):
+            stop("%s is not a normally terminated dianion single point with one final energy" % d)
+        return float(e[0])
+    E45 = dict((n_, e45(root / "d45" / n_)) for n_ in ("T1_R", "T1_TS", "P6_R", "P6_TS", "P8_R", "P8_TS") + tuple("M_%s_%s" % (b_, s_) for b_ in ("SV", "TZ", "TP", "QZ") for s_ in ("R", "TS")))
+    b0 = (e45(root / "d41" / "T") - e45(root / "d38" / "N")) * H
+    bar45 = dict(T1=(E45["T1_TS"] - E45["T1_R"]) * H, P6=(E45["P6_TS"] - E45["P6_R"]) * H, P8=(E45["P8_TS"] - E45["P8_R"]) * H)
+    mp2 = dict((b_, (E45["M_%s_TS" % b_] - E45["M_%s_R" % b_]) * H) for b_ in ("SV", "TZ", "TP", "QZ"))
+    d36b = bar_of("DLPNO-CCSD(T)", "DEF2-TZVPD")
+    steps = [("the committed barrier, DLPNO-CCSD(T0), TightPNO, def2-SVPD (d38/N, d41/T)", b0, "22.8968", "measured, committed (D41)"),
+             ("the same with the iterative triples (T1)", bar45["T1"], "22.1417", "measured"),
+             ("triples step, T1 minus T0", bar45["T1"] - b0, "-0.7551", "measured"),
+             ("the barrier at TCutPNO 1e-6", bar45["P6"], "23.4576", "measured"),
+             ("the barrier at TCutPNO 1e-8", bar45["P8"], "22.4796", "measured"),
+             ("PNO step d67, 1e-7 minus 1e-6", b0 - bar45["P6"], "-0.5608", "measured"),
+             ("PNO step d78, 1e-8 minus 1e-7", bar45["P8"] - b0, "-0.4171", "measured"),
+             ("two-point PNO estimate, b6 + 1.5 (b7 - b6)", bar45["P6"] + 1.5 * (b0 - bar45["P6"]), "22.6164", "ESTIMATE"),
+             ("MP2 barrier, def2-SVPD", mp2["SV"], "17.0165", "measured"),
+             ("MP2 barrier, def2-TZVPD", mp2["TZ"], "17.4751", "measured"),
+             ("MP2 barrier, def2-TZVPPD", mp2["TP"], "17.5619", "measured"),
+             ("MP2 barrier, def2-QZVPPD", mp2["QZ"], "17.9202", "measured"),
+             ("MP2 basis step, def2-QZVPPD minus def2-TZVPD", mp2["QZ"] - mp2["TZ"], "0.4451", "measured"),
+             ("D36's barrier, DLPNO-CCSD(T0), TightPNO, def2-TZVPD", d36b, "23.8603", "measured, committed (D36)")]
+    m = re.search(r"basis set, MP2 extrapolated minus MP2/def2-TZVPD\s+\+(\d+\.\d{4})\s+ESTIMATE", t45)
+    m2 = re.search(r"PNO threshold, two-point estimate minus 1e-7, def2-SVPD\s+(-\d+\.\d{4})\s+ESTIMATE", t45)
+    if not m or not m2:
+        stop("DIAGNOSTIC 45's R45.6 does not print the two estimated corrections")
+    extr, pno2 = float(m.group(1)), float(m2.group(1))
+    compA = d36b + (bar45["T1"] - b0) + (bar45["P8"] - b0) + (mp2["QZ"] - mp2["TZ"])
+    compB = d36b + (bar45["T1"] - b0) + pno2 + extr
+    steps += [("composite A: D36's barrier plus the three measured steps", compA, "23.1332", "ESTIMATE"),
+              ("composite B: D36's barrier, the triples and the two extrapolated corrections", compB, "23.5211", "ESTIMATE")]
+    k45 = 0
+    for what, mine, rec, kind in steps:
+        k45 += 1
+        cb = what.startswith("composite B")        # formed from two corrections the result prints to four places: 2e-4
+        if not cb and not what.startswith("D36's") and ("%.4f" % abs(mine)) not in t45:
+            stop("DIAGNOSTIC 45's result does not print %.4f (%s)" % (mine, what))
+        control("C60.%03d" % k45, "DIAGNOSTIC 45, %s, kcal/mol" % what, mine, float(rec), D45R, 2e-4 if cb else 6e-5, 4)
+    if abs(pno2 - (bar45["P6"] + 1.5 * (b0 - bar45["P6"]) - b0)) > 6e-5:
+        stop("DIAGNOSTIC 45's two-point estimate minus 1e-7 is not the one formed here")
+    conv = "CONVERGING" if abs(bar45["P8"] - b0) < abs(b0 - bar45["P6"]) else "NOT CONVERGING"
+    if "THE PNO SERIES IS %s." % conv not in t45:
+        stop("DIAGNOSTIC 45's word on the PNO series is not the one formed here")
+    write_tsv(out / "T17_d45_benchmark_steps.tsv",
+              ["T17. DIAGNOSTIC 45: the approximations of the coupled-cluster benchmark, one at a time, on the bare substrate of frame",
+               "42436.  Formed by make_figures.py from the raw outputs of %s/d45/, D38's d38/N and D41's d41/T (the committed" % S6,
+               "def2-SVPD barrier) and D36's def2-TZVPD barrier as F1 has it; kcal/mol.  The PNO series is %s: |d78| below |d67|." % conv,
+               "The composites add steps measured one at a time, two at def2-SVPD and one at MP2; whether they add is not measured."],
+              ["step", "kcal_mol", "kind"], [(w_, (r_ if w_.startswith("composite B") else fmt(v_, 4)), (k_ + ", as the result prints it; formed here from its rounded corrections to within 2e-4") if w_.startswith("composite B") else k_)
+                                            for w_, v_, r_, k_ in steps])
+    DV.add("DV488", conv, "recomputed from raw outputs", "DIAGNOSTIC 45: the PNO series by the rule fixed in advance", T17N)
+    DV.add("DV489", "%.4f" % (mp2["TZ"] - mp2["SV"]), "recomputed from raw outputs", "DIAGNOSTIC 45: MP2 basis step def2-TZVPD minus def2-SVPD, kcal/mol", T17N)
+    DV.add("DV490", "%.4f" % (mp2["TP"] - mp2["TZ"]), "recomputed from raw outputs", "DIAGNOSTIC 45: MP2 basis step def2-TZVPPD minus def2-TZVPD, kcal/mol", T17N)
+    DV.add("DV491", "%.4f" % (mp2["QZ"] - mp2["TP"]), "recomputed from raw outputs", "DIAGNOSTIC 45: MP2 basis step def2-QZVPPD minus def2-TZVPPD, kcal/mol", T17N)
+
+    # ============================ DIAGNOSTIC 39: the detachment energy at the benchmark level ==============================
+    # Entered in the revision of 26 November 2026 at Jessica's word of 25 November ("Enter D39"); the revisions of 15 to 18
+    # November held it back.  Formed here from d39/M_* (the monoanions, UHF-based DLPNO-CCSD(T)) and D38's dianions, and the
+    # EOM roots of d39/X_*.  Reported with the result's own words on the reference: the CCSD subtraction and the EOM root
+    # differ by 0.70 eV for the bare substrate and 0.88 eV with +1 e at site 1690, "evidence about the UHF reference".
+    D39R, T18N = S6 + "/STAGE6_DIAGNOSTIC39_RESULT_20261115.txt", "figures/T18_d39_detachment.tsv"
+    t39 = (root / "STAGE6_DIAGNOSTIC39_RESULT_20261115.txt").read_text()
+
+    def cc39(d):
+        t = (d / "job.out").read_text(errors="replace")
+        a, b = re.findall(r"^E\(CCSD\)\s+\.\.\.\s+(-?\d+\.\d+)", t, re.M), re.findall(r"^E\(CCSD\(T\)\)\s+\.\.\.\s+(-?\d+\.\d+)", t, re.M)
+        if "****ORCA TERMINATED NORMALLY****" not in t or len(a) != 1 or len(b) != 1:
+            stop("%s does not print one E(CCSD) and one E(CCSD(T)) and end normally" % d)
+        return float(a[0]), float(b[0])
+    T18 = []
+    v39 = {}
+    for n_, lab in (("N", "no embedding charge"), ("B1", "+1.000000 e at site 1690"), ("A1", "-1.000000 e at site 678")):
+        mc, mt = cc39(root / "d39" / ("M_" + n_))
+        dc, dt = cc39(root / "d38" / n_)
+        vt, vc = (mt - dt) * EV, (mc - dc) * EV
+        tx = (root / "d39" / ("X_" + n_) / "job.out").read_text(errors="replace")
+        r1 = re.search(r"IROOT=\s+1:\s+(-?\d+\.\d+) au\s+(-?\d+\.\d+) eV", tx)
+        s1 = re.search(r"Percentage singles character=\s+(\d+\.\d+)", tx)
+        if not r1 or not s1 or "****ORCA TERMINATED NORMALLY****" not in tx:
+            stop("d39/X_%s does not print its first root and its singles character and end normally" % n_)
+        eom = float(r1.group(2))
+        s2 = re.findall(r"^Expectation value of <S\*\*2>\s+:\s+(\d+\.\d+)", (root / "d39" / ("M_" + n_) / "job.out").read_text(errors="replace"), re.M)
+        if len(s2) != 1:
+            stop("d39/M_%s does not print one <S**2> of its UHF reference" % n_)
+        ms = re.search(r"^\s+M_" + n_ + r"\s+(\d+\.\d{6})\s+0\.750000\s", t39, re.M)
+        if not ms:
+            stop("DIAGNOSTIC 39's R39.5 does not print <S**2> of M_%s" % n_)
+        k45 += 1
+        control("C60.%03d" % k45, "DIAGNOSTIC 39 R39.5, M_%s, <S**2> of the UHF reference" % n_, float(s2[0]), float(ms.group(1)), D39R, 6e-7, 6)
+        m = re.search(r"^\s+" + n_ + r"\s+" + re.escape(lab) + r"\s+([+-]\d+\.\d{4}) eV\s+([+-]\d+\.\d{4}) eV\s*$", t39, re.M)
+        if not m:
+            stop("DIAGNOSTIC 39's R39.3 does not print %s" % n_)
+        k45 += 1
+        control("C60.%03d" % k45, "DIAGNOSTIC 39 R39.3, %s, VDE at CCSD(T), eV" % n_, vt, float(m.group(1)), D39R, 6e-5, 4)
+        k45 += 1
+        control("C60.%03d" % k45, "DIAGNOSTIC 39 R39.4, %s, VDE at CCSD, eV" % n_, vc, float(m.group(2)), D39R, 6e-5, 4)
+        v39[n_] = (vt, vc, eom)
+        T18.append((n_, lab, fmt(vt, 4), fmt(vc, 4), "%.3f" % eom, s1.group(1), fmt(vc - eom, 4), s2[0]))
+    write_tsv(out / "T18_d39_detachment.tsv",
+              ["T18. DIAGNOSTIC 39: the vertical detachment energy at the benchmark's level, DLPNO-CCSD(T)/def2-SVPD, frame 42436's reactant,",
+               "eV.  VDE: the monoanion of %s/d39/M_* minus D38's dianion, same geometry, basis and settings.  EOM: the first root of" % S6,
+               "d39/X_* and its singles character (%).  CCSD minus EOM: the result reads it as evidence about the UHF reference of the",
+               "monoanion, not as a correction.  S2_UHF: <S**2> of the monoanion's UHF reference, ideal 0.75, reported and not",
+               "corrected.  The negative value of A1 is a sign, not a size (R39.8)."],
+              ["system", "embedding_charge", "VDE_CCSD_T_eV", "VDE_CCSD_eV", "EOM_root1_eV", "singles_pct", "CCSD_minus_EOM_eV", "S2_UHF"], T18)
+    DV.add("DV492", fmt(v39["N"][1] - v39["N"][2], 4), "recomputed from raw outputs", "DIAGNOSTIC 39: the bare substrate's VDE at CCSD minus its first EOM root, eV", T18N)
     DV.add("DV145", str(len(d31t)), "derived", "DIAGNOSTIC 31 conditions tabulated", "figures/T5_positive_charge_vs_verdict.tsv")
     DV.add("DV146", str(sum(1 for t in d31t if float(t[4]) >= 0.55 and t[6] == "RELIABLE")), "derived",
            "DIAGNOSTIC 31 conditions with largest positive charge at or above +0.55 e that are RELIABLE", "figures/T5_positive_charge_vs_verdict.tsv")
@@ -2637,13 +2960,13 @@ F9 = [
     ("N15", "N13", "charges in the correlated step (D38)",
      "measured: yes, on the one interpretable arm; licenses the coupled-cluster test of ddE only",
      S6 + "/STAGE6_DIAGNOSTIC38_RESULT_20261115.txt", "THE EMBEDDING CHARGE REACHES THE CORRELATION TREATMENT."),
-    ("N16", "N15", "detachment energy at that level (D39)", "open: result committed; NOT ENTERED in this revision",
-     S6 + "/STAGE6_DIAGNOSTIC39_20261115.txt", "THE DETACHMENT ENERGY AT THE BENCHMARK LEVEL"),
+    ("N16", "N15", "detachment energy at that level (D39)", "entered 26 November 2026; readings, no verdict; its routes disagree for two of three",
+     S6 + "/STAGE6_DIAGNOSTIC39_RESULT_20261115.txt", "D39 PRE-REGISTERED READINGS AND NO VERDICT."),
     ("N17", "N13", "benchmark at the production basis (D41)",
      "measured: 22.8968 at def2-SVPD; its basis shift opposes the functionals'",
      S6 + "/STAGE6_DIAGNOSTIC41_RESULT_20261115.txt", "THE BARRIER AT def2-SVPD IS 22.8968 kcal/mol."),
     ("N18", "N14", "revDSD-PBEP86-D4 (D37 Amendment 1)",
-     "measured: 21.4957 at def2-TZVPD, -2.3646 from the benchmark",
+     "measured: 21.4957 at def2-TZVPD, -2.3646 from the benchmark; on the restricted solution (D44, F5)",
      S6 + "/STAGE6_DIAGNOSTIC37_AMENDMENT1_RESULT_20261115.txt",
      "revDSD-PBEP86-D4, arm RI, def2-TZVPD: 21.4957, which is -2.3646 from the benchmark."),
     ("N19", "N12", "is the dianion bound? (D40)",
@@ -2662,8 +2985,17 @@ F9 = [
      "named before any design reached them; no production level adopted",
      S6 + "/STAGE6_AMENDMENT7_20261117.txt", "IT DOES NOT ADOPT A PRODUCTION LEVEL OF THEORY."),
     ("N22", "N24", "the six survivors at the five levels (D44)",
-     "pre-registered; no output in the record",
-     S6 + "/STAGE6_DIAGNOSTIC44_20261118.txt", "Pre-registered 18 November 2026, before any D44 output exists."),
+     "read: none passes; four do not pass, two incomplete",
+     S6 + "/STAGE6_DIAGNOSTIC44_RESULT_20261120.txt", "Of the 6 designs. Pass the cross-check: 0. Do not pass: 4. Incomplete: 2."),
+    ("N25", "N24", "how the reporting level is chosen (Amendment 8)",
+     "fixed before the cross-check was read; reference designs by rule",
+     S6 + "/STAGE6_AMENDMENT8_20261118.txt", "THE REFERENCE DESIGNS are two of D43's six survivors, fixed by rule and not by choice"),
+    ("N26", "N22", "after the cross-check (Amendment 9)",
+     "D46 not submitted; def2-TZVPD joins the search's own test",
+     S6 + "/STAGE6_AMENDMENT9_20261120.txt", "The number 46 is not used again."),
+    ("N27", "N13", "the benchmark's approximations (D45)",
+     "triples, PNO and basis steps each under 1 kcal/mol; the PNO series converging",
+     S6 + "/STAGE6_DIAGNOSTIC45_RESULT_20261119.txt", "THE PNO SERIES IS CONVERGING."),
 ]
 
 
@@ -3010,9 +3342,11 @@ def draw(out):
                 place(c, depth + 1)
             pos[n] = (depth, sum(pos[c][1] for c in ch) / len(ch))
     place("N0", 0)
-    fig, ax = plt.subplots(figsize=(13.0, 8.0))
-    W, Hh, DX = 3.6, 0.86, 4.0
+    SY9 = 1.14                                     # rows a little apart, so that a box of four lines holds them
+    pos = {n_: (d_, y_ * SY9) for n_, (d_, y_) in pos.items()}
+    W, Hh, DX = 3.6, 1.0, 4.0
     maxdepth = max(p[0] for p in pos.values())
+    fig, ax = plt.subplots(figsize=(0.82 * (maxdepth * DX + W + 0.4), 0.5 * (ycur[0] * SY9 + 0.5) + 0.3))
     tone = {"in use": "#e8eef5", "open": "#fff4d6", "not": "#f2cfc7", "none": "#eeeeee"}
 
     def tint(s):
@@ -3029,14 +3363,14 @@ def draw(out):
         r = by[n]
         ax.add_patch(FancyBboxPatch((x, -y - Hh / 2), W, Hh, boxstyle="round,pad=0.02,rounding_size=0.08", facecolor=tint(r["status"]),
                                     edgecolor=INK, lw=0.7))
-        tl9, sl9 = textwrap.wrap(r["approach"], 40), textwrap.wrap(r["status"], 50)
+        tl9, sl9 = textwrap.wrap(r["approach"], 46), textwrap.wrap(r["status"], 55)
         top9 = -y + Hh / 2 - (0.07 if len(tl9) + len(sl9) > 2 else 0.16)
         ax.text(x + 0.1, top9, "\n".join(tl9), fontsize=7.0, va="top", fontweight="bold", linespacing=1.05)
         ax.text(x + 0.1, top9 - 0.205 * len(tl9) - 0.03, "\n".join(sl9), fontsize=6.4, va="top", color="#333333", linespacing=1.05)
         if r["parent"] in pos:
             px, py = pos[r["parent"]]
             ax.plot([px * DX + W, px * DX + W + 0.3, px * DX + W + 0.3, x], [-py, -py, -y, -y], color=INK, lw=0.7)
-    ax.set_xlim(-0.2, maxdepth * DX + W + 0.2); ax.set_ylim(-ycur[0] + 0.3, 0.7); ax.axis("off")
+    ax.set_xlim(-0.2, maxdepth * DX + W + 0.2); ax.set_ylim(-ycur[0] * SY9 + 0.3, 0.8); ax.axis("off")
     ax.set_title("The programme as a decision tree: each approach and the record's own status for it", loc="left")
     fig.tight_layout(); save(fig, "F9_decision_tree")
 
